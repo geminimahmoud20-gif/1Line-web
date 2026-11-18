@@ -1,20 +1,36 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { X, Clock } from 'lucide-react';
 import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
+import { exportRows } from '../utils/transfer/exportTable';
+import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
+import { restoreLeads, mergeLeads, mergeDuplicateGroups } from '../firebaseLazy';
+import { auditLeadDeleted, auditContactUse } from '../utils/contactAudit';
+import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
+import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
+import { memberDesk } from '../utils/inboxView';
+import useTeamMembers from '../hooks/useTeamMembers';
+import { permsOfRole, canViewFinance, canCloseDeals as canCloseDealsPerm } from '../utils/accessModel';
+import { isValidPhoneNumber } from '../utils/securityShield';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
 import SmartMatchingHub from './crm/SmartMatchingHub';
 import AICopywriterModal from './crm/AICopywriterModal';
 import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
+import CampaignReportPanel from './crm/CampaignReportPanel';
+import ReportsHub from './crm/ReportsHub';
+import { getAreas } from '../utils/areasData';
+import TeamChatPanel from './crm/TeamChatPanel';
+import { takePendingLead } from '../utils/openLead';
+import TasksPanel from './crm/TasksPanel';
+import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
-import CustomerProfileModal from './crm/CustomerProfileModal';
 
 import LeadsTab from './crm/LeadsTab';
+import ConcurrencyConflictModal from './crm/ConcurrencyConflictModal';
 import SystemBackupTab from './crm/SystemBackupTab';
 import AutomationTab from './crm/AutomationTab';
 import AddLeadModal from './crm/AddLeadModal';
@@ -23,37 +39,53 @@ import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 import LeadQuickDrawer from './crm/LeadQuickDrawer';
 import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
-import { CRM_ROLES } from './crm/crmRoles';
+import CrmInboxPanel from './crm/CrmInboxPanel';
+import { CRM_ROLES, getMergedCrmRoles } from './crm/crmRoles';
+import { getActiveAccessConfig } from '../services/accessConfig';
 import EditLeadModal from './crm/EditLeadModal';
+import useOpenRequest from '../hooks/useOpenRequest';
 import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
+import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
+import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
+import { formatWhatsAppPhone } from '../utils/matchingEngine';
+import useFullLeadStats from '../hooks/useFullLeadStats';
+import { useProperties } from '../context/PropertiesContext';
+import { areaFamily } from '../utils/areaLookup';
+import { useConfirm } from './ui';
+import { phoneProblem, nameProblem } from '../utils/contactValidation';
+import { userDisplayName } from '../utils/assignees';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
   t = {},
   firebaseConnected = true,
-  leads = [],
+  leads: allLeads = [],
   setLeads,
   properties = [],
-  exportLeadsCSV,
+  projects = [],
+  openRequest = null,
   crmAuthenticated = true,
   setCrmAuthenticated,
   currentUser = null,
   userRole = 'super_admin',
   handleWhatsAppAction,
   triggerToast,
-  addNotification = () => {},
   onConvertToProperty,
-  onUpdateLead,
+  onUpdateLead: rawUpdateLead,
   onDeleteLead,
   onAddNewLead,
+  onImportLeads,
   demands = [],
+  intake = [],
   onSwitchToDemands,
   onSwitchToProperties,
   onSwitchToProjects,
   adminTab: propAdminTab,
   onSwitchTab,
-  activeRole: propActiveRole
+  activeRole: propActiveRole,
+  userPerms = null,
+  userDesk = ''
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -64,32 +96,144 @@ export const CrmAdminPanel = ({
 
   // Multi-Tenant RBAC Identity State
   const activeRole = propActiveRole || userRole || 'super_admin';
-  const myDealsOnly = false; // "my deals only" filter: not exposed in the UI yet
+  const confirm = useConfirm();
+  const isAr = lang === 'ar';
+  const myDealsOnly = false; // desk scoping happens below, on the data itself
+
+  // ── What this account may see and do (mirrors firestore.rules) ─────────────
+  // perms come from the token (CrmPage passes them, or the simulated role's set); desk is the
+  // member's team. Firestore already limits desk agents' queries and hides phones without
+  // ld.phone — this keeps the screens, exports and the super admin's role preview consistent.
+  const perms = userPerms || permsOfRole(getActiveAccessConfig(), activeRole);
+  const isSuperRole = activeRole === 'super_admin';
+  const seesAllLeads = isSuperRole || perms.includes('ld.all') || perms.includes('ld.manage');
+  const seesPhones = isSuperRole || perms.includes('ld.phone');
+  const canEditLeads = isSuperRole || canEditLeadsRole(activeRole, perms);
+  const canExport = isSuperRole || canExportCsv(activeRole, perms);
+  const canRetarget = isSuperRole || (canEditLeads && seesPhones);
+  const myDesk = userDesk || '';
+  const leads = useMemo(() => scopeLeadsForAccess(allLeads, { role: activeRole, perms, desk: myDesk }), [allLeads, activeRole, perms, myDesk]);
+  const [conflictModalState, setConflictModalState] = useState({ isOpen: false, conflictData: null, pendingUpdate: null });
+
+  // One gate for every lead write from this panel: read-only roles can't write, and a role that
+  // only sees masked numbers never writes them back over the real ones. Also enforces versioning.
+  const onUpdateLead = useMemo(() => {
+    if (!rawUpdateLead) return undefined;
+    return (id, fields = {}, expectedVersion = null) => {
+      if (!canEditLeads) {
+        triggerToast?.(isAr ? 'صلاحياتك لا تسمح بتعديل العملاء' : 'Your role cannot edit leads', 'error');
+        return false;
+      }
+      const currentLead = leads.find((l) => l.id === id);
+      const currentVersion = currentLead?.version || 1;
+      // A real conflict is someone else's save in between. The panel's own earlier save (a drawer still
+      // holding the version it opened with) or a system update (routing, WhatsApp) is not: the write
+      // below only touches the fields being changed.
+      const editedByOther = Boolean(currentLead?.lastEditedUid) && currentLead.lastEditedUid !== currentUser?.uid;
+      if (expectedVersion !== null && expectedVersion !== undefined && expectedVersion !== currentVersion && editedByOther) {
+        setConflictModalState({
+          isOpen: true,
+          conflictData: {
+            currentEntity: currentLead,
+            currentVersion,
+            heldBy: currentLead?.lastEditedBy || (isAr ? 'زميل آخر' : 'another user')
+          },
+          pendingUpdate: { id, fields }
+        });
+        return false;
+      }
+
+      const nextVersion = currentVersion + 1;
+      const payload = {
+        ...fields,
+        version: nextVersion,
+        lastEditedBy: userDisplayName(currentUser, 'مستخدم 1Line'),
+        lastEditedUid: currentUser?.uid || null
+      };
+
+      if (seesPhones) return rawUpdateLead(id, payload);
+      const { phone: _p, whatsapp: _w, altPhone: _a, email: _e, ...rest } = payload;
+      return rawUpdateLead(id, rest);
+    };
+  }, [rawUpdateLead, canEditLeads, seesPhones, triggerToast, isAr, leads, currentUser]);
 
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
   const adminTab = propAdminTab || localAdminTab;
-  const setAdminTab = (tab) => {
+  // Dashboard numbers cover every lead this account may read, not only the newest 150 loaded live
+  const { leadsHasMore } = useProperties();
+  const fullStats = useFullLeadStats(allLeads, { enabled: adminTab === 'dashboard', hasMore: leadsHasMore });
+  const dashboardLeads = useMemo(() => (fullStats.leads === allLeads ? leads : scopeLeadsForAccess(fullStats.leads, { role: activeRole, perms, desk: myDesk })), [fullStats.leads, allLeads, leads, activeRole, perms, myDesk]);
+  const setAdminTab = useCallback((tab) => {
     setLocalAdminTab(tab);
     if (onSwitchTab) onSwitchTab(tab);
-  };
-  const [leadFilter, setLeadFilter] = useState('all');
+  }, [onSwitchTab]);
+  const [leadFilter, setLeadFilter] = useState(() => {
+    if (activeRole === 'property_manager') return 'seller';
+    if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') return 'viewing_request';
+    return 'all';
+  });
+  const [prevActiveRole, setPrevActiveRole] = useState(activeRole);
+  if (activeRole !== prevActiveRole) {
+    setPrevActiveRole(activeRole);
+    if (activeRole === 'property_manager') {
+      setLeadFilter('seller');
+    } else if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') {
+      setLeadFilter('viewing_request');
+    }
+  }
   const [temperatureFilter, setTemperatureFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  // The oldest client still waiting for a reply comes first; everyone already answered follows, newest first
+  const [leadSort, setLeadSort] = useState('waiting');
 
   // Customer 360 & Add Lead Modal States
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
-  const [viewingProfileLead, setViewingProfileLead] = useState(null);
+  // The client file (drawer) opens on «الملف»; the old «ملف العميل» window is gone: its data is the «التفاصيل» tab
+  const [drawerTab, setDrawerTab] = useState('overview');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
 
   // AI Copywriter & Contract Studio Modal States
   const [showAICopywriter, setShowAICopywriter] = useState(false);
   const [showContractStudio, setShowContractStudio] = useState(false);
+  // Top bar / command palette asked for one of this panel's modals
+  useOpenRequest(openRequest, ['add_lead', 'contract_studio', 'ai_copywriter'], (type) => {
+    if (type === 'add_lead') { if (canEditLeads) setShowAddLeadModal(true); }
+    else if (type === 'contract_studio') setShowContractStudio(true);
+    else setShowAICopywriter(true);
+  });
+
+  // Open lead drawer directly when clicking desktop notifications or topbar alerts
+  useEffect(() => {
+    const handleOpenFromEvent = (e) => {
+      const targetLead = e.detail?.lead || leads.find((l) => l.id === e.detail?.leadId);
+      if (targetLead) {
+        setQuickDrawerLead(targetLead);
+        if (adminTab !== 'leads' && adminTab !== 'inbox') {
+          setAdminTab('leads');
+        }
+      }
+    };
+    window.addEventListener('oneline_open_lead', handleOpenFromEvent);
+    return () => window.removeEventListener('oneline_open_lead', handleOpenFromEvent);
+  }, [leads, adminTab, setAdminTab]);
+  // A client asked for before this screen was open (a team mention): open it once the list is here
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const found = takePendingLead(leads);
+      if (found) setQuickDrawerLead(found);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [leads]);
 
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
+  // People on the team, for «المستشار المسؤول» by name in the edit form
+  const teamMembers = useTeamMembers(leads);
   const [leadFormData, setLeadFormData] = useState({
     name: '',
     phone: '',
@@ -99,20 +243,29 @@ export const CrmAdminPanel = ({
     followUp: '',
     assignedTo: 'Unassigned',
     notes: '',
-    score: 85,
     budget: '',
-    area: 'east',
+    area: '', // chosen in EditLeadModal (required there)
     propertyType: 'apartment'
   });
 
   // Activity Log Viewer State
   const [viewingLogsLead, setViewingLogsLead] = useState(null);
+  const logsBackdropRef = useRef(false);
 
-  const isAr = lang === 'ar';
+  useEffect(() => {
+    if (!viewingLogsLead) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setViewingLogsLead(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewingLogsLead]);
+
 
   // Active Role Permissions and Agent Claim Helper
-  const currentRoleObj = CRM_ROLES.find(r => r.id === activeRole) || CRM_ROLES[0];
-  const isSuperAdmin = currentRoleObj.canDelete;
+  const allCurrentRoles = getMergedCrmRoles(getActiveAccessConfig());
+  const currentRoleObj = allCurrentRoles.find(r => r.id === activeRole) || CRM_ROLES[0];
+  const isSuperAdmin = activeRole === 'super_admin';
 
   // Leads saved before desk scoping may lack assignedTo; desk agents' queue queries can't see
   // them. A manager's session files them into the shared pool once (only cloud-synced leads).
@@ -129,6 +282,21 @@ export const CrmAdminPanel = ({
     orphans.forEach((l) => onUpdateLead(l.id, { assignedTo: 'Unassigned' }));
   }, [canAssignAll, onUpdateLead, firebaseConnected, leads]);
 
+  // A client handed to a salesperson before their desk was followed stayed on its old desk, out of
+  // that person's queue. A manager's session moves each such client to its owner's desk once.
+  const ownerDeskTried = useRef(new Set());
+  useEffect(() => {
+    if (!canAssignAll || !onUpdateLead || !firebaseConnected || !teamMembers.length) return;
+    leads.forEach((l) => {
+      if (!l?._cloud || !l.ownerUid || ownerDeskTried.current.has(l.id)) return;
+      const member = teamMembers.find((m) => m.uid === l.ownerUid);
+      const desk = member ? memberDesk(member) : '';
+      if (!desk || l.assignedTo === desk) return;
+      ownerDeskTried.current.add(l.id);
+      onUpdateLead(l.id, { assignedTo: desk });
+    });
+  }, [canAssignAll, onUpdateLead, firebaseConnected, leads, teamMembers]);
+
   // Phones still stored on the lead doc (saved before lead_contacts, or by a browser on an old
   // build) are readable by every CRM role; a manager's session moves them into lead_contacts.
   const contactMigrationTried = useRef(new Set());
@@ -140,20 +308,29 @@ export const CrmAdminPanel = ({
     migrateInlineLeadContacts(pending).catch(() => {});
   }, [canAssignAll, firebaseConnected, leads]);
 
+  // Only a sales role with a team can claim, and only from the shared pool (same as the rules:
+  // a desk agent may move a lead between the pool and their own desk, never off someone else's)
+  const canClaimLead = (lead) => Boolean(lead) && canEditLeads && !!myDesk && !isSuperRole
+    && (!lead.assignedTo || lead.assignedTo === 'Unassigned');
   const handleClaimLead = (leadId) => {
-    if (onUpdateLead) {
-      onUpdateLead(leadId, { assignedTo: currentRoleObj.agentName });
-      logAuditEvent({
-        actionType: 'LEAD_CLAIMED',
-        targetCollection: 'leads',
-        targetId: leadId,
-        details: { assignedTo: currentRoleObj.agentName },
-        actor: currentUser
-      });
-      if (triggerToast) {
-        triggerToast(isAr ? `تم استلام العميل بنجاح وتعيينه لـ ${currentRoleObj.label_ar}` : `Lead claimed by ${currentRoleObj.label_en}`, 'success');
-      }
+    const lead = leads.find((l) => l.id === leadId);
+    if (!onUpdateLead || !canClaimLead(lead)) {
+      triggerToast?.(isAr ? 'تقدر تستلم العملاء غير المسندين بس، ولازم يكون ليك فريق' : 'You can only claim unassigned leads, and need a team', 'error');
+      return;
     }
+    onUpdateLead(leadId, { 
+      assignedTo: myDesk,
+      assignedAt: new Date().toISOString(),
+      lastActivityAt: new Date().toISOString()
+    }, lead?.version);
+    logAuditEvent({
+      actionType: 'LEAD_CLAIMED',
+      targetCollection: 'leads',
+      targetId: leadId,
+      details: { assignedTo: myDesk },
+      actor: currentUser
+    });
+    triggerToast?.(isAr ? 'تم استلام العميل وتعيينه لفريقك' : 'Lead claimed for your team', 'success');
   };
 
   const { getLocalizedPropertyType, getLocalizedArea, toLeadExportRow } = makeLeadFormatters(isAr, t);
@@ -175,29 +352,60 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const handleBulkAssign = (newAgent) => {
+  const handleBulkAssign = (newAgent, people = []) => {
     if (selectedLeadIds.length === 0 || !newAgent) return;
-    if (!canEditLeadsRole(activeRole) || !assignableDesks(activeRole).some((d) => d.value === newAgent)) {
+    // A person by name (utils/assignees): allowed when their desk is one this role may assign to,
+    // or, for a manager who assigns anywhere, whatever their desk
+    const person = personFor(newAgent, people);
+    const desks = assignableDesks(activeRole, myDesk || null);
+    const deskAllowed = (value) => desks.some((d) => d.value === value);
+    const allowed = person ? (person.desk ? deskAllowed(person.desk) : desks.length > 2) : deskAllowed(newAgent);
+    if (!canEditLeads || !allowed) {
       if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
       return;
     }
-    selectedLeadIds.forEach(id => {
-      if (onUpdateLead) onUpdateLead(id, { assignedTo: newAgent });
+    const priorAssignments = selectedLeadIds.map(id => {
+      const found = leads.find(l => l.id === id);
+      return {
+        id, assignedTo: found?.assignedTo || 'Unassigned', version: found?.version,
+        owner: { ownerName: found?.ownerName || null, claimedBy: found?.claimedBy || null, ownerUid: found?.ownerUid || null }
+      };
+    });
+    const targetIds = [...selectedLeadIds];
+
+    targetIds.forEach(id => {
+      const leadItem = leads.find(l => l.id === id);
+      if (onUpdateLead) onUpdateLead(id, {
+        ...assignmentUpdates(leadItem, newAgent, people),
+        lastActivityAt: new Date().toISOString()
+      }, leadItem?.version);
     });
     logAuditEvent({
       actionType: 'BULK_LEADS_ASSIGNED',
       targetCollection: 'leads',
-      targetId: selectedLeadIds.join(','),
-      details: { newAgent, count: selectedLeadIds.length },
+      targetId: targetIds.join(','),
+      details: { newAgent, count: targetIds.length },
       actor: currentUser
     });
     if (triggerToast) {
-      triggerToast(isAr ? `تم تعيين ${selectedLeadIds.length} عميل إلى ${newAgent}` : `Assigned ${selectedLeadIds.length} leads to ${newAgent}`, 'success');
+      triggerToast(
+        isAr ? `تم تعيين ${targetIds.length} عميل إلى ${person?.name || newAgent}` : `Assigned ${targetIds.length} leads to ${person?.name || newAgent}`,
+        'success',
+        {
+          onUndo: () => {
+            priorAssignments.forEach(({ id, assignedTo, owner }) => {
+              if (onUpdateLead) onUpdateLead(id, { assignedTo, ...owner });
+            });
+          },
+          undoLabel: isAr ? 'تراجع' : 'Undo',
+          duration: 7000
+        }
+      );
     }
     setSelectedLeadIds([]);
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedLeadIds.length === 0) return;
     if (!canDeleteLead(activeRole)) {
       if (triggerToast) {
@@ -205,26 +413,27 @@ export const CrmAdminPanel = ({
       }
       return;
     }
-    if (window.confirm(isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`)) {
-      selectedLeadIds.forEach(id => {
-        if (onDeleteLead) onDeleteLead(id);
-      });
+    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`, tone: 'danger' })) {
+      const idsToDelete = [...selectedLeadIds];
+      setSelectedLeadIds([]);
+      if (onDeleteLead) {
+        onDeleteLead(idsToDelete);
+      }
       logAuditEvent({
         actionType: 'BULK_LEADS_DELETED',
         targetCollection: 'leads',
-        targetId: selectedLeadIds.join(','),
-        details: { count: selectedLeadIds.length },
+        targetId: idsToDelete.join(','),
+        details: { count: idsToDelete.length },
         actor: currentUser
       });
       if (triggerToast) {
-        triggerToast(isAr ? `تم حذف ${selectedLeadIds.length} عميل بنجاح` : `Deleted ${selectedLeadIds.length} leads`, 'info');
+        triggerToast(isAr ? `تم حذف ${idsToDelete.length} عميل بنجاح` : `Deleted ${idsToDelete.length} leads`, 'info');
       }
-      setSelectedLeadIds([]);
     }
   };
 
-  const exportLeadRows = (rows, fileName, scope) => {
-    if (!canExportCsv(activeRole)) {
+  const exportLeadRows = (rows, fileName, scope, format = 'csv') => {
+    if (!canExport) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير بيانات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
       }
@@ -234,16 +443,34 @@ export const CrmAdminPanel = ({
       if (triggerToast) triggerToast(isAr ? 'لا يوجد عملاء لتصديرهم في العرض الحالي' : 'Nothing to export', 'error');
       return;
     }
-    exportToCsv(fileName, rows.map(toLeadExportRow), LEAD_EXPORT_HEADERS);
+    if (format === 'legacy-csv') {
+      exportToCsv(fileName, rows.map(toLeadExportRow), LEAD_EXPORT_HEADERS);
+    } else {
+      // Same columns the importer reads, with readable type / area names
+      const sheetRows = rows.map((l) => {
+        const row = leadToRow(l);
+        const typeKey = l.propertyType || l.details?.propertyType;
+        const areaKey = l.area || l.details?.area;
+        if (typeKey) row['نوع العقار المطلوب'] = getLocalizedPropertyType(typeKey) || typeKey;
+        if (areaKey) row['المنطقة'] = getLocalizedArea(areaKey) || areaKey;
+        return row;
+      });
+      exportRows(sheetRows, {
+        format,
+        baseName: fileName,
+        sheetName: 'العملاء',
+        jsonPayload: { platform: '1Line Real Estate CRM Leads', timestamp: new Date().toISOString(), leadsCount: rows.length, leads: rows.map(({ _cloud, ...l }) => l) }
+      }).catch(() => triggerToast?.(isAr ? 'تعذّر تجهيز الملف' : 'Export failed', 'error'));
+    }
     logAuditEvent({
-      actionType: 'LEADS_EXPORTED_CSV',
+      actionType: format === 'excel' ? 'LEADS_EXPORTED_XLSX' : format === 'json' ? 'LEADS_EXPORTED_JSON' : 'LEADS_EXPORTED_CSV',
       targetCollection: 'leads',
       targetId: scope,
       details: { count: rows.length },
       actor: currentUser
     });
     if (triggerToast) {
-      triggerToast(isAr ? `تم تصدير ${rows.length} عميل إلى ملف Excel (CSV)` : `Exported ${rows.length} leads`, 'success');
+      triggerToast(isAr ? `تم تصدير ${rows.length} عميل (${format === 'excel' ? 'Excel' : format === 'json' ? 'JSON' : 'CSV'})` : `Exported ${rows.length} leads`, 'success');
     }
   };
 
@@ -272,17 +499,15 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const handleExportCSV = (rows = leads || []) => {
-    if (exportLeadsCSV && canExportCsv(activeRole)) {
-      exportLeadsCSV();
-      return;
-    }
-    exportLeadRows(rows, 'Oneline_Leads_Report', rows === leads ? 'all_leads' : 'filtered_view');
+  const handleExportCSV = (rows = leads || [], format = 'csv') => {
+    // Always the rows this account can see (scoped, phones masked if needed) — never the
+    // app-wide unmasked list
+    exportLeadRows(rows, '1Line_Clients', rows === leads ? 'all_leads' : 'filtered_view', format);
   };
 
   // Full Leads Database JSON Backup
   const handleExportLeadsJson = () => {
-    if (!canExportCsv(activeRole)) {
+    if (!canExport) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير النسخ الاحتياطية (تتطلب صلاحية Super Admin أو المالية)' : 'Unauthorized: requires Admin or Finance', 'error');
       }
@@ -313,14 +538,22 @@ export const CrmAdminPanel = ({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
         const importedLeads = parsed.leads || parsed;
         if (Array.isArray(importedLeads) && importedLeads.length > 0) {
-          if (window.confirm(isAr ? `هل تريد استيراد ${importedLeads.length} عميل من ملف النسخة الاحتياطية؟` : `Import ${importedLeads.length} leads?`)) {
-            localStorage.setItem('oneline_crm_leads', JSON.stringify(importedLeads));
-            window.location.reload();
+          if (await confirm({ message: isAr ? `استعادة ${importedLeads.length} عميل من ملف النسخة الاحتياطية إلى قاعدة البيانات؟ العملاء الموجودين حالياً مش هيتغيروا، بيتضاف بس اللي ناقص.` : `Restore ${importedLeads.length} leads to the database? Existing leads are left unchanged; only missing ones are added.`, tone: 'danger' })) {
+            // Written to Firestore (not this browser): the live list then shows them on every device
+            restoreLeads(importedLeads).then((res) => {
+              if (!res.ok) {
+                triggerToast(isAr ? `فشلت الاستعادة (${res.reason}). اتستعاد ${res.restored} قبل الخطأ.` : `Restore failed (${res.reason}); ${res.restored} restored before the error.`, 'error');
+                return;
+              }
+              triggerToast(isAr
+                ? `اتستعاد ${res.restored} عميل • ${res.skipped} موجودين أصلاً${res.invalid ? ` • ${res.invalid} سجل غير صالح` : ''}`
+                : `Restored ${res.restored} • ${res.skipped} already present${res.invalid ? ` • ${res.invalid} invalid` : ''}`, res.restored ? 'success' : 'info');
+            });
           }
         } else {
           throw new Error('Invalid format');
@@ -345,13 +578,12 @@ export const CrmAdminPanel = ({
       source: lead.source || 'Direct Entry',
       type: lead.type || 'buyer',
       budget: lead.budget || details.budget || details.expectedPrice || '',
-      area: lead.area || details.area || 'east',
+      area: lead.area || details.area || '',
       propertyType: lead.propertyType || details.propertyType || 'apartment',
       notes: lead.notes || '',
       status: lead.status || 'new',
-      temperature: lead.temperature || 'hot',
-      score: lead.score || 85,
-      assignedTo: lead.assignedTo || 'Unassigned',
+      temperature: lead.temperature || '',
+      assignedTo: assigneeValue(lead),
       nextFollowUpAt: lead.nextFollowUpAt ? String(lead.nextFollowUpAt).slice(0, 16) : '',
       followUp: lead.followUp || 'Pending Contact'
     });
@@ -367,9 +599,25 @@ export const CrmAdminPanel = ({
       return;
     }
 
+    // The same name rule as the add form, but only when the name was changed (old clients keep their names)
+    if (leadFormData.name.trim() !== String(editingLead.name || '').trim()) {
+      const nameErr = nameProblem(leadFormData.name, isAr);
+      if (nameErr) { triggerToast(nameErr, 'error'); return; }
+    }
+
     const cleanWhatsapp = (leadFormData.whatsapp || leadFormData.phone || '').trim().replace(/[\s\-()]/g, '');
     if (!cleanWhatsapp) {
       triggerToast(isAr ? 'رقم الواتساب إلزامي للتواصل!' : 'WhatsApp number is required!', 'error');
+      return;
+    }
+
+    if (leadFormData.phone && !isValidPhoneNumber(leadFormData.phone)) {
+      triggerToast(`${isAr ? 'الرقم الأساسي' : 'Primary phone'}: ${phoneProblem(leadFormData.phone, null, isAr)}`, 'error');
+      return;
+    }
+
+    if (cleanWhatsapp && !isValidPhoneNumber(cleanWhatsapp)) {
+      triggerToast(`${isAr ? 'الواتساب' : 'WhatsApp'}: ${phoneProblem(cleanWhatsapp, null, isAr)}`, 'error');
       return;
     }
 
@@ -396,9 +644,9 @@ export const CrmAdminPanel = ({
       propertyType: leadFormData.propertyType,
       notes: leadFormData.notes,
       status: leadFormData.status,
-      temperature: leadFormData.temperature || editingLead.temperature || 'hot',
-      score: parseInt(leadFormData.score) || 85,
-      assignedTo: leadFormData.assignedTo,
+      temperature: leadFormData.temperature || '',
+      // A changed owner only; a person keeps their name on the lead (utils/assignees)
+      ...(leadFormData.assignedTo !== assigneeValue(editingLead) ? assignmentUpdates(editingLead, leadFormData.assignedTo, teamMembers) : { assignedTo: editingLead.assignedTo || 'Unassigned' }),
       nextFollowUpAt: leadFormData.nextFollowUpAt ? new Date(leadFormData.nextFollowUpAt).toISOString() : null,
       followUp: leadFormData.followUp,
       updatedAt: nowIso,
@@ -415,7 +663,7 @@ export const CrmAdminPanel = ({
     };
 
     if (onUpdateLead) {
-      const saved = await onUpdateLead(editingLead.id, updatedLeadData);
+      const saved = await onUpdateLead(editingLead.id, updatedLeadData, editingLead.version);
       if (saved === false) return;
     } else {
       setLeads(prev => prev.map(l => l.id === editingLead.id ? { ...l, ...updatedLeadData } : l));
@@ -426,12 +674,13 @@ export const CrmAdminPanel = ({
   };
 
   // Delete Lead
-  const handleDeleteLeadClick = (leadId, leadName) => {
+  const handleDeleteLeadClick = async (leadId, leadName) => {
     if (!canDeleteLead(activeRole)) {
       if (triggerToast) triggerToast(isAr ? 'حذف العملاء متاح للمدير العام فقط — يمكنك أرشفة العميل بدلاً من ذلك' : 'Only Super Admin can delete leads', 'error');
       return;
     }
-    if (window.confirm(isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`)) {
+    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`, tone: 'danger' })) {
+      auditLeadDeleted(leadId);
       if (onDeleteLead) {
         onDeleteLead(leadId);
       } else {
@@ -442,39 +691,11 @@ export const CrmAdminPanel = ({
   };
 
   // Quick Action Handler (WhatsApp Direct Contact)
-  // ── Keyboard triage for the leads table (audit DEF-22) ──
-  // J/K move, Enter opens the drawer, W WhatsApp, S focuses the status chip.
-  // Uses e.code so it works on the Arabic keyboard layout (J types "ت").
-  const [kbdIndex, setKbdIndex] = useState(-1);
-  const kbdRef = useRef({ list: [], index: -1, wa: null });
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (!document.querySelector('.crm-table[data-kbd="leads"]')) return;
-      if (document.querySelector('.crm-lead-drawer, .crm-modal-backdrop, .track-modal-backdrop, .crm-command-modal')) return;
-      const t = e.target;
-      if (t?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
-      const { list, index, wa } = kbdRef.current;
-      if (!list.length) return;
-      const lead = list[index] || null;
-      if (e.code === 'KeyJ') { e.preventDefault(); setKbdIndex((i) => Math.min(list.length - 1, i + 1)); }
-      else if (e.code === 'KeyK') { e.preventDefault(); setKbdIndex((i) => Math.max(0, i - 1)); }
-      else if (e.code === 'Enter' && lead && !t?.closest?.('button, a, summary')) { e.preventDefault(); setQuickDrawerLead(lead); }
-      else if (e.code === 'KeyW' && lead) { e.preventDefault(); wa?.(lead); }
-      else if (e.code === 'KeyS' && lead) {
-        e.preventDefault();
-        document.querySelector(`.crm-table tr[data-lead-id="${CSS.escape(String(lead.id))}"] .crm-status-select`)?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-  useEffect(() => {
-    if (kbdIndex < 0) return;
-    document.querySelectorAll('.crm-table[data-kbd="leads"] tbody tr')[kbdIndex]?.scrollIntoView({ block: 'nearest' });
-  }, [kbdIndex]);
 
   const onWhatsAppClick = (lead) => {
+    // Counts as contacting the client (first reply time, last contact)
+    if (onUpdateLead && lead?.id) onUpdateLead(lead.id, { lastContactedAt: new Date().toISOString() }, lead.version);
+    auditContactUse(lead, 'whatsapp');
     if (handleWhatsAppAction) {
       handleWhatsAppAction(lead);
     } else {
@@ -485,7 +706,7 @@ export const CrmAdminPanel = ({
       const text = isAr 
         ? `مرحباً أ. ${lead.name || ''}، معك مستشار شركة 1Line للحلول العقارية بسوهاج. نود متابعة طلبك العقاري ومساعدتك في أفضل الفرص المتاحة.` 
         : `Hello ${lead.name || ''}, this is 1Line Real Estate following up on your property request in Sohag.`;
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
     }
   };
 
@@ -499,94 +720,74 @@ export const CrmAdminPanel = ({
     const notes = lead.notes || lead.details?.notes || 'لا توجد ملاحظات إضافية';
 
     const dispatchText = isAr
-      ? `🚨 *إحالة عميل جديد - منصة 1Line العقارية*\n👤 *العميل:* ${clientName}\n📞 *الهاتف:* ${phone}\n🏢 *التصنيف:* ${type}\n📍 *المنطقة:* ${area}\n💰 *الميزانية/السعر:* ${budget}\n📝 *الملاحظات:* ${notes}\n📅 *الوقت:* ${new Date().toLocaleDateString('ar-EG')}\n⚡ *الإجراء المطلوب:* يرجى سرعة التواصل والمتابعة فوراً.`
+      ? `🚨 *إحالة عميل جديد - منصة 1Line العقارية*\n👤 *العميل:* ${clientName}\n📞 *الهاتف:* ${phone}\n🏢 *التصنيف:* ${type}\n📍 *المنطقة:* ${area}\n💰 *الميزانية/السعر:* ${budget}\n📝 *الملاحظات:* ${notes}\n📅 *الوقت:* ${new Date().toLocaleDateString('ar-EG-u-nu-latn')}\n⚡ *الإجراء المطلوب:* يرجى سرعة التواصل والمتابعة فوراً.`
       : `🚨 *New 1Line Lead Dispatch*\n👤 *Client:* ${clientName}\n📞 *Phone:* ${phone}\n🏢 *Type:* ${type}\n📍 *Area:* ${area}\n💰 *Budget:* ${budget}\n📝 *Notes:* ${notes}`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');
   };
 
-  // CRM Analytics Metrics (Memoized)
-  const crmAnalytics = useMemo(() => {
-    const todayStr = new Date().toDateString();
-    let todayCount = 0;
-    let buyersCount = 0;
-    let sellersCount = 0;
-    let brokersCount = 0;
-    let requestsCount = 0;
-    let closedCount = 0;
-
-    for (let i = 0; i < leads.length; i++) {
-      const l = leads[i];
-      if (l.timestamp && new Date(l.timestamp).toDateString() === todayStr) todayCount++;
-      if (l.type === 'buyer') buyersCount++;
-      else if (l.type === 'seller') sellersCount++;
-      else if (l.type === 'broker') brokersCount++;
-      else if (l.type === 'request') requestsCount++;
-      if (l.status === 'closed') closedCount++;
-    }
-
-    return {
-      todayCount,
-      buyersCount,
-      sellersCount,
-      brokersCount,
-      requestsCount,
-      closedCount,
-      conversionSuccess: leads.length > 0 
-        ? Math.round((leads.filter((l) => l.status === 'closed').length / leads.length) * 100) + '%'
-        : '0%'
-    };
-  }, [leads]);
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
-  const filteredLeads = useMemo(() => {
-    return leads.filter((l) => {
-      if (myDealsOnly && activeRole !== 'super_admin') {
-        if (l.assignedTo !== currentRoleObj.agentName && l.assignedTo !== 'Unassigned') {
-          return false;
-        }
-      }
+  const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
+  const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
+    myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
+    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, searchQuery, duplicateIds
+  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
 
-      // Workflow & Archive Logic
-      if (leadFilter === 'archived') {
-        if (!l.isArchived) return false;
-      } else {
-        // Hide archived leads in all normal operational filters
-        if (l.isArchived) return false;
-
-        if (leadFilter === 'new') {
-          if (l.status !== 'new' && l.status) return false;
-        } else if (leadFilter === 'due') {
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const hasDue = (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= todayStr) || (l.followUp && l.followUp.includes(todayStr));
-          if (!hasDue) return false;
-        } else if (leadFilter === 'qualified') {
-          if ((l.score || 0) < 80) return false;
-        } else if (leadFilter !== 'all' && l.type !== leadFilter) {
-          return false;
-        }
+  // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)
+  const handleMergeLeads = async (keepId, otherIds) => {
+    const keep = leads.find((l) => l.id === keepId);
+    const others = leads.filter((l) => otherIds.includes(l.id));
+    if (!keep || others.length === 0 || !onUpdateLead) return false;
+    const merged = buildMergedLead(keep, others);
+    const otherIds2 = others.map((o) => o.id);
+    if (firebaseConnected) {
+      // One batch: either the kept lead is updated AND the duplicates are gone, or nothing changes
+      const ok = await mergeLeads(keepId, merged, otherIds2);
+      if (!ok) {
+        triggerToast(isAr ? 'تعذّر الدمج، لم يتغير أي سجل. حاول تاني.' : 'Merge failed; nothing was changed. Try again.', 'error');
+        return false;
       }
-
-      if (temperatureFilter !== 'all' && (l.temperature || 'hot') !== temperatureFilter) return false;
-      if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        const matchName = (l.name || '').toLowerCase().includes(q);
-        const matchPhone = (l.phone || '').includes(q);
-        const matchNotes = (l.notes && l.notes.toLowerCase().includes(q));
-        const matchCity = (l.cityOrExpat && l.cityOrExpat.toLowerCase().includes(q));
-        const matchTags = (l.tags && l.tags.some(t => t.toLowerCase().includes(q)));
-        if (!matchName && !matchPhone && !matchNotes && !matchCity && !matchTags) return false;
+      setLeads((prev) => prev.filter((l) => !otherIds2.includes(l.id)).map((l) => (l.id === keepId ? { ...l, ...merged } : l)));
+    } else {
+      await onUpdateLead(keepId, merged);
+      for (const o of others) {
+        if (onDeleteLead) await onDeleteLead(o.id);
+        else setLeads((prev) => prev.filter((l) => l.id !== o.id));
       }
-      return true;
-    });
-  }, [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery]);
+    }
+    triggerToast(isAr ? `تم دمج ${others.length} سجل مكرر في عميل واحد` : `Merged ${others.length} duplicate(s)`, 'success');
+    return true;
+  };
+
+  // «دمج كل المكرر»: each plan (utils/dedupePlan) keeps one request and archives the others (nothing deleted)
+  const handleMergeAllDuplicates = async (plans) => {
+    if (!plans.length || !onUpdateLead) return false;
+    const applyLocal = (list) => setLeads((prev) => prev.map((l) => {
+      const plan = list.find((p) => p.keep.id === l.id);
+      if (plan) return { ...l, ...plan.merged };
+      return list.some((p) => p.others.some((o) => o.id === l.id)) ? { ...l, isArchived: true, mergedInto: String(list.find((p) => p.others.some((o) => o.id === l.id)).keep.id) } : l;
+    }));
+    if (firebaseConnected) {
+      const res = await mergeDuplicateGroups(plans);
+      if (res.done) applyLocal(plans);
+      if (res.failed) {
+        triggerToast(isAr ? `اتدمج ${res.done} عميل، و${res.failed} فشلوا ومتغيرش فيهم حاجة. جرّب تاني.` : `Merged ${res.done}; ${res.failed} failed and were left unchanged.`, 'error');
+        return res.done > 0;
+      }
+    } else {
+      for (const p of plans) {
+        await onUpdateLead(p.keep.id, p.merged);
+        for (const o of p.others) await onUpdateLead(o.id, p.archive);
+      }
+    }
+    triggerToast(isAr ? `اتدمج ${plans.length} عميل مكرر في ملفات موحّدة` : `Merged ${plans.length} duplicate clients`, 'success');
+    return true;
+  };
 
   // Login Gate
-  // Hooks stay above the early return below. Keep the keyboard handler's view of the table current (read in the window keydown listener)
-  useEffect(() => {
-    kbdRef.current = { list: filteredLeads, index: kbdIndex, wa: onWhatsAppClick };
-  });
+  // Hooks stay above the early return below (keyboard triage reads the visible rows)
+  const [kbdIndex, setKbdIndex] = useLeadKeyboardTriage({ list: filteredLeads, onOpen: setQuickDrawerLead, onWhatsApp: onWhatsAppClick });
 
   if (!crmAuthenticated) {
     return (
@@ -612,13 +813,13 @@ export const CrmAdminPanel = ({
       {/* 📊 TAB 1: EXECUTIVE DECISION-BASED DASHBOARD (CEO / SALES REP DUAL-MODE) */}
       {adminTab === 'dashboard' && (
         <CrmExecutiveDashboard
-          leads={leads}
+          leads={dashboardLeads}
+          coverage={fullStats.coverage}
           properties={properties}
           demands={demands}
-          projects={[]}
+          projects={projects}
           activeRole={activeRole}
           currentRoleObj={currentRoleObj}
-          crmAnalytics={crmAnalytics}
           isAr={isAr}
           onSwitchTab={(tab) => {
             if (tab === 'properties') onSwitchToProperties?.();
@@ -632,6 +833,28 @@ export const CrmAdminPanel = ({
             setLeadFilter(filterKey);
             setAdminTab('leads');
           }}
+          onOpenContractStudio={() => setShowContractStudio(true)}
+          deskView={!seesAllLeads}
+          scopeDesk={myDesk || null}
+          showMoney={isSuperRole || canViewFinance(perms) || perms.includes('ld.manage')}
+          onOpenCopywriter={() => setShowAICopywriter(true)}
+        />
+      )}
+
+      {/* 📥 TAB 1.5: SMART TRIAGE INBOX */}
+      {adminTab === 'inbox' && (
+        <CrmInboxPanel
+          leads={leads}
+          properties={properties}
+          currentUser={currentUser}
+          userRole={activeRole}
+          lang={lang}
+          onUpdateLead={onUpdateLead}
+          onOpenLead={(lead) => setQuickDrawerLead(lead)}
+          onConvertToProperty={onConvertToProperty}
+          triggerToast={triggerToast}
+          onAddNewLead={onAddNewLead}
+          canEditLeads={canEditLeads}
         />
       )}
 
@@ -641,11 +864,12 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           onUpdateLead={onUpdateLead}
-          onDeleteLead={onDeleteLead}
+          onDeleteLead={canDeleteLead(activeRole) ? onDeleteLead : undefined}
           onOpenEditLead={handleOpenEditLead}
           onOpenLead={(lead) => setQuickDrawerLead(lead)}
           lang={lang}
           triggerToast={triggerToast}
+          activeRole={activeRole}
         />
       )}
 
@@ -676,6 +900,7 @@ export const CrmAdminPanel = ({
           handleClaimLead={handleClaimLead}
           handleDeleteLeadClick={handleDeleteLeadClick}
           handleExportCSV={handleExportCSV}
+          onImportLeads={onImportLeads}
           handleOpenEditLead={handleOpenEditLead}
           handleToggleSelectAll={handleToggleSelectAll}
           handleToggleSelectOne={handleToggleSelectOne}
@@ -689,6 +914,20 @@ export const CrmAdminPanel = ({
           onDispatchLeadClick={onDispatchLeadClick}
           onUpdateLead={onUpdateLead}
           onWhatsAppClick={onWhatsAppClick}
+          duplicateIds={duplicateIds}
+          onMergeLeads={handleMergeLeads}
+          onMergeAllDuplicates={handleMergeAllDuplicates}
+          canMergeLeads={canDeleteLead(activeRole)}
+          canEdit={canEditLeads}
+          canExport={canExport}
+          canClaimLead={canClaimLead}
+          canCloseDeals={isSuperRole || canCloseDealsPerm(perms)}
+          sourceFilter={sourceFilter}
+          setSourceFilter={setSourceFilter}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          leadSort={leadSort}
+          setLeadSort={setLeadSort}
           searchQuery={searchQuery}
           selectedLeadIds={selectedLeadIds}
           setAreaFilter={setAreaFilter}
@@ -699,7 +938,7 @@ export const CrmAdminPanel = ({
           setSelectedLeadIds={setSelectedLeadIds}
           setShowAddLeadModal={setShowAddLeadModal}
           setTemperatureFilter={setTemperatureFilter}
-          setViewingProfileLead={setViewingProfileLead}
+          setViewingProfileLead={(l) => { setDrawerTab('details'); setQuickDrawerLead(l); }}
           temperatureFilter={temperatureFilter}
           triggerToast={triggerToast}
         />
@@ -707,11 +946,63 @@ export const CrmAdminPanel = ({
 
       {/* 🏆 TAB 5: TEAM COMMISSIONS & LEADERBOARD */}
       {adminTab === 'agents' && (
-        <AgentCommissionLeaderboard
+        <>
+          <AgentCommissionLeaderboard
+            leads={leads}
+            properties={properties}
+            lang={lang}
+            triggerToast={triggerToast}
+          />
+          {(isSuperRole || perms.includes('ld.manage')) && <SellerReportPanel leads={leads} lang={lang} />}
+        </>
+      )}
+
+      {/* 📣 Campaign report: leads, visits and cost per ad campaign (managers) */}
+      {adminTab === 'campaigns' && (
+        (isSuperRole || perms.includes('ld.manage')) ? (
+          <CampaignReportPanel leads={leads} properties={properties} lang={lang} triggerToast={triggerToast} />
+        ) : (
+          <div className="crm-table-container">{isAr ? 'تقرير الحملات للمدير العام ومديري المبيعات.' : 'The campaign report is for admins and sales managers.'}</div>
+        )
+      )}
+
+      {/* 📊 Reports hub: sales, portfolio, demands and services over any dates, plus links to the other reports (managers) */}
+      {adminTab === 'performance' && (
+        (isSuperRole || perms.includes('ld.manage')) ? (
+          <ReportsHub
+            leads={leads}
+            properties={properties}
+            demands={demands}
+            intake={intake}
+            members={teamMembers}
+            me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
+            canManage
+            triggerToast={triggerToast}
+            areaNames={Object.fromEntries(getAreas().map((a) => [a.id, a.name_ar || a.id]))}
+            lang={lang}
+            onOpenTab={onSwitchTab}
+            onOpenLead={(l) => setQuickDrawerLead(l)}
+          />
+        ) : (
+          <div className="crm-table-container">{isAr ? 'مركز التقارير للمدير العام ومديري المبيعات.' : 'Reports are for admins and sales managers.'}</div>
+        )
+      )}
+
+      {/* Team chat: one thread for the whole team */}
+      {adminTab === 'chat' && <TeamChatPanel lang={lang} />}
+
+      {/* ✅ Tasks: today's work across all clients (a manager can switch to the whole team's) */}
+      {adminTab === 'tasks' && (
+        <TasksPanel
           leads={leads}
-          properties={properties}
+          members={teamMembers}
+          me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
+          canManage={isSuperRole || perms.includes('ld.manage')}
           lang={lang}
           triggerToast={triggerToast}
+          onOpenLead={(l) => setQuickDrawerLead(l)}
+          onUpdateLead={onUpdateLead}
+          onWhatsApp={onWhatsAppClick}
         />
       )}
 
@@ -721,12 +1012,18 @@ export const CrmAdminPanel = ({
           properties={properties}
           leads={leads}
           lang={lang}
+          canIssueReceipts={isSuperRole || canManagePayments(activeRole, perms)}
           triggerToast={triggerToast}
         />
       )}
 
       {/* 📢 TAB 7: RETARGETING CAMPAIGNS HUB */}
-      {adminTab === 'retargeting' && (
+      {adminTab === 'retargeting' && !canRetarget && (
+        <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
+          {isAr ? 'حملات إعادة الاستهداف متاحة لفريق المبيعات والإدارة فقط.' : 'Retargeting campaigns are for the sales team and managers only.'}
+        </div>
+      )}
+      {adminTab === 'retargeting' && canRetarget && (
         <RetargetingHub
           leads={leads}
           properties={properties}
@@ -738,15 +1035,26 @@ export const CrmAdminPanel = ({
 
       {/* 📊 TAB 8: VISITOR INTELLIGENCE & CLICKSTREAM */}
       {(adminTab === 'visitor_intelligence' || adminTab === 'analytics') && (
-        <VisitorIntelligencePanel
-          properties={properties}
-          lang={lang}
-          triggerToast={triggerToast}
-        />
+        (isSuperRole || perms.includes('ld.manage')) ? (
+          <VisitorIntelligencePanel
+            properties={properties}
+            leads={leads}
+            onOpenLead={(lead) => setQuickDrawerLead(lead)}
+            lang={lang}
+          />
+        ) : (
+          <div className="crm-table-container">{isAr ? 'تحليلات الزوار متاحة للمدير العام ومديري المبيعات.' : 'Visitor analytics are available to admins and sales managers.'}</div>
+        )
       )}
 
       {/* 🏛️ TAB 9: CORPORATE & FOUNDER CMS */}
-      {adminTab === 'founder_cms' && (
+      {/* Company identity, backups and automation: super admin only (writes are admin-only in the rules too) */}
+      {['founder_cms', 'system_backup', 'automation'].includes(adminTab) && !isSuperRole && (
+        <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
+          {isAr ? 'القسم ده للمدير العام بس.' : 'This section is for the super admin only.'}
+        </div>
+      )}
+      {adminTab === 'founder_cms' && isSuperRole && (
         <FounderCmsPanel
           lang={lang}
           triggerToast={triggerToast}
@@ -754,7 +1062,7 @@ export const CrmAdminPanel = ({
       )}
 
       {/* 🛡️ TAB 9.5: SYSTEM BACKUP & RESTORE (ADMIN ONLY) */}
-      {adminTab === 'system_backup' && (
+      {adminTab === 'system_backup' && isSuperRole && (
         <SystemBackupTab
           handleExportLeadsJson={handleExportLeadsJson}
           handleImportLeadsJson={handleImportLeadsJson}
@@ -764,11 +1072,11 @@ export const CrmAdminPanel = ({
       )}
 
       {/* ⚙️ TAB 10: AUTOMATION & WEBHOOKS */}
-      {adminTab === 'automation' && (
+      {adminTab === 'automation' && isSuperRole && (
         <AutomationTab
-          addNotification={addNotification}
           isAr={isAr}
           leads={leads}
+          onUpdateLead={onUpdateLead}
           triggerToast={triggerToast}
         />
       )}
@@ -792,13 +1100,21 @@ export const CrmAdminPanel = ({
           leadFormData={leadFormData}
           setEditingLead={setEditingLead}
           setLeadFormData={setLeadFormData}
+          userRole={activeRole}
+          people={teamMembers}
           t={t}
         />
       )}
 
       {/* 🕒 ACTIVITY LOG VIEWER MODAL */}
       {viewingLogsLead && (
-        <div className="track-modal-backdrop" onClick={() => setViewingLogsLead(null)}>
+        <div
+          className="track-modal-backdrop"
+          onMouseDown={(e) => { logsBackdropRef.current = e.target === e.currentTarget; }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && logsBackdropRef.current) setViewingLogsLead(null);
+          }}
+        >
           <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
             <div className="modal-form-header">
               <h3>
@@ -827,7 +1143,7 @@ export const CrmAdminPanel = ({
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <strong style={{ color: 'var(--crm-positive)' }}>{log.action}</strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
+                        {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
                       </span>
                     </div>
                   </div>
@@ -844,25 +1160,6 @@ export const CrmAdminPanel = ({
         </div>
       )}
 
-      {/* 👤 MODAL: CUSTOMER 360° INTELLIGENCE PROFILE */}
-      {viewingProfileLead && (
-        <CustomerProfileModal
-          isOpen={!!viewingProfileLead}
-          lead={viewingProfileLead}
-          properties={properties}
-          onClose={() => setViewingProfileLead(null)}
-          onUpdateLead={(leadId, updatedData) => {
-            const result = onUpdateLead ? onUpdateLead(leadId, updatedData) : undefined;
-            if (result === false) return false; // blocked by role — don't show an edit that didn't happen
-            setViewingProfileLead(prev => prev ? { ...prev, ...updatedData } : null);
-            return result;
-          }}
-          lang={lang}
-          triggerToast={triggerToast}
-          userRole={activeRole}
-        />
-      )}
-
       {/* ➕ MODAL: ADD NEW LEAD DIRECTLY */}
       {showAddLeadModal && (
         <AddLeadModal
@@ -872,7 +1169,8 @@ export const CrmAdminPanel = ({
             if (onAddNewLead) {
               onAddNewLead(newLeadPayload);
             } else {
-              setLeads(prev => [newLeadPayload, ...prev]);
+              // Local-only fallback: give the lead an id so it can be opened, edited and moved
+              setLeads(prev => [{ id: newLeadPayload.id || `lead-${Date.now()}`, ...newLeadPayload }, ...prev]);
             }
           }}
           lang={lang}
@@ -896,23 +1194,56 @@ export const CrmAdminPanel = ({
       {/* ⚡ DRAWER: HIGH-VELOCITY LEAD QUICK DRAWER */}
       <LeadQuickDrawer
         lead={quickDrawerLead}
-        onClose={() => setQuickDrawerLead(null)}
-        onUpdateLead={(leadId, updatedData) => {
-          if (onUpdateLead) onUpdateLead(leadId, updatedData);
-          setQuickDrawerLead(prev => prev && prev.id === leadId ? { ...prev, ...updatedData } : prev);
+        tab={drawerTab}
+        onTabChange={setDrawerTab}
+        onClose={() => { setQuickDrawerLead(null); setDrawerTab('overview'); }}
+        onUpdateLead={(leadId, updatedData, expectedVer) => {
+          const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
+          if (result !== false) {
+            setQuickDrawerLead(prev => prev && prev.id === leadId ? { ...prev, ...updatedData } : prev);
+          }
+          return result;
         }}
         onDeleteLead={onDeleteLead}
         onConvertToProperty={onConvertToProperty}
-        onOpenFullProfile={(l) => {
-          setViewingProfileLead(l);
-          setQuickDrawerLead(null);
-        }}
+        onNavigate={(l) => setQuickDrawerLead(l)}
         properties={properties}
+        demands={demands}
         filteredLeads={filteredLeads}
+        allLeads={leads}
         isAr={isAr}
         triggerToast={triggerToast}
         activeRole={activeRole}
       />
+
+      {/* ⚠️ MODAL: CONCURRENCY CONFLICT RESOLUTION */}
+      {conflictModalState.isOpen && (
+        <ConcurrencyConflictModal
+          isOpen={conflictModalState.isOpen}
+          conflictData={conflictModalState.conflictData}
+          isAr={isAr}
+          onClose={() => setConflictModalState({ isOpen: false, conflictData: null, pendingUpdate: null })}
+          onReload={() => {
+            setConflictModalState({ isOpen: false, conflictData: null, pendingUpdate: null });
+            triggerToast?.(isAr ? 'تم تحديث البيانات لآخر نسخة مسجلة' : 'Reloaded latest version', 'info');
+          }}
+          onOverwrite={() => {
+            if (conflictModalState.pendingUpdate && rawUpdateLead) {
+              const { id, fields } = conflictModalState.pendingUpdate;
+              const currentLead = leads.find((l) => l.id === id);
+              const nextVersion = (currentLead?.version || 1) + 1;
+              rawUpdateLead(id, {
+                ...fields,
+                version: nextVersion,
+                lastEditedBy: currentUser?.name || 'مستشار 1Line',
+                lastEditedUid: currentUser?.uid || null
+              });
+              setConflictModalState({ isOpen: false, conflictData: null, pendingUpdate: null });
+              triggerToast?.(isAr ? 'تم حفظ التعديل وتجاوز النسخة السابقة' : 'Changes saved with overwrite', 'warn');
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

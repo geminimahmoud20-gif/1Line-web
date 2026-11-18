@@ -1,0 +1,29 @@
+/* «المطورين» (DevelopersPanel) */
+.dvp { display: grid; gap: 16px; }
+.dvp-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.dvp-head p { margin: 0; flex: 1 1 260px; font-size: var(--crm-text-sm); line-height: 1.7; color: var(--crm-muted); }
+.dvp-empty { margin: 0; padding: 24px; text-align: center; color: var(--crm-muted); border: 1px dashed var(--crm-line); border-radius: 14px; }
+.dvp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.dvp-card { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; border: 1px solid var(--crm-line); background: var(--crm-card); min-width: 0; }
+.dvp-card header { display: flex; align-items: center; gap: 10px; }
+.dvp-card h3 { margin: 0; font-size: var(--crm-text-base); font-weight: 800; }
+.dvp-card small { color: var(--crm-muted); }
+.dvp-logo { width: 44px; height: 44px; flex: none; border-radius: 10px; object-fit: contain; background: var(--crm-line); }
+.dvp-logo.is-empty { display: grid; place-items: center; color: var(--crm-muted); }
+.dvp-projects { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dvp-projects li { display: flex; justify-content: space-between; gap: 8px; font-size: var(--crm-text-sm); }
+.dvp-projects li.is-muted { color: var(--crm-muted); }
+.dvp-projects b { white-space: nowrap; color: var(--crm-accent-text); }
+.dvp-card footer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--crm-line); font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.dvp-card footer a { color: var(--crm-info); display: inline-flex; align-items: center; gap: 4px; }
+.dvp-actions { margin-inline-start: auto; display: inline-flex; gap: 4px; }
+.dvp-actions button { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--crm-line); background: transparent; color: inherit; cursor: pointer; }
+.dvp-form { width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; display: grid; gap: 14px; padding: 18px; border-radius: 18px; background: var(--crm-card); color: var(--crm-ink, inherit); border: 1px solid var(--crm-line); }
+.dvp-form header, .dvp-form footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dvp-form footer { justify-content: flex-end; }
+.dvp-form h3 { margin: 0; font-weight: 800; }
+.dvp-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.dvp-field { display: grid; gap: 6px; min-width: 0; }
+.dvp-field.is-wide { grid-column: 1 / -1; }
+.dvp-field > span { font-size: var(--crm-text-sm); font-weight: 700; }
+.dvp-field input, .dvp-field textarea { width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--crm-line-strong, var(--crm-line)); background: transparent; color: inherit; font: inherit; }

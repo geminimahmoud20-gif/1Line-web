@@ -7,6 +7,7 @@ import {
   getPhoneCallUrl, 
   cleanPhoneNumber 
 } from '../../utils/founderCmsData';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function QuickContactDrawer({
   isOpen,
@@ -17,6 +18,7 @@ export default function QuickContactDrawer({
   const isAr = lang === 'ar';
   const [cms, setCms] = useState(() => getFounderSettings());
   const { openRemoteInspection } = useUIModal();
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     const handleUpdate = () => setCms(getFounderSettings());
@@ -99,7 +101,7 @@ export default function QuickContactDrawer({
               <div className="channel-title-badge">
                 <strong>{isAr ? 'مكتب المستثمرين والمغتربين (VIP Desk)' : 'VIP Expat & Investor Desk'}</strong>
               </div>
-              <span className="channel-sub">{isAr ? 'فرص استثمارية وحصص تجارية بعوائد دولارية' : 'High ROI commercial & residential portfolios'}</span>
+              <span className="channel-sub">{isAr ? 'فرص استثمارية تجارية وسكنية' : 'Commercial & residential investment options'}</span>
             </div>
             {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>
@@ -117,7 +119,7 @@ export default function QuickContactDrawer({
               <div className="channel-title-badge">
                 <strong>{isAr ? 'معاينة الغربة (للمقيمين بالخارج)' : 'Remote inspection (expats)'}</strong>
               </div>
-              <span className="channel-sub">{isAr ? 'فيديو حي أو لقطات الشارع والجيران أو جولة درون' : 'Live video, street footage or a drone tour'}</span>
+              <span className="channel-sub">{isAr ? 'فيديو حي أو لقطات الشارع والجيران' : 'Live video or street footage'}</span>
             </div>
             {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>

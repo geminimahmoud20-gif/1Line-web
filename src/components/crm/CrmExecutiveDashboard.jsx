@@ -1,5 +1,12 @@
-import { useMemo } from 'react';
-import { Users, Building, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ArrowRight } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { computeDashboardMetrics } from '../../utils/crmLeadViews';
+import { commissionForecast } from '../../utils/commission';
+import { countWord } from '../../utils/arabicCount';
+import { DESK_BY_ROLE } from '../../utils/rbacRules';
+import { Users, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
+import { PageHeader, KpiRow, KpiTile, Card, CardHeader, Button, Badge, Avatar, EmptyState } from '../ui';
+import './dashboard.css';
 
 export default function CrmExecutiveDashboard({
   leads = [],
@@ -8,670 +15,249 @@ export default function CrmExecutiveDashboard({
   projects = [],
   activeRole = 'super_admin',
   currentRoleObj = {},
-  crmAnalytics = {},
   isAr = true,
   onSwitchTab,
   onOpenLead,
-  onFilterLeads
+  onFilterLeads,
+  onOpenContractStudio,
+  onOpenCopywriter,
+  deskView = null,
+  scopeDesk: scopeDeskProp = null,
+  showMoney: showMoneyProp = null,
+  coverage = null
 }) {
   const isSuperAdmin = activeRole === 'super_admin';
 
-  // 1. Core Financials & Metrics Calculation
+  // Company-wide numbers are for roles that see agency financials (super admin, sales manager,
+  // finance). Everyone else gets their own desk's numbers.
+  // CrmAdminPanel passes the account's real scope; the role-name fallback is for older callers
+  const canViewCompany = isSuperAdmin || !!currentRoleObj.canViewAgencyFinancials;
+  const isDeskView = deskView ?? !canViewCompany;
+  const scopeDesk = isDeskView ? (scopeDeskProp || DESK_BY_ROLE[activeRole] || currentRoleObj.agentName || '__no_team__') : null;
+  const showMoney = showMoneyProp ?? canViewCompany;
+
+  // Clock for "overdue / stale / today"; ticks once a minute
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
   const metrics = useMemo(() => {
-    const totalPipelineValue = leads
-      .filter(l => !l.isArchived && l.status !== 'lost')
-      .reduce((sum, l) => {
-        const val = parseInt(String(l.budget || l.details?.budget || 0).replace(/[^0-9]/g, '')) || 0;
-        return sum + val;
-      }, 0);
-
-    const totalPurchasingPower = demands
-      .reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0);
-
-    const newLeads = leads.filter(l => !l.isArchived && (l.status === 'new' || !l.status));
-    const qualifiedLeads = leads.filter(l => !l.isArchived && (l.status === 'contacted' || l.status === 'site_visit' || l.status === 'negotiating'));
-    const closingDeals = leads.filter(l => !l.isArchived && (l.status === 'closing' || l.status === 'negotiating'));
-    const wonDeals = leads.filter(l => l.status === 'closed');
-
-    // Expected brokerage commission (standard 2.5% in Egyptian market)
-    const expectedCommission = totalPipelineValue * 0.025;
-
-    // Follow-ups & Attention Alerts
-    const nowDayStr = new Date().toISOString().slice(0, 10);
-    const overdueFollowUps = leads.filter(l => {
-      if (l.isArchived || l.status === 'closed' || l.status === 'lost') return false;
-      if (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) < nowDayStr) return true;
-      return false;
-    });
-
-    const dueTodayFollowUps = leads.filter(l => {
-      if (l.isArchived || l.status === 'closed' || l.status === 'lost') return false;
-      if (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) === nowDayStr) return true;
-      if (l.followUp && l.followUp.includes(nowDayStr)) return true;
-      return false;
-    });
-
-    const unassignedLeads = leads.filter(l => !l.isArchived && (!l.assignedTo || l.assignedTo === 'Unassigned'));
-    const pendingDemands = demands.filter(d => d.status === 'pending');
-
-    // Stale leads (over 48h without activity)
-    // eslint-disable-next-line react-hooks/purity -- "48h" window is relative to the moment the dashboard renders
-    const twoDaysAgo = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
-    const staleLeads = leads.filter(l => {
-      if (l.isArchived || l.status === 'closed' || l.status === 'lost') return false;
-      const lastAct = l.lastActivityAt || l.updatedAt || l.createdAt;
-      return lastAct && lastAct < twoDaysAgo;
-    });
-
+    const m = computeDashboardMetrics(leads, demands, { now, scopeDesk });
+    const fmtM = (v) => (v / 1000000).toFixed(1);
+    const fc = commissionForecast(leads, { now });
     return {
-      pipelineValueM: (totalPipelineValue / 1000000).toFixed(1),
-      purchasingPowerM: (totalPurchasingPower / 1000000).toFixed(1),
-      commissionM: (expectedCommission / 1000000).toFixed(2),
-      // Under 1M the commission reads better as a full amount (87,500 ج.م) than as '0.09 مليون'
-      commissionIsMillions: expectedCommission >= 1000000,
-      commissionFull: Math.round(expectedCommission).toLocaleString('en-US'),
-      newLeadsCount: newLeads.length,
-      qualifiedCount: qualifiedLeads.length,
-      closingCount: closingDeals.length,
-      wonCount: wonDeals.length,
-      overdueCount: overdueFollowUps.length,
-      dueTodayCount: dueTodayFollowUps.length,
-      unassignedCount: unassignedLeads.length,
-      pendingDemandsCount: pendingDemands.length,
-      staleLeadsCount: staleLeads.length,
-      dueTodayList: dueTodayFollowUps,
-      overdueList: overdueFollowUps,
-      unassignedList: unassignedLeads
+      ...m,
+      pipelineValueM: fmtM(m.pipelineValue),
+      purchasingPowerM: fmtM(m.purchasingPower),
+      forecast: fc,
+      newLeadsCount: m.newCount,
+      overdueCount: m.overdueList.length,
+      dueTodayCount: m.dueTodayList.length,
+      unassignedCount: m.unassignedList.length,
+      staleLeadsCount: m.staleList.length,
+      awaitingCount: m.awaitingList.length
     };
-  }, [leads, demands]);
+  }, [leads, demands, now, scopeDesk]);
+
+  const activeDemands = demands.filter((d) => !d.isArchived && d.status !== 'archived').length;
+  // Under 1M money reads better as a full amount (87,500 ج.م) than as '0.09 مليون'
+  const moneyValue = (v) => (v >= 1e6 ? v / 1e6 : Math.round(v));
+  const moneyUnit = (v) => (v >= 1e6 ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP'));
+  const fmtMoney = (v) => (v >= 1e6 ? `${(v / 1e6).toFixed(2)} ${isAr ? 'مليون' : 'M'}` : `${Math.round(v).toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`);
+  const goLeads = (filter) => { onFilterLeads?.(filter); onSwitchTab?.('leads'); };
+  const L = (ar, en) => (isAr ? ar : en);
+
+  const alerts = [
+    metrics.overdueCount > 0 && { id: 'overdue', tone: 'danger', title: L(`${metrics.overdueCount} متابعة فات ميعادها`, `${metrics.overdueCount} overdue follow-ups`), hint: L('افتحهم وكلّم العملاء', 'Open them and call'), onClick: () => goLeads('overdue') },
+    metrics.unassignedCount > 0 && { id: 'unassigned', tone: 'warning', title: L(`${metrics.unassignedCount} عميل من غير مسؤول`, `${metrics.unassignedCount} unassigned leads`), hint: L('وزّعهم قبل ما يبردوا', 'Assign them before they go cold'), onClick: () => goLeads('unassigned') },
+    metrics.pendingDemandsCount > 0 && { id: 'demands', tone: 'info', title: L(`${metrics.pendingDemandsCount} طلب مشتري مستني مراجعة`, `${metrics.pendingDemandsCount} buyer requests to review`), hint: L('راجعها علشان تبدأ المطابقة', 'Review to start matching'), onClick: () => onSwitchTab?.('demands') },
+    metrics.staleLeadsCount > 0 && { id: 'stale', tone: 'neutral', title: L(`${metrics.staleLeadsCount} عميل راكد من أكتر من 48 ساعة`, `${metrics.staleLeadsCount} leads idle for 48h+`), hint: L('تابع معاهم تاني', 'Follow up again'), onClick: () => goLeads('stale') }
+  ].filter(Boolean);
 
   return (
-    <div className="crm-dashboard-stack" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* ── §1. CEO COMMAND HUD / GREETING ──────────────────────────── */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '16px',
-        padding: '20px 24px',
-        boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xl)' }}>{isSuperAdmin ? '👑' : '💼'}</span>
-            <h1 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-              {isAr
-                ? (isSuperAdmin ? 'مركز القيادة والعمليات التنفيذية' : `مرحباً ${currentRoleObj.label_ar || 'مستشار المبيعات'}`)
-                : (isSuperAdmin ? 'Executive Command Center' : `Welcome, ${currentRoleObj.label_en || 'Sales Advisor'}`)}
-            </h1>
-            <span style={{
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: '999px',
-              background: 'rgba(169, 130, 74, 0.12)',
-              color: 'var(--crm-accent-text)',
-              border: '1px solid rgba(169, 130, 74, 0.25)'
-            }}>
-              1Line Real Estate OS
-            </span>
-          </div>
-
-          <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, var(--crm-faint))' }}>
-            {isAr
-              ? `موجز العمليات: لديك اليوم ${metrics.dueTodayCount} متابعات مجدولة • ${metrics.newLeadsCount} عملاء جدد بحاجة للتأهيل • ${metrics.pendingDemandsCount} طلبات معلقة.`
-              : `Today's Brief: ${metrics.dueTodayCount} follow-ups due • ${metrics.newLeadsCount} new leads to qualify • ${metrics.pendingDemandsCount} pending demands.`}
-          </p>
-        </div>
-
-        {/* Quick Jump Buttons */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => {
-              onFilterLeads?.('due');
-              onSwitchTab?.('leads');
-            }}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-surface-ink)',
-              color: 'var(--crm-on-dark)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <Clock size={14} style={{ color: 'var(--crm-accent)' }} />
-            <span>{isAr ? `متابعات اليوم (${metrics.dueTodayCount})` : `Follow-ups (${metrics.dueTodayCount})`}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onFilterLeads?.('new');
-              onSwitchTab?.('leads');
-            }}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-subtle)',
-              color: 'var(--crm-ink)',
-              border: '1px solid var(--crm-line)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            <Users size={14} style={{ color: 'var(--crm-muted)' }} />
-            <span>{isAr ? `العملاء الجدد (${metrics.newLeadsCount})` : `New Leads (${metrics.newLeadsCount})`}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSwitchTab?.('kanban')}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-subtle)',
-              color: 'var(--crm-ink)',
-              border: '1px solid var(--crm-line)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            <Target size={14} style={{ color: 'var(--crm-muted)' }} />
-            <span>{isAr ? 'مسار الصفقات' : 'Pipeline'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── §2. WHERE IS THE MONEY? (FINANCIAL & CASH PIPELINE) ───── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-        gap: '14px'
-      }}>
-        {/* Metric 1: Total Pipeline Value */}
-        <div
-          onClick={() => onSwitchTab?.('kanban')}
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
-              {isAr ? 'قيمة مسار الصفقات النشط' : 'Active Pipeline Value'}
-            </span>
-            <TrendingUp size={16} style={{ color: 'var(--crm-positive)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
-            <bdi>{metrics.pipelineValueM}</bdi>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
-              {isAr ? 'مليون ج.م' : 'M EGP'}
-            </span>
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
-            {isAr ? `${leads.length} عميل في مسار المبيعات` : `${leads.length} active leads in pipeline`}
-          </span>
-        </div>
-
-        {/* Metric 2: Expected Commission */}
-        <div
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
-              {isAr ? 'العمولة المتوقعة (2.5%)' : 'Expected Commission'}
-            </span>
-            <Award size={16} style={{ color: 'var(--crm-accent-text)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-accent-text)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
-            <bdi>{metrics.commissionIsMillions ? metrics.commissionM : metrics.commissionFull}</bdi>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
-              {metrics.commissionIsMillions ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP')}
-            </span>
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
-            {isAr ? 'بناءً على الصفقات قيد التفاوض' : 'Based on ongoing negotiations'}
-          </span>
-        </div>
-
-        {/* Metric 3: Demand Purchasing Power */}
-        <div
-          onClick={() => onSwitchTab?.('demands')}
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
-              {isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}
-            </span>
-            <Zap size={16} style={{ color: 'var(--crm-positive)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
-            <bdi>{metrics.purchasingPowerM}</bdi>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
-              {isAr ? 'مليون ج.م' : 'M EGP'}
-            </span>
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
-            {isAr ? `${demands.length} طلب مشتري معتمد` : `${demands.length} certified buyer demands`}
-          </span>
-        </div>
-
-        {/* Metric 4: Closing Rate */}
-        <div
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
-              {isAr ? 'معدل إغلاق الصفقات' : 'Closing Rate'}
-            </span>
-            <Briefcase size={16} style={{ color: 'var(--crm-info)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
-            {crmAnalytics.conversionSuccess || '0%'}
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
-            {isAr ? `${metrics.wonCount} صفقة ناجحة مكتملة` : `${metrics.wonCount} won deals closed`}
-          </span>
-        </div>
-      </div>
-
-      {/* ── §3. WHAT NEEDS ATTENTION? (OPERATIONAL ALERTS CENTER) ───── */}
-      {(metrics.overdueCount > 0 || metrics.unassignedCount > 0 || metrics.pendingDemandsCount > 0 || metrics.staleLeadsCount > 0) && (
-        <div style={{
-          background: 'var(--crm-card)',
-          border: '1px solid var(--crm-line)',
-          borderRadius: '16px',
-          padding: '18px 22px',
-          boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={16} style={{ color: 'var(--crm-warn)' }} />
-              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-                {isAr ? 'تنبيهات العمليات التنفيذية المباشرة' : 'Executive Operational Alerts'}
-              </h3>
-            </div>
-            <span style={{
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: '999px',
-              background: 'var(--crm-warn-soft)',
-              color: 'var(--crm-warn)'
-            }}>
-              {isAr ? 'بحاجة لمتابعة' : 'Action Required'}
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-            {metrics.overdueCount > 0 && (
-              <div
-                onClick={() => {
-                  onFilterLeads?.('due');
-                  onSwitchTab?.('leads');
-                }}
-                style={{
-                  background: 'var(--crm-subtle)',
-                  border: '1px solid var(--crm-line)',
-                  borderRadius: '10px',
-                  padding: '12px 14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-danger)' }}>
-                    {metrics.overdueCount} {isAr ? 'متابعات متأخرة تجاوزت موعدها' : 'Overdue Follow-ups'}
-                  </div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                    {isAr ? 'انقر لفتح العملاء والتواصل الفوري' : 'Click to review & contact'}
-                  </div>
-                </div>
-                <ArrowRight size={14} style={{ color: 'var(--crm-danger)' }} />
-              </div>
-            )}
-
-            {metrics.unassignedCount > 0 && (
-              <div
-                onClick={() => {
-                  onFilterLeads?.('all');
-                  onSwitchTab?.('leads');
-                }}
-                style={{
-                  background: 'var(--crm-subtle)',
-                  border: '1px solid var(--crm-line)',
-                  borderRadius: '10px',
-                  padding: '12px 14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-warn)' }}>
-                    {metrics.unassignedCount} {isAr ? 'عملاء بدون مسؤول مبيعات' : 'Unassigned Leads'}
-                  </div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                    {isAr ? 'تعيين لمستشار لمنع تسرب العميل' : 'Assign to sales rep'}
-                  </div>
-                </div>
-                <ArrowRight size={14} style={{ color: 'var(--crm-warn)' }} />
-              </div>
-            )}
-
-            {metrics.pendingDemandsCount > 0 && (
-              <div
-                onClick={() => onSwitchTab?.('demands')}
-                style={{
-                  background: 'var(--crm-subtle)',
-                  border: '1px solid var(--crm-line)',
-                  borderRadius: '10px',
-                  padding: '12px 14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-info)' }}>
-                    {metrics.pendingDemandsCount} {isAr ? 'طلبات مشترين بحاجة للاعتماد' : 'Pending Buyer Demands'}
-                  </div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                    {isAr ? 'مراجعة ونشر للمطابقة الفورية' : 'Review and approve to match'}
-                  </div>
-                </div>
-                <ArrowRight size={14} style={{ color: 'var(--crm-info)' }} />
-              </div>
-            )}
-
-            {metrics.staleLeadsCount > 0 && (
-              <div
-                onClick={() => {
-                  onFilterLeads?.('all');
-                  onSwitchTab?.('leads');
-                }}
-                style={{
-                  background: 'var(--crm-subtle)',
-                  border: '1px solid var(--crm-line)',
-                  borderRadius: '10px',
-                  padding: '12px 14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>
-                    {metrics.staleLeadsCount} {isAr ? 'عملاء في وضع الركود (>48h)' : 'Stale Leads (>48h)'}
-                  </div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                    {isAr ? 'إعادة تنشيط ومتابعة' : 'Reactivate lead'}
-                  </div>
-                </div>
-                <ArrowRight size={14} style={{ color: 'var(--crm-muted)' }} />
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="crm-dashboard-stack crm-dash">
+      <PageHeader
+        title={isSuperAdmin ? L('لوحة القيادة', 'Dashboard') : L(`أهلاً ${currentRoleObj.label_ar || ''}`.trim(), `Welcome ${currentRoleObj.label_en || ''}`.trim())}
+        description={L(
+          `النهارده: ${metrics.dueTodayCount} متابعة · ${metrics.newLeadsCount} عميل جديد · ${metrics.pendingDemandsCount} طلب مستني`,
+          `Today: ${metrics.dueTodayCount} follow-ups · ${metrics.newLeadsCount} new leads · ${metrics.pendingDemandsCount} pending requests`
+        )}
+        actions={(
+          <>
+            {/* The filled button is the one with something in it */}
+            <Button variant={metrics.dueTodayCount > 0 || metrics.newLeadsCount === 0 ? 'primary' : 'secondary'} icon={<Clock size={16} aria-hidden="true" />} onClick={() => goLeads('due')}>
+              {L(`متابعات النهارده (${metrics.dueTodayCount})`, `Today's follow-ups (${metrics.dueTodayCount})`)}
+            </Button>
+            <Button variant={metrics.dueTodayCount === 0 && metrics.newLeadsCount > 0 ? 'primary' : 'secondary'} icon={<Users size={16} aria-hidden="true" />} onClick={() => goLeads('new')}>
+              {L(`العملاء الجداد (${metrics.newLeadsCount})`, `New leads (${metrics.newLeadsCount})`)}
+            </Button>
+            <Button variant="ghost" icon={<Target size={16} aria-hidden="true" />} onClick={() => onSwitchTab?.('kanban')}>
+              {L('مسار الصفقات', 'Pipeline')}
+            </Button>
+          </>
+        )}
+      />
+      {coverage && (
+        <p className={`crm-dash__coverage ${coverage.complete && !coverage.loading ? '' : 'is-partial'}`}>
+          {coverage.loading
+            ? L('بيتحسب من كل العملاء…', 'Computing over all leads…')
+            : coverage.complete
+              ? L(`محسوبة من كل العملاء (${coverage.count.toLocaleString('en-US')})`, `Covers all ${coverage.count.toLocaleString('en-US')} leads`)
+              : L(`الأرقام من أول ${coverage.count.toLocaleString('en-US')} عميل بس، مش كل العملاء`, `Covers the first ${coverage.count.toLocaleString('en-US')} leads only`)}
+        </p>
       )}
 
-      {/* ── §4. SPLIT SECTION: TODAY'S ACTIONS + LIVE RECENT ACTIVITY ─ */}
-      <div className="crm-dashboard-split">
-        {/* Left Column: Today's Due Follow-ups Table / Quick List */}
-        <div style={{
-          background: 'var(--crm-card)',
-          border: '1px solid var(--crm-line)',
-          borderRadius: '16px',
-          padding: '20px',
-          boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Clock size={16} style={{ color: 'var(--crm-accent, var(--crm-accent-text))' }} />
-              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-                {isAr ? 'قائمة متابعات اليوم المستحقة' : "Today's Actionable Follow-ups"}
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                onFilterLeads?.('due');
-                onSwitchTab?.('leads');
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--crm-accent-text)',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {isAr ? 'عرض الكل ←' : 'View all →'}
-            </button>
-          </div>
+      <KpiRow label={L('أهم الأرقام', 'Key figures')}>
+        <KpiTile
+          label={metrics.scoped ? L('ميزانيات مشتريّ المفتوحين', 'My buyers\' budgets') : L('ميزانيات المشترين المفتوحين', 'Open buyers\' budgets')}
+          value={metrics.pipelineValue > 0 ? metrics.pipelineValue / 1000000 : null}
+          digits={1}
+          unit={L('مليون ج.م', 'M EGP')}
+          emptyText={L('مفيش ميزانيات متسجّلة', 'No budgets recorded')}
+          hint={L(`${metrics.openCount} ${countWord('deal', metrics.openCount)} مفتوحة${metrics.scoped ? ' عندك' : ''}`, `${metrics.openCount} open deals`)}
+          icon={<TrendingUp size={16} />}
+          onClick={() => onSwitchTab?.('kanban')}
+        />
+        {metrics.scoped && (
+          <KpiTile
+            label={L('عملاء متاحين للاستلام', 'Leads in the shared pool')}
+            value={metrics.unassignedCount}
+            hint={L('من غير مسؤول، استلم منهم', 'Unassigned, claim one')}
+            icon={<Users size={16} />}
+            onClick={() => onFilterLeads?.('unassigned')}
+          />
+        )}
+        {metrics.scoped && (
+          <KpiTile
+            label={L('عملائي المستنيين أول رد', 'Awaiting my first reply')}
+            value={metrics.awaitingCount}
+            hint={L(`${metrics.overdueCount} متابعة متأخرة`, `${metrics.overdueCount} overdue follow-ups`)}
+            icon={<Phone size={16} />}
+            className={metrics.awaitingCount ? 'crm-dash__kpi-alert' : undefined}
+            onClick={() => onFilterLeads?.('awaiting')}
+          />
+        )}
+        {!metrics.scoped && showMoney && (
+          <KpiTile
+            label={L('العمولة المتوقعة', 'Expected commission')}
+            value={metrics.forecast.weighted > 0 ? moneyValue(metrics.forecast.weighted) : null}
+            digits={metrics.forecast.weighted >= 1e6 ? 2 : 0}
+            unit={moneyUnit(metrics.forecast.weighted)}
+            emptyText={L('مفيش صفقات مفتوحة بقيمة', 'No open deals with a value')}
+            hint={L(`مرجّحة بمرحلة كل صفقة · لو كلها اتقفلت ${fmtMoney(metrics.forecast.gross)}`, `Weighted by stage · ${fmtMoney(metrics.forecast.gross)} if all close`)}
+            icon={<Award size={16} />}
+            onClick={() => onSwitchTab?.('kanban')}
+          />
+        )}
+        {!metrics.scoped && showMoney && (
+          <KpiTile
+            label={L('عمولات الشهر ده', 'Commission this month')}
+            value={metrics.forecast.wonThisMonth > 0 ? moneyValue(metrics.forecast.wonThisMonth) : null}
+            digits={metrics.forecast.wonThisMonth >= 1e6 ? 2 : 0}
+            unit={moneyUnit(metrics.forecast.wonThisMonth)}
+            emptyText={L('لسه مفيش صفقات اتقفلت', 'No deals won yet')}
+            hint={L(`${metrics.forecast.wonCount} صفقة ناجحة · قريبة: ${fmtMoney(metrics.forecast.late)}`, `${metrics.forecast.wonCount} won · near-term ${fmtMoney(metrics.forecast.late)}`)}
+            icon={<TrendingUp size={16} />}
+            onClick={() => goLeads('won')}
+          />
+        )}
+        {!metrics.scoped && showMoney && (
+          <KpiTile
+            label={L('القوة الشرائية المسجلة', 'Recorded buying power')}
+            value={metrics.purchasingPower > 0 ? metrics.purchasingPower / 1000000 : null}
+            digits={1}
+            unit={L('مليون ج.م', 'M EGP')}
+            emptyText={L('مفيش طلبات بميزانية', 'No budgeted requests')}
+            hint={L(`${activeDemands} طلب مشتري نشط`, `${activeDemands} active buyer requests`)}
+            icon={<Zap size={16} />}
+            onClick={() => onSwitchTab?.('demands')}
+          />
+        )}
+        <KpiTile
+          label={L('نسبة الفوز بالصفقات', 'Win rate')}
+          value={metrics.winRate}
+          unit="%"
+          emptyText={L('لسه مفيش صفقات مقفولة', 'No closed deals yet')}
+          hint={L(`${metrics.wonCount} ناجحة · ${metrics.lostCount} خسرانة`, `${metrics.wonCount} won · ${metrics.lostCount} lost`)}
+          icon={<Briefcase size={16} />}
+        />
+      </KpiRow>
 
+      {alerts.length > 0 && (
+        <Card>
+          <CardHeader
+            title={L('محتاج متابعة', 'Needs attention')}
+            actions={<Badge tone="warning" icon={<AlertTriangle size={12} aria-hidden="true" />}>{alerts.length}</Badge>}
+          />
+          <ul className="crm-dash__alerts">
+            {alerts.map((a) => (
+              <li key={a.id}>
+                <button type="button" className={`crm-dash__alert is-${a.tone}`} onClick={a.onClick}>
+                  <span className="crm-dash__alert-dot" aria-hidden="true" />
+                  <span className="crm-dash__alert-text">
+                    <strong>{a.title}</strong>
+                    <span>{a.hint}</span>
+                  </span>
+                  {isAr ? <ChevronLeft size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <div className="crm-dash__split">
+        <Card>
+          <CardHeader
+            title={L('متابعات النهارده', "Today's follow-ups")}
+            actions={<Button variant="ghost" size="sm" onClick={() => goLeads('due')}>{L('عرض الكل', 'View all')}</Button>}
+          />
           {metrics.dueTodayList.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--crm-muted)' }}>
-              <CheckCircle2 size={32} style={{ color: 'var(--crm-positive)', margin: '0 auto 8px', opacity: 0.8 }} />
-              <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)' }}>
-                {isAr ? 'ممتاز! تم إنجاز كافة المتابعات المجدولة لليوم حتى الآن.' : 'All scheduled follow-ups are up to date!'}
-              </p>
-            </div>
+            <EmptyState icon={<CheckCircle2 size={22} />} title={L('مفيش متابعات مستنية', 'Nothing due')} description={L('كل متابعات النهارده خلصت.', 'Every follow-up for today is done.')} />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {metrics.dueTodayList.slice(0, 5).map(leadItem => {
+            <ul className="crm-dash__list">
+              {metrics.dueTodayList.slice(0, 5).map((leadItem) => {
                 const cleanPhone = (leadItem.phone || '').replace(/[^0-9+]/g, '');
+                const sc = leadScore(leadItem);
                 return (
-                  <div
-                    key={leadItem.id}
-                    onClick={() => onOpenLead?.(leadItem)}
-                    style={{
-                      background: 'var(--crm-subtle)',
-                      border: '1px solid var(--crm-line)',
-                      borderRadius: '10px',
-                      padding: '10px 14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)' }}>{leadItem.name}</strong>
-                        {leadItem.score && (
-                          <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-accent-text)' }}>
-                            ⚡ {leadItem.score}%
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                        {leadItem.phone} • {leadItem.area || 'سوهاج'}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-                      <a
-                        href={`tel:${cleanPhone}`}
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '6px',
-                          background: 'var(--crm-brand-navy)',
-                          color: 'var(--crm-on-dark)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          textDecoration: 'none'
-                        }}
-                      >
-                        <Phone size={13} />
+                  <li key={leadItem.id} className="crm-dash__row">
+                    <button type="button" className="crm-dash__row-main" onClick={() => onOpenLead?.(leadItem)}>
+                      <Avatar name={leadItem.name || ''} size="sm" />
+                      <span className="crm-dash__row-text">
+                        <strong>{leadItem.name || L('عميل بدون اسم', 'Unnamed client')}</strong>
+                        <span><bdi dir="ltr">{leadItem.phone}</bdi> · {leadItem.area || L('سوهاج', 'Sohag')}</span>
+                      </span>
+                      <Badge tone={sc.score >= LEAD_SCORE_HIGH ? 'success' : 'neutral'}>{sc.score}%</Badge>
+                    </button>
+                    {cleanPhone && (
+                      <a href={`tel:${cleanPhone}`} className="ui-icon-btn ui-icon-btn--secondary" aria-label={L(`اتصال بـ ${leadItem.name || 'العميل'}`, `Call ${leadItem.name || 'client'}`)}>
+                        <Phone size={16} />
                       </a>
-                    </div>
-                  </div>
+                    )}
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
-        </div>
+        </Card>
 
-        {/* Right Column: Fast Inventory Overview & Team Readiness */}
-        <div style={{
-          background: 'var(--crm-card)',
-          border: '1px solid var(--crm-line)',
-          borderRadius: '16px',
-          padding: '20px',
-          boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building size={16} style={{ color: 'var(--crm-accent, var(--crm-accent-text))' }} />
-              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-                {isAr ? 'جاهزية الأصول والمشروعات' : 'Inventory & Projects'}
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => onSwitchTab?.('properties')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--crm-accent-text)',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {isAr ? 'إدارة العقارات ←' : 'Manage Units →'}
-            </button>
+        <Card>
+          <CardHeader
+            title={L('العقارات والمشروعات', 'Listings & projects')}
+            actions={<Button variant="ghost" size="sm" onClick={() => onSwitchTab?.('properties')}>{L('إدارة العقارات', 'Manage listings')}</Button>}
+          />
+          <dl className="crm-dash__stats">
+            <div><dt>{L('وحدات معروضة', 'Listed units')}</dt><dd>{properties.length}</dd></div>
+            <div><dt>{L('مشروعات', 'Projects')}</dt><dd>{projects.length}</dd></div>
+          </dl>
+          <div className="crm-dash__tools">
+            <Button variant="secondary" size="sm" icon={<Sparkles size={16} aria-hidden="true" />} onClick={() => onSwitchTab?.('matching')}>{L('المطابقات', 'Matching')}</Button>
+            <Button variant="secondary" size="sm" icon={<FileText size={16} aria-hidden="true" />} onClick={() => onOpenContractStudio?.()}>{L('استوديو العقود', 'Contracts')}</Button>
+            <Button variant="secondary" size="sm" icon={<Sparkles size={16} aria-hidden="true" />} onClick={() => onOpenCopywriter?.()}>{L('كاتب الإعلانات', 'Ad copywriter')}</Button>
           </div>
-
-          <div style={{
-            background: 'var(--crm-subtle)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '12px',
-            padding: '14px',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px'
-          }}>
-            <div>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'إجمالي الوحدات المعروضة' : 'Active Units'}</span>
-              <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '2px' }}>
-                {properties.length}
-              </div>
-            </div>
-
-            <div>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'المشروعات الكبرى' : 'Mega Projects'}</span>
-              <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '2px' }}>
-                {projects.length}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Shortcuts Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => onSwitchTab?.('matching')}
-              className="btn btn-sm btn-outline"
-              style={{
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-            >
-              <Sparkles size={13} style={{ color: 'var(--crm-accent)' }} />
-              <span>{isAr ? 'المطابقات الذكية' : 'AI Matcher'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onSwitchTab?.('contract_studio')}
-              className="btn btn-sm btn-outline"
-              style={{
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-            >
-              <FileText size={13} style={{ color: 'var(--crm-accent)' }} />
-              <span>{isAr ? 'استوديو العقود' : 'Contracts PDF'}</span>
-            </button>
-          </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

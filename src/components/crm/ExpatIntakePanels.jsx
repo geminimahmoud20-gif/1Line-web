@@ -5,9 +5,10 @@ import { findTradeMatches, matchInventory, reachBudget, OFFER_TYPES, WANT_TYPES,
 import { GOVERNORATES } from '../../utils/propertyInsights';
 import { getFxState, subscribeFx, initFxRates } from '../../utils/fxRates';
 import './crm-intake.css';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
-const waLink = (phone, text) => `https://wa.me/${String(phone || '').replace(/[^\d]/g, '')}?text=${encodeURIComponent(text)}`;
+const waLink = (phone, text) => `https://wa.me/${formatWhatsAppPhone(String(phone || ''))}?text=${encodeURIComponent(text)}`;
 const when = (iso) => {
   if (!iso) return '—';
   try { return new Date(iso).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return '—'; }
@@ -190,7 +191,7 @@ export function RemoteInspectionsPanel({ properties = [], canEdit = false, isSup
                 <div className="cxi-row-actions">
                   {r.phone
                     ? <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, msg)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
-                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">🔒 الرقم محجوب</span>}
+                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">الرقم محجوب</span>}
                   <StatusSelect list={STATUSES} value={r.status || 'new'} disabled={!canEdit} onChange={(s) => setStatus(r, s)} />
                 </div>
               </article>
@@ -312,7 +313,7 @@ export function TradeInsPanel({ properties = [], canEdit = false, triggerToast }
                 <div className="cxi-row-actions">
                   {r.phone
                     ? <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, `مرحباً ${r.name} 👋 معك 1Line بخصوص طلب البدل العقاري.`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
-                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">🔒 الرقم محجوب</span>}
+                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">الرقم محجوب</span>}
                   <StatusSelect list={TRADE_STATUSES} value={r.status || 'new'} disabled={!canEdit} onChange={(s) => setStatus(r, s)} />
                 </div>
               </article>

@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks, MessagesSquare, BarChart3, CalendarCheck, Briefcase, Building2 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
+import { CRM_ROLES } from './crmRoles';
+import { isInboxActive, needsAction } from '../../utils/inboxView';
 
 export default function CrmSidebar({
   activeTab,
@@ -14,6 +16,10 @@ export default function CrmSidebar({
   demands = [],
   projects = [],
   activeRole = 'super_admin',
+  canRetarget = true,
+  canCampaigns = false,
+  canWorkRequests = true,
+  tasksBadge = 0,
   collapsed = false,
   onToggleCollapse,
   width = 270,
@@ -27,10 +33,54 @@ export default function CrmSidebar({
   const [systemExpanded, setSystemExpanded] = useState(activeTab === 'system' || activeTab === 'areas' || activeTab === 'corporate');
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef(null);
+  // Which nav sections are folded: remembered per browser. A section never starts folded if it holds the open page.
+  const [folded, setFolded] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('oneline_crm_nav_folded') || '{}') || {}; } catch { return {}; }
+  });
+  const toggleSection = (key) => setFolded((f) => {
+    const next = { ...f, [key]: !f[key] };
+    try { localStorage.setItem('oneline_crm_nav_folded', JSON.stringify(next)); } catch { /* storage is optional */ }
+    return next;
+  });
+
+  const isSalesRole = ['sales_agent', 'agent_east', 'agent_new_sohag'].includes(activeRole);
+  const roleObj = useMemo(() => CRM_ROLES.find(r => r.id === activeRole), [activeRole]);
+
+  // Workspace Mode: 'sales' (Focused 5-module workspace) vs 'full' (Comprehensive 18-module command)
+  const [workspaceMode, setWorkspaceMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oneline_crm_workspace_mode');
+      if (saved === 'sales' || saved === 'full') return saved;
+    } catch {
+      /* ignore storage errors */
+    }
+    return isSalesRole ? 'sales' : 'full';
+  });
+
+  const toggleWorkspaceMode = (mode) => {
+    setWorkspaceMode(mode);
+    try {
+      localStorage.setItem('oneline_crm_workspace_mode', mode);
+    } catch {
+      /* ignore storage errors */
+    }
+    if (mode === 'sales' && !['inbox', 'leads', 'kanban', 'matching', 'agents'].includes(activeTab)) {
+      setActiveTab('inbox');
+    }
+  };
 
   const pendingDemandsCount = useMemo(() => {
     return demands.filter(d => d.status === 'pending').length;
   }, [demands]);
+
+  // Same rule as the inbox's own tabs ("محتاجة تصرّف"), so the two numbers always match
+  const unassignedInboxCount = useMemo(() => {
+    return leads.filter((l) => isInboxActive(l) && needsAction(l)).length;
+  }, [leads]);
+
+  // The clients the leads list shows by default (archived test/duplicate records and lost deals
+  // sit under their own filters), so the badge matches the list instead of counting every record
+  const openLeadsCount = useMemo(() => leads.filter((l) => !l.isArchived && l.status !== 'lost').length, [leads]);
 
   // Keep system group open if active tab is related
   const [sidebarTab, setSidebarTab] = useState(activeTab);
@@ -76,116 +126,225 @@ export default function CrmSidebar({
     };
   }, [isResizing, isAr, onWidthChange]);
 
-  const navSections = useMemo(() => [
-    {
-      label_ar: 'العمليات والمبيعات',
-      label_en: 'Core Operations',
-      items: [
+  const navSections = useMemo(() => {
+    if (workspaceMode === 'sales') {
+      return [
         {
-          id: 'dashboard',
-          icon: LayoutGrid,
-          label_ar: 'لوحة القيادة',
-          label_en: 'Dashboard'
-        },
-        {
-          id: 'leads',
-          icon: Users,
-          label_ar: 'العملاء والمبيعات',
-          label_en: 'Leads & Pipeline',
-          badge: leads.length
-        },
-        {
-          id: 'kanban',
+          label_ar: 'مهام المبيعات المركزة',
+          label_en: 'Sales Focus Workspace',
           icon: Target,
-          label_ar: 'مسار الصفقات',
-          label_en: 'Deals Pipeline'
-        },
-        {
-          id: 'matching',
-          icon: Sparkles,
-          label_ar: 'المطابقات الذكية AI',
-          label_en: 'Smart AI Match'
-        },
-        {
-          id: 'agents',
-          icon: Trophy,
-          label_ar: 'فريق المبيعات والعمولات',
-          label_en: 'Agents Leaderboard'
-        },
-        {
-          id: 'retargeting',
-          icon: Flame,
-          label_ar: 'إعادة الاستهداف الذكي',
-          label_en: 'Smart Retargeting'
-        },
-        {
-          id: 'expat',
-          icon: Globe2,
-          label_ar: 'خدمات المغتربين VIP',
-          label_en: 'Expat VIP Desk'
-        },
-        {
-          id: 'trade_ins',
-          icon: Repeat2,
-          label_ar: 'صفقات التبادل العقاري',
-          label_en: 'Trade-in Deals'
+          items: [
+            {
+              id: 'inbox',
+              icon: Inbox,
+              label_ar: 'صندوق الوارد',
+              label_en: 'Inbox',
+              badge: unassignedInboxCount > 0 ? unassignedInboxCount : undefined,
+              badgeDanger: unassignedInboxCount > 0
+            },
+            {
+              id: 'tasks',
+              icon: ListChecks,
+              label_ar: 'مهامي',
+              label_en: 'My tasks',
+              badge: tasksBadge > 0 ? tasksBadge : undefined,
+              badgeDanger: tasksBadge > 0
+            },
+            {
+              id: 'chat',
+              icon: MessagesSquare,
+              label_ar: 'محادثة الفريق',
+              label_en: 'Team chat'
+            },
+            {
+              id: 'leads',
+              icon: Users,
+              label_ar: 'العملاء والمبيعات',
+              label_en: 'Leads & Pipeline',
+              badge: openLeadsCount
+            },
+            {
+              id: 'kanban',
+              icon: Target,
+              label_ar: 'مسار الصفقات',
+              label_en: 'Deals Pipeline'
+            },
+            {
+              id: 'matching',
+              icon: Sparkles,
+              label_ar: 'المطابقات الذكية',
+              label_en: 'Smart AI Match'
+            },
+            {
+              id: 'agents',
+              icon: Trophy,
+              label_ar: 'فريق المبيعات والعمولات',
+              label_en: 'Agents Leaderboard'
+            }
+          ]
         }
-      ]
-    },
-    {
-      label_ar: 'إدارة الأصول والعروض',
-      label_en: 'Assets & Listings',
-      items: [
-        {
-          id: 'properties',
-          icon: Building,
-          label_ar: 'محفظة العقارات',
-          label_en: 'Properties Portfolio',
-          badge: properties.length
-        },
-        {
-          id: 'demands',
-          icon: Zap,
-          label_ar: 'طلبات المشترين',
-          label_en: 'Buyer Demands',
-          badge: pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : demands.length,
-          badgeDanger: pendingDemandsCount > 0
-        },
-        {
-          id: 'projects',
-          icon: Award,
-          label_ar: 'المشروعات الكبرى',
-          label_en: 'Mega Projects',
-          badge: projects.length
-        },
-        // Paid placements = revenue: super admin only (also enforced in CrmPage and firestore.rules)
-        ...(activeRole === 'super_admin' ? [{
-          id: 'ads',
-          icon: Megaphone,
-          label_ar: 'الإعلانات والحملات',
-          label_en: 'Ads & Campaigns'
-        }] : [])
-      ]
-    },
-    {
-      label_ar: 'الذكاء والتحليلات',
-      label_en: 'Finance & Intelligence',
-      items: [
-        {
-          id: 'financials',
-          icon: Calculator,
-          label_ar: 'المالية والأقساط',
-          label_en: 'Financials & Loans'
-        },
-        {
-          id: 'visitor_intelligence',
-          icon: Activity,
-          label_ar: 'تحليلات ونشاط الزوار',
-          label_en: 'Visitor Intelligence'
-        }
-      ]
+      ];
     }
-  ], [leads.length, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole]);
+
+    // Grouped by what the person is doing: the day's work, selling, the stock, then every report together
+    return [
+      {
+        label_ar: 'شغل النهارده',
+        label_en: 'Today',
+        icon: CalendarCheck,
+        items: [
+          {
+            id: 'inbox',
+            icon: Inbox,
+            label_ar: 'صندوق الوارد',
+            label_en: 'Inbox',
+            badge: unassignedInboxCount > 0 ? unassignedInboxCount : undefined,
+            badgeDanger: unassignedInboxCount > 0
+          },
+          {
+            id: 'tasks',
+            icon: ListChecks,
+            label_ar: 'مهامي',
+            label_en: 'My tasks',
+            badge: tasksBadge > 0 ? tasksBadge : undefined,
+            badgeDanger: tasksBadge > 0
+          },
+          {
+            id: 'chat',
+            icon: MessagesSquare,
+            label_ar: 'محادثة الفريق',
+            label_en: 'Team chat'
+          },
+          {
+            id: 'dashboard',
+            icon: LayoutGrid,
+            label_ar: 'لوحة القيادة',
+            label_en: 'Dashboard'
+          }
+        ]
+      },
+      {
+        label_ar: 'البيع والمتابعة',
+        label_en: 'Selling',
+        icon: Briefcase,
+        items: [
+          {
+            id: 'leads',
+            icon: Users,
+            label_ar: 'العملاء والمبيعات',
+            label_en: 'Leads & Pipeline',
+            badge: openLeadsCount
+          },
+          {
+            id: 'kanban',
+            icon: Target,
+            label_ar: 'مسار الصفقات',
+            label_en: 'Deals Pipeline'
+          },
+          {
+            id: 'matching',
+            icon: Sparkles,
+            label_ar: 'المطابقات الذكية',
+            label_en: 'Smart AI Match'
+          },
+          // Client requests (expat viewings, swaps): the people who follow up on them
+          ...(canWorkRequests ? [{
+            id: 'expat',
+            icon: Globe2,
+            label_ar: 'خدمات المغتربين',
+            label_en: 'Expat VIP Desk'
+          },
+          {
+            id: 'trade_ins',
+            icon: Repeat2,
+            label_ar: 'صفقات التبادل العقاري',
+            label_en: 'Trade-in Deals'
+          }] : []),
+          // Messages clients in bulk: only roles that work leads and see real numbers
+          ...(canRetarget ? [{
+            id: 'retargeting',
+            icon: Flame,
+            label_ar: 'إعادة الاستهداف الذكي',
+            label_en: 'Smart Retargeting'
+          }] : [])
+        ]
+      },
+      {
+        label_ar: 'العقارات والعروض',
+        label_en: 'Assets & Listings',
+        icon: Building2,
+        items: [
+          {
+            id: 'properties',
+            icon: Building,
+            label_ar: 'محفظة العقارات',
+            label_en: 'Properties Portfolio',
+            badge: properties.length
+          },
+          {
+            id: 'demands',
+            icon: Zap,
+            label_ar: 'طلبات المشترين',
+            label_en: 'Buyer Demands',
+            badge: pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : demands.length,
+            badgeDanger: pendingDemandsCount > 0
+          },
+          {
+            id: 'projects',
+            icon: Award,
+            label_ar: 'المشروعات الكبرى',
+            label_en: 'Mega Projects',
+            badge: projects.length
+          },
+          // Paid placements = revenue: super admin only (also enforced in CrmPage and firestore.rules)
+          ...(activeRole === 'super_admin' ? [{
+            id: 'ads',
+            icon: Megaphone,
+            label_ar: 'الإعلانات والحملات',
+            label_en: 'Ads & Campaigns'
+          }] : [])
+        ]
+      },
+      {
+        label_ar: 'التقارير والتحليلات',
+        label_en: 'Reports & Analytics',
+        icon: BarChart3,
+        items: [
+          // One place for the sales, portfolio and demand reports over any dates: managers
+          ...(canCampaigns ? [{
+            id: 'performance',
+            icon: BarChart3,
+            label_ar: 'مركز التقارير',
+            label_en: 'Reports Center'
+          },
+          {
+            id: 'campaigns',
+            icon: Megaphone,
+            label_ar: 'تقرير الحملات',
+            label_en: 'Campaign Report'
+          }] : []),
+          {
+            id: 'agents',
+            icon: Trophy,
+            label_ar: 'فريق المبيعات والعمولات',
+            label_en: 'Agents Leaderboard'
+          },
+          {
+            id: 'financials',
+            icon: Calculator,
+            label_ar: 'المالية والأقساط',
+            label_en: 'Financials & Loans'
+          },
+          {
+            id: 'visitor_intelligence',
+            icon: Activity,
+            label_ar: 'تحليلات ونشاط الزوار',
+            label_en: 'Visitor Intelligence'
+          }
+        ]
+      }
+    ];
+  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests, tasksBadge]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);
@@ -231,7 +390,13 @@ export default function CrmSidebar({
         <div className="crm-sidebar-inner">
           {/* Header Brand */}
           <div className="crm-sidebar-header">
-            <a href="/" className="crm-sidebar-brand" title={isAr ? 'الانتقال للموقع الرئيسي' : 'Go to Homepage'}>
+            <button
+              type="button"
+              onClick={() => handleItemClick('dashboard')}
+              className="crm-sidebar-brand"
+              title={isAr ? 'اللوحة الرئيسية للتحكم' : 'CRM Dashboard'}
+              aria-label={isAr ? 'اللوحة الرئيسية للتحكم' : 'CRM Dashboard'}
+            >
               <div style={{
                 background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(13, 72, 161, 0.4))',
                 padding: '6px',
@@ -249,7 +414,7 @@ export default function CrmSidebar({
                 </span>
                 <span className="crm-brand-badge">PRO COMMAND</span>
               </div>
-            </a>
+            </button>
 
             <button
               type="button"
@@ -261,6 +426,48 @@ export default function CrmSidebar({
               {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             </button>
           </div>
+
+          {/* Collapsed Workspace Mode Toggle */}
+          {collapsed && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0' }}>
+              <button
+                type="button"
+                onClick={() => toggleWorkspaceMode(workspaceMode === 'sales' ? 'full' : 'sales')}
+                className="crm-sidebar-item"
+                style={{ justifyContent: 'center', width: '44px', height: '40px', padding: 0 }}
+                title={workspaceMode === 'sales' ? (isAr ? 'مساحة العمل: تركيز المبيعات (انقر للتحكم الشامل)' : 'Sales Focus (Click for Full Command)') : (isAr ? 'مساحة العمل: التحكم الشامل (انقر لتركيز المبيعات)' : 'Full Command (Click for Sales Focus)')}
+              >
+                {workspaceMode === 'sales' ? <Target size={18} aria-hidden="true" /> : <LayoutGrid size={18} aria-hidden="true" />}
+              </button>
+            </div>
+          )}
+
+          {/* Workspace Switcher (Segmented Control) */}
+          {!collapsed && (
+            <div style={{ padding: '0 12px 10px' }}>
+              <div className="crm-workspace-pill-group">
+                <button
+                  type="button"
+                  onClick={() => toggleWorkspaceMode('sales')}
+                  className={`crm-workspace-pill ${workspaceMode === 'sales' ? 'is-active' : ''}`}
+                  title={isAr ? 'مساحة عمل مركزة للمبيعات (الوارد، العملاء، الصفقات، المطابقة، الفريق)' : 'Sales Focus workspace (5 core sales modules)'}
+                >
+                  <Target size={16} aria-hidden="true" />
+                  <span>{isAr ? 'تركيز المبيعات' : 'Sales Focus'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleWorkspaceMode('full')}
+                  className={`crm-workspace-pill ${workspaceMode === 'full' ? 'is-active' : ''}`}
+                  title={isAr ? 'التحكم الشامل بكافة أقسام العقارات والتحليلات والإدارة' : 'Full Command across all CRM operations'}
+                >
+                  <LayoutGrid size={16} aria-hidden="true" />
+                  <span>{isAr ? 'التحكم الشامل' : 'Full Command'}</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Quick Filter Search Input */}
           {!collapsed && (
@@ -311,51 +518,76 @@ export default function CrmSidebar({
 
               if (filteredItems.length === 0) return null;
 
+              const key = section.label_en;
+              const SectionIcon = section.icon;
+              const holdsActive = section.items.some((item) => item.id === activeTab);
+              // Searching, the icons-only bar and the section with the open page always show their items
+              const isOpen = collapsed || isFiltering || holdsActive || !folded[key];
+              // What needs attention inside a folded section stays visible on its header
+              const alerts = section.items.reduce((n, item) => n + (item.badgeDanger && Number.isFinite(parseInt(item.badge, 10)) ? parseInt(item.badge, 10) : 0), 0);
+              const listId = `crm-nav-section-${idx}`;
+
               return (
-                <div key={idx} className="crm-sidebar-section">
+                <div key={key} className={`crm-sidebar-section ${isOpen ? 'is-open' : 'is-folded'}`}>
                   {!collapsed && (
-                    <div className="crm-sidebar-section-label">
-                      {isAr ? section.label_ar : section.label_en}
-                    </div>
+                    <button
+                      type="button"
+                      className="crm-section-head"
+                      onClick={() => toggleSection(key)}
+                      aria-expanded={isOpen}
+                      aria-controls={listId}
+                      disabled={isFiltering || holdsActive}
+                      title={holdsActive ? (isAr ? 'القسم ده فيه الصفحة المفتوحة' : 'This section holds the open page') : undefined}
+                    >
+                      {SectionIcon && <span className="crm-section-head__icon"><SectionIcon size={16} aria-hidden="true" /></span>}
+                      <span className="crm-section-head__label">{isAr ? section.label_ar : section.label_en}</span>
+                      {!isOpen && alerts > 0 && <span className="crm-item-badge badge-danger">{alerts}</span>}
+                      {!isOpen && alerts === 0 && <span className="crm-section-head__count">{filteredItems.length}</span>}
+                      <ChevronDown size={14} aria-hidden="true" className="crm-section-head__chevron" />
+                    </button>
                   )}
 
-                  {filteredItems.map(item => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-                    const label = isAr ? item.label_ar : item.label_en;
+                  {isOpen && (
+                    <div id={listId} className="crm-section-items">
+                      {filteredItems.map(item => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
+                        const label = isAr ? item.label_ar : item.label_en;
 
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleItemClick(item.id)}
-                        className={`crm-sidebar-item ${isActive ? 'is-active' : ''}`}
-                        data-tooltip={label}
-                        aria-current={isActive ? 'page' : undefined}
-                      >
-                        <div className="crm-item-main">
-                          <span className="crm-item-icon">
-                            <Icon size={17} />
-                          </span>
-                          <span className="crm-item-label">{label}</span>
-                        </div>
-                        {item.badge !== undefined && (
-                          <span className={`crm-item-badge ${item.badgeDanger ? 'badge-danger' : ''}`}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleItemClick(item.id)}
+                            className={`crm-sidebar-item ${isActive ? 'is-active' : ''}`}
+                            data-tooltip={label}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            <div className="crm-item-main">
+                              <span className="crm-item-icon">
+                                <Icon size={17} />
+                              </span>
+                              <span className="crm-item-label">{label}</span>
+                            </div>
+                            {item.badge !== undefined && (
+                              <span className={`crm-item-badge ${item.badgeDanger ? 'badge-danger' : ''}`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
 
-            {/* System Admin Collapsible Group (Super Admin Only) */}
-            {activeRole === 'super_admin' && (
+            {/* System Admin Collapsible Group (Super Admin Only in Full Command mode) */}
+            {activeRole === 'super_admin' && workspaceMode === 'full' && (
               <div className="crm-sidebar-group">
                 {!collapsed && (
-                  <div className="crm-sidebar-section-label">
+                  <div className="crm-section-title">
                     {isAr ? 'إدارة المنظومة' : 'Administration'}
                   </div>
                 )}
@@ -401,6 +633,17 @@ export default function CrmSidebar({
                   <div className="crm-sidebar-subnav" id="crm-sidebar-system-subnav" role="region" aria-label={isAr ? 'القوائم الفرعية لإدارة المنظومة' : 'System administration submodules'}>
                     <button
                       type="button"
+                      onClick={() => handleSubItemClick('team')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'team' ? 'is-active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserCog size={13} />
+                        <span>{isAr ? 'الفريق والصلاحيات' : 'Team & roles'}</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleSubItemClick('areas')}
                       className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'areas' ? 'is-active' : ''}`}
                     >
@@ -423,12 +666,34 @@ export default function CrmSidebar({
 
                     <button
                       type="button"
+                      onClick={() => handleSubItemClick('site')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'site' ? 'is-active' : ''}`}
+                    >
+                      <span className="crm-sidebar-subitem__row">
+                        <Globe2 size={13} />
+                        <span>{isAr ? 'إعدادات الموقع' : 'Site settings'}</span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleSubItemClick('backup')}
                       className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'backup' ? 'is-active' : ''}`}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Database size={13} />
                         <span>{isAr ? 'النسخ الاحتياطي والبيانات' : 'Data & Backups'}</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSubItemClick('alerts')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'alerts' ? 'is-active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Bell size={13} />
+                        <span>{isAr ? 'تنبيهات الطلبات' : 'Request alerts'}</span>
                       </div>
                     </button>
 
@@ -452,6 +717,17 @@ export default function CrmSidebar({
                         <Bug size={13} />
                         <span>{isAr ? 'أخطاء الموقع' : 'Site errors'}</span>
                       </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSubItemClick('uikit')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'uikit' ? 'is-active' : ''}`}
+                    >
+                      <span className="crm-sidebar-subitem__row">
+                        <Palette size={13} />
+                        <span>{isAr ? 'مكتبة التصميم' : 'UI kit'}</span>
+                      </span>
                     </button>
                   </div>
                 )}
@@ -480,15 +756,15 @@ export default function CrmSidebar({
             <div className="crm-sidebar-user-card">
               <div className="crm-user-info">
                 <div className="crm-user-avatar">
-                  <span>{isAr ? 'م' : 'MB'}</span>
+                  <span>{activeRole === 'super_admin' ? (isAr ? 'م' : 'MB') : (roleObj?.agentName?.charAt(0) || 'U')}</span>
                   <span className="crm-user-status-dot" title={isAr ? 'متصل ومحمي' : 'Online & Encrypted'} />
                 </div>
                 <div className="crm-user-text">
                   <span className="crm-user-name">
-                    {isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}
+                    {activeRole === 'super_admin' ? (isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz') : (roleObj?.agentName || (isAr ? 'مستشار المبيعات' : 'Sales Advisor'))}
                   </span>
                   <span className="crm-user-role-label">
-                    {activeRole === 'super_admin' ? (isAr ? 'المدير التنفيذي 👑' : 'Super Admin 👑') : (isAr ? 'مشرف عمليات' : 'Manager')}
+                    {roleObj ? (isAr ? `${roleObj.label_ar} ${roleObj.icon || ''}` : `${roleObj.label_en} ${roleObj.icon || ''}`) : (isAr ? 'مشرف عمليات' : 'Manager')}
                   </span>
                 </div>
               </div>

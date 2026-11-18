@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Building, Calculator, MessageSquare, Scale } from 'lucide-react';
+import { Home, Building, PlusCircle, MessageSquare, Scale } from 'lucide-react';
 
 export default function MobileBottomBar({ 
   lang = 'ar', 
@@ -62,10 +62,10 @@ export default function MobileBottomBar({
           <span>{isAr ? 'تواصل' : 'Contact'}</span>
         </button>
 
-        {/* 4. Financing Calculator */}
-        <Link to="/financing" className={`mob-tab-btn ${isActive('/financing') ? 'active' : ''}`}>
-          <Calculator size={20} />
-          <span>{isAr ? 'التمويل' : 'Financing'}</span>
+        {/* 4. List your property: the owner entry point (financing stays in the header menu) */}
+        <Link to="/sell" className={`mob-tab-btn ${isActive('/sell') ? 'active' : ''}`}>
+          <PlusCircle size={20} />
+          <span>{isAr ? 'اعرض عقارك' : 'List property'}</span>
         </Link>
 
         {/* 5. Compare Drawer Trigger */}

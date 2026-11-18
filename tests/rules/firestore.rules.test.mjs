@@ -1,7 +1,7 @@
 // Firestore security rules tests. Needs the Firestore emulator (Java 11+):
 //   npm run test:rules
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, collection, query, where, orderBy, limit, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -61,7 +61,7 @@ test('leads: agents claim pool leads but cannot move leads to other desks', asyn
   const east = as('agent_east');
   await assertSucceeds(setDoc(doc(east, 'leads/u'), { assignedTo: 'Sales Team A' }, { merge: true }));
   await assertFails(setDoc(doc(east, 'leads/a'), { assignedTo: 'Sales Team B' }, { merge: true }));
-  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted', outcomes: OUT }, { merge: true }));
   await assertFails(setDoc(doc(east, 'leads/b'), { status: 'contacted' }, { merge: true }));
 });
 
@@ -92,11 +92,13 @@ test('demands: contact-bearing docs are staff-only, even when published', async 
   await assertFails(setDoc(doc(guest(), 'demands/new2'), { name: 'Buyer', phone: '01000000002', status: 'published' }));
 });
 
-test('public_demands: public read, editors write contact-free published copies', async () => {
+test('public_demands: public read, only the general manager writes contact-free published copies', async () => {
   const pm = as('property_manager');
-  await assertSucceeds(setDoc(doc(pm, 'public_demands/p1'), { text_ar: 't', status: 'published', budget: 1 }));
-  await assertFails(setDoc(doc(pm, 'public_demands/p2'), { text_ar: 't', status: 'published', phone: '010' }));
-  await assertFails(setDoc(doc(pm, 'public_demands/p3'), { text_ar: 't', status: 'pending' }));
+  const gm = asAdmin();
+  await assertFails(setDoc(doc(pm, 'public_demands/p1'), { text_ar: 't', status: 'published', budget: 1 }));
+  await assertSucceeds(setDoc(doc(gm, 'public_demands/p1'), { text_ar: 't', status: 'published', budget: 1 }));
+  await assertFails(setDoc(doc(gm, 'public_demands/p2'), { text_ar: 't', status: 'published', phone: '010' }));
+  await assertFails(setDoc(doc(gm, 'public_demands/p3'), { text_ar: 't', status: 'pending' }));
   await assertFails(setDoc(doc(as('sales_agent'), 'public_demands/p4'), { text_ar: 't', status: 'published' }));
   await assertFails(setDoc(doc(guest(), 'public_demands/p5'), { text_ar: 't', status: 'published' }));
   await assertSucceeds(getDocs(collection(guest(), 'public_demands')));
@@ -169,7 +171,7 @@ test('contacts: agents edit their lead\'s contact, and leads never gain phone fi
   await assertFails(setDoc(doc(east, 'leads/c1'), { phone: '01000000098' }, { merge: true }));
   await assertFails(setDoc(doc(as('sales_manager'), 'leads/a'), { phone: '01000000097' }, { merge: true }));
   // unchanged legacy phone on an un-migrated lead doesn't block other edits
-  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted', outcomes: OUT }, { merge: true }));
 });
 
 test('contacts: a manager migrates an inline phone into lead_contacts', async () => {
@@ -220,7 +222,12 @@ test('request contacts: only sales roles read them; read-only roles do not', asy
   for (const role of ['sales_manager', 'agent_east', 'sales_agent']) {
     await assertSucceeds(getDocs(query(collection(as(role), 'request_contacts'), where('kind', '==', 'trade_ins'))));
   }
-  await assertSucceeds(getDoc(doc(as('viewer'), 'trade_ins/t1')));
+  // The requests themselves are for the team that follows them up, not read-only roles
+  for (const role of ['viewer', 'finance', 'property_manager']) {
+    await assertFails(getDoc(doc(as(role), 'trade_ins/t1')));
+  }
+  await assertSucceeds(getDoc(doc(as('agent_east'), 'trade_ins/t1')));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'trade_ins/t1')));
 });
 
 test('request contacts: a trade-in without a phone needs its contact doc; updates cannot add a phone', async () => {
@@ -293,6 +300,20 @@ test('ad stats: +1 steps only, and only for published campaigns', async () => {
   await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-2'), { impressions: 1, clicks: 0 }));
 });
 
+test('ad stats shards: same +1 rules, shard ids 0-9, staff read them as a group', async () => {
+  const g = guest();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-9' }], campaignIds: ['ad-9'] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 1, clicks: 0 }));
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 2, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 50, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/42'), { impressions: 1, clicks: 0 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-unpublished/ad_stat_shards/1'), { impressions: 1, clicks: 0 }));
+  await assertFails(getDocs(collectionGroup(g, 'ad_stat_shards')));
+  await assertSucceeds(getDocs(collectionGroup(as('viewer'), 'ad_stat_shards')));
+});
+
 // ── Site error log ───────────────────────────────────────────────────────
 test('client errors: anyone files a bounded entry; only the admin reads or clears', async () => {
   const entry = { kind: 'error', message: 'x is not a function', source: 'https://site/assets/a.js', line: 1, col: 2,
@@ -325,4 +346,547 @@ test('notify: reads the stored record over REST and claims each record once', as
   if ((await db.claimOnce('leads', 'n1')) !== false) throw new Error('second claim should lose');
   // nobody reaches the log through the SDK
   await assertFails(getDoc(doc(asAdmin(), 'notify_log/leads__n1')));
+  // a failed send gives the record back for the retry
+  await db.releaseClaim('leads', 'n1');
+  if ((await db.claimOnce('leads', 'n1')) !== true) throw new Error('claim after release should win');
+  // the status record: admins read it, nobody writes it through the SDK
+  await db.recordStatus({ ok: false, ref: 'leads/n1' }, 2);
+  await db.recordStatus({ ok: true, ref: 'leads/n2' }, 2);
+  const status = await getDoc(doc(asAdmin(), 'notify_status/whatsapp'));
+  const st = status.data();
+  if (st.lastFailRef !== 'leads/n1' || st.lastOkRef !== 'leads/n2' || st.channels !== 2 || !st.lastOkAt || !st.lastFailAt) throw new Error(`status ${JSON.stringify(st)}`);
+  await assertFails(getDoc(doc(as('sales_manager'), 'notify_status/whatsapp')));
+  await assertFails(setDoc(doc(asAdmin(), 'notify_status/whatsapp'), { lastOkAt: 'x' }));
+});
+
+test('campaign_spend: only people who manage leads read or write it', async () => {
+  await assertSucceeds(setDoc(doc(as('sales_manager'), 'campaign_spend/all'), { amounts: { 'buyers-sohag': 1200 } }));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'campaign_spend/all')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'campaign_spend/all')));
+  await assertFails(getDoc(doc(as('sales_agent'), 'campaign_spend/all')));
+  await assertFails(setDoc(doc(as('sales_agent'), 'campaign_spend/all'), { amounts: { x: 1 } }));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'campaign_spend/all')));
+});
+
+test('push_subscriptions: a member manages only their own, never the server digest record, and the private key is closed', async () => {
+  const mgr = env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
+  const sub = { endpoint: 'https://push.example/abc', keys: { p256dh: 'x', auth: 'y' } };
+  await assertSucceeds(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub], manager: true, name: 'منى', updatedAt: 'now' }));
+  await assertSucceeds(getDoc(doc(mgr, 'push_subscriptions/u-mgr')));
+  // not another member's, not with a forged digest record, not too many devices, not a stranger
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-other'), { subs: [sub] }));
+  await assertFails(getDoc(doc(as('sales_agent'), 'push_subscriptions/u-mgr')));
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub], lastDigest: { sig: '9|9|9', at: 'x' } }));
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub, sub, sub, sub, sub, sub] }));
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub], isAdmin: true }));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'push_subscriptions/u-mgr')));
+  await assertFails(getDoc(doc(asAdmin(), 'push_private/vapid')));
+  await assertFails(setDoc(doc(asAdmin(), 'push_private/vapid'), { privateKey: 'x' }));
+});
+
+test('staff_prefs: each member reads and writes only their own bell marker', async () => {
+  const mgr = env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
+  await assertSucceeds(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 1761700000000 }));
+  await assertSucceeds(getDoc(doc(mgr, 'staff_prefs/u-mgr')));
+  await assertFails(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 'yesterday' }));
+  await assertFails(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 1, role: 'super_admin' }));
+  await assertFails(getDoc(doc(mgr, 'staff_prefs/someone-else')));
+  await assertFails(setDoc(doc(guest(), 'staff_prefs/u-guest'), { alertsSeenAt: 1 }));
+});
+
+test('staff registry is server-only (api/team.js with the service account)', async () => {
+  await assertFails(getDoc(doc(asAdmin(), 'staff_registry/u1')));
+  await assertFails(setDoc(doc(asAdmin(), 'staff_registry/u1'), { role: 'super_admin' }));
+  await assertFails(setDoc(doc(guest(), 'staff_registry/u1'), { role: 'super_admin' }));
+});
+
+test('client downloads: anyone files a bounded record; only managers read it', async () => {
+  const entry = { kind: 'property_brochure', itemId: 'p1', itemTitle: 'شقة', clientName: 'سارة', clientPhone: '+201001112223',
+    clientEmail: 's@x.test', path: '/properties/p1', createdAt: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(guest(), 'client_downloads/d1'), entry));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d2'), { ...entry, kind: 'anything' }));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d3'), { ...entry, clientName: '' }));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d4'), { ...entry, extra: 1 }));
+  await assertFails(getDoc(doc(guest(), 'client_downloads/d1')));
+  await assertFails(getDoc(doc(as('agent_east'), 'client_downloads/d1')));
+  await assertFails(getDoc(doc(as('viewer'), 'client_downloads/d1')));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'client_downloads/d1')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'client_downloads/d1')));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d1'), { ...entry, clientName: 'تعديل' }));
+});
+
+// ── Access model claims (staff: true + perms + desk, set by api/team.js) ─────
+test('new-model claims: perms list is the whole truth; desk scopes leads and deals', async () => {
+  const team = env.authenticatedContext('u-team-x', { role: 'r_team_x', staff: true, perms: ['ld.edit', 'ld.phone', 'deal.edit'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(getDoc(doc(team, 'leads/a')));
+  await assertSucceeds(getDoc(doc(team, 'leads/u')));
+  await assertFails(getDoc(doc(team, 'leads/b')));
+  await assertSucceeds(setDoc(doc(team, 'deals/t1'), { assignedTo: 'Sales Team A', stage: 'qualification' }));
+  await assertFails(setDoc(doc(team, 'deals/t2'), { assignedTo: 'Sales Team B', stage: 'qualification' }));
+  await assertFails(getDoc(doc(team, 'deals/b')));
+  // a role named like a built-in one gets only the perms in its token, not the old fixed list
+  const narrowed = env.authenticatedContext('u-narrow', { role: 'sales_manager', staff: true, perms: ['ld.all'], desk: '' }).firestore();
+  await assertSucceeds(getDoc(doc(narrowed, 'leads/b')));
+  await assertFails(setDoc(doc(narrowed, 'leads/b'), { status: 'contacted' }, { merge: true }));
+  await assertFails(getDoc(doc(narrowed, 'client_downloads/x')));
+});
+
+test('session_revocations: a member reads only their own marker; nobody writes from a client', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'session_revocations/u-agent_east'), { at: serverTimestamp() });
+  });
+  const east = as('agent_east');
+  await assertSucceeds(getDoc(doc(east, 'session_revocations/u-agent_east')));
+  await assertFails(getDoc(doc(east, 'session_revocations/u-sales_agent')));
+  await assertFails(setDoc(doc(east, 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
+  await assertFails(setDoc(doc(asAdmin(), 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
+  await assertFails(getDoc(doc(guest(), 'session_revocations/u-agent_east')));
+});
+
+test('leads: moving a lead to closing / won needs deal.edit; other stages are lead work', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/w1'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+  });
+  // a custom role that edits its team's leads but has no deal rights
+  const noDeals = env.authenticatedContext('u-nodeal', { role: 'r_nodeal', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { status: 'site_visit', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closed', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closing', outcomes: OUT }, { merge: true }));
+  const withDeals = env.authenticatedContext('u-deal', { role: 'r_deal', staff: true, perms: ['ld.edit', 'ld.phone', 'deal.edit'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(setDoc(doc(withDeals, 'leads/w1'), { status: 'closed', outcomes: OUT }, { merge: true }));
+  // editing other fields of an already-won lead is not a new close
+  await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { notes: 'متابعة بعد البيع' }, { merge: true }));
+});
+
+test('deals: «deal.add» works deals but cannot close; «deal.close» can; the old «deal.edit» does both', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/dl1'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'leads/dl2'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'leads/dl3'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'deals/dd1'), { assignedTo: 'Sales Team A', title: 'x' });
+  });
+  const member = (id, perms) => env.authenticatedContext(`u-${id}`, { role: `r_${id}`, staff: true, perms: ['ld.edit', 'ld.phone', ...perms], desk: 'Sales Team A' }).firestore();
+  const adder = member('adder', ['deal.add']);
+  await assertSucceeds(setDoc(doc(adder, 'deals/dd1'), { title: 'y' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(adder, 'leads/dl1'), { status: 'site_visit', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closing', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closed', outcomes: OUT }, { merge: true }));
+  const closer = member('closer', ['deal.close']);
+  await assertSucceeds(setDoc(doc(closer, 'leads/dl2'), { status: 'closed', outcomes: OUT }, { merge: true }));
+  await assertSucceeds(setDoc(doc(closer, 'deals/dd1'), { title: 'z' }, { merge: true }));
+  const legacy = member('legacy', ['deal.edit']);
+  await assertSucceeds(setDoc(doc(legacy, 'leads/dl3'), { status: 'closing', outcomes: OUT }, { merge: true }));
+  // no deal right at all: neither deals nor closing
+  const none = member('none', []);
+  await assertFails(setDoc(doc(none, 'deals/dd1'), { title: 'q' }, { merge: true }));
+});
+
+test('finance: «fin.view» reads invoices, collections and receipts but writes nothing; «fin» does both', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'commission_invoices/i1'), { amount: 100 });
+    await setDoc(doc(ctx.firestore(), 'collections/c1'), { amount: 50 });
+    await setDoc(doc(ctx.firestore(), 'receipts/r1'), { number: 'r1', amount: 10 });
+  });
+  const viewer = env.authenticatedContext('u-fv', { role: 'r_fv', staff: true, perms: ['fin.view'] }).firestore();
+  await assertSucceeds(getDoc(doc(viewer, 'commission_invoices/i1')));
+  await assertSucceeds(getDoc(doc(viewer, 'collections/c1')));
+  await assertSucceeds(getDoc(doc(viewer, 'receipts/r1')));
+  await assertFails(setDoc(doc(viewer, 'commission_invoices/i1'), { amount: 999 }));
+  await assertFails(setDoc(doc(viewer, 'collections/c1'), { amount: 999 }));
+  const editor = env.authenticatedContext('u-fe', { role: 'r_fe', staff: true, perms: ['fin'] }).firestore();
+  await assertSucceeds(getDoc(doc(editor, 'commission_invoices/i1')));
+  await assertSucceeds(setDoc(doc(editor, 'commission_invoices/i1'), { amount: 200 }));
+  const nobody = env.authenticatedContext('u-fn', { role: 'r_fn', staff: true, perms: ['ld.edit'] }).firestore();
+  await assertFails(getDoc(doc(nobody, 'commission_invoices/i1')));
+  await assertFails(getDoc(doc(nobody, 'receipts/r1')));
+});
+
+test('analytics: read by managers/admins only, never written from a browser', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'analytics_daily/2026-10-10_0'), { date: '2026-10-10', pageViews: 3 });
+    await setDoc(doc(db, 'analytics_visitors/v_abcdefgh1234'), { intent: 12, leadId: 'a' });
+    await setDoc(doc(db, 'analytics_visitors/v_abcdefgh1234/batches/b1'), { events: [] });
+  });
+  for (const path of ['analytics_daily/2026-10-10_0', 'analytics_visitors/v_abcdefgh1234', 'analytics_visitors/v_abcdefgh1234/batches/b1']) {
+    await assertSucceeds(getDoc(doc(asAdmin(), path)));
+    await assertSucceeds(getDoc(doc(as('sales_manager'), path)));
+    await assertFails(getDoc(doc(as('sales_agent'), path)));
+    await assertFails(getDoc(doc(as('viewer'), path)));
+    await assertFails(getDoc(doc(guest(), path)));
+  }
+  await assertSucceeds(getDocs(query(collection(as('sales_manager'), 'analytics_daily'), where('date', '>=', '2026-10-01'))));
+  // the collector writes with the service account; browsers (even admins) cannot forge numbers
+  await assertFails(setDoc(doc(guest(), 'analytics_daily/2026-10-10_1'), { pageViews: 999 }));
+  await assertFails(setDoc(doc(asAdmin(), 'analytics_visitors/v_abcdefgh1234'), { intent: 999 }));
+  await assertFails(setDoc(doc(guest(), 'analytics_properties/prop-1'), { views: 999 }));
+});
+
+test('backup restore: an admin re-creates a lead with its original id and contact doc', async () => {
+  const restore = (db) => {
+    const b = writeBatch(db);
+    b.set(doc(db, 'leads/lead-1700000000000'), { name: 'Restored', assignedTo: 'Sales Team A', status: 'closed', createdAt: '2025-01-02T10:00:00.000Z', restoredAt: serverTimestamp() });
+    b.set(doc(db, 'lead_contacts/lead-1700000000000'), { phone: '01000000099', assignedTo: 'Sales Team A' });
+    return b.commit();
+  };
+  await assertSucceeds(restore(asAdmin()));
+  await assertFails(restore(as('viewer')));
+});
+
+test('merge duplicates: one batch updates the kept lead and deletes the copies (admin only)', async () => {
+  const merge = (db) => {
+    const b = writeBatch(db);
+    b.set(doc(db, 'leads/c1'), { notes: 'merged', updatedAt: serverTimestamp() }, { merge: true });
+    b.set(doc(db, 'lead_contacts/c1'), { phone: '01000000011', assignedTo: 'Sales Team A' }, { merge: true });
+    b.delete(doc(db, 'leads/c2'));
+    b.delete(doc(db, 'lead_contacts/c2'));
+    return b.commit();
+  };
+  await assertFails(merge(as('sales_manager')));
+  await assertSucceeds(merge(asAdmin()));
+});
+
+test('dashboard totals: the paged "all leads" read works per role (services/leads loadAllLeadsForStats)', async () => {
+  // desk agent: own desk + pool, paged by document id
+  const east = as('agent_east');
+  const deskPage = query(collection(east, 'leads'), where('assignedTo', 'in', ['Sales Team A', 'Unassigned']), orderBy(documentId()), limit(500));
+  const r = await assertSucceeds(getDocs(deskPage));
+  if (r.size !== 3) throw new Error(`expected 3 leads, got ${r.size}`);
+  // managers and admins: every lead
+  const all = await assertSucceeds(getDocs(query(collection(as('sales_manager'), 'leads'), orderBy(documentId()), limit(500))));
+  if (all.size !== 6) throw new Error(`expected 6 leads, got ${all.size}`);
+  await assertFails(getDocs(query(collection(east, 'leads'), orderBy(documentId()), limit(500))));
+});
+
+test('WhatsApp taps (contact_intents): server-written, staff read, lead editors only change the status', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'contact_intents/W-7K3Q'), { ref: 'W-7K3Q', channel: 'whatsapp', path: '/properties/p1', propertyId: 'p1', status: 'open' });
+  });
+  await assertFails(getDoc(doc(guest(), 'contact_intents/W-7K3Q')));
+  await assertFails(setDoc(doc(guest(), 'contact_intents/W-AAAA'), { ref: 'W-AAAA', status: 'open' }));
+  await assertSucceeds(getDoc(doc(as('viewer'), 'contact_intents/W-7K3Q')));
+  // a viewer can't handle it; an agent can, stamped with their uid and the server time
+  await assertFails(setDoc(doc(as('viewer'), 'contact_intents/W-7K3Q'), { status: 'dismissed', handledBy: 'u-viewer', handledAt: serverTimestamp() }, { merge: true }));
+  await assertSucceeds(setDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q'), { status: 'linked', leadId: 'lead-1', handledBy: 'u-sales_agent', handledAt: serverTimestamp() }, { merge: true }));
+  // the unit, page and reference can't be rewritten; nobody can sign as someone else
+  await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q'), { propertyId: 'p2', status: 'open', handledBy: 'u-sales_agent', handledAt: serverTimestamp() }, { merge: true }));
+  await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q'), { status: 'dismissed', handledBy: 'someone-else', handledAt: serverTimestamp() }, { merge: true }));
+  await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-NEW1'), { ref: 'W-NEW1', status: 'open' }));
+  await assertFails(deleteDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q')));
+});
+
+// ── api/daily-report.js against the emulator (REST reads + once-a-day claim) ──
+test('daily report: reads leads, listings and analytics over REST, claims each day once', async () => {
+  const { reportStore } = await import('../../api/daily-report.js');
+  const { buildDailyReport, reportDays, cairoDayRange } = await import('../../api/_daily-report-core.js');
+  const store = reportStore({ project_id: 'demo-1line-rules' });
+  const now = Date.now();
+  const { target } = reportDays(now);
+  const [start] = cairoDayRange(target);
+  const at = (h) => new Date(start + h * 3600 * 1000);
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'leads/r1'), { name: 'زينب', type: 'buyer', source: 'website', area: 'new_sohag', status: 'new', createdAt: at(10) });
+    await setDoc(doc(db, 'leads/r2'), { type: 'seller', status: 'contacted', createdAt: at(12), firstContactedAt: at(13).toISOString() });
+    await setDoc(doc(db, 'properties/p1'), { title_ar: 'شقة تجربة', areaKey: 'new_sohag', status: 'published', price: 1000000 });
+    await setDoc(doc(db, `analytics_daily/${target}_0`), { date: target, sessions: 40, pageViews: 90, contacts: { whatsapp: 3 } });
+    await setDoc(doc(db, `analytics_daily/${target}_3`), { date: target, sessions: 10 });
+    await setDoc(doc(db, 'analytics_properties/p1'), { propertyId: 'p1', days: { [target]: 12 } });
+    await setDoc(doc(db, 'contact_intents/i1'), { channel: 'whatsapp', propertyId: 'p1', createdAt: at(9) });
+    await setDoc(doc(db, 'settings/areas_cms'), { areas: [{ id: 'new_sohag', name_ar: 'سوهاج الجديدة' }] });
+  });
+  const data = await store.load(now);
+  if (!data.leads.some((l) => l.id === "r1") || data.daily[target].sessions !== 50 || data.daily[target].contacts.whatsapp !== 3) throw new Error(`loaded ${JSON.stringify({ leads: data.leads.map((l) => [l.id, l.createdAt]), day: data.daily[target] })}`);
+  if (data.areaNames.new_sohag !== 'سوهاج الجديدة' || data.intents.length !== 1 || data.propertyStats[0].days[target] !== 12) throw new Error('names / intents / stats');
+  const r = buildDailyReport(data, { now });
+  if (!/زيارات: 50/.test(r.text) || !/طلبات جديدة: 2 /.test(r.text) || !/شقة تجربة — 12 مشاهدة/.test(r.text) || /زينب/.test(r.text)) throw new Error(`${r.text}\n${JSON.stringify(data.leads.map((l) => [l.id, l.createdAt]))}`);
+  if ((await store.claimDay(target)) !== true) throw new Error('first claim');
+  if ((await store.claimDay(target)) !== false) throw new Error('second claim');
+  await store.releaseDay(target);
+  if ((await store.claimDay(target)) !== true) throw new Error('claim after release');
+  await assertFails(getDoc(doc(asAdmin(), `report_log/${target}`)));
+});
+
+// ── Reservation receipts: numbered from a counter, issued once ────────────
+const receipt = (db, uid, seq, extra = {}) => {
+  const id = `REC-2026-${String(seq).padStart(4, '0')}`;
+  return [doc(db, `receipts/${id}`), { number: id, year: 2026, seq, leadId: 'a', amount: 50000, totalPrice: 1000000, method: 'cash', issuedBy: uid, issuedAt: serverTimestamp(), ...extra }];
+};
+const issue = (db, uid, seq, extra = {}, counter = seq) => {
+  const b = writeBatch(db);
+  b.set(doc(db, 'counters/receipts_2026'), { last: counter, updatedAt: serverTimestamp() });
+  b.set(...receipt(db, uid, seq, extra));
+  return b.commit();
+};
+
+test('receipts: finance issues them in order, each number once, never edited', async () => {
+  const fin = as('finance');
+  await assertSucceeds(issue(fin, 'u-finance', 1));
+  await assertSucceeds(issue(asAdmin(), ADMIN_UID, 2));
+  await assertFails(issue(fin, 'u-finance', 2, {}, 3)); // the number doesn't match the counter
+  await assertFails(issue(fin, 'u-finance', 4, {}, 4)); // the counter can't jump ahead
+  await assertFails(setDoc(...receipt(fin, 'u-finance', 3))); // a receipt without moving the counter
+  await assertFails(issue(fin, 'someone-else', 3)); // issued in someone else's name
+  await assertFails(issue(fin, 'u-finance', 3, { amount: 0 }));
+  await assertSucceeds(issue(fin, 'u-finance', 3));
+  await assertFails(setDoc(doc(fin, 'receipts/REC-2026-0001'), { amount: 1 }, { merge: true }));
+  await assertFails(deleteDoc(doc(fin, 'receipts/REC-2026-0001')));
+  await assertSucceeds(getDoc(doc(fin, 'receipts/REC-2026-0001')));
+  await assertFails(getDoc(doc(as('agent_east'), 'receipts/REC-2026-0001')));
+  await assertFails(issue(as('sales_manager'), 'u-sales_manager', 4));
+});
+
+// ── Publishing needs the general manager (src/utils/publishApproval.js) ──────────────────
+test('approval: staff saves of listings and projects must wait for the general manager', async () => {
+  const pm = as('property_manager');
+  const gm = asAdmin();
+  for (const col of ['properties', 'projects']) {
+    await assertFails(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x' }));
+    await assertFails(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x', approval: 'approved' }));
+    await assertFails(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x', approval: 'rejected' }));
+    await assertSucceeds(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x', approval: 'pending' }));
+    // Removing from the site (tombstone) needs no approval
+    await assertSucceeds(setDoc(doc(pm, `${col}/s1`), { id: 's1', deleted: true }));
+    // The manager publishes and approves
+    await assertSucceeds(setDoc(doc(gm, `${col}/s2`), { id: 's2', title_ar: 'y', approval: 'approved' }));
+    await assertSucceeds(setDoc(doc(gm, `${col}/s2`), { id: 's2', title_ar: 'y' }));
+    // A staff edit to a live item sends it back for approval
+    await assertFails(setDoc(doc(pm, `${col}/s2`), { price: 5 }, { merge: true }));
+    await assertSucceeds(setDoc(doc(pm, `${col}/s2`), { price: 5, approval: 'pending' }, { merge: true }));
+  }
+  // Roles without inventory edit still can't write at all
+  await assertFails(setDoc(doc(as('sales_agent'), 'properties/s3'), { id: 's3', approval: 'pending' }));
+});
+
+// ── Inventory split by kind of item, and a separate right to publish ─────────────────────
+const withPerms = (uid, perms) => env.authenticatedContext(uid, { role: `r_${uid}`, staff: true, perms, desk: '' }).firestore();
+
+test('inventory: a projects-only role edits projects, and they wait for approval', async () => {
+  const proj = withPerms('u-proj', ['inv.projects']);
+  await assertSucceeds(setDoc(doc(proj, 'projects/x1'), { id: 'x1', title_ar: 'مشروع', approval: 'pending' }));
+  // not published on its own, and not another kind of item
+  await assertFails(setDoc(doc(proj, 'projects/x2'), { id: 'x2', title_ar: 'مشروع', approval: 'approved' }));
+  await assertFails(setDoc(doc(proj, 'properties/x1'), { id: 'x1', title_ar: 'عقار', approval: 'pending' }));
+  // editing an existing buyer request is the demands permission
+  await assertFails(updateDoc(doc(proj, 'demands/p1'), { notes: 'edited' }));
+});
+
+test('inventory: a listings-only role edits listings, not projects', async () => {
+  const list = withPerms('u-list', ['inv.listings']);
+  await assertSucceeds(setDoc(doc(list, 'properties/x1'), { id: 'x1', title_ar: 'عقار', approval: 'pending' }));
+  await assertFails(setDoc(doc(list, 'projects/x1'), { id: 'x1', title_ar: 'مشروع', approval: 'pending' }));
+});
+
+test('inventory: «كل المخزون» (inv.edit) still covers listings, projects and requests', async () => {
+  const all = withPerms('u-all', ['inv.edit']);
+  await assertSucceeds(setDoc(doc(all, 'properties/x1'), { id: 'x1', approval: 'pending' }));
+  await assertSucceeds(setDoc(doc(all, 'projects/x1'), { id: 'x1', approval: 'pending' }));
+  await assertSucceeds(setDoc(doc(all, 'demands/x1'), { name: 'Buyer', phone: '01000000002', status: 'pending' }));
+  // and still can't publish
+  await assertFails(setDoc(doc(all, 'projects/x2'), { id: 'x2', approval: 'approved' }));
+});
+
+test('inventory: inv.publish publishes and approves, without any other inventory permission', async () => {
+  const pub = withPerms('u-pub', ['inv.publish']);
+  await assertSucceeds(setDoc(doc(pub, 'properties/x1'), { id: 'x1', title_ar: 'عقار', approval: 'approved' }));
+  await assertSucceeds(setDoc(doc(pub, 'projects/x1'), { id: 'x1', title_ar: 'مشروع', approval: 'approved' }));
+  // approving what the team submitted
+  await assertSucceeds(setDoc(doc(withPerms('u-proj', ['inv.projects']), 'projects/x3'), { id: 'x3', approval: 'pending' }));
+  await assertSucceeds(setDoc(doc(pub, 'projects/x3'), { approval: 'approved' }, { merge: true }));
+  // buyer requests too
+  await assertSucceeds(setDoc(doc(withPerms('u-dem', ['inv.demands']), 'demands/d1'), { name: 'Buyer', phone: '01000000002', status: 'pending' }));
+  await assertSucceeds(updateDoc(doc(pub, 'demands/d1'), { status: 'published' }));
+  // deleting stays its own permission
+  await assertFails(deleteDoc(doc(pub, 'projects/x1')));
+});
+
+test('inventory: a role with no inventory permission still writes nothing', async () => {
+  const none = withPerms('u-none', ['ld.edit', 'ld.phone']);
+  await assertFails(setDoc(doc(none, 'properties/x1'), { id: 'x1', approval: 'pending' }));
+  await assertFails(setDoc(doc(none, 'projects/x1'), { id: 'x1', approval: 'pending' }));
+});
+
+test('approval: only the general manager publishes a buyer request', async () => {
+  const pm = as('property_manager');
+  const gm = asAdmin();
+  // Staff can add requests that wait, not published ones
+  await assertSucceeds(setDoc(doc(pm, 'demands/s1'), { name: 'Buyer', phone: '01000000002', status: 'pending' }));
+  await assertFails(setDoc(doc(pm, 'demands/s2'), { name: 'Buyer', phone: '01000000002', status: 'published' }));
+  await assertFails(updateDoc(doc(pm, 'demands/s1'), { status: 'published' }));
+  await assertSucceeds(updateDoc(doc(gm, 'demands/s1'), { status: 'published' }));
+  // On a published request, staff may change working fields but not the public text without unpublishing
+  await assertSucceeds(updateDoc(doc(pm, 'demands/p1'), { notes: 'call back Sunday' }));
+  await assertFails(updateDoc(doc(pm, 'demands/p1'), { text_ar: 'changed' }));
+  await assertSucceeds(updateDoc(doc(pm, 'demands/p1'), { text_ar: 'changed', status: 'pending' }));
+  await assertSucceeds(updateDoc(doc(gm, 'demands/s1'), { text_ar: 'gm edit' }));
+});
+
+// A logged outcome («حصل إيه؟»): what the CRM always writes with a stage change by a non-manager
+const OUT = [{ id: 'reached', at: '2026-11-17T10:00:00.000Z', by: 'u-sales_agent' }];
+
+// ── Tasks ────────────────────────────────────────────────────────────────
+const task = (over = {}) => ({
+  title: 'اتصل بالعميل', note: '', dueAt: '2026-11-14', priority: 'normal', status: 'open', kind: 'call', leadId: 'a', leadName: 'A',
+  assigneeUid: 'u-sales_agent', assigneeName: 'بياع', createdBy: 'u-sales_agent', createdByName: 'بياع', createdAt: '2026-11-13T10:00:00.000Z', doneAt: '', doneBy: '', updatedAt: '2026-11-13T10:00:00.000Z', ...over
+});
+
+test('crm_tasks: a salesperson creates, reads, ticks and deletes their own', async () => {
+  const me = as('sales_agent');
+  await assertSucceeds(setDoc(doc(me, 'crm_tasks/t1'), task()));
+  await assertSucceeds(getDoc(doc(me, 'crm_tasks/t1')));
+  await assertSucceeds(getDocs(query(collection(me, 'crm_tasks'), where('assigneeUid', '==', 'u-sales_agent'))));
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/t1'), { status: 'done', doneAt: '2026-11-13T11:00:00.000Z', doneBy: 'u-sales_agent', updatedAt: 'x' }));
+  await assertSucceeds(deleteDoc(doc(me, 'crm_tasks/t1')));
+});
+
+test('crm_tasks: a salesperson cannot give a task to someone else, forge the creator, or read the team\'s', async () => {
+  const me = as('sales_agent');
+  await assertFails(setDoc(doc(me, 'crm_tasks/t2'), task({ assigneeUid: 'u-other' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/t3'), task({ createdBy: 'u-other' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/t4'), task({ status: 'done' })));
+  await assertFails(getDocs(collection(me, 'crm_tasks'))); // the whole team's list is the manager's
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'crm_tasks/other'), task({ assigneeUid: 'u-other', createdBy: 'u-other' })); });
+  await assertFails(getDoc(doc(me, 'crm_tasks/other')));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/other'), { status: 'done' }));
+  await assertFails(deleteDoc(doc(me, 'crm_tasks/other')));
+});
+
+test('crm_tasks: a manager assigns to anyone, reads all and reassigns; a viewer or a stranger does nothing', async () => {
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'crm_tasks/m1'), task({ assigneeUid: 'u-sales_agent', createdBy: 'u-sales_manager' })));
+  await assertSucceeds(getDocs(collection(mgr, 'crm_tasks')));
+  await assertSucceeds(updateDoc(doc(mgr, 'crm_tasks/m1'), { assigneeUid: 'u-other', assigneeName: 'تاني' }));
+  await assertSucceeds(deleteDoc(doc(mgr, 'crm_tasks/m1')));
+  await assertFails(setDoc(doc(as('viewer'), 'crm_tasks/v1'), task({ assigneeUid: 'u-viewer', createdBy: 'u-viewer' })));
+  await assertFails(getDoc(doc(guest(), 'crm_tasks/m1')));
+  await assertFails(setDoc(doc(guest(), 'crm_tasks/g1'), task()));
+});
+
+test('crm_tasks: only the shape is accepted (no phone field, a title, a known priority)', async () => {
+  const me = as('sales_agent');
+  await assertFails(setDoc(doc(me, 'crm_tasks/s1'), task({ phone: '01000000000' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/s2'), task({ title: '' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/s3'), task({ priority: 'urgent' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/s4'), task({ title: 'x'.repeat(141) })));
+});
+
+// ── Monthly goals ────────────────────────────────────────────────────────
+const goals = (over = {}) => ({ team: { closed: 8, commission: 400000 }, people: { 'u-sales_agent': { closed: 3 } }, updatedAt: 'x', updatedBy: 'u-sales_manager', ...over });
+
+test('crm_goals: a manager sets them, staff read them, nobody else writes', async () => {
+  await assertSucceeds(setDoc(doc(as('sales_manager'), 'crm_goals/current'), goals()));
+  await assertSucceeds(getDoc(doc(as('sales_agent'), 'crm_goals/current')));
+  await assertSucceeds(getDoc(doc(as('viewer'), 'crm_goals/current')));
+  await assertFails(setDoc(doc(as('sales_agent'), 'crm_goals/current'), goals()));
+  await assertFails(setDoc(doc(as('viewer'), 'crm_goals/current'), goals()));
+  await assertFails(getDoc(doc(guest(), 'crm_goals/current')));
+  await assertFails(setDoc(doc(guest(), 'crm_goals/current'), goals()));
+});
+
+test('crm_goals: one document, only the known fields, and not deletable', async () => {
+  const mgr = as('sales_manager');
+  await assertFails(setDoc(doc(mgr, 'crm_goals/other'), goals()));
+  await assertFails(setDoc(doc(mgr, 'crm_goals/current'), goals({ note: 'x' })));
+  await assertFails(setDoc(doc(mgr, 'crm_goals/current'), goals({ team: 'many' })));
+  await assertFails(setDoc(doc(mgr, 'crm_goals/current'), goals({ people: Object.fromEntries(Array.from({ length: 61 }, (_, i) => [`u${i}`, { closed: 1 }])) })));
+  await assertSucceeds(setDoc(doc(mgr, 'crm_goals/current'), goals()));
+  await assertFails(deleteDoc(doc(mgr, 'crm_goals/current')));
+});
+
+const noteDoc = (uid, over = {}) => ({
+  entityType: 'lead', entityId: 'a', entityName: 'A', text: 'كلموه النهارده', mentions: [], authorUid: uid, authorName: 'م', createdAt: '2026-11-14T10:00:00.000Z', ...over
+});
+
+test('team_directory: each member writes only their own name card; staff read them all', async () => {
+  const me = as('sales_agent');
+  await assertSucceeds(setDoc(doc(me, 'team_directory/u-sales_agent'), { name: 'بياع', desk: 'Sales Team A', role: 'sales_agent', updatedAt: 'x' }));
+  await assertFails(setDoc(doc(me, 'team_directory/u-other'), { name: 'تاني', desk: '', role: '', updatedAt: 'x' }));
+  await assertFails(setDoc(doc(me, 'team_directory/u-sales_agent'), { name: 'بياع', phone: '010' }));
+  await assertSucceeds(getDocs(collection(as('viewer'), 'team_directory')));
+  await assertFails(getDocs(collection(guest(), 'team_directory')));
+});
+
+test('crm_notes on a client follow the client: managers see all, a desk agent their own queue, a mention opens one', async () => {
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'crm_notes/n1'), noteDoc('u-sales_manager', { entityId: 'a', mentions: ['u-agent_east'] })));
+  await assertSucceeds(setDoc(doc(mgr, 'crm_notes/n2'), noteDoc('u-sales_manager', { entityId: 'b' })));
+  const east = env.authenticatedContext('u-agent_east', { role: 'agent_east' }).firestore(); // desk: Sales Team A
+  const byLead = (db, id) => getDocs(query(collection(db, 'crm_notes'), where('entityType', '==', 'lead'), where('entityId', '==', id)));
+  await assertSucceeds(byLead(east, 'a'));
+  await assertFails(byLead(east, 'b'));
+  await assertSucceeds(byLead(mgr, 'b'));
+  await assertSucceeds(setDoc(doc(east, 'crm_notes/n3'), noteDoc('u-agent_east', { entityId: 'a' })));
+  await assertFails(setDoc(doc(east, 'crm_notes/n4'), noteDoc('u-agent_east', { entityId: 'b' })));
+  await assertFails(setDoc(doc(east, 'crm_notes/n5'), noteDoc('u-someone-else', { entityId: 'a' })));
+  await assertFails(byLead(guest(), 'a'));
+  // a mention lets someone outside the queue read that note
+  const west = env.authenticatedContext('u-agent_new_sohag', { role: 'agent_new_sohag' }).firestore();
+  await assertFails(getDoc(doc(west, 'crm_notes/n1')));
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'crm_notes/n6'), noteDoc('u-sales_manager', { entityId: 'a', mentions: ['u-agent_new_sohag'] })); });
+  await assertSucceeds(getDoc(doc(west, 'crm_notes/n6')));
+});
+
+test('crm_notes: the team thread is for staff, notes are never edited, only their author or a lead manager deletes', async () => {
+  const me = as('sales_agent');
+  const chat = (uid) => noteDoc(uid, { entityType: 'team', entityId: 'general', entityName: '' });
+  await assertSucceeds(setDoc(doc(me, 'crm_notes/t1'), chat('u-sales_agent')));
+  await assertSucceeds(getDocs(query(collection(as('viewer'), 'crm_notes'), where('entityType', '==', 'team'), where('entityId', '==', 'general'))));
+  await assertFails(updateDoc(doc(me, 'crm_notes/t1'), { text: 'edited' }));
+  await assertFails(setDoc(doc(me, 'crm_notes/t2'), { ...chat('u-sales_agent'), text: '' }));
+  await assertFails(setDoc(doc(me, 'crm_notes/t3'), { ...chat('u-sales_agent'), text: 'x'.repeat(1501) }));
+  await assertFails(setDoc(doc(me, 'crm_notes/t4'), { ...chat('u-sales_agent'), extra: 1 }));
+  await assertFails(setDoc(doc(guest(), 'crm_notes/t5'), chat('x')));
+  await assertFails(deleteDoc(doc(as('finance'), 'crm_notes/t1')));
+  await assertSucceeds(deleteDoc(doc(as('sales_manager'), 'crm_notes/t1')));
+  await assertSucceeds(setDoc(doc(me, 'crm_notes/t6'), chat('u-sales_agent')));
+  await assertSucceeds(deleteDoc(doc(me, 'crm_notes/t6')));
+});
+
+test('crm_mentions: anyone on the team sends one, only the person it is for reads, ticks and clears it', async () => {
+  const sender = as('sales_agent');
+  const m = (over = {}) => ({ toUid: 'u-finance', fromUid: 'u-sales_agent', fromName: 'بياع', entityType: 'lead', entityId: 'a', entityName: 'A', snippet: 'بص على ده', createdAt: '2026-11-14T10:00:00.000Z', ...over });
+  await assertSucceeds(setDoc(doc(sender, 'crm_mentions/m1'), m()));
+  await assertFails(setDoc(doc(sender, 'crm_mentions/m2'), m({ fromUid: 'u-someone-else' })));
+  await assertFails(setDoc(doc(sender, 'crm_mentions/m3'), m({ snippet: 'x'.repeat(161) })));
+  const to = as('finance');
+  await assertSucceeds(getDocs(query(collection(to, 'crm_mentions'), where('toUid', '==', 'u-finance'))));
+  await assertFails(getDoc(doc(sender, 'crm_mentions/m1')));
+  await assertFails(getDocs(query(collection(sender, 'crm_mentions'), where('toUid', '==', 'u-finance'))));
+  await assertFails(updateDoc(doc(to, 'crm_mentions/m1'), { snippet: 'changed' }));
+  await assertSucceeds(updateDoc(doc(to, 'crm_mentions/m1'), { readAt: '2026-11-14T11:00:00.000Z' }));
+  await assertFails(updateDoc(doc(sender, 'crm_mentions/m1'), { readAt: 'x' }));
+  await assertFails(deleteDoc(doc(sender, 'crm_mentions/m1')));
+  await assertSucceeds(deleteDoc(doc(to, 'crm_mentions/m1')));
+});
+
+test('leads: a non-manager cannot change a stage without a logged outcome; a manager can; other edits are free', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/sl1'), { name: 'عميل', status: 'new', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'leads/sl2'), { name: 'عميل', assignedTo: 'Sales Team A' }); // an old client with no status at all
+  });
+  const agent = env.authenticatedContext('u-stage', { role: 'r_stage', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
+  await assertFails(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted' }, { merge: true }));
+  await assertFails(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted', outcomes: [] }, { merge: true }));
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted', outcomes: OUT }, { merge: true }));
+  // writing the same stage again, or any other field, is not a stage change
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted', notes: 'متابعة' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl2'), { status: 'new' }, { merge: true }));
+  await assertFails(setDoc(doc(agent, 'leads/sl2'), { status: 'contacted' }, { merge: true }));
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'leads/sl3'), { name: 'قديم', status: 'new', assignedTo: 'Sales Team A', callOutcomes: [{ id: 'answered', at: '2026-11-01T10:00:00.000Z' }] }); });
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl3'), { status: 'contacted' }, { merge: true })); // answered through the older call prompt
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'leads/sl2'), { status: 'contacted' }, { merge: true }));
+});
+
+test('crm_tasks: a task needs a day; an older undated task can still be ticked off, but not re-saved with a bad date', async () => {
+  const me = as('sales_agent');
+  await assertFails(setDoc(doc(me, 'crm_tasks/nd1'), task({ dueAt: '' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/nd2'), task({ dueAt: 'بكرة' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/nd3'), task({ dueAt: '2026-11-14 10:00' })));
+  await assertSucceeds(setDoc(doc(me, 'crm_tasks/nd4'), task({ dueAt: '2026-11-14T10:30' })));
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'crm_tasks/old'), task({ dueAt: '' })); });
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/old'), { status: 'done', doneAt: '2026-11-13T11:00:00.000Z', doneBy: 'u-sales_agent', updatedAt: 'x' }));
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/old'), { dueAt: '2026-11-20' }));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/old'), { dueAt: 'soon' }));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/nd4'), { dueAt: '' }));
 });

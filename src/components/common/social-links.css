@@ -1,0 +1,26 @@
+/* Social accounts set in CRM → إعدادات الموقع → السوشيال; only filled networks are listed */
+.social-links { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }
+.social-link {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px;
+  border-radius: 999px; font-size: 0.85rem; font-weight: 700; text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.social-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.social-link svg { flex-shrink: 0; }
+
+.social-links--footer { margin-top: 14px; }
+.social-links--footer .social-link {
+  border: 1px solid rgba(255, 255, 255, 0.18); color: inherit;
+}
+.social-links--footer .social-link:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.35); }
+
+.social-links--page .social-link {
+  border: 1px solid rgba(13, 72, 161, 0.16); background: #fff; color: #0f172a;
+}
+.social-links--page .social-link:hover { border-color: rgba(13, 72, 161, 0.4); }
+.social-links--page .social-link--facebook svg { color: #1877f2; }
+.social-links--page .social-link--instagram svg { color: #d62976; }
+.social-links--page .social-link--youtube svg { color: #ff0000; }
+.social-links--page .social-link--tiktok svg { color: #111; }
+.dark-theme .social-links--page .social-link { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.16); color: #f1f5f9; }
+.dark-theme .social-links--page .social-link--tiktok svg { color: #fff; }

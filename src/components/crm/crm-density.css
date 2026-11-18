@@ -42,6 +42,13 @@
   min-width: 44px;
   background: var(--crm-card);
 }
+/* A cell that spans the row (an empty or loading message) is not the checkbox column: without
+   this it kept the 44px width and, on phones where rows are cards, squeezed the message into it */
+.crm-layout .crm-table td[colspan]:first-child {
+  position: static;
+  width: auto;
+  min-width: 0;
+}
 .crm-layout .crm-table :is(th, td):nth-child(2) {
   position: sticky;
   inset-inline-start: 44px;
@@ -78,10 +85,10 @@
 /* Legacy App.css badges still at 11.5px (property code, section counters) — lift to the 12px floor */
 .crm-layout :is(.prop-id-tag, .count-badge-gold) { font-size: var(--crm-text-xs) !important; }
 
-/* ── DEF-20: layering instead of white-on-white (light mode, CRM only) ──
-   Warm ivory canvas under white cards: the cards read as surfaces and the canvas no longer glares.
-   Scoped to .crm-layout because --crm-canvas is shared with the public calculators. */
-html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3EE; }
+/* ── Light mode canvas (CRM only): plain white, as the team asked; cards separate from it by their
+   hairline border instead of a tinted background. Scoped to .crm-layout because --crm-canvas is
+   shared with the public calculators. */
+html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: var(--ui-surface); }
 
 /* ── DEF-17 / DEF-22: row click + keyboard triage ── */
 .crm-layout .crm-table tbody tr.crm-lead-row { cursor: pointer; }
@@ -106,3 +113,25 @@ html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3
 .crm-layout .fcms-url-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .crm-layout .fcms-url-row label { font-size: var(--crm-text-sm); font-weight: 600; color: var(--crm-body); }
 .crm-layout .fcms-url-row input { flex: 1 1 260px; min-width: 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--crm-line-strong); background: var(--crm-card); color: var(--crm-ink); font: inherit; font-size: var(--crm-text-sm); min-height: 0 !important; }
+
+/* Properties table: cells a bit tighter so status and actions stay on screen (properties-panel.css styles the rest) */
+.admin-data-table.crm-props-table { min-width: 0; }
+.crm-layout .admin-data-table.crm-props-table :is(th, td) { padding-inline: 8px !important; }
+
+/* ── Phones (≤639px): nothing runs off the screen, rows wrap instead of hiding buttons, and the
+      numbers sit two to a row so the list starts on the first screen ── */
+@media (max-width: 639px) {
+  /* Projects table: scrolls sideways inside its frame instead of squeezing a word per line */
+  .crm-projects-table-wrap .crm-modern-table { min-width: 680px; }
+  /* Stat cards (فريق المبيعات وغيرها): two per row */
+  .crm-layout .crm-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .crm-layout .crm-stats-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .crm-layout .crm-stats-grid .crm-stat-card { padding: 12px; gap: 8px; flex-direction: column; align-items: flex-start; }
+  .crm-layout .crm-stats-grid .crm-stat-num { font-size: var(--crm-text-lg); }
+  /* Promoted-property picker (إعادة الاستهداف) and similar pill selects stay inside the screen */
+  .crm-layout .crm-select-custom-pill { max-width: 100%; min-width: 0; }
+  /* Tap targets: at least 40px for the small icon buttons on client cards and the pipeline */
+  .crm-layout :is(.crm-icon-btn, .crm-phone-copy-btn, .kanban-stage-collapse-btn) { min-width: 40px; min-height: 40px; }
+  .crm-layout :is(.crm-btn-quick, .kb-btn, .crm-leads__temp) { min-height: 40px; }
+  .crm-layout .crm-leads input[type='checkbox'] { width: 22px; height: 22px; }
+}

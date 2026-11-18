@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RotateCcw, Sparkles, SearchX, CheckCircle2, Send } from 'lucide-react';
 import PropertyCard from './PropertyCard';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { phoneProblem } from '../../utils/contactValidation';
 
 export default function ZeroResultsFallback({
   lang = 'ar',
@@ -15,6 +16,7 @@ export default function ZeroResultsFallback({
 }) {
   const isAr = lang === 'ar';
   const [demandPhone, setDemandPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [demandNote, setDemandNote] = useState('');
   const [demandSubmitted, setDemandSubmitted] = useState(false);
 
@@ -30,6 +32,9 @@ export default function ZeroResultsFallback({
   const handleQuickSubmit = (e) => {
     e.preventDefault();
     if (!demandPhone) return;
+    const phoneErr = phoneProblem(demandPhone, null, isAr);
+    if (phoneErr) { setPhoneError(phoneErr); return; }
+    setPhoneError('');
     setDemandSubmitted(true);
     handleCustomRequestWhatsApp();
   };
@@ -79,7 +84,8 @@ export default function ZeroResultsFallback({
                 type="tel"
                 placeholder={isAr ? 'رقم هاتفك أو الواتساب (مثال: 01012345678)' : 'WhatsApp Number'}
                 value={demandPhone}
-                onChange={(e) => setDemandPhone(e.target.value)}
+                onChange={(e) => { setDemandPhone(e.target.value); if (phoneError) setPhoneError(''); }}
+                aria-invalid={Boolean(phoneError)}
                 required
                 style={{
                   width: '100%',
@@ -91,6 +97,7 @@ export default function ZeroResultsFallback({
                   color: 'var(--text-primary)'
                 }}
               />
+              {phoneError && <small role="alert" style={{ color: 'var(--danger, #b42318)', fontWeight: 600 }}>{phoneError}</small>}
               <input
                 type="text"
                 placeholder={isAr ? 'ما الذي تبحث عنه؟ (مثال: شقة في الجمهورية، أو محل في الكوثر تحت 2 مليون)' : 'What are you looking for?'}

@@ -1,0 +1,24 @@
+/* «ابعت فورم تسجيل الوحدة»: the seller form link for WhatsApp / share sheet / clipboard */
+.ssl { margin-top: 14px; }
+.ssl-toggle {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 12px;
+  border: 1px dashed rgba(13, 72, 161, 0.35); background: transparent; color: #0d48a1;
+  font: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; text-align: start;
+}
+.ssl-toggle:focus-visible, .ssl-btn:focus-visible { outline: 2px solid #0d48a1; outline-offset: 2px; }
+.ssl-panel { margin-top: 10px; padding: 14px; border-radius: 14px; background: rgba(13, 72, 161, 0.05); border: 1px solid rgba(13, 72, 161, 0.12); }
+.ssl-hint { margin: 0 0 8px; font-size: 0.85rem; line-height: 1.7; color: #475569; }
+.ssl-url { display: block; overflow-wrap: anywhere; font-size: 0.78rem; color: #334155; background: rgba(255, 255, 255, 0.7); padding: 6px 8px; border-radius: 8px; }
+.ssl-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
+.ssl-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid rgba(13, 72, 161, 0.2); background: #fff; color: #0f172a;
+  font: inherit; font-size: 0.88rem; font-weight: 700; text-decoration: none; cursor: pointer;
+}
+.ssl-btn--wa { background: #25d366; border-color: #25d366; color: #fff; }
+
+.dark-theme .ssl-toggle { color: #93c5fd; border-color: rgba(147, 197, 253, 0.4); }
+.dark-theme .ssl-panel { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.12); }
+.dark-theme .ssl-hint { color: #cbd5e1; }
+.dark-theme .ssl-url { background: rgba(0, 0, 0, 0.25); color: #e2e8f0; }
+.dark-theme .ssl-btn:not(.ssl-btn--wa) { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.18); color: #f1f5f9; }

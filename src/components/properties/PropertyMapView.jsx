@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { isAgricultural, isIndustrial } from '../../utils/propertyKinds';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
-import { Layers, Satellite, Map as MapIcon, Maximize2, Minimize2, X, Navigation, TrendingUp, Sparkles, Landmark, Filter } from 'lucide-react';
+import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
+import './map-layout.css';
+import { Layers, Satellite, Map as MapIcon, Maximize2, Minimize2, X, Navigation, TrendingUp, Sparkles, Landmark, Filter, Search } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import { mapLayout, pinPriceLabel, escapeHtml } from '../../utils/mapPins';
+import { sizeLabel } from '../../utils/propertyKinds';
+import { getAreas } from '../../utils/areasData';
+import { thumbUrl } from '../../utils/imageThumbs';
+
+// Area centre from the areas the CRM manages ({ lat, lng }), used for the area bubbles
+const areaCenterOf = (key) => {
+  const c = getAreas().find((a) => a.id === key)?.center;
+  return c && Number.isFinite(Number(c.lat)) ? { lat: Number(c.lat), lng: Number(c.lng) } : null;
+};
 
 // Fix Leaflet Default Marker Icon issues in Webpack/Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -193,6 +207,8 @@ export default function PropertyMapView({
   hoveredPropertyId = null,
   onHoverProperty,
   onFilterChange,
+  onBoundsChange,
+  viewBounds = null,
   currency = 'EGP',
   lang = 'ar'
 }) {
@@ -202,14 +218,21 @@ export default function PropertyMapView({
   const landmarksRef = useRef([]);
   const districtPolygonsRef = useRef([]);
   const tileLayerRef = useRef(null);
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
   
   const [mapType, setMapType] = useState('satellite'); // 'streets' | 'satellite'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeDistrict, setActiveDistrict] = useState('all');
-  const [showBoundaries, setShowBoundaries] = useState(true);
-  const [showLandmarks, setShowLandmarks] = useState(true);
+  // Off at first so the unit pins and area circles are readable; one tap turns them on
+  const [showBoundaries, setShowBoundaries] = useState(false);
+  const [showLandmarks, setShowLandmarks] = useState(false);
   const [mapPropertyTypeFilter, setMapPropertyTypeFilter] = useState('all');
   const [districtHudInfo, setDistrictHudInfo] = useState(null);
+  const [mapMoved, setMapMoved] = useState(false);
+  const [zoom, setZoom] = useState(14);
+  const fittingRef = useRef(false);
 
   const isAr = lang === 'ar';
 
@@ -228,6 +251,8 @@ export default function PropertyMapView({
   // Filter properties on the map if the user chooses a type from the map HUD
   const visibleMapProperties = useMemo(() => {
     if (mapPropertyTypeFilter === 'all') return properties;
+    if (mapPropertyTypeFilter === 'agricultural') return properties.filter(isAgricultural);
+    if (mapPropertyTypeFilter === 'industrial') return properties.filter(isIndustrial);
     return properties.filter(p => p.type === mapPropertyTypeFilter);
   }, [properties, mapPropertyTypeFilter]);
 
@@ -257,11 +282,31 @@ export default function PropertyMapView({
         maxZoom: 19
       }).addTo(map);
 
+      // Popup links open the listing inside the app (no full page reload)
+      map.on('popupopen', (e) => {
+        const link = e.popup.getElement()?.querySelector('a.popup-cta-btn');
+        if (!link || link.dataset.spa) return;
+        link.dataset.spa = '1';
+        link.addEventListener('click', (ev) => {
+          if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button === 1) return;
+          ev.preventDefault();
+          navigateRef.current(link.getAttribute('href'));
+        });
+      });
+
       mapInstanceRef.current = map;
     }
 
     return () => {
-      // Map cleanup
+      // Release Leaflet (listeners, tiles, the container's _leaflet_id) so a remount starts clean
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      tileLayerRef.current = null;
+      markersRef.current = [];
+      landmarksRef.current = [];
+      districtPolygonsRef.current = [];
     };
   }, []);
 
@@ -295,7 +340,9 @@ export default function PropertyMapView({
     }, 250);
   };
 
-  // Update Markers with prominent Luxury 3D Location Pins
+  // Pins for listings placed on the map in the CRM; one bubble per area for all the others
+  const layout = useMemo(() => mapLayout(visibleMapProperties, areaCenterOf), [visibleMapProperties]);
+
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -305,28 +352,68 @@ export default function PropertyMapView({
 
     const bounds = [];
 
-    visibleMapProperties.forEach(prop => {
-      if (!prop.coordinates) return;
+    // Circles closer than ~100px at this zoom merge into one; zooming in splits them again
+    const map = mapInstanceRef.current;
+    const merged = [];
+    layout.bubbles.forEach((g) => {
+      const pt = map.project([g.lat, g.lng], zoom);
+      const near = merged.find((m) => m.pt.distanceTo(pt) < 100);
+      if (near) {
+        near.count += g.count;
+        near.areaKeys.push(g.areaKey);
+        if (g.minPrice > 0 && (near.minPrice === 0 || g.minPrice < near.minPrice)) near.minPrice = g.minPrice;
+      } else {
+        merged.push({ ...g, pt, areaKeys: [g.areaKey] });
+      }
+    });
 
-      const { lat, lng } = prop.coordinates;
+    merged.forEach((g) => {
+      bounds.push([g.lat, g.lng]);
+      const area = getAreas().find((x) => x.id === g.areaKey);
+      const single = g.areaKeys.length === 1;
+      const areaName = escapeHtml(single
+        ? ((isAr ? (area?.name_ar || area?.label_ar) : (area?.name_en || area?.name_ar)) || g.areaKey)
+        : (isAr ? `${g.areaKeys.length} مناطق قريبة` : `${g.areaKeys.length} nearby areas`));
+      const from = g.minPrice > 0 ? (isAr ? `من ${pinPriceLabel(g.minPrice, true)}` : `from ${pinPriceLabel(g.minPrice, false)}`) : '';
+      const html = `
+        <div class="map-area-bubble" title="${areaName}">
+          <strong>${g.count}</strong>
+          <span>${isAr ? 'وحدة' : 'units'}${from ? ` · ${from}` : ''}</span>
+          <small>${areaName}</small>
+        </div>`;
+      const icon = L.divIcon({ className: 'custom-leaflet-area-bubble', html, iconSize: [108, 52], iconAnchor: [54, 26] });
+      const marker = L.marker([g.lat, g.lng], { icon, keyboard: true, title: areaName }).addTo(mapInstanceRef.current);
+      marker.on('click', () => {
+        if (!single) { map.flyTo([g.lat, g.lng], Math.min(zoom + 2, 17), { duration: 0.6 }); return; }
+        if (onFilterChange) onFilterChange('area', g.areaKey);
+        map.flyTo([g.lat, g.lng], 15, { duration: 0.8 });
+      });
+      markersRef.current.push(marker);
+    });
+
+    layout.pins.forEach(prop => {
+      const lat = Number(prop.coordinates.lat);
+      const lng = Number(prop.coordinates.lng);
       bounds.push([lat, lng]);
 
-      const title = isAr ? prop.title_ar : prop.title_en;
-      const location = isAr ? prop.locationName_ar : prop.locationName_en;
+      const title = escapeHtml(isAr ? prop.title_ar : (prop.title_en || prop.title_ar));
+      const location = escapeHtml(isAr ? prop.locationName_ar : (prop.locationName_en || prop.locationName_ar));
       const isSelected = selectedProperty?.id === prop.id;
       const isHovered = hoveredPropertyId === prop.id;
 
-      // Price formatting for Luxury Beacon Pin (EGP)
-      const priceObj = formatCurrencyPrice(prop.price, 'EGP', lang);
-      const pinPriceLabel = (prop.price / 1000000).toFixed(1) + (isAr ? ' م.ج' : 'M');
+      const priceObj = formatCurrencyPrice(prop.price, currency, lang);
+      const pinLabel = escapeHtml(pinPriceLabel(prop.price, isAr));
+      const hasPrice = Number(prop.price) > 0;
+      const image = escapeHtml(prop.images && prop.images[0] ? thumbUrl(prop.images[0]) : '/no-photo.svg');
+      const badge = prop.badge_ar ? `<span class="popup-badge-pill">${escapeHtml(isAr ? prop.badge_ar : (prop.badge_en || prop.badge_ar))}</span>` : '';
 
-      // Luxury Beacon Pin with Pointer Needle directly hitting the property unit
+      // Price pin with a pointer on the listing's spot
       const customPinHtml = `
         <div class="property-map-pin-container ${isSelected ? 'is-selected' : ''} ${isHovered ? 'is-hovered' : ''}">
           <div class="pin-pulse-radar"></div>
           <div class="pin-bubble-pill">
             <span class="pin-badge-dot"></span>
-            <span class="pin-price-label">${pinPriceLabel}</span>
+            <span class="pin-price-label">${pinLabel}</span>
           </div>
           <div class="pin-needle-pointer"></div>
         </div>
@@ -335,12 +422,12 @@ export default function PropertyMapView({
       const customIcon = L.divIcon({
         className: 'custom-leaflet-property-icon',
         html: customPinHtml,
-        iconSize: [84, 46],
-        iconAnchor: [42, 46],
+        iconSize: [96, 46],
+        iconAnchor: [48, 46],
         popupAnchor: [0, -48]
       });
 
-      const marker = L.marker([lat, lng], { 
+      const marker = L.marker([lat, lng], {
         icon: customIcon,
         zIndexOffset: (isSelected || isHovered) ? 1000 : 0
       }).addTo(mapInstanceRef.current);
@@ -348,8 +435,8 @@ export default function PropertyMapView({
       const popupContent = `
         <div class="luxury-map-popup-card">
           <div class="popup-thumb-wrap">
-            <img src="${prop.images && prop.images[0] ? prop.images[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80'}" alt="${title}" class="popup-thumb-img" />
-            <span class="popup-badge-pill">${prop.badge_ar || (isAr ? 'معتمد' : 'Verified')}</span>
+            <img src="${image}" alt="${title}" class="popup-thumb-img" />
+            ${badge}
           </div>
           <div class="popup-details-body">
             <h5 class="popup-property-title">${title}</h5>
@@ -358,21 +445,21 @@ export default function PropertyMapView({
             </div>
             <div class="popup-price-row">
               <div>
-                <strong style="color: var(--primary, #071e3d); font-size: 0.95rem;">${priceObj.primary} ${priceObj.symbol}</strong>
+                <strong class="popup-price">${hasPrice ? `${escapeHtml(priceObj.primary)} ${escapeHtml(priceObj.symbol)}` : escapeHtml(pinPriceLabel(0, isAr))}</strong>${hasPrice && priceObj.approx ? `<div class="popup-approx">${escapeHtml(priceObj.approx)}</div>` : ''}
               </div>
-              <span class="popup-size">${prop.size || ''} ${isAr ? 'م²' : 'sqm'}</span>
+              <span class="popup-size">${escapeHtml(sizeLabel(prop, isAr))}</span>
             </div>
-            <a href="/properties/${prop.id}" class="popup-cta-btn" style="display: block; margin-top: 8px; text-align: center; background: #071e3d; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
-              ${isAr ? 'عرض الملف والتوثيق ↗' : 'View Property Details ↗'}
+            <a href="/properties/${encodeURIComponent(prop.id)}" class="popup-cta-btn">
+              ${isAr ? 'تفاصيل الوحدة ↗' : 'View details ↗'}
             </a>
           </div>
         </div>
       `;
 
-      marker.bindPopup(popupContent, { 
-        maxWidth: 270, 
+      marker.bindPopup(popupContent, {
+        maxWidth: 270,
         minWidth: 240,
-        className: 'custom-property-leaflet-popup' 
+        className: 'custom-property-leaflet-popup'
       });
 
       marker.on('click', () => {
@@ -390,10 +477,32 @@ export default function PropertyMapView({
       markersRef.current.push(marker);
     });
 
-    if (bounds.length > 0 && mapInstanceRef.current && !selectedProperty && activeDistrict === 'all') {
+    if (bounds.length > 0 && mapInstanceRef.current && !selectedProperty && activeDistrict === 'all' && !viewBounds) {
+      fittingRef.current = true;
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
-  }, [visibleMapProperties, isAr, lang, selectedProperty, hoveredPropertyId, onSelectProperty, onHoverProperty, activeDistrict, currency]);
+  }, [layout, zoom, isAr, lang, selectedProperty, hoveredPropertyId, onSelectProperty, onHoverProperty, onFilterChange, activeDistrict, currency, viewBounds]);
+
+  // "ابحث في المنطقة دي": after the visitor pans or zooms, offer to limit the list to the view
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return undefined;
+    const onMoveEnd = () => {
+      setZoom(map.getZoom());
+      if (fittingRef.current) { fittingRef.current = false; return; }
+      setMapMoved(true);
+    };
+    map.on('moveend', onMoveEnd);
+    return () => { map.off('moveend', onMoveEnd); };
+  }, []);
+
+  const searchThisArea = () => {
+    const map = mapInstanceRef.current;
+    if (!map || !onBoundsChange) return;
+    const b = map.getBounds();
+    onBoundsChange({ south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() });
+    setMapMoved(false);
+  };
 
   // Landmarks Layer
   useEffect(() => {
@@ -466,7 +575,7 @@ export default function PropertyMapView({
       const tooltipContent = `
         <div style="font-family: Cairo, sans-serif; text-align: ${isAr ? 'right' : 'left'}; direction: ${isAr ? 'rtl' : 'ltr'}; padding: 4px;">
           <strong style="color: #081226; font-size: 0.85rem; display: block; margin-bottom: 2px;">📍 ${isAr ? dist.label_ar : dist.label_en}</strong>
-          <div style="color: #475569; font-size: 0.75rem;">${isAr ? 'متوسط سعر المتر:' : 'Avg Sqm:'} <strong style="color: #0d48a1;">${dist.avgPricePerSqm.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}</strong></div>
+          <div style="color: #475569; font-size: 0.75rem;">${isAr ? 'متوسط سعر المتر:' : 'Avg Sqm:'} <strong style="color: #0d48a1;">${dist.avgPricePerSqm.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}</strong></div>
           <div style="color: #10b981; font-size: 0.75rem; font-weight: bold;">${isAr ? 'معدل النمو السنوي:' : 'Annual Growth:'} ${dist.appreciation} 📈</div>
         </div>
       `;
@@ -582,7 +691,9 @@ export default function PropertyMapView({
           { id: 'apartment', label_ar: 'شقق', label_en: 'Apartments' },
           { id: 'villa', label_ar: 'فيلات', label_en: 'Villas' },
           { id: 'commercial', label_ar: 'تجاري', label_en: 'Commercial' },
-          { id: 'land', label_ar: 'أراضي', label_en: 'Land' }
+          { id: 'land', label_ar: 'أراضي', label_en: 'Land' },
+          { id: 'agricultural', label_ar: 'زراعي', label_en: 'Farmland' },
+          { id: 'industrial', label_ar: 'صناعي', label_en: 'Industrial' }
         ].map(item => (
           <button
             key={item.id}
@@ -631,7 +742,7 @@ export default function PropertyMapView({
           <div className="hud-metrics-grid">
             <div className="hud-metric-box">
               <span className="hud-metric-label">{isAr ? 'متوسط المتر' : 'Avg Sqm'}</span>
-              <strong className="hud-metric-val">{districtHudInfo.avgPricePerSqm.toLocaleString()} ج.م</strong>
+              <strong className="hud-metric-val">{districtHudInfo.avgPricePerSqm.toLocaleString('en-US')} ج.م</strong>
             </div>
             <div className="hud-metric-box growth-box">
               <span className="hud-metric-label">{isAr ? 'النمو السنوي' : 'Growth'}</span>
@@ -664,6 +775,18 @@ export default function PropertyMapView({
           )}
         </div>
       )}
+
+      {mapMoved && onBoundsChange && (
+        <button type="button" className="map-search-area-btn" onClick={searchThisArea}>
+          <Search size={14} aria-hidden="true" /> {isAr ? 'ابحث في المنطقة دي' : 'Search this area'}
+        </button>
+      )}
+
+      <p className="map-legend-note" role="note">
+        {isAr
+          ? `الدبوس = موقع الوحدة بالظبط. الدايرة = وحدات المنطقة (دوس عليها تتفلتر).${layout.unplaced ? ` ${layout.unplaced} وحدة مالهاش منطقة على الخريطة.` : ''}`
+          : `Pin = exact spot. Circle = listings in that area (tap to filter).${layout.unplaced ? ` ${layout.unplaced} listings have no area on the map.` : ''}`}
+      </p>
 
       <div ref={mapContainerRef} className="interactive-leaflet-map" />
     </div>

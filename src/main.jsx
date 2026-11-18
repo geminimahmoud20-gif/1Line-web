@@ -1,19 +1,34 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import 'leaflet/dist/leaflet.css'
 import './index.css'
 import './styles/art-direction.css'
 import App from './App.jsx'
 import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 import { installErrorReporter } from './utils/errorReporter.js'
+import { installLatinDigits } from './utils/latinDigits.js'
+// Catches the browser's install offer before React mounts (it fires once, early)
+import './utils/pwaInstall.js'
+import { setManifestFor } from './utils/appManifest';
+
+// Before the browser checks installability: the CRM installs as its own app
+setManifestFor(window.location.pathname);
+import { installContactIntents } from './utils/contactIntent.js'
 
 // Visitors' errors and CSP violations → CRM → System → Site errors
 installErrorReporter()
 
-// Auto-heal new deployments when CSS/JS chunks are updated on the server
-window.addEventListener('vite:preloadError', (event) => {
-  event.preventDefault();
+// One digit style everywhere (0-9), including text from the database typed with ٠-٩
+installLatinDigits()
+
+// WhatsApp taps to the company number get a reference the CRM can link to the chat
+installContactIntents()
+
+// A tab opened before a deploy asks for chunk files the new deploy no longer has: reload once to
+// pick up the new version. The error is NOT swallowed (no preventDefault): swallowing it made the
+// import resolve to undefined and React.lazy crash with «Cannot read properties of undefined
+// (reading 'default')». The ErrorBoundary shows «بنحدّث الصفحة» meanwhile.
+window.addEventListener('vite:preloadError', () => {
   const reloadKey = '1line_vite_preload_reload';
   const lastAttempt = sessionStorage.getItem(reloadKey);
   if (!lastAttempt || (Date.now() - Number(lastAttempt)) > 15000) {

@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Landmark, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle, Landmark, Briefcase, Info, Phone, MessageCircle, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
+import InstallAppButton from './InstallAppButton';
 import CurrencySwitcher from './CurrencySwitcher';
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getPhoneCallUrl } from '../../utils/founderCmsData';
+import '../../styles/mobile-drawer.css';
+import { tagged } from '../../utils/shareLinks';
+import './header-services-menu.css';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { useClientAuth } from '../../context/ClientAuthContext';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function Header({ 
   lang = 'ar', 
@@ -24,6 +30,10 @@ export default function Header({
   onOpenFavorites
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // The phone menu starts right under the header capsule, wherever that ends on this phone
+  const capsuleRef = useRef(null);
+  const [menuTop, setMenuTop] = useState(76);
+  useBodyScrollLock(mobileMenuOpen);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const dropdownTimeoutRef = useRef(null);
@@ -75,6 +85,30 @@ export default function Header({
     };
   }, []);
 
+  // While the menu is open the bottom bar and floating buttons step aside (they used to cover its end)
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+    document.documentElement.classList.add('mobile-menu-open');
+    return () => document.documentElement.classList.remove('mobile-menu-open');
+  }, [mobileMenuOpen]);
+
+  // Handle browser back button & escape key to close mobile drawer
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    window.history.pushState({ mobileDrawerOpen: true }, '');
+    const handlePopState = () => setMobileMenuOpen(false);
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setMobileMenuOpen(false); };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (window.history.state?.mobileDrawerOpen) {
+        window.history.back();
+      }
+    };
+  }, [mobileMenuOpen]);
+
   const handleMouseEnter = (id) => {
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
@@ -114,104 +148,116 @@ export default function Header({
       icon: Layers
     },
     {
-      id: 'demands',
+      id: 'sell',
       type: 'link',
-      path: '/demands',
-      label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
-      title: isAr ? 'طلبات المشترين' : 'Buyer Demands',
-      icon: FileText
+      path: '/sell',
+      label: isAr ? 'اعرض عقارك' : 'List Property',
+      title: isAr ? 'اعرض عقارك للبيع أمام نخبة المشترين والمستثمرين' : 'List your property for sale',
+      icon: PlusCircle
     },
     {
-      id: 'about',
+      id: 'match',
       type: 'link',
-      path: '/about',
-      label: isAr ? 'عن الشركة' : 'About Us',
-      title: isAr ? 'عن 1Line ورؤية الإدارة والمؤسس' : 'About 1Line & Leadership',
-      icon: Award
+      path: '/match',
+      label: isAr ? 'رشح لي عقاري' : 'Find my property',
+      title: isAr ? 'قولنا عايز إيه ونرشّحلك الأنسب' : 'Tell us what you need, we match it',
+      icon: Sparkles
     },
     {
-      id: 'vip-services',
+      // Five links stay in the bar; buyer demands and the VIP services share one menu
+      id: 'services',
       type: 'dropdown',
-      label: isAr ? 'استشارات VIP' : 'VIP Advisory',
-      title: isAr ? 'خدمات واستشارات VIP' : 'VIP Services & Advisory',
+      label: isAr ? 'خدمات' : 'Services',
+      title: isAr ? 'طلبات المشترين وخدمات واستشارات VIP' : 'Buyer demands, VIP services & advisory',
       icon: Sparkles,
-      badge: 'VIP',
-      badgeType: 'gold',
-      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
-      items: [
+      activePaths: ['/broker', '/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/trade-in', '/commercial-hub'],
+      // Three short sections so the menu reads at a glance: buy & sell, prices & finance, premium clients
+      groups: [
         {
-          path: '/trade-in',
-          label: isAr ? 'بدّل عقارك (البدل العقاري)' : 'Trade in your property',
-          desc: isAr ? 'شقة بفيلا، أرض بعمارة — بفرق كاش أو رأس برأس' : 'Swap with or without a cash difference',
-          badge: isAr ? 'جديد' : 'New',
-          badgeType: 'gold',
-          icon: Repeat2
+          id: 'deal',
+          title: isAr ? 'بيع وشراء' : 'Buy & sell',
+          items: [
+            { path: '/match', label: isAr ? 'رشح لي عقاري' : 'Find my property', desc: isAr ? 'شقة، محل، أرض… ونرشّحلك الأنسب' : 'Any property, the best fits', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
+            { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', desc: isAr ? 'مشترين بيدوّروا على عقار زي عقارك' : 'Buyers looking for a property like yours', icon: FileText },
+            { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade in', desc: isAr ? 'بفرق كاش أو رأس برأس' : 'With or without a cash difference', badge: isAr ? 'جديد' : 'New', icon: Repeat2 },
+            { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', desc: isAr ? 'الموقع والركن وحاسبة العائد' : 'Location, parking & yield', icon: Stethoscope },
+            { path: '/broker', label: isAr ? 'شبكة الوسطاء' : 'Brokers network', desc: isAr ? 'اعرض وحدات عملائك وطلباتهم معانا' : 'List your clients’ units and requests with us', icon: Users }
+          ]
         },
         {
-          path: '/commercial-hub',
-          label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices',
-          desc: isAr ? 'مؤشرات الكثافة والركن وحاسبة العائد' : 'Traffic, parking & yield indicators',
-          icon: Stethoscope
+          id: 'prices',
+          title: isAr ? 'أسعار وتمويل' : 'Prices & finance',
+          items: [
+            { path: '/market-intelligence', label: isAr ? 'أسعار المتر في سوهاج' : 'Price per m²', desc: isAr ? 'متوسط كل منطقة من العروض الحالية' : 'Each area, from current listings', icon: TrendingUp },
+            { path: '/financing', label: isAr ? 'التمويل والتقسيط' : 'Financing', desc: isAr ? 'حاسبة القسط وبرامج التمويل' : 'Instalment calculator & programmes', icon: Landmark }
+          ]
         },
         {
-          path: '/private-office',
-          label: isAr ? 'المكتب الخاص: صفقات خاصة وحصرية (Off-Market)' : '1Line Private Office (Off-Market)',
-          desc: isAr ? 'عقارات وقصور مليونية حصرية بأعلى معايير الخصوصية' : 'Exclusive multi-million acquisitions & estates',
-          badge: 'Private',
-          badgeType: 'gold',
-          icon: Lock
-        },
-        {
-          path: '/special-requests',
-          label: isAr ? 'طلب عقار خاص VIP' : 'VIP Bespoke Requests',
-          desc: isAr ? 'طلب بمواصفات خاصة وخصوصية تامة' : 'Private bespoke sourcing for premium clients',
-          badge: 'VIP',
-          badgeType: 'gold',
-          icon: Sparkles
-        },
-        {
-          path: '/market-intelligence',
-          label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence',
-          desc: isAr ? 'تحليل يومي لسعر المتر بسوهاج' : 'Real-time sqm price indices & trends',
-          icon: TrendingUp
-        },
-        {
-          path: '/financing',
-          label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Installments',
-          desc: isAr ? 'محاكاة القسط حتى 7 سنوات' : 'Mortgage & installment calculator',
-          icon: Landmark
-        },
-        {
-          path: '/investor',
-          label: isAr ? 'بوابة كبار المستثمرين' : 'Investor Portal',
-          desc: isAr ? 'محافظ عقارية وأراضي كبرى' : 'High-yield portfolios & lands',
-          badge: 'ROI',
-          badgeType: 'gold',
-          icon: Award
+          id: 'vip',
+          title: isAr ? 'كبار العملاء' : 'Premium clients',
+          items: [
+            { path: '/private-office', label: isAr ? 'المكتب الخاص' : 'Private office', desc: isAr ? 'صفقات حصرية بسرية تامة' : 'Off-market deals in confidence', badge: isAr ? 'حصري' : 'Exclusive', icon: Lock },
+            { path: '/special-requests', label: isAr ? 'اطلب عقار بمواصفاتك' : 'Bespoke request', desc: isAr ? 'نوصلك للعقار اللي في دماغك' : 'We source exactly what you want', badge: 'VIP', icon: Sparkles },
+            { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', desc: isAr ? 'أراضي ومحافظ استثمارية كبيرة' : 'Large land & portfolios', icon: Briefcase }
+          ]
         }
       ]
     }
   ];
 
-  // Flat nav list for mobile drawer
-  const flatMobileLinks = [
-    { path: '/', label: isAr ? 'الرئيسية' : 'Home', icon: Home },
-    { path: '/properties', label: isAr ? 'العقارات المعتمدة' : 'Properties', icon: Building },
-    { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers },
-    { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands', icon: FileText },
-    { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade-in', badge: isAr ? 'جديد' : 'New', badgeType: 'gold', icon: Repeat2 },
-    { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Commercial hub', icon: Stethoscope },
-    { path: '/about', label: isAr ? 'عن الشركة والمؤسس' : 'About & Founder', icon: Award },
-    { path: '/private-office', label: isAr ? 'المكتب الخاص (Off-Market)' : 'Private Office', badge: 'Private', badgeType: 'gold', icon: Lock },
-    { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
-    { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp },
-    { path: '/financing', label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing', icon: Landmark },
-    { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', icon: Award }
+  // Phone menu: three short groups, each link with its own icon, badges in Arabic
+  const mobileGroups = [
+    {
+      id: 'browse',
+      title: isAr ? 'تصفّح' : 'Browse',
+      links: [
+        { path: '/', label: isAr ? 'الرئيسية' : 'Home', icon: Home },
+        { path: '/properties', label: isAr ? 'العقارات' : 'Properties', icon: Building },
+        { path: '/match', label: isAr ? 'رشح لي عقاري' : 'Find my property', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
+        { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects & compounds', icon: Layers },
+        { path: '/developers', label: isAr ? 'شركات التطوير' : 'Developers', icon: Building },
+        { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', icon: FileText },
+        { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', icon: Stethoscope },
+        { path: '/market-intelligence', label: isAr ? 'أسعار المتر في سوهاج' : 'Price per m²', icon: TrendingUp }
+      ]
+    },
+    {
+      id: 'services',
+      title: isAr ? 'خدمات' : 'Services',
+      links: [
+        { path: '/sell', label: isAr ? 'اعرض عقارك للبيع' : 'Sell your property', icon: PlusCircle },
+        { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade in', badge: isAr ? 'جديد' : 'New', icon: Repeat2 },
+        { path: '/financing', label: isAr ? 'التمويل والتقسيط' : 'Financing', icon: Landmark },
+        { path: '/broker', label: isAr ? 'شبكة الوسطاء' : 'Brokers network', icon: Users },
+        { path: '/special-requests', label: isAr ? 'اطلب عقار بمواصفاتك' : 'Request a property', badge: 'VIP', icon: Sparkles }
+      ]
+    },
+    {
+      id: 'about',
+      title: isAr ? 'عن 1Line' : 'About 1Line',
+      links: [
+        { path: '/about', label: isAr ? 'عن الشركة والمؤسس' : 'About & founder', icon: Info },
+        { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', icon: Briefcase },
+        { path: '/private-office', label: isAr ? 'المكتب الخاص لكبار العملاء' : 'Private office', badge: isAr ? 'حصري' : 'Exclusive', icon: Lock }
+      ]
+    }
   ];
+  const Chevron = isAr ? ChevronLeft : ChevronRight;
+  const closeMenu = () => setMobileMenuOpen(false);
+  // The phone's own share sheet (WhatsApp, Messenger, copy…) for the page on screen; the site's
+  // share window where the browser has none
+  const shareThisPage = async () => {
+    closeMenu();
+    const url = tagged(window.location.href.split('#')[0], 'share_sheet');
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, url }); return; } catch (err) { if (err?.name === 'AbortError') return; }
+    }
+    onOpenShare?.();
+  };
 
   return (
     <header className="site-header sticky-header" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="header-container glass-capsule">
+      <div className="header-container glass-capsule" ref={capsuleRef}>
         {/* Mobile One-Step Back Navigation Button */}
         {location.pathname !== '/' && (
           <button
@@ -275,7 +321,7 @@ export default function Header({
               >
                 <button
                   type="button"
-                  className={`luxury-nav-pill ${groupActive ? 'active' : ''} ${isOpen ? 'open' : ''} ${hub.id === 'vip-services' ? 'vip-nav-pill' : ''}`}
+                  className={`luxury-nav-pill ${groupActive ? 'active' : ''} ${isOpen ? 'open' : ''} ${hub.id === 'services' ? 'vip-nav-pill' : ''}`}
                   onClick={() => setActiveDropdown(isOpen ? null : hub.id)}
                   title={hub.title || hub.label}
                   aria-expanded={isOpen}
@@ -291,34 +337,33 @@ export default function Header({
                 </button>
 
                 {isOpen && (
-                  <div className="luxury-dropdown-menu">
-                    {hub.items.map((item) => {
-                      const ItemIcon = item.icon;
-                      const itemActive = isActive(item.path);
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className={`luxury-dropdown-item ${itemActive ? 'active' : ''}`}
-                          onClick={() => setActiveDropdown(null)}
-                        >
-                          <div className="dropdown-item-icon-box">
-                            <ItemIcon size={15} />
-                          </div>
-                          <div className="dropdown-item-text">
-                            <div className="dropdown-item-title-row">
-                              <span className="dropdown-item-title">{item.label}</span>
-                              {item.badge && (
-                                <span className={`luxury-badge luxury-badge-${item.badgeType || 'gold'}`}>
-                                  {item.badge}
+                  <div className="luxury-dropdown-menu svc-menu" role="menu">
+                    {hub.groups.map((group) => (
+                      <section key={group.id} className="svc-col" aria-label={group.title}>
+                        <h3 className="svc-col-title">{group.title}</h3>
+                        {group.items.map((item) => {
+                          const ItemIcon = item.icon;
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              role="menuitem"
+                              className={`svc-item ${isActive(item.path) ? 'active' : ''}`}
+                              onClick={() => setActiveDropdown(null)}
+                            >
+                              <span className="svc-icon"><ItemIcon size={16} /></span>
+                              <span className="svc-text">
+                                <span className="svc-title">
+                                  {item.label}
+                                  {item.badge && <span className="svc-badge">{item.badge}</span>}
                                 </span>
-                              )}
-                            </div>
-                            <span className="dropdown-item-desc">{item.desc}</span>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                                <span className="svc-desc">{item.desc}</span>
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </section>
+                    ))}
                   </div>
                 )}
               </div>
@@ -397,12 +442,12 @@ export default function Header({
               <CurrencySwitcher lang={lang} compact />
             </div>
 
-            <div className="utility-divider hide-mobile-sm" />
+            <div className="utility-divider utility-divider--theme hide-mobile-sm" />
 
             {/* Theme Toggle (Sun/Moon) with Luxury Rotation Effect */}
             <button
               type="button"
-              className="utility-sub-btn theme-toggle-btn hide-mobile-sm"
+              className="utility-sub-btn theme-toggle-btn theme-toggle-btn--bar hide-mobile-sm"
               onClick={handleThemeToggle}
               title={isAr ? (theme === 'dark' ? 'الوضع الليلي مفعّل — انقر للتبديل للنهاري' : 'الوضع النهاري مفعّل — انقر لتفعيل الوضع الليلي الفاخر') : 'Toggle Luxury Theme'}
               aria-label="تبديل الوضع الليلي"
@@ -416,26 +461,6 @@ export default function Header({
 
             <div className="utility-divider hide-mobile" />
 
-            {/* Sound Effects Toggle (Audio Feedback) */}
-            <button
-              type="button"
-              className={`utility-sub-btn sound-toggle-btn hide-mobile ${soundEnabled ? 'sound-active' : ''}`}
-              onClick={() => {
-                if (toggleSound) toggleSound();
-                playNotificationChime('chime');
-              }}
-              title={isAr ? (soundEnabled ? 'التنبيهات الصوتية مفعلة (انقر للكتم)' : 'التنبيهات الصوتية مكتومة (انقر للتشغيل)') : 'Toggle Sound'}
-              aria-label="تشغيل/إيقاف الصوت"
-            >
-              {soundEnabled ? (
-                <Volume2 size={14} className="text-gold" />
-              ) : (
-                <VolumeX size={14} style={{ opacity: 0.6 }} />
-              )}
-            </button>
-
-            <div className="utility-divider hide-mobile" />
-
             {/* Language Switcher */}
             <button
               type="button"
@@ -444,7 +469,8 @@ export default function Header({
                 setLang(lang === 'ar' ? 'en' : 'ar');
                 if (soundEnabled) playNotificationChime('click');
               }}
-              title="Switch Language"
+              title={isAr ? "Switch to English" : "التبديل إلى العربية"}
+              aria-label={isAr ? "تغيير لغة المنصة إلى الإنجليزية" : "Switch language to Arabic"}
             >
               <Globe size={13} />
               <span>{isAr ? 'EN' : 'عربي'}</span>
@@ -489,6 +515,16 @@ export default function Header({
                 >
                   <Share2 size={16} />
                   <span>{isAr ? 'مشاركة المنصة' : 'Share Platform'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="tool-dropdown-item"
+                  data-theme-toggle
+                  onClick={handleThemeToggle}
+                >
+                  {theme === 'dark' ? <Sun size={16} className="text-gold" /> : <Moon size={16} />}
+                  <span>{isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي') : (theme === 'dark' ? 'Light mode' : 'Dark mode')}</span>
                 </button>
 
                 {/* Sound Chime Toggle */}
@@ -573,6 +609,7 @@ export default function Header({
             type="button"
             className="mobile-hamburger-btn"
             onClick={() => {
+              if (!mobileMenuOpen && capsuleRef.current) setMenuTop(Math.round(capsuleRef.current.getBoundingClientRect().bottom + 6));
               setMobileMenuOpen(!mobileMenuOpen);
               if (soundEnabled) playNotificationChime('click');
             }}
@@ -584,139 +621,90 @@ export default function Header({
       </div>
 
       {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="mobile-drawer open">
-          <div className="mobile-drawer-links">
-            {onOpenQuickSearch && (
-              <button
-                type="button"
-                className="mobile-drawer-search-pill"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenQuickSearch();
-                }}
-              >
-                <Search size={16} />
-                <span>{isAr ? 'البحث السريع (Ctrl + K)' : 'Quick Search (Ctrl + K)'}</span>
-              </button>
-            )}
-
-            {/* 👤 Mobile Client Account Portal Link */}
-            <Link
-              to="/my-account"
-              className={`mobile-nav-item ${isActive('/my-account') ? 'active' : ''}`}
-              onClick={() => setMobileMenuOpen(false)}
-              style={{ background: isClientAuthenticated ? 'rgba(16, 185, 129, 0.08)' : 'rgba(20, 43, 73, 0.04)', borderRadius: '10px', marginBottom: '4px' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <User size={16} className={isClientAuthenticated ? 'text-emerald' : 'text-gold'} />
-                <span>
-                  {isClientAuthenticated 
-                    ? (isAr ? `حسابي (${clientUser.name.split(' ')[0]})` : `My Account (${clientUser.name.split(' ')[0]})`) 
-                    : (isAr ? 'حساب العميل (المفضلة والمقارنة)' : 'Client Account')}
+      {/* In <body>, not inside the header: a blurred (dark mode) header would otherwise become the
+          box the fixed menu is measured against */}
+      {mobileMenuOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          dir={isAr ? 'rtl' : 'ltr'}
+          className="mdw"
+          style={{ '--mdw-top': `${menuTop}px` }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={isAr ? 'قائمة التنقل الرئيسية للموقع' : 'Main Navigation Menu'}
+        >
+          <div className="mdw-inner">
+            <div className="mdw-top">
+              {onOpenQuickSearch && (
+                <button type="button" className="mdw-search" onClick={() => { closeMenu(); onOpenQuickSearch(); }}>
+                  <Search size={17} aria-hidden="true" />
+                  <span>{isAr ? 'ابحث عن عقار، منطقة أو كود' : 'Search a property, area or code'}</span>
+                </button>
+              )}
+              <Link to="/my-account" className={`mdw-account ${isClientAuthenticated ? 'is-in' : ''}`} onClick={closeMenu}>
+                <span className="mdw-ico"><User size={17} aria-hidden="true" /></span>
+                <span className="mdw-account-text">
+                  <strong>
+                    {isClientAuthenticated
+                      ? (isAr ? `حسابي (${clientUser.name.split(' ')[0]})` : `My account (${clientUser.name.split(' ')[0]})`)
+                      : (isAr ? 'حسابك: المفضلة والمقارنة' : 'Your account: favourites & compare')}
+                  </strong>
+                  {!isClientAuthenticated && <small>{isAr ? 'سجّل برقم موبايلك في ثواني' : 'Sign in with your phone in seconds'}</small>}
                 </span>
-              </div>
-              <span className={`nav-badge nav-badge-${isClientAuthenticated ? 'emerald' : 'gold'}`}>
-                {isClientAuthenticated ? (isAr ? 'حسابي' : 'Account') : (isAr ? 'تفعيل' : 'Activate')}
-              </span>
-            </Link>
-
-            {favoritesCount > 0 && onOpenFavorites && (
-              <button
-                type="button"
-                className="mobile-drawer-fav-pill"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenFavorites();
-                }}
-              >
-                <Heart size={16} fill="#ef4444" color="#ef4444" />
-                <span>{isAr ? `العقارات المحفوظة بالمفضلة (${favoritesCount})` : `Saved Properties (${favoritesCount})`}</span>
+                <Chevron size={16} className="mdw-chev" aria-hidden="true" />
+              </Link>
+              {favoritesCount > 0 && onOpenFavorites && (
+                <button type="button" className="mdw-fav" onClick={() => { closeMenu(); onOpenFavorites(); }}>
+                  <Heart size={16} fill="currentColor" aria-hidden="true" />
+                  <span>{isAr ? `المفضلة (${favoritesCount})` : `Saved (${favoritesCount})`}</span>
+                </button>
+              )}
+              <button type="button" className="mdw-fav mdw-share" onClick={shareThisPage}>
+                <Share2 size={16} aria-hidden="true" />
+                <span>{isAr ? 'شارك الصفحة دي (واتساب وغيره)' : 'Share this page (WhatsApp and more)'}</span>
               </button>
-            )}
-            {flatMobileLinks.map((link) => {
-              const LinkIcon = link.icon;
-              return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`mobile-nav-item ${isActive(link.path) ? 'active' : ''} ${link.path === '/special-requests' ? 'mobile-nav-vip' : ''}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {LinkIcon && <LinkIcon size={16} className="text-gold" />}
-                    <span>{link.label}</span>
-                  </div>
-                  {link.badge && (
-                    <span className={`nav-badge nav-badge-${link.badgeType || 'gold'}`}>
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-            {/* Mobile Dedicated Luxury Utility Bar */}
-            <div className="mobile-drawer-utilities" style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 16px',
-              marginTop: '16px',
-              borderTop: '1px solid var(--border-color)',
-              background: 'var(--secondary)',
-              borderRadius: 'var(--radius-md)'
-            }}>
-              {/* Theme Toggle Button */}
-              <button
-                type="button"
-                className="mobile-util-btn"
-                onClick={handleThemeToggle}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'inherit',
-                  fontWeight: 600,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer'
-                }}
-              >
-                {theme === 'dark' ? <Sun size={18} className="text-gold" /> : <Moon size={18} />}
-                <span>{isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي الفاخر') : (theme === 'dark' ? 'Day Pearl' : 'Midnight Luxury')}</span>
+              <InstallAppButton lang={lang} className="is-block mobile-drawer-install" onDone={closeMenu} />
+            </div>
+
+            {mobileGroups.map((g) => (
+              <nav key={g.id} className="mdw-group" aria-label={g.title}>
+                <h3 className="mdw-group-title">{g.title}</h3>
+                {g.links.map((link) => {
+                  const LinkIcon = link.icon;
+                  const on = link.path === '/' ? location.pathname === '/' : isActive(link.path);
+                  return (
+                    <Link key={link.path} to={link.path} className={`mdw-link ${on ? 'is-active' : ''}`} aria-current={on ? 'page' : undefined} onClick={closeMenu}>
+                      <span className="mdw-ico"><LinkIcon size={17} aria-hidden="true" /></span>
+                      <span className="mdw-label">{link.label}</span>
+                      {link.badge && <span className="mdw-badge">{link.badge}</span>}
+                    </Link>
+                  );
+                })}
+              </nav>
+            ))}
+
+            <div className="mdw-contact">
+              <a className="mdw-contact-btn is-wa" href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد الاستفسار عن العقارات المتاحة.' : 'Hello 1Line, I would like to ask about available properties.')} target="_blank" rel="noopener noreferrer" onClick={closeMenu}>
+                <MessageCircle size={18} aria-hidden="true" /> {isAr ? 'واتساب' : 'WhatsApp'}
+              </a>
+              <a className="mdw-contact-btn is-call" href={getPhoneCallUrl()} onClick={closeMenu}>
+                <Phone size={18} aria-hidden="true" /> {isAr ? 'اتصل بنا' : 'Call us'}
+              </a>
+            </div>
+
+            <div className="mdw-utils">
+              <button type="button" className="mdw-util" onClick={handleThemeToggle}>
+                {theme === 'dark' ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
+                <span>{isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي') : (theme === 'dark' ? 'Light mode' : 'Dark mode')}</span>
               </button>
-
-              {/* Currency Switcher for Mobile Drawer */}
-              <div className="mobile-drawer-currency" style={{ display: 'flex', alignItems: 'center' }}>
-                <CurrencySwitcher lang={lang} compact={false} />
-              </div>
-
-              {/* Language Switch */}
-              <button
-                type="button"
-                className="mobile-util-btn"
-                onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'inherit',
-                  fontWeight: 600,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <Globe size={16} />
+              <div className="mdw-util mdw-util--currency"><CurrencySwitcher lang={lang} compact={false} /></div>
+              <button type="button" className="mdw-util" onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}>
+                <Globe size={17} aria-hidden="true" />
                 <span>{isAr ? 'English' : 'عربي'}</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );

@@ -9,6 +9,7 @@
 import { issueSignedToken } from '@vercel/blob';
 import { handleUpload, handleUploadPresigned } from '@vercel/blob/client';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { canUploadMedia } from '../src/utils/accessModel.js';
 
 const FIREBASE_PROJECT_ID = 'line-c9601';
 const firebaseKeys = createRemoteJWKSet(
@@ -17,9 +18,12 @@ const firebaseKeys = createRemoteJWKSet(
 
 // Keep in step with CMS_MEDIA_LIMITS in src/services/cmsMedia.js
 const LIMITS = {
-  video: { maxBytes: 60 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
-  image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] }
+  video: { maxBytes: 20 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
+  image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] },
+  // 640px copies of listing photos (src/utils/imageThumbs.js): a fixed path, so no random suffix
+  thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] }
 };
+const THUMB_PATH = /^cms\/thumbs\/[\w.-]{1,200}\.w640\.jpg$/;
 const GRANT_TTL_MS = 30 * 60 * 1000;
 const CACHE_SECONDS = 60 * 60 * 24 * 365;
 
@@ -34,9 +38,6 @@ const uploadMode = () => {
   return null;
 };
 
-// Same tests as firestore.rules isAdmin() / isInventoryEditor() (custom claims only)
-const INVENTORY_ROLES = ['sales_manager', 'property_manager'];
-
 // Videos (homepage hero): admins only. Images (property photos): admins + inventory editors.
 const verifyUploader = async (idToken, kind) => {
   let payload;
@@ -48,9 +49,8 @@ const verifyUploader = async (idToken, kind) => {
   } catch {
     throw new Error('not-admin'); // bad signature, expired, wrong project, malformed…
   }
-  const isAdmin = payload.admin === true || payload.role === 'admin' || payload.role === 'super_admin';
-  const allowed = isAdmin || (kind === 'image' && INVENTORY_ROLES.includes(payload.role));
-  if (!allowed) throw new Error('not-admin');
+  // A role edited on the roles screen counts by its permissions, as in firestore.rules
+  if (!canUploadMedia(payload, kind)) throw new Error('not-admin');
   return payload.sub;
 };
 
@@ -59,9 +59,14 @@ const authorise = async (pathname, clientPayload) => {
   let payload = {};
   try { payload = JSON.parse(clientPayload || '{}'); } catch { /* checked below */ }
   const limits = LIMITS[payload.kind];
-  if (!limits || !pathname.startsWith(`cms/${payload.kind}s/`) || !/^cms\/(videos|images)\/[\w.-]{1,120}$/.test(pathname)) throw new Error('bad-path');
+  const pathOk = payload.kind === 'thumb'
+    ? THUMB_PATH.test(pathname)
+    : pathname.startsWith(`cms/${payload.kind}s/`) && /^cms\/(videos|images)\/[\w.-]{1,120}$/.test(pathname);
+  if (!limits || !pathOk) throw new Error('bad-path');
   const uid = await verifyUploader(String(payload.idToken || ''), payload.kind);
-  return { limits, uid };
+  // A small copy is rewritten in place when it is made again
+  const fixedPath = payload.kind === 'thumb';
+  return { limits, uid, naming: { addRandomSuffix: !fixedPath, allowOverwrite: fixedPath } };
 };
 
 // The CMS asks this before showing the upload box; `mode` tells the browser which SDK call to use
@@ -82,7 +87,7 @@ export async function POST(request) {
         body,
         request,
         getSignedToken: async (pathname, clientPayload) => {
-          const { limits } = await authorise(pathname, clientPayload);
+          const { limits, naming } = await authorise(pathname, clientPayload);
           const validUntil = Date.now() + GRANT_TTL_MS;
           // Delegation covers this one path, uploads only, 30 minutes
           const token = await issueSignedToken({
@@ -98,7 +103,7 @@ export async function POST(request) {
               validUntil,
               allowedContentTypes: limits.types,
               maximumSizeInBytes: limits.maxBytes,
-              addRandomSuffix: true,
+              ...naming,
               cacheControlMaxAge: CACHE_SECONDS
             }
           };
@@ -108,11 +113,11 @@ export async function POST(request) {
         body,
         request,
         onBeforeGenerateToken: async (pathname, clientPayload) => {
-          const { limits, uid } = await authorise(pathname, clientPayload);
+          const { limits, uid, naming } = await authorise(pathname, clientPayload);
           return {
             allowedContentTypes: limits.types,
             maximumSizeInBytes: limits.maxBytes,
-            addRandomSuffix: true,
+            ...naming,
             cacheControlMaxAge: CACHE_SECONDS,
             validUntil: Date.now() + GRANT_TTL_MS,
             tokenPayload: JSON.stringify({ uid })

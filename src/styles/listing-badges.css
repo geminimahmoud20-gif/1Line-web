@@ -1,0 +1,23 @@
+/* Unit page: availability and review badges beside the type pill (see utils/listingBadges.js) */
+.pd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #E2E8F0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.pd-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #34D399; box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2); }
+.pd-badge--avail.is-negotiating .pd-badge-dot { background: #FBBF24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2); }
+.pd-badge--avail.is-sold { color: #FECACA; border-color: rgba(252, 165, 165, 0.45); background: rgba(127, 29, 29, 0.35); }
+.pd-badge--avail.is-sold .pd-badge-dot { background: #FCA5A5; box-shadow: none; }
+.pd-badge--verified { color: #6EE7B7; border-color: rgba(52, 211, 153, 0.4); background: rgba(16, 185, 129, 0.1); }
+.pd-badge--in-review { color: #FCD34D; border-color: rgba(252, 211, 77, 0.35); }
+.pd-badge--not-reviewed { color: #CBD5E1; }

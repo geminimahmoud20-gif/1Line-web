@@ -1,0 +1,14 @@
+/* Layout of the UI kit showcase only (System → UI kit). */
+.ui-kit { background: var(--ui-bg); color: var(--ui-text); padding: var(--ui-s-5); border-radius: var(--ui-r-lg); display: grid; gap: var(--ui-s-5); }
+.ui-kit__grid { display: grid; gap: var(--ui-s-4); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.ui-kit__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
+.ui-kit__stack { display: grid; gap: var(--ui-s-3); }
+.ui-kit__swatches { display: grid; gap: var(--ui-s-2); grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.ui-kit__swatch { border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); overflow: hidden; font-size: var(--ui-fs-1); background: var(--ui-surface); }
+.ui-kit__chip { height: 40px; }
+.ui-kit__swatch span { display: block; padding: var(--ui-s-1) var(--ui-s-2); color: var(--ui-text-2); }
+.ui-kit__type > * { margin: 0; color: var(--ui-text); }
+.ui-kit__lead { display: flex; align-items: center; gap: var(--ui-s-3); min-width: 0; }
+.ui-kit__lead-name { font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.ui-kit__muted { color: var(--ui-text-3); font-size: var(--ui-fs-2); }
+@media (max-width: 639px) { .ui-kit { padding: var(--ui-s-3); } }

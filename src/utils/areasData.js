@@ -1,4 +1,5 @@
 import { saveSettings, subscribeToSettings } from '../firebaseLazy.js';
+import { areaFromText } from './areaLookup.js';
 
 export const DEFAULT_SOHAG_AREAS = [
   {
@@ -94,7 +95,7 @@ export const DEFAULT_SOHAG_AREAS = [
     label_en: 'New Sohag (Districts 1, 2 & Central Axis)',
     center: { lat: 26.4715, lng: 31.6620 },
     zoom: 13,
-    description_ar: 'المدينة الذكية المستقبلية وأعلى عائد استثماري ونمو سكني',
+    description_ar: 'المدينة الجديدة ومحور النمو السكني والتجاري',
     avgPricePerMeter: 12000,
     annualGrowthRate: 109,
     historicalPrices: [
@@ -315,36 +316,57 @@ export const DEFAULT_SOHAG_AREAS = [
 const LOCAL_STORAGE_KEY = 'oneline_custom_areas';
 const SETTING_DOC_KEY = 'areas_cms';
 
+const ALL_AREA = DEFAULT_SOHAG_AREAS[0];
+
 /**
- * Get all active areas from LocalStorage with smart-merge of enriched defaults
+ * The saved list is the source of truth: an area the admin deleted (built-in or not) stays deleted.
+ * Built-in areas that are still in the list keep their reference data (amenities, price history)
+ * unless the admin saved their own. "كل المناطق" is always present and first.
+ * Pure, so it can be unit-tested.
+ */
+export const tidyName = (s) => String(s).replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/\s{2,}/g, ' ').trim();
+
+export function mergeStoredAreas(stored, defaults = DEFAULT_SOHAG_AREAS) {
+  if (!Array.isArray(stored) || stored.length === 0) return defaults;
+  const byId = new Map(defaults.map((d) => [d.id, d]));
+  const seen = new Set();
+  const out = [];
+  for (const item of stored) {
+    if (!item || typeof item !== 'object' || !item.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    const def = byId.get(item.id);
+    out.push(def
+      ? {
+          ...def,
+          ...item,
+          amenities: Array.isArray(item.amenities) ? item.amenities : def.amenities,
+          historicalPrices: Array.isArray(item.historicalPrices) ? item.historicalPrices : def.historicalPrices,
+          // ?? not ||: a saved 0% growth must stay 0
+          avgPricePerMeter: item.avgPricePerMeter ?? def.avgPricePerMeter,
+          annualGrowthRate: item.annualGrowthRate ?? def.annualGrowthRate
+        }
+      : item);
+  }
+  // Names typed in the CRM sometimes carry stray spaces: "سوهاج ( ش البحر )" → "سوهاج (ش البحر)"
+  for (const a of out) {
+    for (const k of ['name_ar', 'name_en', 'label_ar', 'label_en']) {
+      if (typeof a[k] === 'string') a[k] = tidyName(a[k]);
+    }
+  }
+  const allIdx = out.findIndex((a) => a.id === 'all');
+  const all = allIdx >= 0 ? out.splice(allIdx, 1)[0] : (byId.get('all') || ALL_AREA);
+  return [all, ...out];
+}
+
+/**
+ * All active areas: this browser's copy of settings/areas_cms (kept in sync by initAreasSync),
+ * or the built-in list when nothing was ever saved.
  */
 export function getAreas() {
   if (typeof window === 'undefined') return DEFAULT_SOHAG_AREAS;
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Smart merge so existing stored areas inherit new benchmark/amenities if not previously stored
-        const mergedDefaults = DEFAULT_SOHAG_AREAS.map(def => {
-          const userModified = parsed.find(p => p.id === def.id);
-          if (!userModified) return def;
-          return {
-            ...def,
-            ...userModified,
-            // Keep rich amenities and historical prices if user hasn't explicitly set them
-            amenities: userModified.amenities || def.amenities,
-            historicalPrices: userModified.historicalPrices || def.historicalPrices,
-            avgPricePerMeter: userModified.avgPricePerMeter || def.avgPricePerMeter,
-            annualGrowthRate: userModified.annualGrowthRate || def.annualGrowthRate
-          };
-        });
-
-        // Add any purely custom areas created by admin
-        const customOnly = parsed.filter(p => !DEFAULT_SOHAG_AREAS.some(def => def.id === p.id));
-        return [...mergedDefaults, ...customOnly];
-      }
-    }
+    if (saved) return mergeStoredAreas(JSON.parse(saved));
   } catch (err) {
     console.error('Error reading custom areas:', err);
   }
@@ -355,8 +377,9 @@ export function getAreas() {
  * Get specific area by ID or fallback
  */
 export function getAreaById(areaId) {
-  const all = getAreas();
-  return all.find(a => a.id === areaId) || all.find(a => a.id === 'default') || DEFAULT_SOHAG_AREAS[1];
+  // null when the id is not in the list: callers hide area data instead of showing another area's
+  if (!areaId) return null;
+  return getAreas().find((a) => a.id === areaId) || null;
 }
 
 /**
@@ -365,7 +388,8 @@ export function getAreaById(areaId) {
  * into the standard system area ID (e.g. 'new_sohag').
  */
 export function normalizeAreaKey(rawArea) {
-  if (!rawArea) return 'new_sohag';
+  // No area stays no area (it used to become New Sohag, which counted unknown leads there)
+  if (!rawArea) return '';
   if (typeof rawArea !== 'string') return String(rawArea);
 
   const clean = rawArea.trim().toLowerCase().replace(/[\s\-_]+/g, '_');
@@ -473,29 +497,29 @@ export function normalizeAreaKey(rawArea) {
     'اي_منطقه': 'all'
   };
 
-  if (aliases[clean]) return aliases[clean];
-
-  // Try checking raw string without underscore replacement
+  // An alias counts only while its area is still in the CRM's list: 'شرق' used to become 'east'
+  // even after East Sohag was deleted, and the lead then pointed at an area nobody can pick.
   const rawClean = rawArea.trim();
-  if (aliases[rawClean]) return aliases[rawClean];
+  const alias = aliases[clean] || aliases[rawClean] || '';
+  let currentAreas = [];
+  try { currentAreas = getAreas(); } catch { /* storage unavailable */ }
+  if (alias && (alias === 'all' || currentAreas.some((a) => a.id === alias))) return alias;
 
-  // Check against dynamic areas list from getAreas()
-  try {
-    const currentAreas = getAreas();
-    const matched = currentAreas.find(a => 
-      a.id === clean || 
-      a.id === rawArea ||
-      a.name_ar === rawClean || 
-      a.name_en?.toLowerCase() === rawArea.toLowerCase() ||
-      a.label_ar === rawClean ||
-      rawClean.includes(a.name_ar)
-    );
-    if (matched) return matched.id;
-  } catch (_e) {
-    // Ignore matching errors and fallback to clean
-  }
+  const matched = currentAreas.find((a) =>
+    a.id === clean ||
+    a.id === rawArea ||
+    a.name_ar === rawClean ||
+    a.name_en?.toLowerCase() === rawArea.toLowerCase() ||
+    a.label_ar === rawClean ||
+    (a.name_ar && rawClean.includes(a.name_ar))
+  );
+  if (matched) return matched.id;
 
-  return clean;
+  // Free text that names one of the CRM's areas ("محل في شارع الجمهورية")
+  const fromText = areaFromText(rawArea, currentAreas);
+  if (fromText) return fromText;
+
+  return alias || clean;
 }
 
 /**
@@ -534,11 +558,14 @@ export async function saveAreas(areasList) {
  */
 export async function addArea(areaData) {
   const currentAreas = getAreas();
-  const rawId = (areaData.id || areaData.name_en || areaData.name_ar || `area_${Date.now()}`)
+  // Latin ids only (they end up in URLs and saved listings); an Arabic-only name gets area_<time>
+  const slug = String(areaData.id || areaData.name_en || '')
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9_]/g, '_');
-  
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  const rawId = slug || `area_${Date.now().toString(36)}`;
+
   // Ensure unique ID
   let uniqueId = rawId;
   let counter = 1;
@@ -555,10 +582,15 @@ export async function addArea(areaData) {
     center: areaData.center || { lat: 26.5569, lng: 31.7001 },
     zoom: areaData.zoom || 14,
     description_ar: areaData.description_ar?.trim() || '',
-    avgPricePerMeter: Number(areaData.avgPricePerMeter) || 15000,
-    annualGrowthRate: Number(areaData.annualGrowthRate) || 75,
-    historicalPrices: areaData.historicalPrices || DEFAULT_SOHAG_AREAS[0].historicalPrices,
-    amenities: areaData.amenities || DEFAULT_SOHAG_AREAS[0].amenities,
+    // No invented figure: an area priced from its listings may have none typed
+    avgPricePerMeter: Number(areaData.avgPricePerMeter) || 0,
+    priceMode: areaData.priceMode === 'manual' ? 'manual' : 'auto',
+    annualGrowthRate: Number.isFinite(Number(areaData.annualGrowthRate)) ? Number(areaData.annualGrowthRate) : 0,
+    // A new area starts without landmarks or price history; never borrow another area's figures
+    historicalPrices: Array.isArray(areaData.historicalPrices) ? areaData.historicalPrices : [],
+    amenities: Array.isArray(areaData.amenities) ? areaData.amenities : [],
+    // '' = a main area; another area's id = a sub-area of it (utils/areaLookup)
+    parentId: typeof areaData.parentId === 'string' ? areaData.parentId : '',
     isSystem: false,
     createdAt: new Date().toISOString()
   };

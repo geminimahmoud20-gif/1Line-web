@@ -25,6 +25,11 @@ function getSafeOutDir() {
 export default defineConfig({
   // localMediaUpload: dev-server-only endpoint that saves CRM video uploads into public/videos
   plugins: [react(), localMediaUpload()],
+  server: {
+    watch: {
+      ignored: ['**/dist/**', '**/cypress/**', '**/tests/**']
+    }
+  },
   build: {
     outDir: getSafeOutDir(),
     emptyOutDir: false,

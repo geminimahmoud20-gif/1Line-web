@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { isPrivatePath } from '../../utils/privatePaths';
+import { initGa4 } from '../../utils/ga4';
+import { initMetaPixel, sendMetaEvent } from '../../utils/metaPixel';
 
-const STORAGE_KEY = 'oneline_consent_v1';
 const CLARITY_ID = 'ykuhk4dxes';
 
-function readConsent() {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
+// Clarity keeps recording across in-app navigation once loaded, so it is paused on private pages
+function stopClarity() {
+  try { window.clarity?.('stop'); } catch { /* not loaded */ }
 }
 
-function loadClarity() {
-  if (typeof window === 'undefined' || window.clarity) return;
+function startClarity() {
+  if (typeof window === 'undefined') return;
+  if (window.clarity) {
+    try { window.clarity('start'); } catch { /* ignore */ }
+    return;
+  }
   (function (c, l, a, r, i, t, y) {
     c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
     t = l.createElement(r); t.async = 1; t.src = 'https://www.clarity.ms/tag/' + i;
@@ -22,51 +25,26 @@ function loadClarity() {
 }
 
 /**
- * Analytics (Microsoft Clarity session recording) only loads after explicit consent,
- * per Egypt's Personal Data Protection Law No. 151 of 2020.
+ * Starts the measurement tools (Clarity, GA4, Meta Pixel) on public pages with no consent prompt.
+ * The CRM and client accounts are never measured.
  */
-export default function ConsentBanner({ lang = 'ar' }) {
-  const [choice, setChoice] = useState(readConsent);
+export default function ConsentBanner() {
+  
   const location = useLocation();
-  const isAr = lang === 'ar';
 
+  const onPrivatePage = isPrivatePath(location.pathname);
+
+  // Only on public pages: the CRM and a client's account show other people's details (PDPL 151/2020)
   useEffect(() => {
-    if (choice === 'accepted') loadClarity();
-  }, [choice]);
-
-  if (choice || location.pathname.startsWith('/crm')) return null;
-
-  const decide = (value) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, value);
-    } catch {
-      // Private mode: remember for this page view only
+    if (onPrivatePage) {
+      stopClarity();
+    } else {
+      startClarity();
+      initGa4();
+      // The page view that happened before the click counts once the Pixel can run
+      if (initMetaPixel()) sendMetaEvent('page_view', { path: location.pathname });
     }
-    setChoice(value);
-  };
+  }, [onPrivatePage]); // eslint-disable-line react-hooks/exhaustive-deps -- location.pathname: page views come from App
 
-  return (
-    <div className="lx-consent" role="region" aria-label={isAr ? 'إشعار الخصوصية' : 'Privacy notice'} dir={isAr ? 'rtl' : 'ltr'}>
-      <p>
-        {/* Full sentence on desktop; one line on phones so the banner doesn't cover the hero search */}
-        <span className="lx-consent-long">
-          {isAr
-            ? 'نستخدم أدوات قياس لتحسين تجربة الموقع، ولا نشغّلها إلا بموافقتك. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
-            : 'We use analytics to improve the site and only run them with your consent. Form data is used only to respond to your request.'}
-        </span>
-        <span className="lx-consent-short">
-          {isAr ? 'نشغّل أدوات القياس بموافقتك فقط.' : 'Analytics run only with your consent.'}
-        </span>{' '}
-        <Link to="/privacy">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</Link>
-      </p>
-      <div className="lx-consent-actions">
-        <button type="button" className="lx-btn lx-btn-primary lx-btn-sm" onClick={() => decide('accepted')}>
-          {isAr ? 'موافق' : 'Accept'}
-        </button>
-        <button type="button" className="lx-btn lx-btn-ghost lx-btn-sm" onClick={() => decide('declined')}>
-          {isAr ? 'الضروري فقط' : 'Essential only'}
-        </button>
-      </div>
-    </div>
-  );
+  return null;
 }

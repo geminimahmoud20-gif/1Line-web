@@ -1,12 +1,35 @@
 import { useState } from 'react';
-import { 
-  Award, 
-  Sparkles 
+import {
+  Sparkles, Users, FileCheck, Megaphone, Lock, FileSignature, MessageCircle
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { PROPERTY_TYPES } from '../data/propertiesData';
+import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
+
+// What a broker gets from the network. Deliberately no rates or amounts: fees are agreed per deal in writing.
+const BROKER_PERKS = [
+  { Icon: Users, title_ar: 'طلبات مشترين جادة', title_en: 'Serious buyer requests',
+    desc_ar: 'نوصّلك بطلبات شراء وإيجار فعلية بتوصلنا من الموقع والواتساب في منطقتك.',
+    desc_en: 'We connect you with real purchase and rental requests reaching us in your area.' },
+  { Icon: FileCheck, title_ar: 'مراجعة المستندات', title_en: 'Document review',
+    desc_ar: 'فريقنا يراجع أوراق العقار قبل العرض، فتشتغل على صفقة أوضح وأسرع.',
+    desc_en: 'Our team reviews the papers before listing, so your deals move with fewer surprises.' },
+  { Icon: Megaphone, title_ar: 'دعم تسويقي', title_en: 'Marketing support',
+    desc_ar: 'عرض عقاراتك على منصة 1Line بصفحة احترافية وصور وملف قابل للمشاركة.',
+    desc_en: 'Your listings on the 1Line platform with a professional page, photos and a shareable brochure.' },
+  { Icon: Lock, title_ar: 'عقارات خارج السوق', title_en: 'Off-market access',
+    desc_ar: 'فرصة للتعاون على عقارات غير منشورة للعامة حسب كل صفقة.',
+    desc_en: 'A chance to cooperate on properties not shown publicly, deal by deal.' },
+  { Icon: FileSignature, title_ar: 'اتفاق مكتوب وواضح', title_en: 'Clear written terms',
+    desc_ar: 'كل تعاون باتفاق مكتوب قبل البدء، يحدد دور كل طرف من غير لبس.',
+    desc_en: 'Every cooperation starts with a written agreement setting out each side\'s role.' },
+  { Icon: MessageCircle, title_ar: 'تواصل مباشر', title_en: 'Direct line',
+    desc_ar: 'متابعة مع فريق 1Line على الواتساب من أول ترشيح لحد التعاقد.',
+    desc_en: 'Follow-up with the 1Line team on WhatsApp from first lead to contract.' },
+];
 
 export const BrokerPortal = ({
   lang = 'ar',
@@ -28,7 +51,9 @@ export const BrokerPortal = ({
     const cleanPhone = (brokerForm.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (brokerForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
-    if (!brokerForm.name || !brokerForm.name.trim()) {
+    const nameErr = nameProblem(brokerForm.name, isAr);
+    if (nameErr) {
+      setWhatsappError(nameErr);
       return;
     }
 
@@ -44,16 +69,16 @@ export const BrokerPortal = ({
     const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
-      setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setPhoneError(phoneProblem(cleanPhone, phoneCountry, isAr));
       return;
     }
     
     if (!isWhatsappValid) {
-      setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setWhatsappError(phoneProblem(cleanWhatsapp, whatsappCountry, isAr));
       return;
     }
 
-    const targetArea = brokerForm.area || 'new_sohag';
+    const targetArea = brokerForm.area || ''; // required select: no preset area
     const targetType = brokerForm.propertyType || 'apartment';
 
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
@@ -74,36 +99,36 @@ export const BrokerPortal = ({
     submitBrokerPortal(updatedForm);
   };
 
-  const commissionTiers = [
-    { title_ar: 'وسيط معتمد (Silver)', rate: '2.0%', desc_ar: 'وصول لمخزون الوحدات المباشرة + إغلاق سريع', color: '#94a3b8' },
-    { title_ar: 'شريك ذهبي (Gold Partner)', rate: '2.5% + بونص', desc_ar: 'أولوية في حجز مشروعات سوهاج الجديدة + عمولات فورية', color: '#ffca28', featured: true },
-    { title_ar: 'شريك استراتيجي (VIP Club)', rate: '3.0% + دعم تسويقي', desc_ar: 'تمويل حملات إعلانية مشتركة ورعاية صفقات كبرى', color: '#38bdf8' }
-  ];
 
   return (
     <div className="smart-valuation-wizard-box">
-      {/* Commission Tiers Strip */}
+      {/* No published rates: every arrangement is agreed in writing, deal by deal */}
       <div className="step-prompt-row">
-        <h3>{isAr ? 'باقات وحوافز شبكة وسطاء 1Line بسوهاج' : 'Broker Commission Tiers & Partner Benefits'}</h3>
-        <p>{isAr ? 'انضم لأكثر من 120 وسيطاً معتمداً واستفد من أسرع نظام صرف عمولات في الصعيد' : 'Join 120+ verified brokers with instant payouts'}</p>
+        <h3>{isAr ? 'ليه تشتغل مع شبكة وسطاء 1Line؟' : 'Why work with the 1Line broker network?'}</h3>
+        <p>{isAr
+          ? 'سجّل بياناتك ونتواصل معك لنتفق على طريقة التعاون.'
+          : 'Register and we will contact you to agree how we work together.'}</p>
       </div>
 
-      <div className="prop-types-rich-grid" style={{ marginBottom: '32px' }}>
-        {commissionTiers.map((tier, idx) => (
-          <div key={idx} className={`prop-type-card ${tier.featured ? 'selected' : ''}`}>
-            <div className="prop-type-icon" style={{ background: tier.featured ? 'var(--primary)' : 'rgba(13, 72, 161, 0.08)' }}>
-              <Award size={24} style={{ color: tier.featured ? '#ffffff' : tier.color }} />
+      <div className="prop-types-rich-grid broker-perks-grid" style={{ marginBottom: '16px' }}>
+        {BROKER_PERKS.map(({ Icon, title_ar, title_en, desc_ar, desc_en }) => (
+          <div key={title_en} className="prop-type-card">
+            <div className="prop-type-icon" style={{ background: 'rgba(13, 72, 161, 0.08)' }}>
+              <Icon size={22} style={{ color: 'var(--accent-gold)' }} />
             </div>
             <div className="prop-type-info">
-              <h4>{isAr ? tier.title_ar : ''}</h4>
-              <div style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--accent-gold)', marginBottom: '4px' }}>
-                {tier.rate}
-              </div>
-              <p>{isAr ? tier.desc_ar : ''}</p>
+              <h4>{isAr ? title_ar : title_en}</h4>
+              <p>{isAr ? desc_ar : desc_en}</p>
             </div>
           </div>
         ))}
       </div>
+
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 28px' }}>
+        {isAr
+          ? 'الأتعاب يتم الاتفاق عليها كتابياً لكل صفقة على حدة، ولا ينشأ أي التزام مالي قبل توقيع اتفاق مكتوب.'
+          : 'Fees are agreed in writing for each deal; no financial obligation arises before a signed agreement.'}
+      </p>
 
       {/* Broker Registration Form */}
       <form onSubmit={validateAndSubmit} className="seller-contact-submission-form">
@@ -142,13 +167,12 @@ export const BrokerPortal = ({
             <label>{isAr ? 'الموقع / منطقة نشاطك الأساسية بسوهاج * (إلزامي)' : 'Primary District in Sohag * (Required)'}</label>
             <select
               className="form-select-styled"
-              value={brokerForm.area || 'new_sohag'}
+              value={brokerForm.area || ''}
               onChange={(e) => setBrokerForm({ ...brokerForm, area: e.target.value })}
               required
             >
-              {getAreas().filter(a => a.id !== 'all').map(a => (
-                <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-              ))}
+              <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
+              <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
             </select>
           </div>
 
@@ -235,7 +259,7 @@ export const BrokerPortal = ({
             className="btn btn-primary btn-submit-valuation"
           >
             <Sparkles size={16} className="text-gold" />
-            <span>{isAr ? 'تأكيد التسجيل وتفعيل حساب الشريك المعتمد' : 'Activate Certified Broker Partner Profile'}</span>
+            <span>{isAr ? 'سجّل كوسيط شريك' : 'Register as a partner broker'}</span>
           </button>
         </div>
       </form>

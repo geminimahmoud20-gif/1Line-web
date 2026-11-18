@@ -1,26 +1,28 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Calculator, X, CheckCircle2, Lock, Target } from 'lucide-react';
 
 import MarketTickerBar from '../components/home/MarketTickerBar';
-import GoldStandardsSection from '../components/home/GoldStandardsSection';
-import FamilyLegacySection from '../components/family/FamilyLegacySection';
 
-import { MEGA_PROJECTS } from '../data/projectsData';
-import { DEMO_PROPERTIES, DEMO_DEMANDS, isRealItem } from '../data/demoData';
+import { DEMO_DEMANDS, isRealItem } from '../data/demoData';
 import { getFounderSettings } from '../utils/founderCmsData';
-import { getAreas } from '../utils/areasData';
+import { heroSlides, slideIntervalMs } from '../utils/videoPoster';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
-import FaqSection from '../components/home/FaqSection';
-import { parseSemanticQuery } from '../utils/semanticSearchEngine';
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
 import { getHomepageSlots } from '../utils/featuredSlots';
 import { useAdCampaigns, pickHeroCampaign, getInlineCampaigns } from '../utils/adCampaigns';
 import { SponsoredStrip } from '../components/home/SponsoredPlacements';
+import HomeOffers from '../components/home/HomeOffers';
 
 import HomeHero from '../components/home/HomeHero';
 import HomeMarketplace from '../components/home/HomeMarketplace';
+import { blockedByApproval } from '../utils/publishApproval';
+
+// Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
+const FamilyLegacySection = lazy(() => import('../components/family/FamilyLegacySection'));
+const GoldStandardsSection = lazy(() => import('../components/home/GoldStandardsSection'));
+const HomeTestimonials = lazy(() => import('../components/home/HomeTestimonials'));
 
 // Keep in sync with the <link rel="preload"> in index.html
 
@@ -37,15 +39,6 @@ export default function HomePage({
   onOpenAddDemand
 }) {
   const navigate = useNavigate();
-
-  // Smart Search States
-  const [searchPurpose, setSearchPurpose] = useState('buy'); // 'buy' | 'sell' | 'invest'
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchArea, setSearchArea] = useState('all');
-  const [searchType, setSearchType] = useState('all');
-  const [searchBudget, setSearchBudget] = useState('all');
-  const [districts, setDistricts] = useState(() => getAreas());
 
   // Dynamic Corporate & Hero Stats Settings from CMS
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
@@ -65,18 +58,6 @@ export default function HomePage({
   const [clipFade, setClipFade] = useState(false);
   const [showTheaterModal, setShowTheaterModal] = useState(false);
   const heroVideoRef = useRef(null);
-  const omniboxRef = useRef(null);
-
-  // Close omnibox live suggestions on outside click
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (omniboxRef.current && !omniboxRef.current.contains(e.target)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
 
   // Sync CMS founder & contact updates in real time
   useEffect(() => {
@@ -98,7 +79,27 @@ export default function HomePage({
   const { campaigns: adCampaigns, now: adNow } = useAdCampaigns();
   const heroAd = useMemo(() => pickHeroCampaign(adCampaigns, adNow), [adCampaigns, adNow]);
   const inlineAds = useMemo(() => getInlineCampaigns(adCampaigns, adNow), [adCampaigns, adNow]);
-  const showHeroVideo = !heroAd && founderSettings.heroVideoEnabled !== false;
+  // The hero video is the site's heaviest file: an uploaded clip is several MB, sent from Blob storage
+  // on every visit (the reason the Blob transfer limit was reached in Oct 2026). It plays on wide
+  // screens with a fast connection only; phones, slow links and data saver get the poster image.
+  const canPlayHeroVideo = typeof window !== 'undefined'
+    && Boolean(window.matchMedia?.('(min-width: 1024px)').matches)
+    && !isDataSaver && !isReducedMotion
+    && navigator.connection?.effectiveType !== '3g';
+  const showHeroVideo = !heroAd && founderSettings.heroVideoEnabled !== false && canPlayHeroVideo;
+
+  // Without the video (phones, slow links, data saver) the hero changes between one still per video
+  const heroStills = useMemo(
+    () => (heroAd ? [] : heroSlides(founderSettings.heroVideoClips, founderSettings.heroPosterUrl)),
+    [heroAd, founderSettings.heroVideoClips, founderSettings.heroPosterUrl]
+  );
+  const [activeStill, setActiveStill] = useState(0);
+  const stillsCycle = !showHeroVideo && heroStills.length > 1 && founderSettings.heroVideoAutoCycle !== false && !isReducedMotion;
+  useEffect(() => {
+    if (!stillsCycle) return;
+    const timer = setInterval(() => setActiveStill((i) => (i + 1) % heroStills.length), slideIntervalMs(founderSettings.heroVideoIntervalSec));
+    return () => clearInterval(timer);
+  }, [stillsCycle, heroStills.length, founderSettings.heroVideoIntervalSec, activeStill]);
 
   const currentClip = heroClips[activeClipIndex] || heroClips[0];
   const activeVideoUrl = currentClip?.url || founderSettings.heroVideoUrl;
@@ -163,15 +164,14 @@ export default function HomePage({
 
   useEffect(() => {
     const handleUpdate = () => setFounderSettings(getFounderSettings());
-    const handleAreasUpdate = () => setDistricts(getAreas());
     window.addEventListener('oneline_founder_cms_updated', handleUpdate);
-    window.addEventListener('oneline_areas_updated', handleAreasUpdate);
     
     // 🌐 Update Homepage SEO & Organization Schema
     updatePageSeo({
-      title: lang === 'ar' ? 'وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
+      // «عقارات سوهاج» is what people search for; the title and description lead with it
+      title: lang === 'ar' ? 'عقارات سوهاج للبيع | شقق وفيلات ومحلات وأراضي في سوهاج الجديدة' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
       description: lang === 'ar'
-        ? 'ون لاين للاستشارات والتسويق العقاري: بيع وشراء وتقييم الأراضي والوحدات عالية القيمة في سوهاج والقاهرة الكبرى، مع مراجعة قانونية للمستندات قبل التعاقد، بإشراف د. محمود الباز.'
+        ? 'عقارات سوهاج للبيع: شقق وفيلات ومحلات ومكاتب وأراضي في سوهاج وسوهاج الجديدة بأسعار حقيقية من العروض الحالية، ومستندات مراجعة قانونياً قبل التعاقد. 1Line للاستشارات والتسويق العقاري.'
         : '1Line Solutions: buying, selling and valuing high-value land and property in Sohag and Greater Cairo, with legal document review before contract, led by Dr. Mahmoud Elbaz.',
       url: '/',
       type: 'website',
@@ -193,7 +193,6 @@ export default function HomePage({
 
     return () => {
       window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
-      window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
     };
   }, [lang]);
 
@@ -201,27 +200,23 @@ export default function HomePage({
   const [marketplaceTab, setMarketplaceTab] = useState('properties'); // 'properties' | 'demands'
   const [marketplaceAreaFilter, setMarketplaceAreaFilter] = useState('all');
 
-  // Safe fallback to default verified catalog if parent state was ever empty
-  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : DEMO_PROPERTIES;
+  // The site list (complete listings only, utils/siteReady). The bundled samples already fill it
+  // while the catalogue loads (PropertiesContext); no fallback here, or incomplete real listings
+  // would be replaced by sample ones
+  const safeProperties = Array.isArray(properties) ? properties : [];
   const safeDemands = (Array.isArray(demands) && demands.length > 0) ? demands : DEMO_DEMANDS;
 
   // Exclude hidden, draft, and deleted properties from public homepage
   const publishedProperties = safeProperties.filter(
-    (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft'
+    (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft' && !blockedByApproval(p)
   );
-  const activePublished = publishedProperties.length > 0 ? publishedProperties : DEMO_PROPERTIES;
+  const activePublished = publishedProperties;
 
   // In-Tab Quick District Filter for Marketplace Properties
   const filteredMarketplaceProps = useMemo(() => {
     if (marketplaceAreaFilter === 'all') return activePublished;
     return activePublished.filter(p => p.areaKey === marketplaceAreaFilter || (p.locationName_ar || '').includes(marketplaceAreaFilter));
   }, [activePublished, marketplaceAreaFilter]);
-
-  // Longest installment plan actually on offer — the discovery pill quotes it instead of a fixed number
-  const maxInstallmentYears = useMemo(
-    () => activePublished.reduce((max, p) => (Number(p.monthlyInstallment) > 0 ? Math.max(max, Number(p.installmentYears) || 0) : max), 0),
-    [activePublished]
-  );
 
   // Homepage slots: scheduled/ordered featured listings from the CRM first, then newest listings
   const displayProperties = useMemo(
@@ -255,68 +250,6 @@ export default function HomePage({
     return (Math.round((totalDemandLiquidity / 1000000) * 10) / 10).toLocaleString('en-US');
   }, [totalDemandLiquidity]);
 
-  // Categorized Omnibox Search Matchers (Districts, Projects, and Properties)
-  const matchingDistricts = useMemo(() => {
-    if (!searchKeyword.trim()) return [];
-    const q = searchKeyword.toLowerCase().trim();
-    return districts.filter(a => 
-      a.id !== 'all' && ((a.name_ar && a.name_ar.toLowerCase().includes(q)) || (a.name_en && a.name_en.toLowerCase().includes(q)))
-    ).slice(0, 3);
-  }, [searchKeyword, districts]);
-
-  const matchingProjects = useMemo(() => {
-    if (!searchKeyword.trim()) return [];
-    const q = searchKeyword.toLowerCase().trim();
-    return (MEGA_PROJECTS || []).filter(p =>
-      (p.title_ar && p.title_ar.toLowerCase().includes(q)) || 
-      (p.title_en && p.title_en.toLowerCase().includes(q))
-    ).slice(0, 2);
-  }, [searchKeyword]);
-
-  const matchingProperties = useMemo(() => {
-    if (!searchKeyword.trim()) return [];
-    const q = searchKeyword.toLowerCase().trim();
-    return activePublished.filter(p => {
-      const tAr = (p.title_ar || '').toLowerCase();
-      const tEn = (p.title_en || '').toLowerCase();
-      const lAr = (p.locationName_ar || '').toLowerCase();
-      return tAr.includes(q) || tEn.includes(q) || lAr.includes(q);
-    }).slice(0, 3);
-  }, [searchKeyword, activePublished]);
-
-  const handleHeroSearch = (e) => {
-    e.preventDefault();
-    const queryParams = new URLSearchParams();
-    const trimmed = searchKeyword.trim();
-    
-    if (trimmed !== '') {
-      queryParams.set('q', trimmed);
-      // Run deep semantic NLP extraction
-      const parsed = parseSemanticQuery(trimmed);
-      if (parsed.filters.area && searchArea === 'all') queryParams.set('area', parsed.filters.area);
-      if (parsed.filters.type && searchType === 'all') queryParams.set('type', parsed.filters.type);
-      if (parsed.filters.maxPrice && searchBudget === 'all') {
-        if (parsed.filters.maxPrice <= 3000000) queryParams.set('budget', 'under_3m');
-        else if (parsed.filters.maxPrice <= 6000000) queryParams.set('budget', '3m_to_6m');
-        else queryParams.set('budget', 'above_6m');
-      }
-      if (parsed.filters.bedrooms) queryParams.set('bedrooms', String(parsed.filters.bedrooms));
-    }
-
-    if (searchArea !== 'all') queryParams.set('area', searchArea);
-    if (searchType !== 'all') queryParams.set('type', searchType);
-    if (searchBudget !== 'all') queryParams.set('budget', searchBudget);
-
-    // 📡 Telemetry event
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('oneline_search_started', {
-        detail: { keyword: trimmed, area: searchArea, type: searchType, budget: searchBudget }
-      }));
-    }
-
-    navigate(`/properties?${queryParams.toString()}`);
-  };
-
   return (
     <div className="homepage-wrapper">
       {/* 🌟 1. HERO SECTION */}
@@ -326,35 +259,19 @@ export default function HomePage({
         activeVideoUrl={activeVideoUrl}
         clipFade={clipFade}
         currentClip={currentClip}
-        districts={districts}
         founderSettings={founderSettings}
-        handleHeroSearch={handleHeroSearch}
         handleVideoEnded={handleVideoEnded}
         heroAd={heroAd}
+        heroStills={heroStills}
+        activeStill={heroStills[activeStill] ? activeStill : 0}
+        setActiveStill={setActiveStill}
+        stillsCycle={stillsCycle}
         heroClips={heroClips}
         heroVideoRef={heroVideoRef}
         isDataSaver={isDataSaver}
         lang={lang}
-        matchingDistricts={matchingDistricts}
-        matchingProjects={matchingProjects}
-        matchingProperties={matchingProperties}
-        maxInstallmentYears={maxInstallmentYears}
-        navigate={navigate}
-        omniboxRef={omniboxRef}
-        searchArea={searchArea}
-        searchBudget={searchBudget}
-        searchKeyword={searchKeyword}
-        searchPurpose={searchPurpose}
-        searchType={searchType}
-        setSearchArea={setSearchArea}
-        setSearchBudget={setSearchBudget}
-        setSearchKeyword={setSearchKeyword}
-        setSearchPurpose={setSearchPurpose}
-        setSearchType={setSearchType}
-        setShowSuggestions={setShowSuggestions}
         setShowTheaterModal={setShowTheaterModal}
         showHeroVideo={showHeroVideo}
-        showSuggestions={showSuggestions}
         switchClip={switchClip}
         toggleVideoMute={toggleVideoMute}
         toggleVideoPlayback={toggleVideoPlayback}
@@ -385,12 +302,26 @@ export default function HomePage({
         setMarketplaceTab={setMarketplaceTab}
       />
 
+      {/* 🔥 Limited-time offers (CRM → العقارات → العرض), after the listings so a visitor sees properties first; renders nothing when no offer is running */}
+      <HomeOffers
+        properties={publishedProperties}
+        lang={lang}
+        currency={currency}
+        favorites={favorites}
+        compareList={compareList}
+        onToggleFavorite={onToggleFavorite}
+        onToggleCompare={onToggleCompare}
+        onQuickView={onQuickView}
+      />
+
       {/* 📢 Sponsored banners (CRM → الإعلانات, placement "inline"); renders nothing when no campaign is live */}
       <SponsoredStrip campaigns={inlineAds} lang={lang} />
 
       {/* 👨‍👩‍👧‍👦 بيت العيلة — family-sized listings + cost split calculator */}
       <ScrollReveal>
-        <FamilyLegacySection lang={lang} currency={currency} properties={activePublished} />
+        <Suspense fallback={null}>
+          <FamilyLegacySection lang={lang} currency={currency} properties={activePublished} />
+        </Suspense>
       </ScrollReveal>
 
       {/* 🏡 3. SELLER INVITATION SECTION (Architectural Editorial Contrast & Proof Showcase) */}
@@ -569,11 +500,14 @@ export default function HomePage({
 
       {/* 🛡️ THE 4 1LINE GOLDEN STANDARDS OF INSTITUTIONAL TRUST */}
       <ScrollReveal>
-        <GoldStandardsSection lang={lang} />
+        <Suspense fallback={null}>
+          <GoldStandardsSection lang={lang} />
+        </Suspense>
       </ScrollReveal>
 
-      {/* FAQ — answer-engine friendly, with FAQPage schema */}
-      <FaqSection lang={lang} />
+      <Suspense fallback={null}>
+        <HomeTestimonials lang={lang} />
+      </Suspense>
 
       {/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */}
       {showTheaterModal && (

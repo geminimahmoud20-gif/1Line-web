@@ -17,24 +17,90 @@ service cloud.firestore {
     function hasRole(roles) {
       return isAdmin() || (request.auth != null && role() in roles);
     }
+    // The member's permissions, worked out once per call: the token's own list for accounts set
+    // through the team API (staff: true), else the old role's fixed list. Same rule as
+    // accessFromClaims() in src/utils/accessModel.js. One map lookup instead of a chain of ORs,
+    // which used to blow the 1000-expression limit (desk agents' lead reads were denied).
+    function myPerms() {
+      return request.auth.token.get('staff', false) == true && request.auth.token.get('perms', null) is list
+        ? request.auth.token.perms
+        : {
+            'sales_manager': ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'deal.all', 'deal.edit', 'export', 'inv.edit'],
+            'sales_agent': ['ld.edit', 'ld.phone', 'deal.edit'],
+            'agent_east': ['ld.edit', 'ld.phone', 'deal.edit'],
+            'agent_new_sohag': ['ld.edit', 'ld.phone', 'deal.edit'],
+            'property_manager': ['ld.all', 'inv.edit', 'inv.delete'],
+            'finance': ['ld.all', 'deal.all', 'deal.edit', 'fin', 'export'],
+            'viewer': ['ld.all', 'deal.all']
+          }.get(role(), []);
+    }
+    // Every check goes through hasPerm(): a role's permissions are what the roles screen says,
+    // never its name (a built-in role id with permissions removed loses them here too).
+    function hasPerm(p) {
+      return request.auth != null && (isAdmin() || p in myPerms());
+    }
     function isStaff() {
-      return hasRole(['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag']);
+      return isAdmin() || (request.auth != null && (
+        request.auth.token.get('staff', false) == true ||
+        hasRole(['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag'])
+      ));
     }
     function isLeadEditor() {
-      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+      return hasPerm('ld.edit') || hasPerm('ld.manage');
     }
+    // Inventory is split by kind of item: 'inv.listings', 'inv.projects', 'inv.demands'. 'inv.edit'
+    // covers all three (roles saved before the split carry it) and 'inv.publish' also edits, since
+    // whoever approves an item can fix it. One list lookup per check (see myPerms above).
+    // Same tests as canEditInventory() in src/utils/accessModel.js.
+    function invAllows(kind) {
+      return request.auth != null && (isAdmin() || myPerms().hasAny(['inv.edit', 'inv.publish', kind]));
+    }
+    function canEditListings() {
+      return invAllows('inv.listings');
+    }
+    function canEditProjects() {
+      return invAllows('inv.projects');
+    }
+    function canEditDemands() {
+      return invAllows('inv.demands');
+    }
+    // Any inventory work: the shared collections (areas, developers, search requests…)
     function isInventoryEditor() {
-      return hasRole(['sales_manager', 'property_manager']);
+      return request.auth != null && (isAdmin() || myPerms().hasAny(['inv.edit', 'inv.publish', 'inv.listings', 'inv.projects', 'inv.demands']));
+    }
+    // Publishing needs the general manager (المدير العام) or an account with 'inv.publish': a
+    // listing or project saved by anyone else is stored as approval 'pending' and stays off the
+    // site until approved. Removing an item (tombstone) needs no approval.
+    // See src/utils/publishApproval.js.
+    function publishAllowed(data) {
+      return hasPerm('inv.publish') || data.get('approval', '') == 'pending' || data.get('deleted', false) == true;
+    }
+    // A buyer request's text as the site shows it; staff edits to these on a published request
+    // send it back for approval
+    function publicDemandContent() {
+      return ['text_ar', 'text_en', 'area', 'area_ar', 'area_en', 'type', 'budget', 'paymentMethod',
+              'timeframe', 'urgency', 'minSize'];
+    }
+    function demandPublishAllowed() {
+      return hasPerm('inv.publish')
+        || request.resource.data.get('status', '') != 'published'
+        || (resource.data.get('status', '') == 'published'
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(publicDemandContent()));
     }
 
     // Lead visibility. Desk agents work only their own queue: leads assigned to their desk plus the
     // shared 'Unassigned' pool. Desk names match CRM_ROLES in components/crm/crmRoles.js and DESK_BY_ROLE
     // in src/utils/rbacRules.js. Managers, admins and the read-only roles see every lead.
     function leadDesk() {
-      return {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
+      return request.auth != null && request.auth.token.get('desk', '') != ''
+        ? request.auth.token.get('desk', '')
+        : {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
+    }
+    function canSeeAllLeads() {
+      return hasPerm('ld.all') || hasPerm('ld.manage');
     }
     function isDeskAgent() {
-      return request.auth != null && !isAdmin() && role() in ['sales_agent', 'agent_east', 'agent_new_sohag'];
+      return request.auth != null && !isAdmin() && !canSeeAllLeads() && isLeadEditor();
     }
     function inMyLeadQueue(data) {
       return data.assignedTo in [leadDesk(), 'Unassigned'];
@@ -57,6 +123,9 @@ service cloud.firestore {
     function leadPath(leadId) {
       return /databases/$(database)/documents/leads/$(leadId);
     }
+    function personPath(personId) {
+      return /databases/$(database)/documents/persons/$(personId);
+    }
     function deskOf(data) {
       return data.get('assignedTo', 'Unassigned');
     }
@@ -67,7 +136,7 @@ service cloud.firestore {
     }
     // Who may see a client's phone: admins, sales managers and the sales desks (rbacRules canViewLeadPhone)
     function seesClientContacts() {
-      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+      return hasPerm('ld.phone');
     }
     // Demands and expat/trade-in requests keep their phone in request_contacts/{kind}__{id}
     function requestContactPath(kind, id) {
@@ -86,6 +155,38 @@ service cloud.firestore {
           && !('isAdmin' in data);
     }
 
+    // The pipeline lives on the lead's status. Moving a lead INTO closing / won is a deal action,
+    // so it needs deal.edit (the same right /deals uses); other stage changes are lead work.
+    // «deal.edit» covers «deal.add» and «deal.close» (roles saved before the split carry it)
+    function canEditDeals() {
+      return hasPerm('deal.edit') || hasPerm('deal.add') || hasPerm('deal.close');
+    }
+    function canCloseDeals() {
+      return hasPerm('deal.edit') || hasPerm('deal.close');
+    }
+    function closesDealOnlyWithDealRights() {
+      return !('status' in request.resource.data)
+          || request.resource.data.status == resource.data.get('status', '')
+          || !(request.resource.data.status in ['closing', 'closed'])
+          || canCloseDeals();
+    }
+    function canViewFinance() {
+      return hasPerm('fin') || hasPerm('fin.view');
+    }
+
+    // The server-side half of the CRM's stage lock (src/utils/stageGate.js, enforced first in the browser): a person who
+    // is not a lead manager cannot change a client's stage unless the client has at least one logged outcome
+    // («حصل إيه؟») after the write. Managers move clients freely. The finer rules (which outcome opens which stage,
+    // going back is the manager's) stay in the browser; this is the floor a hand-made request cannot go under.
+    function stageChangeAllowed() {
+      return !('status' in request.resource.data)
+          || request.resource.data.status == resource.data.get('status', 'new')
+          || hasPerm('ld.manage')
+          || (request.resource.data.get('outcomes', []) is list && request.resource.data.get('outcomes', []).size() > 0)
+          // older clients logged the answer of the call prompt in callOutcomes (the browser's outcomesOf reads both)
+          || (request.resource.data.get('callOutcomes', []) is list && request.resource.data.get('callOutcomes', []).size() > 0);
+    }
+
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES
     match /leads/{leadId} {
       // Current format: no contact fields here, its lead_contacts doc written in the same batch.
@@ -101,17 +202,35 @@ service cloud.firestore {
                     );
       // Agents can claim a pool lead or hand it back, but only managers move leads between desks.
       // A desk change must move the contact doc with it (same batch), or the old desk keeps the phone.
-      allow read: if hasRole(['sales_manager', 'property_manager', 'finance', 'viewer'])
+      allow read: if canSeeAllLeads()
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
-      allow update: if (hasRole(['sales_manager'])
+      allow update: if (hasPerm('ld.manage')
                        || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
                     && keepsContactFields()
+                    && closesDealOnlyWithDealRights()
+                    && stageChangeAllowed()
                     && (!exists(contactPath(leadId)) || deskOf(getAfter(contactPath(leadId)).data) == deskOf(request.resource.data));
       allow delete: if isAdmin();
     }
 
     // 🛡️ 1b. LEAD CONTACTS — phone / WhatsApp / email per lead (doc id = lead id).
     // assignedTo mirrors the lead's desk so agents' queue queries can be checked by the rules.
+    // 🔑 Forced sign-out marker, written by /api/team (service account) when the super admin signs
+    // a member out or changes their access. Each member reads only their own.
+    match /session_revocations/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // 🔔 When each team member last opened the CRM bell, so a request seen on the laptop is not
+    // counted again on the phone. Their own doc only, one number.
+    match /staff_prefs/{uid} {
+      allow read: if isStaff() && request.auth.uid == uid;
+      allow write: if isStaff() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['alertsSeenAt'])
+        && request.resource.data.alertsSeenAt is int;
+    }
+
     match /lead_contacts/{leadId} {
       function validContact(data) {
         return data.keys().hasOnly(contactFields().concat(['assignedTo']))
@@ -122,16 +241,16 @@ service cloud.firestore {
             && (!('altPhone' in data) || (data.altPhone is string && data.altPhone.size() <= 25))
             && boundedText(data, 'email', 120);
       }
-      allow read: if hasRole(['sales_manager'])
+      allow read: if (canSeeAllLeads() && seesClientContacts())
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
       // Anyone, together with a brand-new lead (the public forms); staff for a lead they may edit
       allow create: if existsAfter(leadPath(leadId))
                     && validContact(request.resource.data)
                     && (!exists(leadPath(leadId))
-                        || hasRole(['sales_manager'])
+                        || hasPerm('ld.manage')
                         || (isDeskAgent() && inMyLeadQueue(request.resource.data)));
       allow update: if validContact(request.resource.data)
-                    && (hasRole(['sales_manager'])
+                    && (hasPerm('ld.manage')
                         || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
       allow delete: if isAdmin();
     }
@@ -150,31 +269,36 @@ service cloud.firestore {
                     && request.resource.data.keys().size() <= 60
                     && boundedText(request.resource.data, 'notes', 2000)
                     && boundedText(request.resource.data, 'description', 3000)
-                    // A visitor cannot publish their own demand; staff approve it
-                    && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
+                    // A visitor cannot publish their own demand; only the general manager (or 'inv.publish') publishes
+                    && (hasPerm('inv.publish') || request.resource.data.get('status', 'pending') != 'published')
+                    && (canEditDemands() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
       // Staff only. Visitors read public_demands; phones are in request_contacts.
       allow read: if isStaff();
-      allow update: if isInventoryEditor() && keepsContactFields();
+      allow update: if (canEditDemands() || hasPerm('ld.manage')) && keepsContactFields() && demandPublishAllowed();
       allow delete: if isAdmin();
     }
 
-    // 📋 2b. PUBLISHED DEMANDS — contact-free copies the site shows. Written by editors when they
-    // publish/unpublish (syncPublicDemand in src/services/demands.js; same field list there).
+    // 📋 2b. PUBLISHED DEMANDS — contact-free copies the site shows. Written only with the general
+    // manager's approval (editors may only remove a copy) (syncPublicDemand in src/services/demands.js; same field list there).
     match /public_demands/{demandId} {
       allow read: if true;
-      allow create, update: if isInventoryEditor()
+      allow create, update: if hasPerm('inv.publish')
                             && request.resource.data.keys().hasOnly([
                               'text_ar', 'text_en', 'area', 'area_ar', 'area_en', 'type', 'budget', 'paymentMethod',
                               'timeframe', 'urgency', 'minSize', 'status', 'timestamp', 'createdAt', 'approvedAt', 'updatedAt'])
                             && request.resource.data.status == 'published';
-      allow delete: if isInventoryEditor();
+      allow delete: if canEditDemands();
     }
 
     // 🏠 3. PROPERTIES INVENTORY
+    // Visitors read only listings that are on the site (live, under negotiation, sold…); hidden,
+    // draft and trashed ones, with their exact location and legal file, are for staff only.
+    // Keep in sync with SITE_STATUSES in src/services/catalog.js (the visitors' query filters on it).
     match /properties/{propId} {
-      allow read: if true;
-      allow create, update: if isInventoryEditor();
-      allow delete: if hasRole(['property_manager']);
+      allow read: if isStaff()
+        || resource.data.get('status', '') in ['published', 'under_negotiation', 'reserved', 'deposit_paid', 'contracted', 'sold'];
+      allow create, update: if canEditListings() && publishAllowed(request.resource.data);
+      allow delete: if hasPerm('inv.delete');
     }
 
     // 🔔 4. NOTIFICATIONS
@@ -213,16 +337,161 @@ service cloud.firestore {
     }
 
     // ⚙️ 6. SITE & FOUNDER SETTINGS (areas CMS, founder CMS)
+    // Everything here is site content except `access` (roles, their permissions and the teams),
+    // which only the CRM reads
     match /settings/{settingId} {
-      allow read: if true;
+      allow read: if settingId != 'access' || isStaff();
       allow write: if isAdmin();
     }
 
     // 🏢 7. PROJECTS & MEGA DEVELOPMENTS
     match /projects/{projectId} {
       allow read: if true;
-      allow create, update: if isInventoryEditor();
-      allow delete: if hasRole(['property_manager']);
+      allow create, update: if canEditProjects() && publishAllowed(request.resource.data);
+      allow delete: if hasPerm('inv.delete');
+    }
+
+    // 📲 Phone reminders: each staff member's own push subscriptions (devices that agreed to get the
+    // follow-up reminder). The hourly job reads them with the service account and records what it
+    // last sent in `lastDigest`, which the browser can't write. The VAPID private key lives in
+    // push_private/*, which no client can read or write (no rule = denied).
+    match /push_subscriptions/{uid} {
+      allow read, delete: if isStaff() && request.auth.uid == uid;
+      allow create: if isStaff() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['subs', 'manager', 'name', 'updatedAt'])
+        && request.resource.data.subs is list && request.resource.data.subs.size() <= 5;
+      allow update: if isStaff() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['subs', 'manager', 'name', 'updatedAt', 'lastDigest'])
+        && request.resource.data.subs is list && request.resource.data.subs.size() <= 5
+        && request.resource.data.get('lastDigest', null) == resource.data.get('lastDigest', null);
+    }
+
+    // 📣 7b. CAMPAIGN SPEND — what each ad campaign cost, typed in the campaign report.
+    // Managers only (never public): one doc `all` with the amounts.
+    match /campaign_spend/{docId} {
+      allow read, write: if hasPerm('ld.manage');
+    }
+
+    // 🗒️ 7b2. TEAM NOTES AND CHAT: a note on a client, a listing or a project, or in the team's general thread
+    // (entityType 'team'), with @mentions that reach the person as a notification (crm_mentions). Staff read and
+    // write; a note on a client follows the client's visibility (managers see all, a desk agent the notes on
+    // their own queue, anyone the notes they wrote or were mentioned in). Notes are never edited, only
+    // deleted by their author or a lead manager. A person reads and ticks only their own notifications.
+    // team_directory/{uid} is each member's own name card, so a colleague can be picked in an @mention.
+    // Same shapes as src/utils/teamNotes.js.
+    match /team_directory/{uid} {
+      allow read: if isStaff();
+      allow create, update: if isStaff() && uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['name', 'desk', 'role', 'updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.get('desk', '') is string && request.resource.data.get('desk', '').size() <= 60
+        && request.resource.data.get('role', '') is string && request.resource.data.get('role', '').size() <= 40
+        && request.resource.data.get('updatedAt', '') is string && request.resource.data.get('updatedAt', '').size() <= 40;
+      allow delete: if isAdmin();
+    }
+    match /crm_notes/{noteId} {
+      function validNote(d) {
+        return d.keys().hasOnly(['entityType', 'entityId', 'entityName', 'text', 'mentions', 'authorUid', 'authorName', 'createdAt'])
+          && d.entityType in ['lead', 'property', 'project', 'team']
+          && d.entityId is string && d.entityId.size() > 0 && d.entityId.size() <= 128
+          && d.get('entityName', '') is string && d.get('entityName', '').size() <= 80
+          && d.text is string && d.text.size() > 0 && d.text.size() <= 1500
+          && d.mentions is list && d.mentions.size() <= 10
+          && d.authorUid == request.auth.uid
+          && d.authorName is string && d.authorName.size() <= 80
+          && d.createdAt is string && d.createdAt.size() <= 40;
+      }
+      // One myPerms() lookup: calling hasPerm() several times here ran into the 1000-expression limit
+      function seesLead(leadId) {
+        let p = myPerms();
+        return isAdmin() || 'ld.all' in p || 'ld.manage' in p
+          || ('ld.edit' in p && inMyLeadQueue(get(leadPath(leadId)).data));
+      }
+      allow read: if isStaff() && (
+        resource.data.entityType != 'lead'
+        || resource.data.authorUid == request.auth.uid
+        || request.auth.uid in resource.data.mentions
+        || seesLead(resource.data.entityId));
+      allow create: if isStaff() && validNote(request.resource.data)
+        && (request.resource.data.entityType != 'lead' || seesLead(request.resource.data.entityId));
+      allow update: if false;
+      allow delete: if isStaff() && (resource.data.authorUid == request.auth.uid || hasPerm('ld.manage'));
+    }
+    match /crm_mentions/{mentionId} {
+      function validMention(d) {
+        return d.keys().hasOnly(['toUid', 'fromUid', 'fromName', 'entityType', 'entityId', 'entityName', 'snippet', 'createdAt', 'readAt'])
+          && d.toUid is string && d.toUid.size() > 0 && d.toUid.size() <= 128
+          && d.fromUid == request.auth.uid
+          && d.fromName is string && d.fromName.size() <= 80
+          && d.entityType in ['lead', 'property', 'project', 'team']
+          && d.entityId is string && d.entityId.size() > 0 && d.entityId.size() <= 128
+          && d.get('entityName', '') is string && d.get('entityName', '').size() <= 80
+          && d.snippet is string && d.snippet.size() <= 160
+          && d.createdAt is string && d.createdAt.size() <= 40
+          && d.get('readAt', '') is string && d.get('readAt', '').size() <= 40;
+      }
+      allow read: if isStaff() && resource.data.toUid == request.auth.uid;
+      allow create: if isStaff() && validMention(request.resource.data);
+      allow update: if isStaff() && resource.data.toUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
+        && request.resource.data.readAt is string;
+      allow delete: if isStaff() && resource.data.toUid == request.auth.uid;
+    }
+
+    // ✅ 7c. CRM TASKS («مهامي», crm_tasks: not the operational `tasks` handoffs below): things a team member has to do by a day, with or without a client behind
+    // them (a client's id and name only, never a phone). A lead editor creates tasks for themselves, a
+    // lead manager for anyone; you read the ones assigned to you, a manager reads all. Changing who a
+    // task is for, or deleting someone else's, is the manager's. Same shape as src/utils/tasks.js.
+    match /crm_tasks/{taskId} {
+      function taskKeys() {
+        return ['title', 'note', 'dueAt', 'priority', 'status', 'kind', 'leadId', 'leadName', 'assigneeUid', 'assigneeName',
+                'createdBy', 'createdByName', 'createdAt', 'doneAt', 'doneBy', 'updatedAt'];
+      }
+      function validTask(d) {
+        return d.keys().hasOnly(taskKeys())
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 140
+          && d.get('note', '') is string && d.get('note', '').size() <= 1000
+          && d.get('dueAt', '') is string && d.get('dueAt', '').size() <= 16
+          && d.priority in ['high', 'normal', 'low']
+          && d.status in ['open', 'done']
+          && d.get('kind', 'other') in ['call', 'whatsapp', 'visit', 'docs', 'other']
+          && d.get('leadId', '') is string && d.get('leadId', '').size() <= 80
+          && d.get('leadName', '') is string && d.get('leadName', '').size() <= 80
+          && d.assigneeUid is string && d.assigneeUid.size() > 0 && d.assigneeUid.size() <= 128
+          && d.createdBy is string;
+      }
+      allow read: if isStaff() && (hasPerm('ld.manage') || resource.data.assigneeUid == request.auth.uid);
+      // A task has a day: «YYYY-MM-DD» or «YYYY-MM-DDTHH:MM». An older task that never had one can still be ticked off
+      // or edited as long as its date is not touched.
+      function datedTask(d) {
+        return d.get('dueAt', '').matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2})?$');
+      }
+      allow create: if isLeadEditor()
+        && validTask(request.resource.data)
+        && datedTask(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'open'
+        && (request.resource.data.assigneeUid == request.auth.uid || hasPerm('ld.manage'));
+      allow update: if isLeadEditor()
+        && (resource.data.assigneeUid == request.auth.uid || hasPerm('ld.manage'))
+        && validTask(request.resource.data)
+        && (datedTask(request.resource.data) || request.resource.data.get('dueAt', '') == resource.data.get('dueAt', ''))
+        && request.resource.data.createdBy == resource.data.createdBy
+        && (request.resource.data.assigneeUid == resource.data.assigneeUid || hasPerm('ld.manage'));
+      allow delete: if isLeadEditor() && (resource.data.createdBy == request.auth.uid || hasPerm('ld.manage'));
+    }
+
+    // 🎯 7d. MONTHLY GOALS (crm_goals/current): what the team and each salesperson aim for each month
+    // (new clients, viewings, deals, commission). Staff read them to see their own progress; a lead
+    // manager sets them. One document, numbers only, up to 60 people.
+    match /crm_goals/{goalId} {
+      allow read: if isStaff();
+      allow create, update: if goalId == 'current' && hasPerm('ld.manage')
+        && request.resource.data.keys().hasOnly(['team', 'people', 'updatedAt', 'updatedBy'])
+        && request.resource.data.team is map
+        && request.resource.data.people is map
+        && request.resource.data.people.size() <= 60;
+      allow delete: if false;
     }
 
     // 📢 8. SPONSORED ADS & CAMPAIGNS
@@ -258,6 +527,28 @@ service cloud.firestore {
                     && request.resource.data.clicks >= resource.data.clicks
                     && request.resource.data.clicks <= resource.data.clicks + 1;
       allow delete: if isAdmin();
+
+      // Busy campaigns: the counter is split over 10 shard docs (a single doc takes ~1 write/s),
+      // same +1 rules per shard. The CRM sums parent + shards.
+      match /ad_stat_shards/{shardId} {
+        allow create: if shardId.matches('^[0-9]$') && isPublishedCampaign()
+                      && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+                      && request.resource.data.impressions is int && request.resource.data.clicks is int
+                      && request.resource.data.impressions >= 0 && request.resource.data.impressions <= 1
+                      && request.resource.data.clicks >= 0 && request.resource.data.clicks <= 1;
+        allow update: if isPublishedCampaign()
+                      && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+                      && request.resource.data.impressions >= resource.data.impressions
+                      && request.resource.data.impressions <= resource.data.impressions + 1
+                      && request.resource.data.clicks >= resource.data.clicks
+                      && request.resource.data.clicks <= resource.data.clicks + 1;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Staff read every campaign's shards in one collection-group listener
+    match /{path=**}/ad_stat_shards/{shardId} {
+      allow read: if isStaff();
     }
 
     // 🩺 8c. SITE ERROR LOG — visitors' browsers report JS errors / crashes / CSP violations
@@ -282,6 +573,86 @@ service cloud.firestore {
     // 📣 8d. STAFF ALERT LOG — written only by api/notify.js with the service account (one doc per
     // record already alerted on WhatsApp). Nobody reaches it through the client SDK.
     match /notify_log/{entryId} {
+      allow read, write: if false;
+    }
+
+    // 📣 Last WhatsApp alert that went out and last one that didn't (api/notify.js, service account).
+    // No customer data: times and a record reference. The CRM shows it to admins.
+    // 📊 One doc per Cairo day the daily WhatsApp report went out (api/daily-report.js, service account)
+    match /report_log/{day} {
+      allow read, write: if false;
+    }
+
+    match /notify_status/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // 💬 8e. WHATSAPP TAPS FROM THE SITE — created only by api/contact-intent.js (service account):
+    // reference, page and unit, no personal data. Staff see them in the inbox; lead editors mark one
+    // linked (with the lead it became) or dismissed. Nothing else on the row can change.
+    match /contact_intents/{ref} {
+      allow read: if isStaff();
+      allow create: if false;
+      allow update: if isLeadEditor()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'leadId', 'handledBy', 'handledAt'])
+        && request.resource.data.status in ['linked', 'dismissed', 'open']
+        && request.resource.data.handledBy == request.auth.uid
+        && request.resource.data.handledAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    // Visitor analytics, written only by /api/track with the service account. No contact data is
+    // ever stored here (the collector keeps whitelisted ids/numbers only). Readers: staff who see
+    // leads across desks (permission ld.manage: managers, admins) — profiles can be tied to a lead.
+    function canSeeAnalytics() {
+      return hasPerm('ld.manage');
+    }
+    match /analytics_daily/{dayShard} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+    }
+    match /analytics_properties/{propertyId} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+    }
+    match /analytics_sessions/{sessionId} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+    }
+    match /analytics_visitors/{visitorId} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+      match /batches/{batchId} {
+        allow read: if canSeeAnalytics();
+        allow write: if false;
+      }
+    }
+
+    // 📥 8f. CLIENT DOWNLOADS — a registered client downloaded a brochure / story card / file.
+    // The browser files a bounded record; managers see who downloaded what (it holds the client's
+    // contact, so desk agents and read-only roles don't read it).
+    match /client_downloads/{entryId} {
+      function validDownload(data) {
+        return data.keys().hasOnly(['kind', 'itemId', 'itemTitle', 'clientName', 'clientPhone', 'clientEmail', 'path', 'createdAt'])
+          && data.kind in ['property_brochure', 'story_card', 'project_brochure', 'investor_prospectus', 'compare_pdf']
+          && isStr(data, 'itemId', 0, 128)
+          && isStr(data, 'itemTitle', 0, 200)
+          && isStr(data, 'clientName', 1, 100)
+          && isStr(data, 'clientPhone', 0, 25)
+          && isStr(data, 'clientEmail', 0, 120)
+          && isStr(data, 'path', 0, 200)
+          && data.createdAt == request.time;
+      }
+      allow create: if validDownload(request.resource.data);
+      // Holds clients' phones and emails: lead managers only (not read-only roles with ld.all)
+      allow read: if hasPerm('ld.manage');
+      allow delete: if isAdmin();
+    }
+
+    // 👥 8e. STAFF REGISTRY — uid → role of every CRM account, kept by api/team.js with the service
+    // account so the team screen reads a few docs instead of scanning every client account.
+    match /staff_registry/{uid} {
       allow read, write: if false;
     }
 
@@ -319,7 +690,8 @@ service cloud.firestore {
                     && optStr(request.resource.data, 'submittedAt', 40)
                     && request.resource.data.status == 'new'
                     && request.resource.data.createdAt == request.time;
-      allow read: if isStaff();
+      // The sales team that follows these requests up (not viewer / finance / inventory)
+      allow read: if isLeadEditor();
       allow update: if isLeadEditor() && keepsContactFields();
       allow delete: if isAdmin();
     }
@@ -352,7 +724,8 @@ service cloud.firestore {
                     && optStr(request.resource.data, 'submittedAt', 40)
                     && request.resource.data.status == 'new'
                     && request.resource.data.createdAt == request.time;
-      allow read: if isStaff();
+      // The sales team that follows these requests up (not viewer / finance / inventory)
+      allow read: if isLeadEditor();
       allow update: if isLeadEditor() && keepsContactFields();
       allow delete: if isAdmin();
     }
@@ -379,7 +752,7 @@ service cloud.firestore {
       // Anyone together with a brand-new request; managers when migrating an existing one
       allow create: if validRequestContact(request.resource.data)
                     && existsAfter(parentPath(request.resource.data))
-                    && (!exists(parentPath(request.resource.data)) || hasRole(['sales_manager']));
+                    && (!exists(parentPath(request.resource.data)) || hasPerm('ld.manage'));
       allow update: if validRequestContact(request.resource.data)
                     && request.resource.data.kind == resource.data.kind
                     && request.resource.data.parentId == resource.data.parentId
@@ -390,12 +763,133 @@ service cloud.firestore {
     // 💼 9. DEALS & PIPELINE
     // Same desk scoping as leads: agents see and edit only their desk's deals (and the pool).
     match /deals/{dealId} {
-      allow read: if hasRole(['sales_manager', 'finance', 'viewer'])
+      // deal.edit: every deal with deal.all, otherwise only the member's own desk (+ the pool)
+      allow read: if hasPerm('deal.all')
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
-      allow create: if hasRole(['sales_manager', 'finance'])
-                    || (isDeskAgent() && inMyLeadQueue(request.resource.data));
-      allow update: if hasRole(['sales_manager', 'finance'])
-                    || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data));
+      allow create: if canEditDeals()
+                    && (hasPerm('deal.all') || inMyLeadQueue(request.resource.data));
+      allow update: if canEditDeals()
+                    && (hasPerm('deal.all') || (inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🏛️ 1LINE OS ENTERPRISE ENTITIES (Schema 5.1)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // 👤 Persons (Unified Contact Entity)
+    match /persons/{personId} {
+      allow read: if canSeeAllLeads() || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow create: if isStaff() && validLeadBasics(request.resource.data);
+      allow update: if (hasPerm('ld.manage')
+                       || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
+                    && keepsContactFields()
+                    && closesDealOnlyWithDealRights();
+      allow delete: if isAdmin();
+    }
+
+    // 🔒 Person Contacts (Protected Phone & PII)
+    match /person_contacts/{personId} {
+      function canManagePersonContact(data) {
+        return hasPerm('ld.manage')
+          || (seesClientContacts() && isDeskAgent()
+              && inMyLeadQueue(data)
+              && (!exists(personPath(personId)) || inMyLeadQueue(get(personPath(personId)).data)));
+      }
+      allow read: if seesClientContacts() && (
+                    canSeeAllLeads()
+                    || (isDeskAgent() && inMyLeadQueue(resource.data))
+                  );
+      allow create: if canManagePersonContact(request.resource.data);
+      allow update: if canManagePersonContact(request.resource.data)
+                    && (hasPerm('ld.manage') || inMyLeadQueue(resource.data));
+      allow delete: if isAdmin();
+    }
+
+    // 🔍 Search Requests (طلبات البحث الموجّه - 7 Days SLA)
+    match /search_requests/{reqId} {
+      allow read: if isStaff();
+      allow create: if isLeadEditor();
+      allow update: if isLeadEditor() || isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 🎯 Nominations (الترشيحات المكتوبة - الأقرب / القيمة / التحدي)
+    match /nominations/{nomId} {
+      allow read: if isStaff();
+      allow create, update: if isLeadEditor() || isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 📋 Tasks & Handoffs (التسليمات والمهام التشغيلية 1-10)
+    match /tasks/{taskId} {
+      function canEditTask(data) {
+        return isAdmin()
+          || (hasPerm('ld.manage') && (leadDesk() == '' || data.get('assignedDesk', '') == leadDesk() || data.get('assignedTo', '') in [leadDesk(), 'Unassigned']))
+          || (isLeadEditor() && (data.get('assignedTo', 'Unassigned') in [request.auth.uid, leadDesk(), 'Unassigned'] || data.get('assignedDesk', '') == leadDesk()))
+          || isInventoryEditor();
+      }
+      allow read: if isStaff();
+      allow create: if isLeadEditor() || isInventoryEditor() || hasPerm('ld.manage');
+      allow update: if canEditTask(resource.data)
+                    && canEditTask(request.resource.data)
+                    && !resource.data.diff(request.resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 🏗️ Developers & Cairo Projects (محرك القاهرة)
+    match /developers/{devId} {
+      allow read: if isStaff();
+      allow create, update: if isAdmin() || hasPerm('ld.manage') || isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 💰 Commission Invoices & Collections (الفوترة والتحصيل)
+    match /commission_invoices/{invId} {
+      allow read: if canViewFinance() || isAdmin();
+      allow write: if hasPerm('fin') || isAdmin();
+    }
+
+    match /collections/{colId} {
+      allow read: if canViewFinance() || isAdmin();
+      allow write: if hasPerm('fin') || isAdmin();
+    }
+
+    // 🧾 Reservation receipts: numbered from counters/receipts_<year> in one transaction
+    // (services/receipts.js). Issued once and never edited or deleted, so the numbers stay a record.
+    match /receipts/{receiptId} {
+      allow read: if canViewFinance() || isAdmin();
+      allow create: if (hasPerm('fin') || isAdmin())
+        && request.resource.data.number == receiptId
+        && request.resource.data.issuedBy == request.auth.uid
+        && request.resource.data.amount is int && request.resource.data.amount > 0
+        && request.resource.data.issuedAt == request.time
+        && getAfter(/databases/$(database)/documents/counters/$(('receipts_' + string(request.resource.data.year)))).data.last == request.resource.data.seq;
+      allow update, delete: if false;
+    }
+    match /counters/{counterId} {
+      allow read: if counterId.matches('receipts_[0-9]{4}') && (canViewFinance() || isAdmin());
+      allow create: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin())
+        && request.resource.data.last == 1;
+      allow update: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin())
+        && request.resource.data.last == resource.data.last + 1;
+    }
+
+    // 🚨 Complaints (خدمة العملاء والشكاوى)
+    match /complaints/{compId} {
+      allow read: if isStaff();
+      allow create: if isLeadEditor() || hasPerm('ld.manage');
+      allow update: if (isLeadEditor() || hasPerm('ld.manage'))
+                    && !resource.data.diff(request.resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 🤝 Referrals (برنامج الإحالات)
+    match /referrals/{refId} {
+      allow read: if isStaff();
+      allow create: if isLeadEditor() || hasPerm('ld.manage');
+      allow update: if (isLeadEditor() || hasPerm('ld.manage'))
+                    && !resource.data.diff(request.resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
       allow delete: if isAdmin();
     }
   }

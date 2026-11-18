@@ -1,13 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { TrendingUp, DollarSign, Percent, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft } from 'lucide-react';
+import { TrendingUp, Calculator, ArrowRight, ArrowLeft, CheckCircle2, MessageCircle } from 'lucide-react';
+import { budgetMatches, liveListings, pricedListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import MarketAreaList from '../components/market/MarketAreaList';
 import { getAreas } from '../utils/areasData';
-import { updatePageSeo } from '../utils/seoHelper';
+import { areaPrice } from '../utils/areaPricing';
+import { mainAreas, areaPathName } from '../utils/areaLookup';
+import '../components/market/market-page.css';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
+import { countPhrase } from '../utils/arabicCount';
 
-export default function MarketIntelligencePage({ lang = 'ar' }) {
+export default function MarketIntelligencePage({ lang = 'ar', properties = [], projects = [] }) {
   const navigate = useNavigate();
-  const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);
   const [areas, setAreas] = useState(getAreas);
   const isAr = lang === 'ar';
@@ -15,12 +20,17 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
   // Dynamic SEO Meta Tags for Market Intelligence
   useEffect(() => {
     updatePageSeo({
-      title: isAr ? 'مركز أبحاث وبيانات السوق العقاري بسوهاج 2026 | 1Line' : 'Sohag Real Estate Market Intelligence Hub 2026',
-      description: isAr 
-        ? 'بيانات حية ومحدثة لأسعار المتر في سوهاج وسوهاج الجديدة، مؤشرات العائد الإيجاري، وتحليل الفرص الاستثمارية.' 
-        : 'Live verified transaction data, sqm benchmarks, and rental yields across all Sohag districts.',
+      title: isAr ? 'أسعار المتر في سوهاج حسب المنطقة | 1Line' : 'Sohag price per m² by area | 1Line',
+      description: isAr
+        ? 'سعر المتر في كل منطقة بسوهاج ومناطقها الفرعية، من العروض الحالية على 1Line أو تقدير فريقنا، وإيه اللي تقدر تلاقيه بميزانيتك.'
+        : 'Price per m² in each Sohag district, computed from the listings currently on 1Line, and what your budget can find.',
       url: '/market-intelligence',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'أسعار المتر ومؤشرات السوق' : 'Market Intelligence', url: '/market-intelligence' }
+      ])
     });
   }, [lang, isAr]);
 
@@ -31,156 +41,17 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
     return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
   }, []);
 
-  // Live Sohag District Price Benchmark & Rental Yield Intelligence Data
-  const districtsData = useMemo(() => {
-    const rawAreas = areas.filter(a => a.id !== 'all');
-    
-    // Metadata presets per district ID to enrich dynamic prices
-    const districtMeta = {
-      corniche: {
-        rentalYield: 9.2,
-        demandLevel_ar: 'طلب فائق (نادر المعروض)',
-        demandLevel_en: 'Very High (Scarce)',
-        topAsset_ar: 'شقق سكنية بإطلالة نيلية',
-        topAsset_en: 'Nile View Residences',
-        category: 'residential'
-      },
-      east: {
-        rentalYield: 11.0,
-        demandLevel_ar: 'نشط جداً (المركز الإداري والمالي)',
-        demandLevel_en: 'Highly Active',
-        topAsset_ar: 'مقرات إدارية وعيادات',
-        topAsset_en: 'Offices & Clinics',
-        category: 'commercial'
-      },
-      new_sohag: {
-        rentalYield: 14.2,
-        demandLevel_ar: 'نمو عمراني سريع',
-        demandLevel_en: 'Fast urban growth',
-        topAsset_ar: 'محلات ومقرات تجارية وكمبوندات',
-        topAsset_en: 'Retail Shops & Gated Villas',
-        category: 'commercial'
-      },
-      center: {
-        rentalYield: 10.5,
-        demandLevel_ar: 'حركة تجارية مستمرة (قلب المدينة)',
-        demandLevel_en: 'Continuous Downtown Traffic',
-        topAsset_ar: 'صيدليات ومحلات تجزئة',
-        topAsset_en: 'Pharmacies & Retail Stores',
-        category: 'commercial'
-      },
-      kawthar: {
-        rentalYield: 12.8,
-        demandLevel_ar: 'نمو صناعي ولوجستي واعد',
-        demandLevel_en: 'Industrial & Logistics Expansion',
-        topAsset_ar: 'مستودعات ومصانع وسكن متميز',
-        topAsset_en: 'Warehouses & Industrial Sites',
-        category: 'commercial'
-      },
-      thakafa: {
-        rentalYield: 8.8,
-        demandLevel_ar: 'طلب سكني عائلي مستقر',
-        demandLevel_en: 'Stable Residential',
-        topAsset_ar: 'شقق سكنية عائلية',
-        topAsset_en: 'Family Apartments',
-        category: 'residential'
-      },
-      tahta: {
-        rentalYield: 10.2,
-        demandLevel_ar: 'عاصمة التجارة والأثاث شمالاً',
-        demandLevel_en: 'Northern Commercial Hub',
-        topAsset_ar: 'محلات تجارية وأراضي استثمارية',
-        topAsset_en: 'Commercial Outlets & Land',
-        category: 'commercial'
-      },
-      girga: {
-        rentalYield: 9.5,
-        demandLevel_ar: 'مركز الثقل الاقتصادي جنوباً',
-        demandLevel_en: 'Southern Commercial Center',
-        topAsset_ar: 'عقارات شارع البحر والكورنيش',
-        topAsset_en: 'Waterfront & Bahr St Real Estate',
-        category: 'commercial'
-      },
-      west: {
-        rentalYield: 8.5,
-        demandLevel_ar: 'طلب سكني متصل بالمحطة',
-        demandLevel_en: 'Transit & Residential Demand',
-        topAsset_ar: 'وحدات سكنية وتجارية',
-        topAsset_en: 'Mixed-Use Units',
-        category: 'residential'
-      },
-      akhmeem: {
-        rentalYield: 9.0,
-        demandLevel_ar: 'تراث ونشاط سكني تجاري متنامي',
-        demandLevel_en: 'Historic & Commercial Growth',
-        topAsset_ar: 'شقق سكنية وأسواق تجزئة',
-        topAsset_en: 'Apartments & Retail Stalls',
-        category: 'residential'
-      }
-    };
-
-    return rawAreas.map(area => {
-      const meta = districtMeta[area.id] || {
-        rentalYield: 9.5,
-        demandLevel_ar: 'طلب استثماري مستقر',
-        demandLevel_en: 'Stable Demand',
-        topAsset_ar: 'وحدات سكنية وتجارية',
-        topAsset_en: 'Mixed-Use Real Estate',
-        category: 'residential'
-      };
-
-      const cagr = area.annualGrowthRate || 75;
-      const annualGrowth = Number((cagr / 3.2).toFixed(1));
-
-      return {
-        id: area.id,
-        name_ar: area.name_ar,
-        name_en: area.name_en,
-        avgPricePerSqm: area.avgPricePerMeter || 15000,
-        annualGrowth: annualGrowth,
-        cagr3Yrs: cagr,
-        rentalYield: meta.rentalYield,
-        demandLevel_ar: meta.demandLevel_ar,
-        demandLevel_en: meta.demandLevel_en,
-        topAsset_ar: meta.topAsset_ar,
-        topAsset_en: meta.topAsset_en,
-        category: meta.category
-      };
-    });
-  }, [areas]);
-
-  const filteredDistricts = selectedAssetType === 'all' 
-    ? districtsData 
-    : districtsData.filter(d => d.category === selectedAssetType);
-
-  // Dynamic Budget Recommendation
-  const budgetRecommendation = useMemo(() => {
-    if (userBudget >= 5000000) {
-      return {
-        district_ar: 'سوهاج الجديدة + كورنيش النيل',
-        district_en: 'New Sohag + Nile Corniche',
-        strategy_ar: 'توزيع المحفظة بين مقر تجاري بسوهاج الجديدة وشقة فاخرة على الكورنيش لتعظيم العائد الإيجاري وحفظ القيمة.',
-        strategy_en: 'Split allocation between commercial retail in New Sohag and Nilefront luxury residence.',
-        estAnnualYield: (userBudget * 0.135).toLocaleString()
-      };
-    } else if (userBudget >= 2000000) {
-      return {
-        district_ar: 'سوهاج الجديدة (الحي الثاني أو المحور المركزي)',
-        district_en: 'New Sohag (Central Axis / 2nd District)',
-        strategy_ar: 'محل تجاري أو عيادة طبية بمقدم 20% وتقسيط حتى 5 سنوات — العائد الفعلي يتحدد بالموقع والإيجارات المقارنة قبل الشراء.',
-        strategy_en: 'Commercial/medical unit with 20% down — actual return depends on location and comparable rents.',
-        estAnnualYield: (userBudget * 0.14).toLocaleString()
-      };
-    } else {
-      return {
-        district_ar: 'شرق سوهاج أو الثقافة (شقة سكنية متكاملة)',
-        district_en: 'East Sohag or Thakafa (Ready Residence)',
-        strategy_ar: 'شقة سكنية مسجلة 120-150م² بموقع حيوي بتشطيب سوبر لوكس للإيجار السكني الفوري المستقر.',
-        strategy_en: 'Serviced 120-150 sqm residential apartment for steady long-term rental income.',
-        estAnnualYield: (userBudget * 0.095).toLocaleString()
-      };
-    }
-  }, [userBudget]);
+  const live = useMemo(() => liveListings(properties), [properties]);
+  // Main areas that show a price, whichever source each one uses
+  const pricedAreas = useMemo(() => mainAreas(areas).filter((a) => areaPrice(a, properties, areas).ppm > 0).length, [areas, properties]);
+  const matches = useMemo(() => budgetMatches(properties, userBudget), [properties, userBudget]);
+  const overall = useMemo(() => {
+    // Same listings, classes and median as the area cards below: flats only, every area
+    const ppm = pricedListings(properties).filter((p) => Number(p.size) > 0 && assetClass(p) === 'residential').map((p) => Number(p.price) / Number(p.size));
+    return { residential: Math.round(median(ppm)), sample: ppm.length };
+  }, [properties]);
+  const areaName = (id) => areaPathName(id, areas, isAr) || (isAr ? 'منطقة تانية' : 'Other');
+  const n = (v) => Number(v || 0).toLocaleString('en-US');
 
   return (
     <div className="market-intelligence-page-wrapper">
@@ -207,227 +78,102 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
             <div className="page-breadcrumb-sub">
               <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
               <span>/</span>
-              <span className="crumb-current">{isAr ? 'مركز أبحاث السوق' : 'Market Intelligence'}</span>
+              <span className="crumb-current">{isAr ? 'أسعار المتر' : 'Price per m²'}</span>
             </div>
           </div>
 
           <div className="market-badge-pill">
             <TrendingUp size={16} className="text-gold" />
-            <span>{isAr ? 'مركز أبحاث وبيانات السوق العقاري بسوهاج 2026' : 'Sohag Real Estate Market Intelligence Hub'}</span>
+            <span>{isAr ? 'بيتحدّث مع كل عرض جديد' : 'Updated with every listing'}</span>
           </div>
 
-          <h1>{isAr ? 'مؤشرات أسعار المتر والعوائد الاستثمارية بسوهاج' : 'Price per Sqm & ROI Intelligence in Sohag'}</h1>
+          <h1>{isAr ? 'أسعار المتر في سوهاج' : 'Price per m² in Sohag'}</h1>
           <p>
-            {isAr 
-              ? 'بيانات حية ومحدثة دورياً من واقع صفقات الشهر العقاري وتداولات السوق لمساعدة المستثمرين والمشترين في اتخاذ قرارات دقيقة.' 
-              : 'Live verified transaction data, average sqm benchmarks, and projected rental yields across all Sohag districts.'}
+            {isAr
+              ? 'سعر المتر في كل منطقة ومناطقها الفرعية، ومكتوب جنب كل رقم مصدره: متوسط العروض الحالية على 1Line أو تقدير فريقنا.'
+              : 'Price per m² for each area and its sub-areas, with the source next to every figure: current 1Line listings or our team\'s estimate.'}
           </p>
         </div>
       </div>
 
-      {/* Top 4 Key Economic Indicators Strip */}
-      <div className="market-content-container">
-        <div className="market-summary-stats-grid">
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-blue">
-              <TrendingUp size={22} />
-            </div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'متوسط نمو رأس المال السنوي' : 'Avg Capital Growth'}</span>
-              <strong className="stat-num text-primary">+26.4% {isAr ? 'سنوياً' : '/ Year'}</strong>
-            </div>
+      <div className="market-content-container mi-body">
+        <div className="mi-stats">
+          <div className="mi-stat">
+            <span>{isAr ? 'عقارات معروضة دلوقتي' : 'Listings now'}</span>
+            <strong>{n(live.length)}</strong>
           </div>
-
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-green">
-              <Percent size={22} />
-            </div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'متوسط العائد الإيجاري التجاري' : 'Commercial Rental Yield'}</span>
-              <strong className="stat-num text-success">12.5% - 15%</strong>
-            </div>
+          <div className="mi-stat">
+            <span>{isAr ? 'وسيط متر الشقق' : 'Median flat price / m²'}</span>
+            <strong>{overall.residential ? <><bdi>{n(overall.residential)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></> : '—'}</strong>
+            {overall.sample > 0 && <em>{isAr ? `من ${countPhrase('listing', overall.sample)} في كل المناطق` : `from ${countPhrase('listing', overall.sample, false)}`}</em>}
           </div>
-
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-gold">
-              <DollarSign size={22} />
-            </div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'أعلى منطقة طلباً للاستثمار' : 'Top Investment District'}</span>
-              <strong className="stat-num">{isAr ? 'سوهاج الجديدة' : 'New Sohag'}</strong>
-            </div>
-          </div>
-
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-purple">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'قبل أي نشر أو تعاقد' : 'Before listing or contract'}</span>
-              <strong className="stat-num">{isAr ? 'مراجعة المستندات' : 'Document review'}</strong>
-            </div>
+          <div className="mi-stat">
+            <span>{isAr ? 'مناطق ليها سعر' : 'Areas priced'}</span>
+            <strong>{n(pricedAreas)}</strong>
           </div>
         </div>
 
-        {/* Interactive Custom Budget ROI Simulator */}
-        <div className="market-budget-advisor-card">
-          <div className="advisor-header-row">
-            <div className="advisor-title-wrap">
-              <div className="advisor-glow-icon">
-                <Calculator size={20} className="text-white" />
-              </div>
-              <div>
-                <h4>{isAr ? 'محاكي ترشيح أفضل حي لاستثمار ميزانيتك' : 'Certified Investment District Recommender'}</h4>
-                <p>{isAr ? 'أدخل حجم السيولة المتاحة لديك لنرشح لك الحي الأكثر ربحية وأعلى عائد إيجاري فورياً' : 'Input your capital to discover the highest-yield district in Sohag'}</p>
-              </div>
-            </div>
-
-            <div className="advisor-input-box">
-              <label>{isAr ? 'ميزانيتك الاستثمارية:' : 'Your Capital:'}</label>
-              <div className="advisor-num-input-wrap">
-                <input
-                  type="number"
-                  min="500000"
-                  max="30000000"
-                  step="100000"
-                  value={userBudget}
-                  onChange={(e) => setUserBudget(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="advisor-direct-input"
-                />
-                <span>{isAr ? 'ج.م' : 'EGP'}</span>
-              </div>
-            </div>
+        <section className="mi-section" aria-labelledby="mi-areas-title">
+          <div className="mi-section-head">
+            <h2 id="mi-areas-title">{isAr ? 'سعر المتر حسب المنطقة' : 'Price per m² by area'}</h2>
+            <p>{isAr ? 'السعر الكبير لمتر الشقق في المنطقة كلها. افتح «الأسعار حسب النوع» للمحلات والمكاتب والأراضي.' : 'The large figure is for flats across the area. Open «Prices by kind» for shops, offices and land.'}</p>
           </div>
+          <MarketAreaList areas={areas} properties={properties} projects={projects} isAr={isAr} />
+        </section>
 
-          <div className="advisor-result-banner">
-            <div className="advisor-res-district">
-              <span className="res-tag">{isAr ? 'الترشيح الاستثماري الأفضل' : 'Top Recommended Location'}</span>
-              <h5>{isAr ? budgetRecommendation.district_ar : budgetRecommendation.district_en}</h5>
-              <p>{isAr ? budgetRecommendation.strategy_ar : budgetRecommendation.strategy_en}</p>
-            </div>
-            <div className="advisor-res-yield">
-              <span className="yield-tag">{isAr ? 'العائد السنوي المتوقع' : 'Est. Annual Cash Flow'}</span>
-              <strong>{budgetRecommendation.estAnnualYield} {isAr ? 'ج.م / سنوياً' : 'EGP/yr'}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Main District Matrix Table */}
-        <div className="market-matrix-card">
-          <div className="matrix-header-flex">
+        {/* What a budget can find right now */}
+        <section className="mi-budget" aria-labelledby="mi-budget-title">
+          <div className="mi-budget-head">
+            <span className="mi-budget-icon"><Calculator size={20} aria-hidden="true" /></span>
             <div>
-              <h3>{isAr ? 'جدول مقارنة أسعار المتر والعوائد حسب أحياء سوهاج' : 'District Price & Yield Benchmark Matrix'}</h3>
-              <p>{isAr ? 'متوسط سعر المتر الكاش ومعدلات النمو والعوائد المتوقعة لعام 2026' : 'Average cash price per sqm, CAGR, and yield forecast'}</p>
-            </div>
-
-            {/* Filter Toggle */}
-            <div className="matrix-filter-pills">
-              <button
-                type="button"
-                className={`mat-btn ${selectedAssetType === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedAssetType('all')}
-              >
-                {isAr ? 'الكل' : 'All'}
-              </button>
-              <button
-                type="button"
-                className={`mat-btn ${selectedAssetType === 'commercial' ? 'active' : ''}`}
-                onClick={() => setSelectedAssetType('commercial')}
-              >
-                {isAr ? 'تجاري وإداري' : 'Commercial'}
-              </button>
-              <button
-                type="button"
-                className={`mat-btn ${selectedAssetType === 'residential' ? 'active' : ''}`}
-                onClick={() => setSelectedAssetType('residential')}
-              >
-                {isAr ? 'سكني' : 'Residential'}
-              </button>
+              <h2 id="mi-budget-title">{isAr ? 'ميزانيتك تلاقي إيه دلوقتي؟' : 'What can your budget find now?'}</h2>
+              <p>{isAr ? 'اكتب ميزانيتك ونقولك كام عقار معروض في حدودها وفين.' : 'Type your budget to see how many listings fit and where.'}</p>
             </div>
           </div>
-
-          {/* Desktop Table View */}
-          <div className="matrix-table-scroll">
-            <table className="market-data-table">
-              <thead>
-                <tr>
-                  <th>{isAr ? 'المنطقة / الحي' : 'District'}</th>
-                  <th>{isAr ? 'متوسط سعر المتر' : 'Avg Price / Sqm'}</th>
-                  <th>{isAr ? 'النمو السنوي' : 'Annual Growth'}</th>
-                  <th>{isAr ? 'العائد الإيجاري' : 'Rental Yield'}</th>
-                  <th>{isAr ? 'النمو التراكمي (3 سنوات)' : '3-Yr Growth'}</th>
-                  <th>{isAr ? 'حالة الطلب' : 'Demand Status'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDistricts.map((d) => (
-                  <tr key={d.id}>
-                    <td>
-                      <div className="district-cell">
-                        <MapPin size={15} className="text-primary" />
-                        <strong>{isAr ? d.name_ar : d.name_en}</strong>
-                      </div>
-                    </td>
-                    <td>
-                      <strong className="cell-price">{d.avgPricePerSqm.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
-                    </td>
-                    <td>
-                      <span className="growth-badge">+{d.annualGrowth}%</span>
-                    </td>
-                    <td>
-                      <strong className="text-success">{d.rentalYield}% {isAr ? 'سنوياً' : '/ yr'}</strong>
-                    </td>
-                    <td>
-                      <span className="cagr-text">+{d.cagr3Yrs}%</span>
-                    </td>
-                    <td>
-                      <span className="demand-tag">{isAr ? d.demandLevel_ar : d.demandLevel_en}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Investment Insights & Expert Forecast Section */}
-        <div className="market-insights-grid">
-          <div className="insight-card">
-            <div className="insight-card-header">
-              <Sparkles size={18} className="text-gold" />
-              <h4>{isAr ? 'أبرز توصيات خبراء الاستثمار العقاري بسوهاج 2026' : 'Key Investment Recommendations 2026'}</h4>
+          <div className="mi-budget-row">
+            <label htmlFor="mi-budget" className="mi-budget-input">
+              <span>{isAr ? 'الميزانية' : 'Budget'}</span>
+              <span className="mi-budget-field">
+                {/* Shown with thousands separators (2,500,000); typed digits in any script are read */}
+                <input id="mi-budget" type="text" inputMode="numeric" dir="ltr" value={userBudget ? n(userBudget) : ''}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/\D/g, '');
+                    setUserBudget(Math.min(1000000000, Number(digits) || 0));
+                  }} />
+                <em>{isAr ? 'ج.م' : 'EGP'}</em>
+              </span>
+            </label>
+            <div className="mi-budget-result" aria-live="polite">
+              <strong>{matches.count ? countPhrase('property', matches.count, isAr) : (isAr ? 'مفيش عقارات في الحدود دي' : 'No listings in this range')}</strong>
+              <span>
+                {matches.areas.length
+                  ? matches.areas.slice(0, 4).map(([id, c]) => `${areaName(id)} (${c})`).join(isAr ? '، ' : ', ')
+                  : (isAr ? 'اطلب اللي محتاجه ونبلغك أول ما يتوفر.' : 'Post a request and we will tell you when one appears.')}
+              </span>
             </div>
-            <ul className="insights-points-list">
-              <li>
-                <CheckCircle2 size={16} className="text-success" />
-                <span>{isAr ? 'سوهاج الجديدة تمثل الفرصة الذهبية للمضاعفة الرأسمالية خلال الـ 24 شهراً القادمة بسبب نقل المصالح والجامعات.' : 'New Sohag is the prime capital appreciation hotspot for the next 24 months.'}</span>
-              </li>
-              <li>
-                <CheckCircle2 size={16} className="text-success" />
-                <span>{isAr ? 'المقرات الإدارية والعيادات في شرق سوهاج من أكثر الوحدات طلباً للإيجار — اطلب إيجارات مقارنة فعلية قبل القرار.' : 'Clinics and offices in East Sohag are in high rental demand — ask for real comparable rents first.'}</span>
-              </li>
-              <li>
-                <CheckCircle2 size={16} className="text-success" />
-                <span>{isAr ? 'عقارات الكورنيش تحافظ على قيمتها كأفضل ملاذ آمن ضد التضخم مع ندرة الأراضي المتاحة على النيل.' : 'Nile Corniche properties remain the premier inflation-proof luxury store of value.'}</span>
-              </li>
+            <Link to={matches.count ? `/properties?maxPrice=${userBudget}` : '/special-requests'} className="mi-budget-cta">
+              {matches.count ? (isAr ? 'اعرض العقارات' : 'See listings') : (isAr ? 'اطلب عقار' : 'Request a property')}
+            </Link>
+          </div>
+        </section>
+
+        <div className="mi-bottom">
+          <section className="mi-tips" aria-labelledby="mi-tips-title">
+            <h2 id="mi-tips-title">{isAr ? 'قبل ما تقرر' : 'Before you decide'}</h2>
+            <ul>
+              <li><CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'قارن سعر متر الوحدة بسعر نفس المنطقة ونفس النوع (شقة مع شقة، محل مع محل).' : 'Compare a unit\'s price per m² with the same area and kind.'}</span></li>
+              <li><CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'الرقم اللي جنبه «من عرض واحد» أو «عرضين» سعر وحدات بعينها، مش متوسط المنطقة.' : 'A figure from one or two listings is those units\' price, not the area\'s.'}</span></li>
+              <li><CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'دي أسعار معروضة مش أسعار بيع نهائية. راجع المستندات مع محاميك قبل أي دفع.' : 'These are asking prices, not sale prices. Check the papers with your lawyer before paying.'}</span></li>
             </ul>
-          </div>
-
-          <div className="insight-card cta-consult-card">
-            <div className="insight-card-header">
-              <Building size={18} className="text-white" />
-              <h4>{isAr ? 'طلب دراسة جدوى استثمارية مخصصة' : 'Request Custom Feasibility Study'}</h4>
-            </div>
-            <p>{isAr ? 'هل تمتلك سيولة وترغب في توزيعها على أفضل محفظة عقارية في سوهاج؟ تواصل مع خبرائنا لإعداد دراسة جدوى مجانية.' : 'Have investment capital and looking for the optimal property portfolio? Consult our advisors.'}</p>
-            <a
-              href={getWhatsAppUrl(isAr ? 'مرحباً، أريد طلب دراسة جدوى عقارية استثمارية لمحفظتي' : 'Hello, I would like to request a custom investment feasibility study')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-whatsapp btn-full"
-            >
-              <span>{isAr ? 'تواصل مع مستشار الاستثمار (VIP)' : 'Consult Investment Desk'}</span>
+          </section>
+          <section className="mi-cta" aria-labelledby="mi-cta-title">
+            <h2 id="mi-cta-title">{isAr ? 'عايز مقارنة لوحدة معينة؟' : 'Need a comparison for a unit?'}</h2>
+            <p>{isAr ? 'ابعتلنا الوحدة اللي بتفكر فيها ونبعتلك العروض المشابهة في نفس المنطقة وأسعارها.' : 'Send us the unit and we will send similar listings in the same area with their prices.'}</p>
+            <a href={getWhatsAppUrl(isAr ? 'مرحباً، عايز مقارنة أسعار لوحدة بفكر فيها' : 'Hello, I would like a price comparison for a unit')} target="_blank" rel="noopener noreferrer" className="mi-cta-btn">
+              <MessageCircle size={18} aria-hidden="true" />
+              <span>{isAr ? 'اطلب مقارنة على واتساب' : 'Ask on WhatsApp'}</span>
             </a>
-          </div>
+          </section>
         </div>
       </div>
     </div>

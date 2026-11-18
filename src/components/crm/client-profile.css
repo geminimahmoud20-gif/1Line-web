@@ -1,0 +1,49 @@
+/* The client file's «التفاصيل» and «رحلة الزائر» tabs (the old full-profile window is gone). Tokens only. */
+.cp__head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; padding: 16px 20px 10px; }
+.cp__btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--crm-line-strong); background: var(--crm-subtle); color: var(--crm-ink); font-size: var(--crm-text-base); font-weight: 700; cursor: pointer; }
+.cp__btn--wa { flex: 1; background: var(--crm-positive-soft); color: var(--crm-positive); border-color: var(--crm-positive-line); }
+.cp__btn--call { flex: 1; background: var(--crm-brand-navy); color: var(--crm-on-dark); border-color: var(--crm-brand-navy); }
+.cp__btn--icon { flex: 0 0 44px; width: 44px; padding: 0; }
+.cp__btn--primary { background: var(--crm-brand-navy); color: var(--crm-on-dark); border-color: var(--crm-brand-navy); }
+.cp__btn--block { width: 100%; }
+.cp__locked { flex: 1; display: inline-flex; align-items: center; gap: 6px; color: var(--crm-muted); font-size: var(--crm-text-sm); }
+.cp__stack { display: flex; flex-direction: column; gap: var(--cp-gap); }
+.cp__h { margin: 0; display: flex; align-items: center; gap: 8px; font-size: var(--crm-text-md); font-weight: 700; color: var(--crm-ink); }
+.cp__note { padding: 12px 14px; border-radius: 10px; background: var(--crm-info-soft); border: 1px solid var(--crm-info-line); display: flex; flex-direction: column; gap: 6px; }
+.cp__note--ok { background: var(--crm-positive-soft); border-color: var(--crm-positive-line); }
+.cp__note p { margin: 0; font-size: var(--crm-text-sm); color: var(--crm-body); }
+.cp__chip { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: var(--crm-card); border: 1px solid var(--crm-line-strong); font-size: var(--crm-text-xs); font-weight: 700; color: var(--crm-body); }
+.cp__events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cp__event { --cp-tone: var(--crm-info); display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 14px; background: var(--crm-card); border: 1px solid var(--crm-line); border-inline-start: 4px solid var(--cp-tone); border-radius: 10px; }
+.cp__event[data-tone='positive'] { --cp-tone: var(--crm-positive); }
+.cp__event[data-tone='warn'] { --cp-tone: var(--crm-warn); }
+.cp__event[data-tone='violet'] { --cp-tone: var(--crm-violet); }
+.cp__event[data-tone='danger'] { --cp-tone: var(--crm-danger); }
+.cp__event-tag { grid-column: 1; font-size: var(--crm-text-xs); font-weight: 700; color: var(--cp-tone); }
+.cp__event-title { grid-column: 1; font-size: var(--crm-text-base); color: var(--crm-ink); overflow-wrap: anywhere; }
+.cp__event-time { grid-column: 2; grid-row: 1; font-size: var(--crm-text-xs); color: var(--crm-faint); white-space: nowrap; }
+.cp-ov__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.cp-ov__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.cp-ov__tag { min-height: 32px; padding: 0 12px; border-radius: 999px; background: var(--crm-subtle); color: var(--crm-faint); border: 1px solid var(--crm-line-strong); font-size: var(--crm-text-xs); cursor: default; }
+.cp-ov__tag.is-on { background: var(--crm-info-soft); color: var(--crm-info); border-color: var(--crm-info); font-weight: 700; }
+.cp-ov__tag.is-edit { cursor: pointer; }
+.cp-ov__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.cp-ov__save { display: flex; margin-top: 18px; }
+  .cp__head { padding: calc(12px + env(safe-area-inset-top)) 14px 8px; gap: 2px 10px; }
+  .cp-ov__save { position: sticky; bottom: 0; margin-inline: -14px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--crm-card); border-top: 1px solid var(--crm-line); }
+  .cp-ov__save .btn { width: 100%; min-height: 48px; }
+  .cp__btn--wa, .cp__btn--call { flex: 0 0 auto; min-width: 150px; }
+  .cp__locked { flex: 1; }
+@media (max-width: 640px) {
+  .cp-ov__grid { grid-template-columns: 1fr; }
+  /* Saving stays in reach while the form scrolls */
+  .cp-ov__save { position: sticky; bottom: 0; margin-inline: calc(var(--ui-s-4) * -1); padding: 10px var(--ui-s-4) calc(10px + env(safe-area-inset-bottom)); background: var(--crm-card); border-top: 1px solid var(--crm-line); }
+  .cp-ov__save .btn { width: 100%; min-height: 48px; }
+}
+
+/* The form now lives in the client drawer, not in the old modal that styled it: same fields, kit look, 16px so a phone does not zoom */
+.cp-ov__grid .form-group-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cp-ov__grid .form-group-item label { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); }
+.cp-ov__grid .form-group-item :is(input, select, textarea) { width: 100%; min-height: 44px; padding: 0 12px; font: inherit; font-size: 16px; color: var(--ui-text); background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); box-sizing: border-box; }
+.cp-ov__grid .form-group-item :is(input, select, textarea):disabled { background: var(--ui-surface-2); color: var(--ui-text); border-color: var(--ui-line); opacity: 1; -webkit-text-fill-color: var(--ui-text); }
+.cp-ov__grid .form-group-item :is(input, select, textarea):focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 1px; }

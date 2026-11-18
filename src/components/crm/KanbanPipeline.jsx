@@ -1,17 +1,53 @@
-import { useState, useMemo, useEffect } from 'react';
-import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, Filter, AlertTriangle, Shuffle, Search, X, Zap, MoreHorizontal } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Building2, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
+import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { leadScore, isOpenLead, leadBudget, isSellerLead, duplicatesById } from '../../utils/crmLeadViews';
+import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
+import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
+import LostReasonModal from './LostReasonModal';
+import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
+import { guardStage } from '../../utils/stageGate';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
+import './kanban-redesign.css';
+import './kanban-mobile.css';
+import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
 
-const PIPELINE_STAGES = [
-  { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
-  { id: 'contacted', title_ar: 'تم التواصل الأولي', title_en: 'Contacted', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
-  { id: 'site_visit', title_ar: 'معاينات مجدولة', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
-  { id: 'negotiating', title_ar: 'قيد التفاوض والتقييم', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
-  { id: 'closing', title_ar: 'توقيع عقود وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
-  { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' }
+const CARDS_PER_STAGE = 5;
+
+// Seven columns: five steps ending in «إغلاق» (a lead in the old «توقيع وحجز» step sits there too), then
+// غير متفاعل and خسارة. Same status ids as before (utils/dealStages).
+const BASE_STAGES = [
+  { id: 'new', title_ar: 'عملاء محتملين', title_en: 'Leads', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
+  { id: 'contacted', title_ar: 'مؤهل', title_en: 'Qualified', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
+  { id: 'site_visit', title_ar: 'اجتماع / معاينة', title_en: 'Meeting / viewing', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
+  { id: 'negotiating', title_ar: 'تفاوض', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
+  { id: 'closed', title_ar: 'إغلاق', title_en: 'Closed', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
+  { id: 'inactive', title_ar: 'غير متفاعل', title_en: 'Unresponsive', color: 'var(--crm-muted)', bg: 'var(--crm-line)' },
+  { id: 'lost', title_ar: 'خسارة', title_en: 'Lost', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)' }
 ];
+// The first five columns are steps forward; «next» and «back» only move inside them
+const PROGRESS_COUNT = PROGRESS_STAGE_IDS.length;
+
+// The same columns named for an owner's sale (utils/leadPipeline): inspection & valuation, listed, sold
+const SELLER_COLUMNS = BASE_STAGES.map((st) => {
+  const sel = SELLER_STAGES.find((x) => x.id === st.id);
+  return sel ? { ...st, title_ar: sel.column_ar, title_en: sel.column_en } : st;
+});
+/** A lead's own stage names: an owner's card offers «معروض للبيع», not «تفاوض» */
+const stagesOfLead = (lead) => (pipelineKind(lead) === 'seller' ? SELLER_COLUMNS : BASE_STAGES);
+// Buyers / owners / investors chips: an owner is anyone who came to sell or value (isSellerLead)
+const matchesType = (l, type) => {
+  if (type === 'all') return true;
+  if (type === 'seller') return isSellerLead(l);
+  if (type === 'buyer') return !isSellerLead(l) && l.type !== 'investor';
+  return l.type === type;
+};
 
 const PROPERTY_TYPE_NAMES = {
   apartment: 'شقة سكنية',
@@ -49,22 +85,95 @@ export default function KanbanPipeline({
   onOpenEditLead,
   onOpenLead,
   lang = 'ar',
-  triggerToast
+  triggerToast,
+  activeRole = 'sales_agent'
 }) {
+  // Leads sharing a phone: the same person asking more than once shows up as several cards, so say so on each
+  const sameNumber = useMemo(() => duplicatesById(leads), [leads]);
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
-  const [filterType, setFilterType] = useState('all');
+  // A lead dropped on «خسارة» asks why first
+  const [lostFor, setLostFor] = useState(null);
+  const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
+  // Two separate pipelines: requests (buyers) and offers (owners and brokers), each with its own stages and card
+  const [filterType, setFilterType] = useState('buyer');
+  const isPhone = useMediaQuery('(max-width: 640px)');
+  const [phoneStage, setPhoneStage] = useState('new');
+  // Columns read as an owner's pipeline when only owners are shown
+  const PIPELINE_STAGES = filterType === 'seller' ? SELLER_COLUMNS : BASE_STAGES;
+  const phoneStageId = PIPELINE_STAGES.some((st) => st.id === phoneStage) ? phoneStage : PIPELINE_STAGES[0].id;
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedStages, setCollapsedStages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oneline_kanban_collapsed_stages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Each column shows the first few deals; "show all" opens the rest (per column, not saved)
+  const [openStages, setOpenStages] = useState([]);
+  const toggleStageOpen = (stageId) => setOpenStages((prev) => (prev.includes(stageId) ? prev.filter((id) => id !== stageId) : [...prev, stageId]));
+
+  // Compact view: narrower columns and shorter cards, so more stages fit on one screen
+  const [compact, setCompact] = useState(() => {
+    try { return localStorage.getItem('oneline_kanban_compact') === '1'; } catch { return false; }
+  });
+  const toggleCompact = () => setCompact((prev) => {
+    try { localStorage.setItem('oneline_kanban_compact', prev ? '0' : '1'); } catch { /* ignore storage error */ }
+    return !prev;
+  });
+
+  const saveCollapsed = (next) => {
+    try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch { /* ignore storage error */ }
+    return next;
+  };
+  const collapseAll = () => setCollapsedStages(saveCollapsed(PIPELINE_STAGES.map((st) => st.id)));
+  const expandAll = () => setCollapsedStages(saveCollapsed([]));
+
+  // A second scrollbar above the board, kept in sync, so wide boards scroll without going to the bottom
+  const boardRef = useRef(null);
+  const topBarRef = useRef(null);
+  const topTrackRef = useRef(null);
+  const [boardWidth, setBoardWidth] = useState(0);
+  useEffect(() => {
+    if (topTrackRef.current) topTrackRef.current.style.width = `${boardWidth}px`;
+  }, [boardWidth]);
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () => setBoardWidth(board.scrollWidth > board.clientWidth + 1 ? board.scrollWidth : 0);
+    const ro = new ResizeObserver(measure);
+    ro.observe(board);
+    measure();
+    return () => ro.disconnect();
+  }, [collapsedStages, compact]);
+  // The echo scroll on the other bar finds the positions already equal and stops there
+  const syncScroll = (from, to) => {
+    if (from && to && Math.abs(to.scrollLeft - from.scrollLeft) >= 1) to.scrollLeft = from.scrollLeft;
+  };
+
+  const toggleStageCollapse = (stageId) => {
+    setCollapsedStages(prev => {
+      const next = prev.includes(stageId) ? prev.filter(id => id !== stageId) : [...prev, stageId];
+      try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch { /* ignore storage error */ }
+      return next;
+    });
+  };
 
   const isAr = lang === 'ar';
 
   const allAreas = useMemo(() => getAreas(), []);
 
-  // Format and localize property type
+  // Format and localize property type (returns null for general tags that duplicate the top card badge)
   const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'Property';
+    if (!typeKey) return null;
     const cleanKey = String(typeKey).trim().toLowerCase();
+    if (cleanKey === 'buyer' || cleanKey === 'request' || cleanKey === 'lead' || cleanKey === 'seller') {
+      return null;
+    }
     if (PROPERTY_TYPE_NAMES[cleanKey]) {
       return isAr ? PROPERTY_TYPE_NAMES[cleanKey] : typeKey;
     }
@@ -82,25 +191,8 @@ export default function KanbanPipeline({
     if (found) {
       return isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en);
     }
-    return areaKey;
-  };
-
-  // Format time ago
-  const formatTimeAgo = (timestamp) => {
-    if (!timestamp) return isAr ? 'اليوم' : 'Today';
-    try {
-      // eslint-disable-next-line react-hooks/purity -- "time ago" label must use the current clock
-      const diffMs = Date.now() - new Date(timestamp).getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 2) return isAr ? 'الآن' : 'Just now';
-      if (diffMins < 60) return isAr ? `منذ ${diffMins} دقيقة` : `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return isAr ? `منذ ${diffHours} ساعة` : `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      return isAr ? `منذ ${diffDays} يوم` : `${diffDays}d ago`;
-    } catch {
-      return isAr ? 'مؤخراً' : 'Recent';
-    }
+    // An unknown internal key (e.g. "new_area_2") must not reach the card as raw text
+    return /^[a-z0-9_-]+$/i.test(String(areaKey)) ? (isAr ? 'سوهاج' : 'Sohag') : areaKey;
   };
 
   // Extract lead budget
@@ -131,7 +223,8 @@ export default function KanbanPipeline({
     }
   };
 
-  // "More" menus are <details> disclosures: close them on outside click or Esc
+  // "More" menus are <details> disclosures: close them on outside click, Esc, or when the page
+  // or board scrolls (the menu is pinned to the screen, so it would drift off its card)
   useEffect(() => {
     const closeAll = (e) => {
       document.querySelectorAll('.kb-more[open]').forEach((d) => {
@@ -140,14 +233,38 @@ export default function KanbanPipeline({
     };
     document.addEventListener('click', closeAll);
     document.addEventListener('keydown', closeAll);
+    document.addEventListener('scroll', closeAll, true);
     return () => {
       document.removeEventListener('click', closeAll);
       document.removeEventListener('keydown', closeAll);
+      document.removeEventListener('scroll', closeAll, true);
     };
   }, []);
+
+  // Opened menus sit on the screen next to their "…" button: below it when there is room,
+  // above it otherwise, and never past the screen edges
+  const placeMenu = (e) => {
+    const details = e.currentTarget;
+    if (!details.open) return;
+    const menu = details.querySelector('.kb-menu');
+    const btn = details.querySelector('summary');
+    if (!menu || !btn) return;
+    const r = btn.getBoundingClientRect();
+    const h = menu.offsetHeight;
+    const w = menu.offsetWidth;
+    const gap = 6;
+    const fitsBelow = r.bottom + gap + h <= window.innerHeight - 8;
+    const top = fitsBelow ? r.bottom + gap : Math.max(8, r.top - gap - h);
+    const left = Math.min(Math.max(8, isAr ? r.left : r.right - w), window.innerWidth - w - 8);
+    menu.style.top = `${Math.round(top)}px`;
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.visibility = 'visible';
+  };
   const filteredLeads = useMemo(() => {
     return leads.filter(l => {
-      if (filterType !== 'all' && l.type !== filterType) return false;
+      // Archived (hidden test or duplicate) requests stay out of the board
+      if (l.isArchived) return false;
+      if (!matchesType(l, filterType)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const nameMatch = (l.name || '').toLowerCase().includes(q);
@@ -160,14 +277,64 @@ export default function KanbanPipeline({
     });
   }, [leads, filterType, searchQuery]);
 
-  // Calculate Column metrics
-  const getStageStats = (stageId) => {
-    const stageLeads = filteredLeads.filter(l => (l.status || 'new') === stageId);
-    const totalVolume = stageLeads.reduce((acc, curr) => {
-      return acc + getLeadBudget(curr);
-    }, 0);
-    return { count: stageLeads.length, totalVolume };
-  };
+  // Pre-grouped leads & metrics by stage in a single O(N) pass
+  const { leadsByStage, stageStatsMap } = useMemo(() => {
+    const groups = {};
+    const stats = {};
+    PIPELINE_STAGES.forEach((s) => {
+      groups[s.id] = [];
+      stats[s.id] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+    });
+    filteredLeads.forEach((l) => {
+      const st = boardColumnOf(l.status);
+      if (!groups[st]) {
+        groups[st] = [];
+        stats[st] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+      }
+      groups[st].push(l);
+      stats[st].count += 1;
+      const b = getLeadBudget(l);
+      stats[st].totalVolume += b;
+      if (b > 0) {
+        stats[st].budgetedCount += 1;
+      } else {
+        stats[st].unbudgetedCount += 1;
+      }
+    });
+    return { leadsByStage: groups, stageStatsMap: stats };
+  }, [filteredLeads, PIPELINE_STAGES]);
+
+  // Clock for overdue calculations
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Executive pipeline metrics overview
+  const pipelineOverview = useMemo(() => {
+    let totalVol = 0;
+    let supplyVol = 0;
+    let highValue = 0;
+    let overdue = 0;
+    // Open deals only (not won, lost or archived), counted the same way as the dashboard:
+    // the board also shows the won/lost columns, which made its total look bigger than the dashboard's
+    const open = filteredLeads.filter(isOpenLead);
+    open.forEach(l => {
+      const b = leadBudget(l);
+      // Buyers' budgets and owners' asking prices are counted apart
+      if (isSellerLead(l)) supplyVol += b; else totalVol += b;
+      if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
+      if (isNewOverdue(l, now)) overdue++;
+    });
+    return {
+      totalVol,
+      supplyVol,
+      highValue,
+      overdue,
+      activeCount: open.length
+    };
+  }, [filteredLeads, now]);
 
   // Drag & Drop Handlers
   const handleDragStart = (e, leadId) => {
@@ -179,14 +346,55 @@ export default function KanbanPipeline({
     e.preventDefault();
   };
 
+  const stageOk = (lead, targetStageId) => guardStage(lead, { status: targetStageId, ...(targetStageId === 'lost' ? { lostReason: 'pending' } : {}) }, { role: activeRole, toast: triggerToast });
+
   const handleDrop = (e, targetStageId) => {
     e.preventDefault();
     const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
     if (leadId) {
-      if (onUpdateLead) {
-        onUpdateLead(leadId, { status: targetStageId });
+      const targetLead = leads.find(l => l.id === leadId);
+      if (targetLead && boardColumnOf(targetLead.status) === targetStageId) { setDraggedLeadId(null); return; }
+      // The stage lock: log the activity outcome first, and only a manager goes back
+      if (targetLead && !stageOk(targetLead, targetStageId)) { setDraggedLeadId(null); return; }
+      if (targetLead && targetStageId === 'lost') { setLostFor(targetLead); setDraggedLeadId(null); return; }
+      if (targetLead && onUpdateLead) {
+        const validation = validateStageTransition(targetLead, targetStageId, {
+          userRole: activeRole,
+          isFounderApproved: targetLead.isFounderApproved || activeRole === 'super_admin'
+        });
+
+        if (!validation.allowed) {
+          setBlockerModal({ isOpen: true, blockerInfo: validation, lead: targetLead });
+          if (triggerToast) {
+            triggerToast(validation.missingDeliverable, 'error');
+          }
+          setDraggedLeadId(null);
+          return;
+        }
+
+        const prevStageId = targetLead.status || 'new';
+        const updates = { 
+          status: targetStageId,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
+          ...(prevStageId === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})
+        };
+        if (validation.nextTask) {
+          updates.latestHandoffTask = validation.nextTask;
+        }
+        onUpdateLead(leadId, updates, targetLead.version);
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar}` : `Lead moved to ${targetStageId}`, 'success');
+          triggerToast(
+            isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -195,13 +403,46 @@ export default function KanbanPipeline({
 
   // Quick Move to Next Stage
   const handleMoveToNextStage = (lead) => {
-    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
-    if (currentIndex < PIPELINE_STAGES.length - 1) {
+    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
+    if (currentIndex >= 0 && currentIndex < PROGRESS_COUNT - 1) {
+      const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
-      if (onUpdateLead) {
-        onUpdateLead(lead.id, { status: nextStage.id });
+      if (!stageOk(lead, nextStage.id)) return;
+      const validation = validateStageTransition(lead, nextStage.id, {
+        userRole: activeRole,
+        isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+      });
+
+      if (!validation.allowed) {
+        setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`, 'success');
+          triggerToast(validation.missingDeliverable, 'error');
+        }
+        return;
+      }
+
+      if (onUpdateLead) {
+        const updates = { 
+          status: nextStage.id,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        };
+        if (validation.nextTask) {
+          updates.latestHandoffTask = validation.nextTask;
+        }
+        onUpdateLead(lead.id, updates, lead.version);
+        if (triggerToast) {
+          triggerToast(
+            isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -209,36 +450,90 @@ export default function KanbanPipeline({
 
   // Quick Move to Previous Stage
   const handleMoveToPrevStage = (lead) => {
-    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
-    if (currentIndex > 0) {
+    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
+    if (currentIndex > 0 && currentIndex < PROGRESS_COUNT) {
+      const currentStageId = lead.status || 'new';
       const prevStage = PIPELINE_STAGES[currentIndex - 1];
+      if (!stageOk(lead, prevStage.id)) return;
       if (onUpdateLead) {
-        onUpdateLead(lead.id, { status: prevStage.id });
+        onUpdateLead(lead.id, { 
+          status: prevStage.id,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        }, lead.version);
         if (triggerToast) {
-          triggerToast(isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`, 'info');
+          triggerToast(
+            isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`,
+            'info',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: currentStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
   };
 
-  // Auto distribute leads across stages for realistic demo (with confirmation safeguard)
-  const handleAutoDistributeStages = () => {
-    if (!onUpdateLead || leads.length === 0) return;
-    const confirmed = typeof window !== 'undefined' && window.confirm(
-      isAr 
-        ? `⚠️ تنبيه تشغيلي:\nهل أنت متأكد من رغبتك في إعادة توزيع حالات جميع العملاء (${leads.length} عميل) على مراحل المسار تجريبياً؟\nسيؤدي ذلك إلى تعديل مراحل الصفقات الحالية.`
-        : `⚠️ Operational Warning:\nAre you sure you want to test-redistribute all ${leads.length} leads across pipeline stages? This will update their active deal stages.`
-    );
-    if (!confirmed) return;
-
-    const stages = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
-    leads.forEach((lead, idx) => {
-      const assignedStage = stages[idx % stages.length];
-      onUpdateLead(lead.id, { status: assignedStage });
+  // Direct Move to Any Specific Stage
+  const handleMoveToSpecificStage = (lead, targetStageId) => {
+    if (!lead || !targetStageId || boardColumnOf(lead.status) === targetStageId) return;
+    if (!stageOk(lead, targetStageId)) return;
+    if (targetStageId === 'lost') { setLostFor(lead); return; }
+    const prevStageId = lead.status || 'new';
+    const validation = validateStageTransition(lead, targetStageId, {
+      userRole: activeRole,
+      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
     });
-    if (triggerToast) {
-      triggerToast(isAr ? 'تم توزيع الصفقات على مسار المبيعات بنجاح!' : 'Leads distributed across stages!', 'success');
+
+    if (!validation.allowed) {
+      setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
+      if (triggerToast) {
+        triggerToast(validation.missingDeliverable, 'error');
+      }
+      return;
     }
+
+    if (onUpdateLead) {
+      const updates = { 
+        status: targetStageId,
+        statusUpdatedAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
+        ...(prevStageId === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})
+      };
+      if (validation.nextTask) {
+        updates.latestHandoffTask = validation.nextTask;
+      }
+      onUpdateLead(lead.id, updates, lead.version);
+      const targetStage = PIPELINE_STAGES.find(s => s.id === targetStageId);
+      if (triggerToast) {
+        triggerToast(
+          isAr ? `تم نقل العميل مباشرة إلى مرحلة: ${targetStage?.title_ar || targetStageId}` : `Moved to ${targetStage?.title_en || targetStageId}`,
+          'success',
+          {
+            onUndo: () => {
+              onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+            },
+            undoLabel: isAr ? 'تراجع' : 'Undo',
+            duration: 6000
+          }
+        );
+      }
+    }
+  };
+
+  // Test or duplicate deals: archived (hidden here and in the inbox, restorable from the leads table)
+  const handleArchive = (lead) => {
+    if (!onUpdateLead) return;
+    onUpdateLead(lead.id, { isArchived: true, lastActivityAt: new Date().toISOString() });
+    triggerToast?.(isAr ? 'اتنقل للأرشيف واتخفى من المسار' : 'Archived', 'info', {
+      onUndo: () => onUpdateLead(lead.id, { isArchived: false, lastActivityAt: new Date().toISOString() }),
+      undoLabel: isAr ? 'تراجع' : 'Undo',
+      duration: 6000
+    });
   };
 
   const onWhatsAppClick = (lead) => {
@@ -248,7 +543,7 @@ export default function KanbanPipeline({
     const text = isAr 
       ? `مرحباً أ. ${lead.name || 'العميل الكريم'}، معك مستشار شركة 1Line للحلول العقارية بسوهاج بخصوص طلبكم (${propTitle} في ${areaTitle}). يسعدنا تزويدك بالتفاصيل.`
       : `Hello ${lead.name}, this is 1Line Real Estate following up on your request for ${propTitle} in ${areaTitle}.`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleScheduleVisit = (leadId, visitDetails) => {
@@ -262,169 +557,170 @@ export default function KanbanPipeline({
   };
 
   return (
-    <div className="kanban-pipeline-wrapper" style={{ paddingBottom: '70px' }}>
-      {/* Top Filter & Search Bar */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={18} style={{ color: 'var(--crm-accent-text)' }} />
-          <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 700, color: 'var(--crm-ink)' }}>
-            {isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}
-          </h3>
-          <span className="badge" style={{ background: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', border: '1px solid var(--crm-warn-line)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
-            {filteredLeads.length} {isAr ? 'صفقة' : 'deals'}
-          </span>
+    <div className="kanban-pipeline-wrapper crm-kanban">
+      <PageHeader
+        title={isAr ? 'مسار الصفقات' : 'Pipeline'}
+        description={isAr ? 'اسحب الصفقة من مرحلة لمرحلة، أو افتحها علشان تسجّل مكالمة.' : 'Drag a deal between stages, or open it to log a call.'}
+      />
+
+      <KpiRow label={isAr ? 'ملخص المسار' : 'Pipeline summary'}>
+        <KpiTile
+          label={isAr ? 'صفقات مفتوحة' : 'Open deals'}
+          value={pipelineOverview.activeCount}
+          icon={<Users size={16} />}
+        />
+        {filterType === 'seller' ? (
+        <KpiTile
+          label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
+          value={pipelineOverview.supplyVol > 0 ? pipelineOverview.supplyVol / 1000000 : null}
+          digits={1}
+          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
+          icon={<Building2 size={16} />}
+        />
+        ) : (
+        <KpiTile
+          label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
+          value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
+          digits={1}
+          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
+          icon={<TrendingUp size={16} />}
+        />
+        )}
+        <KpiTile
+          label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
+          value={pipelineOverview.highValue}
+          icon={<ShieldAlert size={16} />}
+        />
+        <KpiTile
+          label={isAr ? 'جديدة من غير رد +24 ساعة' : 'New, no reply 24h+'}
+          value={pipelineOverview.overdue}
+          className={pipelineOverview.overdue > 0 ? 'crm-kanban__kpi-alert' : undefined}
+          icon={<AlertTriangle size={16} />}
+        />
+      </KpiRow>
+
+      <div className="crm-kanban__toolbar">
+        <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
+          <Chip pressed={filterType === 'buyer'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} onClick={() => setFilterType('buyer')}>{isAr ? 'طلبات (مشترين)' : 'Requests (buyers)'}</Chip>
+          <Chip pressed={filterType === 'seller'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} onClick={() => setFilterType('seller')}>{isAr ? 'عروض (ملاك ووسطاء)' : 'Offers (owners, brokers)'}</Chip>
+          <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
         </div>
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Live Search Input */}
-          <div style={{ position: 'relative', width: '220px' }}>
-            <Search size={14} style={{ position: 'absolute', [isAr ? 'right' : 'left']: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--crm-muted)' }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isAr ? 'بحث بالاسم أو الهاتف...' : 'Search lead...'}
-              className="form-input"
-              style={{
-                width: '100%',
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                [isAr ? 'paddingRight' : 'paddingLeft']: '30px',
-                [isAr ? 'paddingLeft' : 'paddingRight']: searchQuery ? '24px' : '10px',
-                fontSize: 'var(--crm-text-xs)',
-                borderRadius: '8px',
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line-strong)',
-                color: 'var(--crm-ink)'
-              }}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                style={{
-                  position: 'absolute',
-                  [isAr ? 'left' : 'right']: '6px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--crm-muted)',
-                  cursor: 'pointer',
-                  padding: '2px'
-                }}
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
-
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
-            <Filter size={13} /> {isAr ? 'النوع:' : 'Type:'}
-          </span>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('all')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'all' ? 'bold' : '600',
-              background: filterType === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
-              color: filterType === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'all' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'الكل' : 'All'}
-          </button>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('buyer')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'buyer' ? 'bold' : '600',
-              background: filterType === 'buyer' ? 'var(--crm-info-solid)' : 'var(--crm-card)',
-              color: filterType === 'buyer' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'buyer' ? '1px solid var(--crm-info)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'مشترين' : 'Buyers'}
-          </button>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('seller')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'seller' ? 'bold' : '600',
-              background: filterType === 'seller' ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
-              color: filterType === 'seller' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'seller' ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'بائعين' : 'Sellers'}
-          </button>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('investor')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'investor' ? 'bold' : '600',
-              background: filterType === 'investor' ? 'var(--crm-violet-solid)' : 'var(--crm-card)',
-              color: filterType === 'investor' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'investor' ? '1px solid var(--crm-violet)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'مستثمرين' : 'Investors'}
-          </button>
-
-          {/* Quick Demo Balancer */}
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={handleAutoDistributeStages}
-            title={isAr ? 'توزيع الصفقات تلقائياً على كل مراحل خط الأنابيب لاختبار النظام' : 'Distribute across pipeline'}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              background: 'var(--crm-warn-soft)',
-              border: '1px solid var(--crm-warn-line)',
-              color: 'var(--crm-warn)',
-              fontWeight: 'bold',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <Shuffle size={13} />
-            <span>{isAr ? 'توزيع المراحل' : 'Auto Distribute'}</span>
-          </button>
+        <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
+          <Chip pressed={compact} onClick={toggleCompact} icon={<Rows3 size={14} aria-hidden="true" />}>{isAr ? 'عرض مضغوط' : 'Compact'}</Chip>
+          {collapsedStages.length < PIPELINE_STAGES.length ? (
+            <Chip onClick={collapseAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'طي كل الأعمدة' : 'Collapse all'}</Chip>
+          ) : (
+            <Chip onClick={expandAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'فتح كل الأعمدة' : 'Expand all'}</Chip>
+          )}
         </div>
+        <label className="crm-kanban__search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label={isAr ? 'بحث في الصفقات' : 'Search deals'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isAr ? 'اسم أو تليفون' : 'Name or phone'}
+          />
+        </label>
       </div>
 
+      {/* On a phone one stage fills the screen, picked from the row of stages above it */}
+      {isPhone && (
+        <div className="crm-kanban__stagepick" role="tablist" aria-label={isAr ? 'المراحل' : 'Stages'}>
+          {PIPELINE_STAGES.map((st) => (
+            <button key={st.id} type="button" role="tab" aria-selected={phoneStageId === st.id} className={phoneStageId === st.id ? 'is-on' : ''} onClick={() => setPhoneStage(st.id)}>
+              {isAr ? st.title_ar : st.title_en}<b>{(leadsByStage[st.id] || []).length}</b>
+            </button>
+          ))}
+        </div>
+      )}
       {/* Kanban Stages Board */}
-      <div className="kanban-board-scroll-container" style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${PIPELINE_STAGES.length}, minmax(280px, 1fr))`,
-        gap: '14px',
-        overflowX: 'auto',
-        paddingBottom: '40px'
-      }}>
-        {PIPELINE_STAGES.map((stage) => {
-          const stageLeads = filteredLeads.filter(l => (l.status || 'new') === stage.id);
-          const { count, totalVolume } = getStageStats(stage.id);
+      {!isPhone && boardWidth > 0 && (
+        <div
+          ref={topBarRef}
+          className="crm-kanban__topscroll"
+          aria-hidden="true"
+          onScroll={() => syncScroll(topBarRef.current, boardRef.current)}
+        >
+          <div ref={topTrackRef} />
+        </div>
+      )}
+      <div
+        ref={boardRef}
+        className={`kanban-board-scroll-container${compact ? ' is-compact' : ''}${isPhone ? ' is-phone' : ''}`}
+        onScroll={() => syncScroll(boardRef.current, topBarRef.current)}
+        style={{
+          display: 'grid',
+          // Empty columns stay narrow so the space goes to the stages that hold deals
+          gridTemplateColumns: isPhone ? 'minmax(0, 1fr)' : PIPELINE_STAGES.map((s) => {
+            if (collapsedStages.includes(s.id)) return '54px';
+            const empty = !(leadsByStage[s.id] || []).length;
+            if (compact) return empty ? 'minmax(110px, 0.5fr)' : 'minmax(170px, 1fr)';
+            return empty ? 'minmax(150px, 0.5fr)' : 'minmax(280px, 1fr)';
+          }).join(' ')
+        }}
+      >
+        {(isPhone ? PIPELINE_STAGES.filter((st) => st.id === phoneStageId) : PIPELINE_STAGES).map((stage) => {
+          const isCollapsed = !isPhone && collapsedStages.includes(stage.id);
+          const allStageLeads = leadsByStage[stage.id] || [];
+          const isOpen = openStages.includes(stage.id);
+          const stageLeads = isOpen ? allStageLeads : allStageLeads.slice(0, CARDS_PER_STAGE);
+          const hiddenCount = allStageLeads.length - stageLeads.length;
+          const { count, totalVolume, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, unbudgetedCount: 0 };
+
+          if (isCollapsed) {
+            return (
+              <div
+                key={stage.id}
+                className="kanban-stage-column is-collapsed"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, stage.id)}
+                onClick={() => toggleStageCollapse(stage.id)}
+                title={isAr ? `انقر لتوسيع مرحلة "${stage.title_ar}" (${count} صفقات)` : `Click to expand "${stage.title_en}" (${count})`}
+                style={{ borderTop: `3px solid ${stage.color}` }}
+              >
+                <button
+                  type="button"
+                  className="kanban-stage-collapse-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleStageCollapse(stage.id);
+                  }}
+                  title={isAr ? 'توسيع المرحلة' : 'Expand stage'}
+                >
+                  <ChevronRight size={14} style={{ transform: isAr ? 'rotate(180deg)' : 'none' }} />
+                </button>
+
+                <span style={{
+                  background: 'var(--crm-card)',
+                  color: stage.color,
+                  border: `1px solid ${stage.color}`,
+                  borderRadius: '12px',
+                  padding: '2px 6px',
+                  fontSize: 'var(--crm-text-xs)',
+                  fontWeight: 800
+                }}>
+                  {count}
+                </span>
+
+                <div style={{
+                  writingMode: 'vertical-rl',
+                  transform: isAr ? 'rotate(180deg)' : 'none',
+                  fontSize: 'var(--crm-text-xs)',
+                  fontWeight: 700,
+                  color: 'var(--crm-ink)',
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                  marginTop: '10px'
+                }}>
+                  {isAr ? stage.title_ar : stage.title_en}
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div
@@ -432,59 +728,53 @@ export default function KanbanPipeline({
               className="kanban-stage-column"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.id)}
-              style={{
-                background: 'var(--crm-subtle)',
-                border: '1px solid var(--crm-line)',
-                borderTop: `3px solid ${stage.color}`,
-                borderRadius: '12px',
-                padding: '14px',
-                minHeight: '560px',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-              }}
+              style={{ borderTop: `3px solid ${stage.color}` }}
             >
               {/* Stage Header */}
-              <div style={{
-                borderBottom: '1px solid var(--crm-line)',
-                paddingBottom: '10px',
-                marginBottom: '14px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700 }}>
-                    {isAr ? stage.title_ar : stage.title_en}
-                  </h4>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                    {(totalVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م حجم الصفقات' : 'M EGP'}
+              <div className="kanban-stage-header">
+                <div className="kanban-stage-title-wrap">
+                  <h2 className="kanban-stage-title">{isAr ? stage.title_ar : stage.title_en}</h2>
+                  {/* Total value of the stage; how many deals still have no budget */}
+                  <span className="kanban-stage-volume-sub">
+                    {totalVolume > 0 ? (
+                      <>
+                        <bdi>{shortMoney(totalVolume, isAr)}</bdi>{isAr ? ' ج.م' : ' EGP'}
+                        {unbudgetedCount > 0 && (
+                          <span className="kanban-stage-volume-note">
+                            {isAr ? ` · ${unbudgetedCount} من غير ميزانية` : ` · ${unbudgetedCount} without budget`}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="kanban-stage-volume-note">
+                        {count > 0 ? (isAr ? 'من غير ميزانيات' : 'No budgets yet') : (isAr ? 'فاضية' : 'Empty')}
+                      </span>
+                    )}
                   </span>
                 </div>
-                <span style={{
-                  background: 'var(--crm-card)',
-                  color: 'var(--crm-body)',
-                  border: '1px solid var(--crm-line)',
-                  padding: '2px 10px',
-                  borderRadius: '20px',
-                  fontSize: 'var(--crm-text-xs)',
-                  fontWeight: 700
-                }}>
-                  {count}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="kanban-stage-count-pill">
+                    {count}
+                  </span>
+                  <button
+                    type="button"
+                    className="kanban-stage-collapse-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleStageCollapse(stage.id);
+                    }}
+                    title={isAr ? 'طي هذا العمود لتقليل العرض' : 'Collapse column'}
+                    aria-label={isAr ? 'طي العمود' : 'Collapse'}
+                  >
+                    <ChevronLeft size={15} style={{ transform: isAr ? 'none' : 'rotate(180deg)' }} />
+                  </button>
+                </div>
               </div>
 
               {/* Cards Container */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              <div className="kanban-cards-container">
                 {stageLeads.length === 0 ? (
-                  <div style={{
-                    padding: '40px 10px',
-                    textAlign: 'center',
-                    border: '2px dashed var(--crm-line-strong)',
-                    borderRadius: '10px',
-                    color: 'var(--crm-faint)',
-                    fontSize: 'var(--crm-text-xs)'
-                  }}>
+                  <div className="kanban-drop-empty">
                     {isAr ? 'اسحب بطاقة عميل إلى هنا' : 'Drop leads here'}
                   </div>
                 ) : (
@@ -495,13 +785,13 @@ export default function KanbanPipeline({
                     const propType = getLocalizedPropertyType(propTypeRaw);
                     const area = getLocalizedArea(areaRaw);
                     const typeBadge = getLeadTypeBadge(lead);
-                    const timeAgoText = formatTimeAgo(lead.timestamp || lead.createdAt);
+                    const sinceMs = stageSinceMs(lead);
+                    const inStage = Number.isFinite(sinceMs) ? daysLabel(now - sinceMs, isAr) : '';
+                    const stalled = isStalled(lead, now);
+                    // New request nobody called within 24 hours (createdAt or timestamp, whichever it has)
+                    const isOverdue = isNewOverdue(lead, now);
 
-                    // 🚨 Check if inquiry is pending contact > 24 hours
-                    const isOverdue = (lead.status === 'new' || !lead.status) && 
-                      lead.timestamp && (Date.now() - new Date(lead.timestamp).getTime() > 24 * 60 * 60 * 1000);
-
-                    const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
+                    const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
                     const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
                     const leadName = lead.name?.trim() || (isAr ? 'عميل بدون اسم' : 'Unnamed lead');
 
@@ -517,7 +807,32 @@ export default function KanbanPipeline({
                       >
                         <div className="kb-card-top">
                           <span className="kb-type">{typeBadge.label}</span>
-                          <span className="kb-time"><Clock size={11} aria-hidden="true" />{timeAgoText}</span>
+                          {(sameNumber.has(lead.id) || lead.returningClient) && (
+                            <span className="kb-dup" title={isAr ? (lead.returningClient ? 'عميل راجع: اتحوّل لنفس الموظف اللي كان معاه طلبه القديم.' : 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.') : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
+                              <CopyPlus size={11} aria-hidden="true" />
+                              {lead.returningClient
+                                ? (isAr ? 'عميل راجع' : 'Returning client')
+                                : (isAr ? `نفس الرقم · ${sameNumber.get(lead.id).length + 1} طلبات` : `Same number · ${sameNumber.get(lead.id).length + 1}`)}
+                            </span>
+                          )}
+                          {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
+                            <span
+                              className="kb-high-value-pill"
+                              title={isAr ? 'صفقة كبرى (≥ 5 مليون ج) تتطلب اعتماد المؤسس' : 'High value (5M+) requires Founder sign-off'}
+                            >
+                              <ShieldAlert size={11} aria-hidden="true" />
+                              {isAr ? 'صفقة كبرى +5 مليون' : '5M+ deal'}
+                            </span>
+                          )}
+                          {inStage && (
+                            <span
+                              className={`kb-time${stalled ? ' is-stalled' : ''}`}
+                              title={isAr ? `في المرحلة دي ${inStage}${STALE_DAYS[stage.id] ? ` (الحد ${STALE_DAYS[stage.id]} أيام)` : ''}` : `In this stage ${inStage}`}
+                            >
+                              {stalled ? <Hourglass size={11} aria-hidden="true" /> : <Clock size={11} aria-hidden="true" />}
+                              {isAr ? (inStage === 'النهارده' ? 'دخل المرحلة النهارده' : `في المرحلة ${inStage}`) : `In stage ${inStage}`}
+                            </span>
+                          )}
                         </div>
 
                         <button
@@ -530,26 +845,35 @@ export default function KanbanPipeline({
                         </button>
 
                         <p className="kb-meta">
-                          <span>{propType}</span>
-                          <span aria-hidden="true">·</span>
+                          {propType && (
+                            <>
+                              <span>{propType}</span>
+                              <span aria-hidden="true">·</span>
+                            </>
+                          )}
                           <span>{area}</span>
-                          {lead.score ? <><span aria-hidden="true">·</span><span>{isAr ? `جودة ${lead.score}%` : `${lead.score}% fit`}</span></> : null}
+                          {pipelineKind(lead) !== 'seller' && (
+                            <><span aria-hidden="true" className="kb-meta-score-sep">·</span><span className="kb-meta-score" title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span></>
+                          )}
                         </p>
 
                         <div className="kb-value">
                           {budget > 0 ? (
-                            <><bdi>{budget.toLocaleString('en-US')}</bdi><small>{isAr ? 'ج.م' : 'EGP'}</small></>
+                            <span className="kb-value-amount"><bdi>{budget.toLocaleString('en-US')}</bdi><small>{isAr ? 'ج.م' : 'EGP'}</small></span>
                           ) : (
-                            <span className="kb-value-empty">{isAr ? 'لم تُحدَّد الميزانية' : 'Budget not set'}</span>
+                            <span className="kb-value-empty">{pipelineKind(lead) === 'seller' ? (isAr ? 'السعر المطلوب: —' : 'Asking price: —') : (isAr ? 'الميزانية: —' : 'Budget: —')}</span>
                           )}
-                          <bdi className="kb-phone">{lead.whatsapp || lead.phone || '—'}</bdi>
+                          <bdi dir="ltr" className="kb-phone">{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                         </div>
 
                         {isOverdue && (
-                          <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'متأخر عن الاتصال أكثر من 24 ساعة' : 'Not contacted for 24h+'}</p>
+                          <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'محدش كلّمه من أكتر من 24 ساعة' : 'Not contacted for 24h+'}</p>
+                        )}
+                        {stalled && (
+                          <p className="kb-flag kb-flag--warn"><Hourglass size={13} aria-hidden="true" />{isAr ? `راكدة: أكتر من ${STALE_DAYS[stage.id]} أيام في المرحلة` : `Stalled: over ${STALE_DAYS[stage.id]} days in stage`}</p>
                         )}
                         {lead.nextFollowUpAt && (
-                          <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                          <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
                         )}
                         {lead.siteVisit && (
                           <p className="kb-flag"><Car size={13} aria-hidden="true" />{isAr ? 'معاينة:' : 'Visit:'} {lead.siteVisit.visitDate} ({lead.siteVisit.visitTime})</p>
@@ -560,16 +884,42 @@ export default function KanbanPipeline({
                             <MessageSquare size={14} aria-hidden="true" /><span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
                           </button>
                           {onOpenLead && (
-                            <button type="button" className="kb-btn" onClick={() => onOpenLead(lead)} title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick view'}>
-                              <Zap size={14} aria-hidden="true" /><span>{isAr ? 'معاينة' : 'Open'}</span>
+                            <button type="button" className="kb-btn" onClick={() => onOpenLead(lead)} title={isAr ? 'افتح ملف العميل وسجّل مكالمة' : 'Open the lead'}>
+                              <FolderOpen size={14} aria-hidden="true" /><span>{isAr ? 'فتح' : 'Open'}</span>
                             </button>
                           )}
 
-                          <details className="kb-more">
+                          <details className="kb-more" onToggle={placeMenu}>
                             <summary className="kb-btn kb-btn--icon" aria-label={isAr ? 'إجراءات أخرى' : 'More actions'}>
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
                             <div className="kb-menu">
+                              {stageIndex >= 0 && stageIndex < PROGRESS_COUNT - 1 && (
+                                <button type="button" onClick={(e) => { closeMenu(e); handleMoveToNextStage(lead); }}>
+                                  {isAr ? <ChevronLeft size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                                  {isAr ? `انقل لـ«${stagesOfLead(lead)[stageIndex + 1].title_ar}»` : `Move to ${stagesOfLead(lead)[stageIndex + 1].title_en}`}
+                                </button>
+                              )}
+                              {/* Direct Jump To Any Stage */}
+                              <div className="kb-menu-header">
+                                <span className="kb-menu-header-label">
+                                  {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
+                                </span>
+                                {stagesOfLead(lead).filter(s => s.id !== boardColumnOf(lead.status)).map(targetStage => (
+                                  <button
+                                    key={targetStage.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                      closeMenu(e);
+                                      handleMoveToSpecificStage(lead, targetStage.id);
+                                    }}
+                                  >
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: targetStage.color, flexShrink: 0 }} />
+                                    <span>{isAr ? targetStage.title_ar : targetStage.title_en}</span>
+                                  </button>
+                                ))}
+                              </div>
+
                               <button type="button" onClick={(e) => { closeMenu(e); setSchedulingVisitLead(lead); }}>
                                 <Car size={14} aria-hidden="true" />{isAr ? 'حجز موعد معاينة' : 'Schedule visit'}
                               </button>
@@ -578,9 +928,14 @@ export default function KanbanPipeline({
                                   <Edit3 size={14} aria-hidden="true" />{isAr ? 'تعديل البيانات' : 'Edit'}
                                 </button>
                               )}
-                              <button type="button" disabled={stageIndex <= 0} onClick={(e) => { closeMenu(e); handleMoveToPrevStage(lead); }}>
+                              <button type="button" disabled={stageIndex <= 0 || stageIndex >= PROGRESS_COUNT} onClick={(e) => { closeMenu(e); handleMoveToPrevStage(lead); }}>
                                 {isAr ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronLeft size={14} aria-hidden="true" />}{isAr ? 'إرجاع للمرحلة السابقة' : 'Previous stage'}
                               </button>
+                              {onUpdateLead && (
+                                <button type="button" onClick={(e) => { closeMenu(e); handleArchive(lead); }}>
+                                  <Archive size={14} aria-hidden="true" />{isAr ? 'أرشفة (إخفاء، مش مسح)' : 'Archive (hide)'}
+                                </button>
+                              )}
                               {onDeleteLead && (
                                 <button type="button" className="is-danger" onClick={(e) => { closeMenu(e); setLeadToDelete(lead); }}>
                                   <Trash2 size={14} aria-hidden="true" />{isAr ? 'حذف العميل' : 'Delete'}
@@ -589,20 +944,23 @@ export default function KanbanPipeline({
                             </div>
                           </details>
 
-                          <button
-                            type="button"
-                            className="kb-btn kb-btn--icon kb-next"
-                            onClick={() => handleMoveToNextStage(lead)}
-                            disabled={stageIndex >= PIPELINE_STAGES.length - 1}
-                            aria-label={isAr ? `نقل إلى: ${PIPELINE_STAGES[stageIndex + 1]?.title_ar || ''}` : `Move to: ${PIPELINE_STAGES[stageIndex + 1]?.title_en || ''}`}
-                            title={isAr ? 'نقل للمرحلة التالية' : 'Next stage'}
-                          >
-                            {isAr ? <ChevronLeft size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
-                          </button>
                         </div>
                       </article>
                     );
                   })
+                )}
+                {(hiddenCount > 0 || (isOpen && allStageLeads.length > CARDS_PER_STAGE)) && (
+                  <button
+                    type="button"
+                    className="kanban-stage-more"
+                    aria-expanded={isOpen}
+                    onClick={() => toggleStageOpen(stage.id)}
+                  >
+                    {isOpen ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+                    {isOpen
+                      ? (isAr ? 'عرض أقل' : 'Show less')
+                      : (isAr ? `عرض ${hiddenCount} كمان` : `Show ${hiddenCount} more`)}
+                  </button>
                 )}
               </div>
             </div>
@@ -673,6 +1031,38 @@ export default function KanbanPipeline({
           </div>
         </div>
       )}
+
+      {/* 1Line OS Deliverable Gate Blocker Modal */}
+      {lostFor && (
+        <LostReasonModal
+          lead={lostFor}
+          isAr={isAr}
+          onCancel={() => setLostFor(null)}
+          onConfirm={({ lostReason, lostNote }) => {
+            onUpdateLead?.(lostFor.id, {
+              status: 'lost',
+              lostReason,
+              lostNote,
+              lostAt: new Date().toISOString(),
+              statusUpdatedAt: new Date().toISOString(),
+              lastActivityAt: new Date().toISOString()
+            }, lostFor.version);
+            triggerToast?.(isAr ? 'اتسجلت خسارة مع السبب' : 'Marked as lost', 'info');
+            setLostFor(null);
+          }}
+        />
+      )}
+      <StageDeliverableModal
+        isOpen={blockerModal.isOpen}
+        onClose={() => setBlockerModal({ isOpen: false, blockerInfo: null, lead: null })}
+        blockerInfo={blockerModal.blockerInfo}
+        lead={blockerModal.lead}
+        onOpenDeliverableAction={(leadToEdit) => {
+          setBlockerModal({ isOpen: false, blockerInfo: null, lead: null });
+          if (onOpenLead) onOpenLead(leadToEdit);
+          else if (onOpenEditLead) onOpenEditLead(leadToEdit);
+        }}
+      />
     </div>
   );
 }

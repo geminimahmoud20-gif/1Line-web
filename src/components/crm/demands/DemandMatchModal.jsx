@@ -1,4 +1,6 @@
 import { X, MapPin, AlertCircle, Home, Share2 } from 'lucide-react';
+import { formatWhatsAppPhone } from '../../../utils/matchingEngine';
+import { SITE_URL } from '../../../config/siteConfig';
 
 export default function DemandMatchModal({
   canViewPhone,
@@ -53,8 +55,8 @@ export default function DemandMatchModal({
             {isAr ? matchModalDemand.text_ar : matchModalDemand.text_en || matchModalDemand.text_ar}
           </p>
           <div style={{ display: 'flex', gap: '14px', marginTop: '8px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-            <span>📍 {isAr ? (matchModalDemand.area_ar || matchModalDemand.area) : matchModalDemand.area}</span>
-            <span>💰 {(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+            <span>{isAr ? (matchModalDemand.area_ar || matchModalDemand.area) : matchModalDemand.area}</span>
+            <span>{(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 
@@ -74,8 +76,8 @@ export default function DemandMatchModal({
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '14px' }}>
             {getMatchingProperties(matchModalDemand).map((p) => {
-              const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://1linesohag.com';
-              const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString()} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${siteOrigin}/properties/${p.id}`;
+              const siteOrigin = SITE_URL;
+              const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString('en-US')} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${siteOrigin}/properties/${p.id}`;
               const cleanPhone = matchModalDemand.phone ? matchModalDemand.phone.replace(/[^0-9]/g, '') : '';
 
               return (
@@ -93,12 +95,12 @@ export default function DemandMatchModal({
                 >
                   <div style={{ position: 'relative', height: '130px' }}>
                     <img 
-                      src={p.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'} 
+                      src={p.images?.[0] || '/no-photo.svg'} 
                       alt={p.title_ar} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <span style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(15,23,42,0.85)', color: 'var(--crm-accent-text)', fontSize: 'var(--crm-text-xs)', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
-                      {p.price.toLocaleString()} ج.م
+                      {p.price.toLocaleString('en-US')} ج.م
                     </span>
                   </div>
 
@@ -112,15 +114,15 @@ export default function DemandMatchModal({
                         <span>{isAr ? (p.locationName_ar || p.areaKey) : (p.locationName_en || p.areaKey)}</span>
                       </small>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '8px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        {p.size && <span>📐 {p.size} م²</span>}
-                        {p.bedrooms && <span>🛏️ {p.bedrooms} غرف</span>}
+                        {p.size && <span>{p.size} م²</span>}
+                        {p.bedrooms && <span>{p.bedrooms} غرف</span>}
                       </div>
                     </div>
 
                     {/* WhatsApp Pitch Share Button */}
                     {cleanPhone && canViewPhone ? (
                       <a
-                        href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareText)}`}
+                        href={`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(shareText)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="btn btn-sm btn-primary"
@@ -142,7 +144,7 @@ export default function DemandMatchModal({
                       </a>
                     ) : (
                       <div style={{ marginTop: '10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', textAlign: 'center' }}>
-                        {!canViewPhone ? (isAr ? '🔒 الهاتف محجوب للمراقبين' : '🔒 Phone hidden for viewers') : (isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded')}
+                        {!canViewPhone ? (isAr ? 'الهاتف محجوب للمراقبين' : 'Phone hidden for viewers') : (isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded')}
                       </div>
                     )}
                   </div>

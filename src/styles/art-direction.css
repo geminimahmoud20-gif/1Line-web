@@ -390,7 +390,8 @@
     color: #cbd5e1;
     padding: 56px 0 24px;
     border-top: 1px solid rgba(197, 160, 89, 0.28);
-    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.6);
+    /* No dark shadow above it: on the light pages its 40px black blur read as a grey band */
+    box-shadow: none;
     position: relative;
     z-index: 10;
 }
@@ -452,7 +453,7 @@
     gap: 3px;
     direction: ltr !important;
     unicode-bidi: isolate;
-    font-family: var(--font-number, 'Outfit', 'Inter', sans-serif);
+    font-family: var(--font-number);
     font-size: 1.35rem;
     font-weight: 900;
     line-height: 1;
@@ -720,10 +721,6 @@
     box-shadow: var(--shadow-subtle);
 }
 
-.section-pill-tag .section-pill-icon {
-    color: var(--gold) !important;
-}
-
 .dark-theme .section-pill-tag {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(179, 138, 69, 0.2);
@@ -831,8 +828,7 @@
 }
 
 /* Numerals in Arabic context should use Eastern Arabic or Western consistently */
-[dir="rtl"] .price-num-row,
-[dir="rtl"] .price-val {
+[dir="rtl"] .price-num-row {
     direction: ltr;
     unicode-bidi: embed;
     text-align: left;
@@ -872,4 +868,27 @@
 .dark-theme .demand-text,
 .dark-theme .section-heading-desc {
     color: #CBD5E1 !important;
+}
+/* Phones: the footer was a screen and a half. Links become wrapped chips, the long description
+   and the badge go (the header and the page already say it), contact stays one tap away. */
+@media (max-width: 640px) {
+    .site-footer { padding: 28px 0 calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+    .footer-container { padding: 0 16px !important; }
+    .footer-grid { gap: 20px !important; }
+    .footer-grid > .footer-col { grid-column: 1 / -1 !important; }
+    .footer-desc, .footer-trust-badge { display: none !important; }
+    .footer-brand-header { margin-bottom: 4px; }
+    .footer-col-title { margin: 0 0 10px !important; padding-bottom: 6px !important; font-size: 0.9rem !important; }
+    .footer-links { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; gap: 8px !important; }
+    .footer-links li { margin: 0 !important; padding: 0 !important; }
+    .footer-links a, .footer-links .footer-btn-link {
+        display: inline-flex !important; align-items: center; min-height: 40px !important; padding: 0 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; font-size: 0.82rem !important; line-height: 1.3 !important;
+    }
+    /* One even row per contact line: icon centred on the text, phone and email still 40px to tap */
+    .footer-contact-item { align-items: center !important; min-height: 40px; margin-bottom: 2px !important; font-size: 0.85rem; }
+    .footer-contact-item .contact-icon { margin-top: 0 !important; }
+    .site-footer .footer-contact-item .contact-link { min-height: 40px !important; }
+    .footer-wa-pill { width: 100%; justify-content: center; min-height: 44px; }
+    .footer-bottom-bar { margin-top: 20px !important; padding-top: 14px !important; gap: 10px !important; }
 }

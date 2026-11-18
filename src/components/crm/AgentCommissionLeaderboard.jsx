@@ -1,73 +1,93 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, Award, DollarSign, Target } from 'lucide-react';
+import { parseMoney } from '../../utils/crmLeadViews';
+import { getLiveLeadDesks, UNASSIGNED_DESK } from '../../utils/rbacRules';
+import { getActiveAccessConfig } from '../../services/accessConfig';
+import { loadSettings, saveSettings } from '../../firebaseLazy';
 
 export default function AgentCommissionLeaderboard({
   leads = [],
   lang = 'ar'
 }) {
   const isAr = lang === 'ar';
-  const [commissionRate, setCommissionRate] = useState(2.0); // 2% default commission
+  // 2% unless this device picked another rate (kept, so it doesn't reset every visit)
+  const [commissionRate, setCommissionRate] = useState(() => {
+    try { const v = parseFloat(localStorage.getItem('crm_commission_rate')); return [1, 1.5, 2, 2.5, 3].includes(v) ? v : 2; } catch { return 2; }
+  });
+  const pickRate = (v) => {
+    setCommissionRate(v);
+    try { localStorage.setItem('crm_commission_rate', String(v)); } catch { /* private mode: this visit only */ }
+  };
 
-  // Define Team Agents
-  const agentsList = [
-    {
-      id: 'agent-1',
-      name: 'Dr. Mahmoud Elbaz',
-      title_ar: 'المدير التنفيذي واستشاري التوثيق',
-      title_en: 'Executive Director & Senior Consultant',
-      avatar: '👑',
-      target: 20000000
-    },
-    {
-      id: 'agent-2',
-      name: 'Sales Team A',
-      title_ar: 'فريق مبيعات قطاع شرق النيل والكوثر',
-      title_en: 'East Sohag & Kawthar Sales Desk',
-      avatar: '🏆',
-      target: 15000000
-    },
-    {
-      id: 'agent-3',
-      name: 'Sales Team B',
-      title_ar: 'فريق مبيعات سوهاج الجديدة والمحور المركزي',
-      title_en: 'New Sohag & Commercial Hub Desk',
-      avatar: '🌟',
-      target: 12000000
-    }
-  ];
+  // Desks come from the team settings (CRM → إدارة المنظومة → الفرق), not a fixed list.
+  // Targets are only known for the original desks; a new team shows no target bar.
+  const KNOWN = {
+    'Dr. Mahmoud Elbaz': { target: 20000000 },
+    'Sales Team A': { target: 15000000 },
+    'Sales Team B': { target: 12000000 }
+  };
+  // Targets the managers set (settings/targets: { desks: { <desk>: egp } }) win over the built-in ones
+  const [savedTargets, setSavedTargets] = useState({});
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [targetDraft, setTargetDraft] = useState('');
+  useEffect(() => {
+    let alive = true;
+    loadSettings('targets').then((t) => { if (alive && t?.desks && typeof t.desks === 'object') setSavedTargets(t.desks); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const saveTarget = async (desk) => {
+    const egp = Math.round(Number(String(targetDraft).replace(/[^\d.]/g, '')) * 1_000_000);
+    const next = { ...savedTargets };
+    if (egp > 0) next[desk] = egp; else delete next[desk];
+    setSavedTargets(next);
+    setEditingTarget(null);
+    try { await saveSettings('targets', { desks: next }); } catch { /* the figure shows for this visit; saving needs an admin */ }
+  };
+  const deskValues = new Set();
+  const agentsList = getLiveLeadDesks(getActiveAccessConfig())
+    .filter((d) => d.value !== UNASSIGNED_DESK)
+    .map((d) => { deskValues.add(d.value); return d; })
+    .map((d) => ({
+      id: d.value,
+      name: d.value,
+      title_ar: d.label_ar,
+      title_en: d.label_en,
+      // First letter of the team's name instead of an emoji
+      avatar: String(d.label_ar || d.value || '').replace(/^(د\.|أ\.|م\/)\s*/, '').trim().charAt(0) || '؟',
+      target: savedTargets[d.value] || KNOWN[d.value]?.target || null,
+      belongs: (l) => l.assignedTo === d.value
+    }));
+  // Clients with no team (or one that no longer exists) get a row too, so the totals cover every client
+  agentsList.push({ id: '__none', name: '__none', title_ar: 'من غير فريق', title_en: 'No team', avatar: '؟', target: null, belongs: (l) => !deskValues.has(l.assignedTo), noTeam: true });
 
-  // Calculate dynamic stats for each agent from leads
+  // Volumes use the amount actually recorded on the lead. A deal with no amount counts as 0 and is
+  // flagged, instead of being assumed to be 3–3.5M (which inflated sales and commissions).
+  const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
   const agentStats = agentsList.map((agent) => {
-    const assignedLeads = leads.filter(l => l.assignedTo === agent.name);
+    const assignedLeads = leads.filter((l) => agent.belongs(l));
     const closedLeads = assignedLeads.filter(l => l.status === 'closed');
     const scheduledVisits = assignedLeads.filter(l => l.status === 'site_visit' || l.siteVisit);
-    
-    // Total closed volume in EGP
-    const closedVolume = closedLeads.reduce((acc, curr) => {
-      const budget = parseInt(curr.details?.budget) || parseInt(curr.details?.expectedPrice) || 3500000;
-      return acc + budget;
-    }, 0);
-
-    // Active pipeline volume (Negotiation / Closing)
-    const pipelineVolume = assignedLeads.filter(l => l.status === 'negotiating' || l.status === 'closing').reduce((acc, curr) => {
-      const budget = parseInt(curr.details?.budget) || parseInt(curr.details?.expectedPrice) || 3000000;
-      return acc + budget;
-    }, 0);
+    const closedVolume = closedLeads.reduce((acc, l) => acc + amountOf(l), 0);
+    const closedWithoutAmount = closedLeads.filter((l) => !amountOf(l)).length;
+    const pipelineVolume = assignedLeads
+      .filter(l => l.status === 'negotiating' || l.status === 'closing')
+      .reduce((acc, l) => acc + amountOf(l), 0);
 
     const earnedCommission = Math.round(closedVolume * (commissionRate / 100));
-    const targetPercent = Math.min(100, Math.round((closedVolume / agent.target) * 100));
+    const targetPercent = agent.target ? Math.min(100, Math.round((closedVolume / agent.target) * 100)) : null;
 
     return {
       ...agent,
       totalLeads: assignedLeads.length,
       closedCount: closedLeads.length,
+      closedWithoutAmount,
       siteVisitsCount: scheduledVisits.length,
       closedVolume,
       pipelineVolume,
       earnedCommission,
       targetPercent
     };
-  }).sort((a, b) => b.closedVolume - a.closedVolume);
+  }).filter((a) => !a.noTeam || a.totalLeads > 0).sort((a, b) => b.closedVolume - a.closedVolume);
 
   // Total Company Metrics
   const totalCompanyClosedVolume = agentStats.reduce((a, b) => a + b.closedVolume, 0);
@@ -107,11 +127,11 @@ export default function AgentCommissionLeaderboard({
           fontSize: 'var(--crm-text-sm)'
         }}>
           <span style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>
-            💼 {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
+            {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
           </span>
           <select
-            value={commissionRate}
-            onChange={(e) => setCommissionRate(parseFloat(e.target.value))}
+            value={commissionRate.toFixed(1)}
+            onChange={(e) => pickRate(parseFloat(e.target.value))}
             style={{
               background: 'transparent',
               border: 'none',
@@ -136,7 +156,7 @@ export default function AgentCommissionLeaderboard({
             <DollarSign size={22} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{(totalCompanyClosedVolume / 1000000).toFixed(1)} M</span>
+            <span className="crm-stat-num">{(totalCompanyClosedVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}</span>
             <span className="crm-stat-lbl">{isAr ? 'إجمالي المبيعات المغلقة' : 'Total Closed Volume (EGP)'}</span>
           </div>
         </div>
@@ -146,7 +166,7 @@ export default function AgentCommissionLeaderboard({
             <Award size={22} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{totalCompanyCommission.toLocaleString()}</span>
+            <span className="crm-stat-num">{totalCompanyCommission.toLocaleString('en-US')}</span>
             <span className="crm-stat-lbl">{isAr ? 'إجمالي العمولات المستحقة (ج.م)' : 'Total Commissions (EGP)'}</span>
           </div>
         </div>
@@ -184,11 +204,13 @@ export default function AgentCommissionLeaderboard({
                   height: '48px',
                   borderRadius: '50%',
                   background: index === 0 ? 'var(--crm-surface-ink)' : 'var(--crm-subtle)',
+                  color: index === 0 ? 'var(--crm-on-dark)' : 'var(--crm-ink)',
+                  fontWeight: 700,
                   border: index === 0 ? '1px solid rgba(179, 138, 69, 0.3)' : '1px solid var(--crm-line)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'var(--crm-text-xl)',
+                  fontSize: 'var(--crm-text-lg)',
                   boxShadow: 'var(--shadow-sm)',
                   flexShrink: 0
                 }}>
@@ -197,16 +219,13 @@ export default function AgentCommissionLeaderboard({
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)' }}>{agent.name}</strong>
-                    {index === 0 && (
+                    <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)' }}>{(isAr ? agent.title_ar : agent.title_en) || agent.name}</strong>
+                    {index === 0 && agent.closedVolume > 0 && (
                       <span className="badge" style={{ background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)', fontWeight: 'bold', border: '1px solid rgba(179, 138, 69, 0.25)' }}>
-                        ⭐ {isAr ? 'متصدر المبيعات' : 'Top Closer'}
+                        {isAr ? 'متصدر المبيعات' : 'Top Closer'}
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-                    {isAr ? agent.title_ar : agent.title_en}
-                  </span>
                 </div>
               </div>
 
@@ -216,8 +235,8 @@ export default function AgentCommissionLeaderboard({
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
                     {isAr ? 'المبيعات المنفذة:' : 'Closed Deals:'}
                   </span>
-                  <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-positive)' }}>
-                    {(agent.closedVolume / 1000000).toFixed(2)} M ج.م
+                  <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-positive)' }}>
+                    {(agent.closedVolume / 1000000).toFixed(2)} {isAr ? 'مليون ج.م' : 'M EGP'}
                   </strong>
                 </div>
 
@@ -231,15 +250,29 @@ export default function AgentCommissionLeaderboard({
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', display: 'block', fontWeight: 'bold' }}>
                     {isAr ? 'العمولة المستحقة (' + commissionRate + '%):' : 'Earned Commission:'}
                   </span>
-                  <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)' }}>
-                    {agent.earnedCommission.toLocaleString()} ج.م
+                  <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-accent-text)' }}>
+                    {agent.earnedCommission.toLocaleString('en-US')} ج.م
                   </strong>
                 </div>
               </div>
             </div>
 
-            {/* Target Progress Bar */}
-            <div style={{ marginTop: '10px' }}>
+            {/* Set or change the monthly target (a real team only) */}
+            {!agent.noTeam && (editingTarget === agent.name ? (
+              <form onSubmit={(e) => { e.preventDefault(); saveTarget(agent.name); }} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'المستهدف الشهري (مليون ج.م)' : 'Monthly target (M EGP)'}</label>
+                <input type="number" inputMode="decimal" min="0" step="0.5" value={targetDraft} onChange={(e) => setTargetDraft(e.target.value)} autoFocus style={{ width: '90px', padding: '6px 8px' }} />
+                <button type="submit" className="ui-btn ui-btn--primary ui-btn--sm">{isAr ? 'حفظ' : 'Save'}</button>
+                <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" onClick={() => setEditingTarget(null)}>{isAr ? 'إلغاء' : 'Cancel'}</button>
+              </form>
+            ) : (
+              <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" style={{ marginTop: '8px' }} onClick={() => { setEditingTarget(agent.name); setTargetDraft(agent.target ? String(agent.target / 1000000) : ''); }}>
+                {agent.target ? (isAr ? 'تعديل المستهدف' : 'Edit target') : (isAr ? 'حدد مستهدف شهري' : 'Set a monthly target')}
+              </button>
+            ))}
+
+            {/* Target Progress Bar (only for desks with a set target) */}
+            {agent.targetPercent !== null && <div style={{ marginTop: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--crm-muted)' }}>
                   {isAr ? `المستهدف الشهري: ${(agent.target / 1000000).toFixed(0)} مليون ج.م` : `Monthly Target: ${(agent.target / 1000000)}M`}
@@ -263,21 +296,27 @@ export default function AgentCommissionLeaderboard({
                   transition: 'width 0.6s ease'
                 }} />
               </div>
-            </div>
+            </div>}
 
             {/* Micro Stats Strip */}
             <div style={{
               display: 'flex',
-              gap: '16px',
+              flexWrap: 'wrap',
+              gap: '6px 16px',
               marginTop: '12px',
               paddingTop: '10px',
               borderTop: '1px solid rgba(255,255,255,0.05)',
               fontSize: 'var(--crm-text-xs)',
               color: 'var(--crm-muted)'
             }}>
-              <span>👥 {isAr ? 'إجمالي العملاء:' : 'Leads:'} <strong>{agent.totalLeads}</strong></span>
-              <span>🚗 {isAr ? 'المعاينات المنجزة:' : 'Site Visits:'} <strong>{agent.siteVisitsCount}</strong></span>
-              <span>💼 {isAr ? 'صفقات قيد الإغلاق:' : 'In Closing:'} <strong>{(agent.pipelineVolume / 1000000).toFixed(1)} M</strong></span>
+              <span>{isAr ? 'إجمالي العملاء:' : 'Leads:'} <strong>{agent.totalLeads}</strong></span>
+              <span>{isAr ? 'المعاينات المنجزة:' : 'Site Visits:'} <strong>{agent.siteVisitsCount}</strong></span>
+              <span>{isAr ? 'صفقات قيد الإغلاق:' : 'In Closing:'} <strong>{(agent.pipelineVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}</strong></span>
+              {agent.closedWithoutAmount > 0 && (
+                <span style={{ color: 'var(--crm-warn)' }} title={isAr ? 'سجّل قيمة الصفقة في بيانات العميل عشان تتحسب' : 'Record the deal amount on the lead so it counts'}>
+                  ⚠ {isAr ? `${agent.closedWithoutAmount} صفقة ناجحة بدون قيمة (محسوبة صفر)` : `${agent.closedWithoutAmount} won deal(s) with no amount (counted as 0)`}
+                </span>
+              )}
             </div>
           </div>
         ))}

@@ -65,17 +65,91 @@ export function formatCurrencyPrice(amountInEgp, currency = 'EGP', lang = 'ar') 
 }
 
 /**
+ * Detects if a property is a full building, multi-unit house, or mixed-use asset.
+ * For these assets, simple flat (price / footprint area) does not represent unit price per sqm.
+ */
+const SINGLE_UNIT_TYPES = new Set(['apartment', 'villa', 'commercial', 'office', 'land', 'agri_land', 'farm', 'factory', 'warehouse', 'industrial_land']);
+
+export function isMultiUnitOrBuilding(property) {
+  if (!property) return false;
+  if (property.type === 'building' || property.type === 'house' || property.isMultiUnit || property.category === 'building') {
+    return true;
+  }
+  // A listing typed as one unit (apartment, villa, shop, office, land…) is never a whole building,
+  // even when its description mentions "العمارة" it sits in
+  if (SINGLE_UNIT_TYPES.has(property.type)) return false;
+  // Untyped listings: the title says what is for sale; the description talks about the building
+  const text = `${property.title_ar || ''} ${property.title_en || ''} ${property.commercialType_ar || ''}`.toLowerCase();
+  return /(?:منزل|عمارة|عماره|مبنى|مبني|بيت عيلة|بيت عائلي|شقق.*محلات|محلات.*شقق|برج سكن|عقار كامل|building|entire house)/i.test(text);
+}
+
+/**
+ * Extracts unit breakdown from title, description, or property fields
+ */
+export function parseUnitBreakdown(property, isAr = true) {
+  if (!property) return null;
+  const title = property.title_ar || property.title_en || '';
+  const desc = property.description_ar || property.description_en || '';
+  const combined = `${title} ${desc}`;
+
+  const resUnits = property.residentialUnitsCount || property.apartmentsCount;
+  const commUnits = property.commercialUnitsCount || property.shopsCount;
+  const floors = property.totalFloors || property.floorsCount;
+
+  const aptMatch = resUnits || (combined.match(/(\d+)\s*(?:شقق|شقة)/) ? combined.match(/(\d+)\s*(?:شقق|شقة)/)[1] : null);
+  const shopMatch = commUnits || (combined.match(/(\d+)\s*(?:محلات|محل)/) ? combined.match(/(\d+)\s*(?:محلات|محل)/)[1] : null);
+  const floorMatch = floors || (combined.match(/(\d+)\s*(?:أدوار|ادوار|طوابق|دور)/) ? combined.match(/(\d+)\s*(?:أدوار|ادوار|طوابق|دور)/)[1] : null);
+
+  const parts = [];
+  if (floorMatch) parts.push(isAr ? `${floorMatch} أدوار` : `${floorMatch} Floors`);
+  if (aptMatch) parts.push(isAr ? `${aptMatch} شقق` : `${aptMatch} Apts`);
+  if (shopMatch) parts.push(isAr ? `${shopMatch} محلات` : `${shopMatch} Shops`);
+
+  return {
+    floors: floorMatch ? Number(floorMatch) : null,
+    residentialUnits: aptMatch ? Number(aptMatch) : null,
+    commercialUnits: shopMatch ? Number(shopMatch) : null,
+    summary: parts.join(' · ') || (isAr ? 'عقار مركب (سكني + تجاري)' : 'Mixed-use building')
+  };
+}
+
+/**
  * Computes price per square meter and compares with district benchmark
  */
+// District averages are residential prices per m². Shops, offices, clinics and land are priced by
+// frontage, activity and zoning, so they get no "above/below the area average" verdict.
+const RESIDENTIAL_TYPES = ['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'chalet', 'townhouse', 'twinhouse', 'residential'];
+export const isResidentialProperty = (p) => !p?.type || RESIDENTIAL_TYPES.includes(p.type) || p.category === 'residential';
+
 export function getPriceBenchmark(property, lang = 'ar') {
   if (!property || !property.price || !property.size) {
     return null;
   }
 
   const isAr = lang === 'ar';
+
+  // Multi-unit buildings / mixed-use houses must NOT be divided naively by footprint area
+  if (isMultiUnitOrBuilding(property)) {
+    const breakdown = parseUnitBreakdown(property, isAr);
+    return {
+      isMultiUnit: true,
+      pricePerMeter: null,
+      pricePerMeterFormatted: null,
+      badgeType: 'building',
+      badgeLabel: isAr ? '🏢 عقار كامل (سكني + تجاري)' : '🏢 Full Building (Mixed-Use)',
+      badgeColor: '#0b4ea2',
+      badgeBg: 'rgba(11, 78, 162, 0.1)',
+      unitBreakdown: breakdown,
+      valuationNote: isAr
+        ? 'عقار متعدد الوحدات والأدوار: السعر إجمالي للكيان بالكامل (أرض + محلات تجارية + شقق)، ولا يقاس بقسمة السعر على مساحة الأرض المسطحة.'
+        : 'Multi-unit building: lump-sum price for land, commercial shops, and residential units.'
+    };
+  }
+
   const price = Number(property.price) || 0;
   const size = Number(property.size) || 1;
   const pricePerMeter = Math.round(price / size);
+  if (!isResidentialProperty(property) && !property.customBenchmarkPrice) return null;
 
   const areaKey = property.areaKey || 'default';
   const districtAvg = property.customBenchmarkPrice || getDistrictBenchmark(areaKey);
@@ -111,7 +185,7 @@ export function getPriceBenchmark(property, lang = 'ar') {
 
   return {
     pricePerMeter,
-    pricePerMeterFormatted: `${pricePerMeter.toLocaleString()} ${isAr ? 'ج.م/م²' : 'EGP/m²'}`,
+    pricePerMeterFormatted: `${pricePerMeter.toLocaleString('en-US')} ${isAr ? 'ج.م/م²' : 'EGP/m²'}`,
     badgeType,
     badgeLabel,
     badgeColor,

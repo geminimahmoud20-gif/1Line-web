@@ -12,6 +12,8 @@ import { readMyDemands } from '../utils/browserStorage';
 import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
 import AccountCompareTab from '../components/account/AccountCompareTab';
 import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
+import '../styles/client-auth-modes.css';
+import { siteLink } from '../config/siteConfig';
 
 /**
  * Lead Stages & Color Scheme
@@ -118,8 +120,8 @@ export default function ClientAccountPage({
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       msg += `\n🏠 *${idx + 1}. ${title}* (كود: #${p.id})\n`;
       msg += `📍 ${loc}\n`;
-      msg += `💰 ${Number(p.price).toLocaleString()} ج.م\n`;
-      msg += `🔗 ${window.location.origin}/properties/${p.id}\n`;
+      msg += `💰 ${Number(p.price).toLocaleString('en-US')} ج.م\n`;
+      msg += `🔗 ${siteLink(`/properties/${p.id}`)}\n`;
     });
 
     msg += `\n----------------------------------------\n`;
@@ -271,7 +273,7 @@ export default function ClientAccountPage({
                 {clientUser.verifiedAt && (
                   <span className="contact-tag hide-mobile">
                     <Calendar size={13} className="text-muted" />
-                    <span>{isAr ? 'عضو منذ: ' : 'Member since: '} {new Date(clientUser.verifiedAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}</span>
+                    <span>{isAr ? 'عضو منذ: ' : 'Member since: '} {new Date(clientUser.verifiedAt).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}</span>
                   </span>
                 )}
               </div>
@@ -321,12 +323,20 @@ export default function ClientAccountPage({
 
             <button 
               type="button" 
-              onClick={logoutClient} 
+              onClick={() => logoutClient()} 
               className="btn-client-logout"
               title={isAr ? 'تسجيل الخروج ومسح الجلسة' : 'Logout and clear active session'}
             >
               <LogOut size={15} />
               <span>{isAr ? 'خروج' : 'Logout'}</span>
+            </button>
+            {/* On a shared phone: sign out and leave nothing behind for «عندي حساب» */}
+            <button
+              type="button"
+              onClick={() => logoutClient({ forgetDevice: true })}
+              className="btn-client-forget"
+            >
+              {isAr ? 'جهاز مش بتاعك؟ اخرج وامسح حسابك منه' : 'Not your device? Sign out and forget me'}
             </button>
           </div>
         </div>
@@ -339,7 +349,7 @@ export default function ClientAccountPage({
             onClick={() => setActiveTab('favorites')}
           >
             <Heart size={16} fill={activeTab === 'favorites' ? '#ef4444' : 'none'} color={activeTab === 'favorites' ? '#ef4444' : 'currentColor'} />
-            <span>{isAr ? 'عقاراتي المفضلة' : 'My Saved Properties'}</span>
+            <span>{isAr ? 'المفضلة' : 'Saved'}</span>
             <span className="tab-pill-count">{favoriteProperties.length}</span>
           </button>
 
@@ -349,7 +359,7 @@ export default function ClientAccountPage({
             onClick={() => setActiveTab('compare')}
           >
             <Scale size={16} color={activeTab === 'compare' ? '#d97706' : 'currentColor'} />
-            <span>{isAr ? 'عقارات المقارنة الفورية' : 'Compared Properties'}</span>
+            <span>{isAr ? 'المقارنة' : 'Compare'}</span>
             <span className="tab-pill-count">{compareList.length}</span>
           </button>
 
@@ -359,7 +369,7 @@ export default function ClientAccountPage({
             onClick={() => setActiveTab('inquiries')}
           >
             <Calendar size={16} color={activeTab === 'inquiries' ? '#059669' : 'currentColor'} />
-            <span>{isAr ? 'طلباتي ومواعيدي' : 'My Requests & Site Visits'}</span>
+            <span>{isAr ? 'طلباتي' : 'Requests'}</span>
             <span className="tab-pill-count">{totalInquiriesCount}</span>
           </button>
         </div>

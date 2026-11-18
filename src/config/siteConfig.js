@@ -2,14 +2,22 @@
  * Single source of truth for public brand facts (domain, contact, coverage, verified stats).
  * Phone/WhatsApp stay editable from the Founder CMS (see utils/founderCmsData.js).
  *
- * Set VITE_SITE_URL in Vercel once the official domain is connected
- * (e.g. https://1line-sohag.com). Until then the current origin is used,
- * so canonical URLs never point to a domain that doesn't resolve.
+ * VITE_SITE_URL (.env, or the Vercel project's environment variables, which win) is the
+ * official address: https://www.1lineestate.com. 1lineestate.com redirects to it.
  */
 
 const envUrl = (import.meta.env?.VITE_SITE_URL || '').replace(/\/+$/, '');
 
-export const SITE_URL = envUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://1-line-qkzp9.vercel.app');
+export const CANONICAL_URL = 'https://www.1lineestate.com';
+
+// Links people share (WhatsApp, PDFs, schema) always name the official domain, whatever address
+// the page was opened from: the CRM opened on a vercel.app address used to share vercel.app
+// links. Only a local dev server keeps its own origin, so links work while testing.
+const isLocal = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+export const SITE_URL = envUrl || (isLocal ? window.location.origin : CANONICAL_URL);
+
+/** Public link to a page of the site: siteLink('/properties/12') */
+export const siteLink = (path = '/') => `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
 export const BRAND = {
   name_ar: 'ون لاين للاستشارات والتسويق العقاري',
@@ -21,21 +29,36 @@ export const BRAND = {
   founder_en: 'Dr. Mahmoud Elbaz',
 };
 
+/** The company's own social pages: shown on the site and given to Google (sameAs) even before
+ *  anyone fills them in the CRM; a link saved there for the same network takes over. */
+export const OFFICIAL_SOCIAL = Object.freeze({
+  facebook: 'https://www.facebook.com/profile.php?id=61568924733170'
+});
+
 export const CONTACT = {
-  email: 'contact@oneline-sohag.com',
+  email: '1linesolutions@gmail.com',
   address_ar: 'برج أحمد حلمي الشريف، شارع الجمهورية، سوهاج',
   address_en: 'Ahmed Helmy El-Sherif Tower, El-Gomhoreya St., Sohag',
-  hours_ar: 'يومياً 10 صباحاً – 10 مساءً (عدا الجمعة)',
-  hours_en: 'Daily 10:00–22:00 (closed Friday)',
+  hours_ar: 'يومياً من 1 الظهر لـ 9 بالليل (عدا الجمعة)',
+  hours_en: 'Daily 1 pm – 9 pm (closed Friday)',
   mapsUrl: 'https://maps.google.com/?q=' + encodeURIComponent('شارع الجمهورية برج احمد حلمي الشريف سوهاج'),
   geo: { lat: 26.5569, lng: 31.6948 },
 };
 
+/** The same office hours as numbers (Cairo time), for "open now" and the search-engine card */
+export const OFFICE_HOURS = { open: 13, close: 21, closedDays: ['Fri'] };
+
+/** Viewing time slots offered to visitors, inside the office hours */
+export const VIEWING_SLOTS = {
+  morning: { ar: 'بعد الضهر (1 – 5 م)', en: 'Afternoon (1–5 pm)' },
+  evening: { ar: 'بالليل (5 – 9 م)', en: 'Evening (5–9 pm)' }
+};
+
 export const SERVICE_AREAS = {
-  sohag_ar: ['شرق سوهاج', 'غرب سوهاج', 'سوهاج الجديدة', 'كورنيش النيل', 'حي الكوثر', 'أخميم', 'طهطا', 'جرجا'],
-  cairo_ar: ['القاهرة الجديدة والتجمع', 'الشيخ زايد', 'السادس من أكتوبر', 'العاصمة الإدارية'],
-  sohag_en: ['East Sohag', 'West Sohag', 'New Sohag', 'Nile Corniche', 'El Kawthar', 'Akhmim', 'Tahta', 'Girga'],
-  cairo_en: ['New Cairo', 'Sheikh Zayed', '6th of October', 'New Administrative Capital'],
+  sohag_ar: ['شرق سوهاج', 'غرب سوهاج', 'سوهاج الجديدة', 'كورنيش النيل', 'مراكز سوهاج'],
+  cairo_ar: ['التجمع الخامس', 'الشيخ زايد', 'أكتوبر الجديدة'],
+  sohag_en: ['East Sohag', 'West Sohag', 'New Sohag', 'Nile Corniche', 'Sohag districts'],
+  cairo_en: ['Fifth Settlement', 'Sheikh Zayed', 'New October'],
 };
 
 /**

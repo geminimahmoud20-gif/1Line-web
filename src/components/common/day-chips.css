@@ -1,0 +1,15 @@
+/* Day picker chips: one swipeable row on phones, wraps on wider screens */
+.dch { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; scroll-snap-type: x proximity; }
+.dch::-webkit-scrollbar { display: none; }
+.dch-chip {
+  flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-width: 76px; min-height: 52px; padding: 6px 10px; scroll-snap-align: start;
+  border: 1px solid rgba(100, 116, 139, 0.35); border-radius: 12px; background: transparent; color: inherit;
+  font: inherit; cursor: pointer;
+}
+.dch-chip b { font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+.dch-chip small { font-size: 0.75rem; opacity: 0.75; white-space: nowrap; }
+.dch-chip.is-on { background: #0B1B32; border-color: #0B1B32; color: #FFFFFF; }
+.dark-theme .dch-chip.is-on { background: #C5A059; border-color: #C5A059; color: #0B1B32; }
+.dch-chip:focus-visible { outline: 2px solid #C5A059; outline-offset: 2px; }
+@media (min-width: 900px) { .dch { flex-wrap: wrap; overflow: visible; } }

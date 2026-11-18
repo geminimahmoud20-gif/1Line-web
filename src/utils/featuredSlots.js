@@ -7,9 +7,18 @@
 //    featuredFrom   'YYYY-MM-DD' | null  — first day shown (inclusive, local time)
 //    featuredUntil  'YYYY-MM-DD' | null  — last day shown (inclusive); null = open-ended
 //    featuredOrder  number   — slot position, lower first
+//    homeExcluded   boolean  — never used to fill an empty slot automatically (pinning still works)
 // =============================================================
 
-export const HOME_FEATURED_SLOTS = 4;
+import { isSiteReady } from './siteReady.js';
+import { blockedByApproval } from './publishApproval.js';
+
+// Six cards fill two even rows of three; with fewer listings the grid shrinks to a count that
+// still makes full rows (see homeGridCount) so the homepage never shows a half-empty row.
+export const HOME_FEATURED_SLOTS = 6;
+
+/** Cards the homepage shows out of n available: 6, 4, 3, 2 or 1 (5 → 4) */
+export const homeGridCount = (n) => (n >= 6 ? 6 : n === 5 ? 4 : Math.max(0, n));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -28,9 +37,9 @@ export const toDayInput = (date) => {
 
 export const addDays = (days, from = Date.now()) => toDayInput(from + days * DAY_MS);
 
-/** Same visibility rule the public homepage uses */
+/** Same visibility rule the public homepage uses: on sale, not hidden, and complete (siteReady) */
 export const isPublishedProperty = (p) =>
-  !!p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status);
+  !!p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && !blockedByApproval(p) && isSiteReady(p);
 
 /** 'none' | 'scheduled' | 'active' | 'expired' */
 export function featuredState(p, now = Date.now()) {
@@ -57,6 +66,22 @@ const byOrder = (a, b) => {
 };
 
 /**
+ * How new a listing is: its createdAt, else the time in its id ('prop-1793208340768'), else updatedAt.
+ * Most listings have no createdAt, and the CRM and the site get them in different orders (live
+ * listener vs /api/catalog), so the auto-filled slots must not depend on list order.
+ */
+export function listingAge(p) {
+  const created = Date.parse(p?.createdAt || p?.timestamp || '');
+  if (Number.isFinite(created)) return created;
+  const fromId = /(\d{12,13})/.exec(String(p?.id || ''));
+  if (fromId) return Number(fromId[1]);
+  const updated = Date.parse(p?.updatedAt || '');
+  return Number.isFinite(updated) ? updated : 0;
+}
+
+const newestFirst = (a, b) => listingAge(b) - listingAge(a); // a tie keeps list order (stable sort)
+
+/**
  * Resolves the homepage slots.
  * Returns [{ property, source: 'featured' | 'auto' }] — active featured first (by order),
  * remaining slots filled with the newest published listings so the grid is never half empty.
@@ -65,11 +90,13 @@ export function getHomepageSlots(list = [], limit = HOME_FEATURED_SLOTS, now = D
   const published = list.filter(isPublishedProperty);
   const featured = published.filter((p) => featuredState(p, now) === 'active').sort(byOrder).slice(0, limit);
   const taken = new Set(featured.map((p) => p.id));
-  const filler = published.filter((p) => !taken.has(p.id)).slice(0, Math.max(0, limit - featured.length));
-  return [
+  const filler = published.filter((p) => !taken.has(p.id) && !p.homeExcluded).sort(newestFirst).slice(0, Math.max(0, limit - featured.length));
+  const slots = [
     ...featured.map((property) => ({ property, source: 'featured' })),
     ...filler.map((property) => ({ property, source: 'auto' }))
   ];
+  // Full rows only (pinned listings come first, so an auto-filled one is the first to go)
+  return limit === HOME_FEATURED_SLOTS ? slots.slice(0, homeGridCount(slots.length)) : slots;
 }
 
 /** Featured listings that are not on the homepage right now, for the CRM board */
@@ -80,5 +107,27 @@ export function getFeaturedQueue(list = [], limit = HOME_FEATURED_SLOTS, now = D
     overflow: live.slice(limit),
     scheduled: published.filter((p) => featuredState(p, now) === 'scheduled').sort((a, b) => String(a.featuredFrom).localeCompare(String(b.featuredFrom))),
     expired: published.filter((p) => featuredState(p, now) === 'expired')
+  };
+}
+
+/** Why a pinned listing can't reach the homepage: 'trash' | 'hidden' | 'draft' | 'sold' | 'incomplete' (null = it can) */
+export function featuredBlocker(p) {
+  if (!p?.featured || isPublishedProperty(p)) return null;
+  if (p.isDeleted || p.status === 'trash') return 'trash';
+  if (['hidden', 'draft', 'sold'].includes(p.status)) return p.status;
+  return isSiteReady(p) ? 'hidden' : 'incomplete';
+}
+
+/**
+ * Counts for the CRM header and board: live = pinned and on the homepage now (or waiting for a
+ * free slot), blocked = pinned but hidden / sold / in the trash, excluded = kept out of auto-fill.
+ */
+export function homepageSummary(list = [], now = Date.now()) {
+  const pinned = list.filter((p) => p?.featured && !(p.isDeleted || p.status === 'trash'));
+  return {
+    pinned: pinned.length,
+    live: pinned.filter((p) => isPublishedProperty(p) && featuredState(p, now) === 'active').length,
+    blocked: list.filter((p) => featuredBlocker(p) && featuredBlocker(p) !== 'trash'),
+    excluded: list.filter((p) => p?.homeExcluded && isPublishedProperty(p))
   };
 }

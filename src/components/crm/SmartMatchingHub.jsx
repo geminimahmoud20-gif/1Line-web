@@ -1,395 +1,164 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, Send, CheckCircle2, Car, Zap } from 'lucide-react';
+import { Sparkles, Send, Car, EyeOff, CheckCircle2 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
-import { getAreas, normalizeAreaKey } from '../../utils/areasData';
+import { normalizeAreaKey, getAreas } from '../../utils/areasData';
+import { matchBuyersToProperties, formatWhatsAppPhone, generateWhatsAppMessage, MATCH_THRESHOLD } from '../../utils/matchingEngine';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { countPhrase } from '../../utils/arabicCount';
+import './smart-matching.css';
+import { outcomeEntry, outcomePatchFor } from '../../utils/stageGate';
 
-export default function SmartMatchingHub({
-  leads = [],
-  properties = [],
-  onUpdateLead,
-  onOpenLead,
-  lang = 'ar',
-  triggerToast
-}) {
+const DISMISS_KEY = 'crm_match_dismissed';
+const IDEAL = 85;
+const SENT_MARK = 'إرسال ترشيح مطابق عبر واتساب للعقار [';
+
+const readDismissed = () => { try { return JSON.parse(localStorage.getItem(DISMISS_KEY) || '{}') || {}; } catch { return {}; } };
+
+/** When this buyer was last sent this listing (from the lead's own history, so it holds on every device) */
+const sentAt = (lead, propertyId) => {
+  const mark = `${SENT_MARK}${propertyId}]`;
+  const log = (lead?.activityLogs || []).find((x) => String(x.action || '').includes(mark));
+  return log?.timestamp || '';
+};
+
+/**
+ * «المطابقات الذكية»: one card per buyer with the listings that fit them (utils/matchingEngine, the same
+ * rules as the new-listing alerts: active buyers, the kind, area and budget, and their «رشح لي» answers).
+ * A listing already sent shows when; one that isn't for them can be set aside on this device.
+ */
+export default function SmartMatchingHub({ leads = [], properties = [], onUpdateLead, onOpenLead, lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
-  const [minMatchScore, setMinMatchScore] = useState(60);
-  const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
+  const [minScore, setMinScore] = useState(MATCH_THRESHOLD);
+  const [visitFor, setVisitFor] = useState(null);
+  const [dismissed, setDismissed] = useState(readDismissed);
 
-  const allAreas = useMemo(() => getAreas(), []);
-
-  const getLocalizedArea = (areaKey) => {
-    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
-    const cleanKey = normalizeAreaKey(areaKey);
-    const map = {
-      thakafa: 'حي الثقافة',
-      east: 'حي شرق',
-      west: 'حي غرب',
-      center: 'وسط البلد',
-      new_sohag: 'سوهاج الجديدة',
-      corniche: 'كورنيش النيل',
-      city: 'سيتي والشبان',
-      kawthar: 'مدينة الكوثر',
-      akhmeem: 'أخميم',
-      tahta: 'طهطا',
-      girga: 'جرجا',
-      araba: 'عرابة أبيدوس'
+  const areaName = useMemo(() => {
+    const areas = getAreas();
+    return (key) => {
+      const a = areas.find((x) => x.id === normalizeAreaKey(key));
+      return a ? (isAr ? a.name_ar : (a.name_en || a.name_ar)) : (isAr ? 'سوهاج' : 'Sohag');
     };
-    if (map[cleanKey]) return map[cleanKey];
-    const found = allAreas.find(a => a.id === cleanKey);
-    return found ? (isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en)) : areaKey;
+  }, [isAr]);
+
+  const rows = useMemo(() => matchBuyersToProperties(leads, properties, { minScore, perBuyer: 6 })
+    .map((r) => ({ ...r, items: r.items.filter((i) => !dismissed[`${r.key}|${i.property.id}`]).slice(0, 3) }))
+    .filter((r) => r.items.length > 0), [leads, properties, minScore, dismissed]);
+
+  const dismiss = (row, property) => {
+    const next = { ...dismissed, [`${row.key}|${property.id}`]: true };
+    setDismissed(next);
+    try { localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch { /* private mode: this visit only */ }
   };
 
-  // Compute live match matrix between Buyer Leads and Published Properties
-  const matches = useMemo(() => {
-    const buyerLeads = leads.filter(l => l.type === 'buyer' || l.type === 'investor' || l.type === 'request' || !l.type);
-    const liveProps = properties.filter(p => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden');
-
-    const results = [];
-
-    buyerLeads.forEach(lead => {
-      const details = lead.details || {};
-      const rawLeadArea = lead.area || details.area || lead.location || '';
-      const leadArea = normalizeAreaKey(rawLeadArea);
-      const leadType = (lead.propertyType || details.propertyType || '').toLowerCase();
-      const leadBudget = parseInt(lead.budget) || parseInt(details.budget) || parseInt(details.investmentAmount) || 2500000;
-
-      liveProps.forEach(prop => {
-        let score = 0;
-        const reasons = [];
-        const propArea = normalizeAreaKey(prop.areaKey);
-
-        // 1. Area match (35 pts) - Normalized comparison
-        if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
-          score += 35;
-          reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
-        } else if (!rawLeadArea) {
-          score += 20;
-        }
-
-        // 2. Property type match (30 pts)
-        if (leadType && (prop.type === leadType || prop.category === leadType)) {
-          score += 30;
-          reasons.push(isAr ? 'نفس نوع العقار' : 'Type match');
-        } else if (!leadType) {
-          score += 15;
-        }
-
-        // 3. Budget match (35 pts)
-        if (prop.price) {
-          const diffRatio = Math.abs(prop.price - leadBudget) / leadBudget;
-          if (diffRatio <= 0.1) {
-            score += 35;
-            reasons.push(isAr ? 'مطابق تماماً للميزانية' : 'Exact budget match');
-          } else if (diffRatio <= 0.25) {
-            score += 25;
-            reasons.push(isAr ? 'قريب جداً من الميزانية' : 'Close to budget');
-          } else if (prop.price <= leadBudget) {
-            score += 30;
-            reasons.push(isAr ? 'أقل من الميزانية المحددة' : 'Under budget');
-          }
-        }
-
-        if (score >= minMatchScore) {
-          results.push({
-            id: `match-${lead.id}-${prop.id}`,
-            lead,
-            property: prop,
-            score,
-            reasons,
-            budgetDifference: prop.price - leadBudget
-          });
-        }
+  const send = (row, item) => {
+    const lead = row.lead;
+    const { property } = item;
+    const digits = String(row.phone || '').replace(/[^0-9*]/g, '');
+    if (!digits || digits.includes('*') || digits.length < 8) {
+      triggerToast?.(isAr ? 'رقم العميل غير متوفر أو محجوب لصلاحيات حسابك' : 'The phone is unavailable or masked for your role', 'error');
+      return;
+    }
+    // The client's message carries the listing and its own plan, never our internal match score
+    const text = generateWhatsAppMessage('new_unit', { name: row.name }, property);
+    window.open(`https://wa.me/${formatWhatsAppPhone(digits)}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    if (lead && onUpdateLead) {
+      const nowIso = new Date().toISOString();
+      const title = isAr ? property.title_ar : property.title_en;
+      onUpdateLead(lead.id, {
+        lastContactedAt: nowIso,
+        activityLogs: [{ timestamp: nowIso, action: `${SENT_MARK}${property.id}] — ${title} (${item.score}% توافق)` }, ...(lead.activityLogs || [])]
       });
-    });
-
-    return results.sort((a, b) => b.score - a.score);
-  }, [leads, properties, minMatchScore, isAr]);
-
-  // Dispatch proposal directly to buyer via WhatsApp
-  const handleSendProposal = (match) => {
-    const { lead, property } = match;
-    const phone = lead.whatsapp || lead.phone;
-    const cleanPhone = phone?.replace(/[^0-9]/g, '');
-
-    const propTitle = isAr ? property.title_ar : property.title_en;
-    const propPrice = property.price?.toLocaleString();
-    const propLoc = getLocalizedArea(property.areaKey);
-
-    const waText = isAr
-      ? `🏛️ *شركة 1Line للحلول العقارية — عرض عقاري مخصص لطلبكم (${match.score}% نسبة توافق)*\n\n` +
-        `أهلاً بك أ. *${lead.name}*،\n` +
-        `بناءً على طلبكم المسجل لدينا، وجدنا لك وحدة عقارية استثنائية تطابق معاييرك تماماً:\n\n` +
-        `🏢 *الوحدة:* ${propTitle}\n` +
-        `📍 *الموقع:* ${propLoc}\n` +
-        `📐 *المساحة:* ${property.size} م² (${property.bedrooms || 0} غرف)\n` +
-        `💰 *السعر الإجمالي:* ${propPrice} ج.م\n` +
-        `💳 *المقدم:* ${property.downPayment?.toLocaleString()} ج.م وقسط شهري: ${property.monthlyInstallment?.toLocaleString()} ج.م\n\n` +
-        `📲 هل يناسبكم حجز موعد لمعاينة العقار على الطبيعة اليوم أو غداً؟`
-      : `🏛️ *1Line Real Estate — Tailored Property Match (${match.score}%)*\n\n` +
-        `Dear Mr/Ms *${lead.name}*,\n` +
-        `We have matched a prime property for your criteria:\n` +
-        `🏢 *${propTitle}*\n` +
-        `📍 *Location:* ${propLoc}\n` +
-        `💰 *Price:* ${propPrice} EGP\n\n` +
-        `Would you like to schedule a site visit?`;
-
-    if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
     }
+    triggerToast?.(isAr ? 'اتفتح واتساب واتسجّل الإرسال في سجل العميل' : 'WhatsApp opened and logged in the client history', 'success');
+  };
 
-    if (triggerToast) {
-      triggerToast(isAr ? 'تم فتح واتساب لإرسال العرض المقترح للمشتري!' : 'WhatsApp proposal link opened!', 'success');
-    }
+  const when = (iso) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' });
   };
 
   return (
-    <div className="smart-matching-hub-card">
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
+    <div className="smh">
+      <header className="smh__head">
         <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
-            <Sparkles size={20} style={{ color: 'var(--crm-accent-text)' }} />
-            {isAr ? 'محرك المطابقة الذكي اللحظي بين المشترين والمعروض' : 'Live Smart Deals & Buyer Matching Engine'}
-          </h3>
-          <p className="section-subtitle" style={{ margin: '4px 0 0', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
-            {isAr ? `تم العثور على ${matches.length} فرصة صفقة مؤكدة التوافق مع المشترين المسجلين` : `${matches.length} high-probability buyer-property matches found`}
-          </p>
+          <h2 className="smh__title"><Sparkles size={20} aria-hidden="true" />{isAr ? 'المطابقات الذكية' : 'Smart matches'}</h2>
+          <p className="smh__sub">{isAr ? `${countPhrase('buyer', rows.length, true)} عنده ترشيحات مناسبة من العروض المتاحة` : `${rows.length} buyers with matching listings`}</p>
         </div>
-
-        {/* Filter by Match Strength */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)', fontWeight: '600' }}>
-            {isAr ? 'الحد الأدنى للتوافق:' : 'Min Score:'}
-          </span>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setMinMatchScore(80)}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: minMatchScore === 80 ? 'bold' : '600',
-              background: minMatchScore === 80 ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
-              color: minMatchScore === 80 ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: minMatchScore === 80 ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            🔥 80%+ {isAr ? 'مطابقة مثالية' : 'Super Match'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setMinMatchScore(60)}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: minMatchScore === 60 ? 'bold' : '600',
-              background: minMatchScore === 60 ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
-              color: minMatchScore === 60 ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: minMatchScore === 60 ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            ⚡ 60%+ {isAr ? 'كل الفرص' : 'All Deals'}
-          </button>
+        <div className="smh__tabs" role="group" aria-label={isAr ? 'قوة المطابقة' : 'Match strength'}>
+          <button type="button" className={minScore === IDEAL ? 'is-on' : ''} aria-pressed={minScore === IDEAL} onClick={() => setMinScore(IDEAL)}>{isAr ? 'مثالية +85' : 'Best 85+'}</button>
+          <button type="button" className={minScore === MATCH_THRESHOLD ? 'is-on' : ''} aria-pressed={minScore === MATCH_THRESHOLD} onClick={() => setMinScore(MATCH_THRESHOLD)}>{isAr ? 'كل الفرص +70' : 'All 70+'}</button>
         </div>
-      </div>
+      </header>
 
-      {/* Matches Grid */}
-      {matches.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          background: 'var(--crm-card)',
-          borderRadius: '12px',
-          border: '2px dashed var(--crm-line-strong)'
-        }}>
-          <Sparkles size={36} style={{ color: 'var(--crm-accent-text)', opacity: 0.7, marginBottom: '12px' }} />
-          <h4 style={{ color: 'var(--crm-ink)', fontWeight: 700 }}>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
-          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)' }}>
-            {isAr ? 'أضف عقارات جديدة أو قلل نسبة المطابقة لعرض الفرص القريبة' : 'Add new properties or lower threshold'}
-          </p>
+      {rows.length === 0 ? (
+        <div className="smh__empty">
+          <Sparkles size={32} aria-hidden="true" />
+          <h3>{isAr ? 'مفيش ترشيحات بالنسبة دي دلوقتي' : 'No matches at this strength'}</h3>
+          <p>{isAr ? 'العقار المباع أو المخفي أو من غير سعر مش بيتعرض، ولا العميل اللي قفل أو خسر. أضف عقارات أو نزّل النسبة.' : 'Add listings or lower the strength.'}</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
-          {matches.map((match) => {
-            const { lead, property, score, reasons } = match;
-
-            return (
-              <div
-                key={match.id}
-                className="deal-match-card animate-fadeIn"
-                style={{
-                  background: 'var(--crm-card)',
-                  border: score >= 85 ? '1px solid var(--crm-warn-line)' : '1px solid var(--crm-line)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '12px'
-                }}
-              >
-                <div>
-                  {/* Card Header: Score Badge */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{
-                        background: score >= 85 ? 'var(--crm-positive-soft)' : 'var(--crm-warn-soft)',
-                        color: score >= 85 ? 'var(--crm-positive)' : 'var(--crm-warn)',
-                        border: `1px solid ${score >= 85 ? 'var(--crm-positive-line)' : 'var(--crm-warn-line)'}`,
-                        padding: '3px 10px',
-                        borderRadius: '20px',
-                        fontSize: 'var(--crm-text-sm)',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        <CheckCircle2 size={13} /> {score}% {isAr ? 'نسبة التوافق' : 'Match'}
-                      </span>
-                    </div>
-
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                      {lead.assignedTo}
-                    </span>
-                  </div>
-
-                  {/* Buyer & Property Comparison Box */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '10px',
-                    background: 'var(--crm-subtle)',
-                    border: '1px solid var(--crm-line)',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    marginBottom: '10px'
-                  }}>
-                    {/* Buyer Side */}
-                    <div style={{ borderInlineEnd: '1px solid var(--crm-line)', paddingInlineEnd: '10px' }}>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
-                        👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
-                      </span>
-                      <strong 
-                        onClick={() => onOpenLead?.(lead)}
-                        style={{ 
-                          fontSize: 'var(--crm-text-md)', 
-                          color: 'var(--crm-ink)', 
-                          fontWeight: 700, 
-                          display: 'block', 
-                          marginBottom: '2px',
-                          cursor: onOpenLead ? 'pointer' : 'default',
-                          textDecoration: onOpenLead ? 'underline' : 'none'
-                        }}
-                        title={isAr ? 'فتح المعاينة السريعة للعميل' : 'Open Lead Quick Drawer'}
-                      >
-                        {lead.name}
-                      </strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
-                        📱 {lead.whatsapp || lead.phone}
-                      </span>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
-                        💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString() + ' ج.م' : '2,500,000 ج.م'}
-                      </span>
-                    </div>
-
-                    {/* Matched Property Side */}
-                    <div>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
-                        🏢 {isAr ? 'العقار المطابق:' : 'Matched Property:'}
-                      </span>
-                      <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
-                        {isAr ? property.title_ar : property.title_en}
-                      </strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-body)', display: 'block' }}>
-                        📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
-                      </span>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: 700 }}>
-                        💵 السعر: {property.price?.toLocaleString()} ج.م
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Match Criteria Pills */}
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    {reasons.map((r, i) => (
-                      <span key={i} style={{
-                        background: 'var(--crm-card)',
-                        border: '1px solid var(--crm-line)',
-                        color: 'var(--crm-body)',
-                        fontSize: 'var(--crm-text-xs)',
-                        fontWeight: '600',
-                        padding: '2px 8px',
-                        borderRadius: '4px'
-                      }}>
-                        ✓ {r}
-                      </span>
-                    ))}
-                  </div>
+        <ul className="smh__list">
+          {rows.map((row) => (
+            <li key={row.key} className="smh__buyer">
+              <div className="smh__buyer-head">
+                <div className="smh__who">
+                  <button type="button" className="smh__name" onClick={() => row.lead && onOpenLead?.(row.lead)} disabled={!row.lead}>{row.name}</button>
+                  <bdi dir="ltr" className="smh__phone">{formatPhoneNumber(row.phone) || '—'}</bdi>
                 </div>
-
-                {/* Actions Footer */}
-                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid var(--crm-line)' }}>
-                  {onOpenLead && (
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      onClick={() => onOpenLead(lead)}
-                      style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '6px' }}
-                      title={isAr ? 'معاينة العميل وتعديل مرحلته' : 'Quick Drawer'}
-                    >
-                      <Zap size={14} />
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-primary"
-                    onClick={() => handleSendProposal(match)}
-                    style={{ flex: 1, padding: '7px 10px', fontSize: 'var(--crm-text-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
-                  >
-                    <Send size={13} />
-                    <span>{isAr ? 'إرسال العرض واتساب' : 'Send WhatsApp'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => setSchedulingVisitLead({ ...lead, details: { ...lead.details, targetPropertyId: property.id } })}
-                    style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn-line)', borderRadius: '6px' }}
-                    title={isAr ? 'حجز موعد معاينة' : 'Schedule Visit'}
-                  >
-                    <Car size={14} />
-                  </button>
-                </div>
+                <span className="smh__budget">
+                  {row.budget ? `${isAr ? 'ميزانية' : 'Budget'} ${row.budget.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}` : (isAr ? 'من غير ميزانية' : 'No budget')}
+                </span>
               </div>
-            );
-          })}
-        </div>
+
+              <ul className="smh__units">
+                {row.items.map((item) => {
+                  const { property } = item;
+                  const sent = row.lead ? sentAt(row.lead, property.id) : '';
+                  return (
+                    <li key={property.id} className="smh__unit">
+                      <div className="smh__unit-top">
+                        <strong className="smh__unit-title">{isAr ? property.title_ar : property.title_en}</strong>
+                        <span className={`smh__score ${item.score >= IDEAL ? 'is-ideal' : ''}`}>{item.score}%</span>
+                      </div>
+                      <p className="smh__unit-meta">
+                        {[property.size ? `${property.size} م²` : '', areaName(property.areaKey), property.price ? `${Number(property.price).toLocaleString('en-US')} ج.م` : ''].filter(Boolean).join(' • ')}
+                      </p>
+                      {item.reasons?.length > 0 && <p className="smh__reasons">{item.reasons.slice(0, 3).join(' · ')}</p>}
+                      <div className="smh__actions">
+                        <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" onClick={() => send(row, item)}>
+                          <Send size={14} aria-hidden="true" />{sent ? (isAr ? 'ابعت تاني' : 'Send again') : (isAr ? 'ابعت واتساب' : 'Send')}
+                        </button>
+                        {row.lead && (
+                          <button type="button" className="ui-btn ui-btn--secondary ui-btn--sm" onClick={() => setVisitFor({ ...row.lead, details: { ...row.lead.details, targetPropertyId: property.id } })}>
+                            <Car size={14} aria-hidden="true" />{isAr ? 'احجز معاينة' : 'Book a viewing'}
+                          </button>
+                        )}
+                        <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" onClick={() => dismiss(row, property)} title={isAr ? 'مش مناسب للعميل ده (على الجهاز ده)' : 'Not for this buyer (this device)'}>
+                          <EyeOff size={14} aria-hidden="true" />{isAr ? 'مش مناسب' : 'Skip'}
+                        </button>
+                        {sent && <span className="smh__sent"><CheckCircle2 size={13} aria-hidden="true" />{isAr ? `اتبعت ${when(sent)}` : `Sent ${when(sent)}`}</span>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              {row.total > row.items.length && <p className="smh__more">{isAr ? `و${row.total - row.items.length} عرض تاني مناسب` : `+${row.total - row.items.length} more`}</p>}
+            </li>
+          ))}
+        </ul>
       )}
 
-      {/* Schedule Visit Modal */}
-      {schedulingVisitLead && (
+      {visitFor && (
         <SiteVisitModal
-          isOpen={Boolean(schedulingVisitLead)}
-          onClose={() => setSchedulingVisitLead(null)}
-          lead={schedulingVisitLead}
+          isOpen={Boolean(visitFor)}
+          onClose={() => setVisitFor(null)}
+          lead={visitFor}
           properties={properties}
           onScheduleVisit={(leadId, visitDetails) => {
-            if (onUpdateLead) {
-              onUpdateLead(leadId, {
-                status: 'site_visit',
-                siteVisit: visitDetails,
-                followUp: `معاينة مجدولة يوم ${visitDetails.visitDate}`
-              });
-            }
+            // Booking the visit is the outcome «تم تحديد موعد معاينة» (utils/stageGate), which the stage lock asks for
+            const visitLead = leads.find((l) => String(l.id) === String(leadId));
+            const outcome = outcomePatchFor(visitLead || {}, outcomeEntry('viewing_set', {}, {}));
+            onUpdateLead?.(leadId, { ...outcome, status: 'site_visit', siteVisit: visitDetails, followUp: `معاينة مجدولة يوم ${visitDetails.visitDate}` });
           }}
           lang={lang}
           triggerToast={triggerToast}

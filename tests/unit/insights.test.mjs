@@ -69,3 +69,10 @@ test('trade-in: inventory matches respect type, size and budget', () => {
   ];
   assert.deepEqual(matchInventory(req, props).map((x) => x.property.id), ['p1']);
 });
+
+test('finance: a cash listing has no plan, and a term in months is used as typed', () => {
+  assert.equal(computeFinanceBreakdown({ price: 1e6, paymentType: 'cash', downPayment: 2e5, monthlyInstallment: 3e4, installmentYears: 2 }).plan, null);
+  const fb = computeFinanceBreakdown({ price: 9e5, paymentType: 'installment', downPayment: 0, monthlyInstallment: 50_000, installmentMonths: 18, installmentYears: 1.5 });
+  assert.equal(fb.plan.months, 18);
+  assert.equal(fb.plan.total, 900_000);
+});

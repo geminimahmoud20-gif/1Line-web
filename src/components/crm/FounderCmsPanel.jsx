@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkles, Award, Loader2, Film } from 'lucide-react';
+import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkles, Award, Loader2, Film, Users } from 'lucide-react';
 import { getFounderSettings, saveFounderSettings, resetFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 import { uploadCmsMedia, getCmsStorageStatus } from '../../firebaseLazy';
 import HeroVideoSettings from './founder-cms/HeroVideoSettings';
+import ImageUploadField from './ImageUploadField';
+import { captureVideoFrame } from '../../utils/videoPoster';
+import { uploadProfilePhoto } from '../../utils/imageUploadService';
 import GoldStandardsSettings from './founder-cms/GoldStandardsSettings';
+import AboutProfileSettings from './founder-cms/AboutProfileSettings';
+import { useConfirm } from '../ui';
 
 /**
  * DEV ONLY: send the file to the Vite dev-server endpoint (scripts/vite-local-media.mjs), which
@@ -34,6 +39,7 @@ function uploadToLocalSite(file, onProgress, onStart, onOptimising) {
 
 export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
   const [formData, setFormData] = useState(() => getFounderSettings());
   const [isSaving, setIsSaving] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('founder'); // 'founder' | 'quote' | 'stats' | 'pillars'
@@ -55,7 +61,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
       if (success) {
         triggerToast(
           isAr 
-            ? 'تم حفظ وتحديث بيانات المؤسس والشركة ونشرها سحابياً على كامل الموقع فوراً! 🚀' 
+            ? 'تم حفظ وتحديث بيانات المؤسس والشركة ونشرها سحابياً على كامل الموقع فوراً!'
             : 'Corporate & Founder profile updated and published live to cloud!', 
           'success'
         );
@@ -71,7 +77,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   };
 
   const handleReset = async () => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من استعادة النصوص والإعدادات الافتراضية؟' : 'Reset all corporate text to defaults?')) {
+    if (await confirm({ message: isAr ? 'هل أنت متأكد من استعادة النصوص والإعدادات الافتراضية؟' : 'Reset all corporate text to defaults?', tone: 'danger' })) {
       await resetFounderSettings();
       setFormData(DEFAULT_FOUNDER_CMS);
       triggerToast(isAr ? 'تمت استعادة الإعدادات الافتراضية بنجاح' : 'Reset to default settings', 'info');
@@ -130,6 +136,15 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   }, []);
   const uploadLocked = storageStatus === 'unavailable';
 
+  // Still picture for phones: a frame from the video, shrunk and stored next to it. null when the
+  // browser can't read the video (codec, or no cross-origin access) or the upload is refused.
+  const makeClipPoster = async (source) => {
+    const blob = await captureVideoFrame(source);
+    if (!blob) return null;
+    const res = await uploadProfilePhoto(new File([blob], 'hero-still.jpg', { type: 'image/jpeg' }), 'hero-still', { maxWidth: 1280, maxHeight: 1280 });
+    return res.ok ? res.url : null;
+  };
+
   // Works without any upload service: any public https video (mp4/webm) can be added by URL
   const handleAddVideoByUrl = async () => {
     const url = pastedVideoUrl.trim();
@@ -185,7 +200,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         'local-server': isAr ? 'تعذّر الاتصال بخادم التطوير المحلي — تأكد أن npm run dev ما زال يعمل.' : 'Local dev server not reachable.',
         'needs-ffmpeg': isAr ? 'هذا النوع يحتاج تحويلاً إلى MP4 لكن ffmpeg غير متاح. ارفع ملف MP4 أو شغّل npm install.' : 'Needs ffmpeg to convert — upload an MP4.',
         type: isAr ? 'نوع الملف غير مدعوم — استخدم MP4 أو WebM أو MOV.' : 'Unsupported file — use MP4, WebM or MOV.',
-        size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 60. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية).` : `Video is ${mb}MB; the limit is 60MB.`,
+        size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 20. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية) أو اضغطه قبل الرفع.` : `Video is ${mb}MB; the limit is 20MB.`,
         'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — الرفع متاح لحساب المدير فقط.' : 'Not authorised to upload — admin accounts only.',
         'storage/unauthenticated': isAr ? 'سجّل الدخول بحساب المدير أولاً لرفع الفيديو.' : 'Sign in as admin to upload.'
       };
@@ -196,13 +211,15 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
       return;
     }
 
+    // A still from the clip for phones, which never download the video itself
+    const poster = await makeClipPoster(file);
     const newClip = {
       id: `uploaded-${Date.now()}`,
       title_ar: file.name.replace(/\.[^/.]+$/, ''),
       title_en: file.name.replace(/\.[^/.]+$/, ''),
       url: res.url,
       storagePath: res.path,
-      poster: formData.heroPosterUrl || ''
+      poster: poster || formData.heroPosterUrl || ''
     };
     const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
     const next = { ...formData, heroVideoUrl: res.url, heroVideoClips: [newClip, ...currentClips] };
@@ -216,6 +233,36 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           ? `تم حفظ الفيديو في ملفات الموقع (${res.url})${outMb ? ` — تم ضغطه من ${mb} إلى ${outMb} ميجابايت` : ''}. سيظهر للزوار بعد نشر الموقع.`
           : `Saved to the site at ${res.url}. Visible after the next deploy.`)
         : (isAr ? `تم رفع الفيديو (${mb} ميجابايت) وحفظه ✔` : `Video uploaded (${mb}MB) and saved`), 'success');
+    }
+  };
+
+  // For videos uploaded before stills existed: one still per video that still shows the default picture
+  const [postersBusy, setPostersBusy] = useState(false);
+  const clipNeedsPoster = (clip) => Boolean(clip?.url) && (!clip.poster || clip.poster === formData.heroPosterUrl || clip.poster === DEFAULT_FOUNDER_CMS.heroPosterUrl);
+  const handleMakeClipPosters = async (onlyIdx = null) => {
+    if (postersBusy) return;
+    const clips = [...(formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips)];
+    const targets = clips.map((c, i) => i).filter((i) => (onlyIdx === null ? clipNeedsPoster(clips[i]) : i === onlyIdx) && clips[i]?.url);
+    if (!targets.length) return;
+    setPostersBusy(true);
+    let made = 0;
+    for (const i of targets) {
+      const url = await makeClipPoster(clips[i].url);
+      if (url) { clips[i] = { ...clips[i], poster: url }; made += 1; }
+    }
+    setPostersBusy(false);
+    if (made) {
+      const next = { ...formData, heroVideoClips: clips };
+      setFormData(next);
+      await saveFounderSettings(next);
+    }
+    if (!triggerToast) return;
+    if (made === targets.length) {
+      triggerToast(isAr ? `تم عمل ${made} صورة للموبايل من الفيديوهات وحفظها ✔` : `Made ${made} phone stills from the videos`, 'success');
+    } else {
+      triggerToast(isAr
+        ? `اتعمل ${made} من ${targets.length}. الباقي المتصفح ماقدرش يقرأه (نوع الفيديو أو إعدادات التخزين). ارفع الفيديو تاني وصورته هتتعمل لوحدها.`
+        : `Made ${made} of ${targets.length}; the browser could not read the rest. Re-upload those videos.`, made ? 'info' : 'error');
     }
   };
 
@@ -334,7 +381,16 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           onClick={() => setActiveSubTab('hero_video')}
         >
           <Film size={14} />
-          <span>{isAr ? '🎬 الفيديو والهيرو السينمائي' : 'Hero Video & Media'}</span>
+          <span>{isAr ? 'الفيديو والهيرو السينمائي' : 'Hero Video & Media'}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`btn btn-sm ${activeSubTab === 'about_profile' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveSubTab('about_profile')}
+        >
+          <Users size={14} />
+          <span>{isAr ? 'الفريق وبيانات الشركة والصور' : 'Team, company facts & photos'}</span>
         </button>
 
         <button
@@ -379,7 +435,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           onClick={() => setActiveSubTab('gold_standards')}
         >
           <Award size={14} />
-          <span>{isAr ? '🛡️ معايير الأمان الأربعة (الرئيسية)' : '4 Golden Standards'}</span>
+          <span>{isAr ? 'معايير الأمان الأربعة (الرئيسية)' : '4 Golden Standards'}</span>
         </button>
       </div>
 
@@ -394,6 +450,9 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             handleAddClip={handleAddClip}
             handleAddVideoByUrl={handleAddVideoByUrl}
             handleKeepOnlyActiveClip={handleKeepOnlyActiveClip}
+            handleMakeClipPosters={handleMakeClipPosters}
+            clipNeedsPoster={clipNeedsPoster}
+            postersBusy={postersBusy}
             handleRemoveClip={handleRemoveClip}
             handleUpdateClip={handleUpdateClip}
             handleVideoFileUpload={handleVideoFileUpload}
@@ -409,6 +468,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         )}
 
         {/* SUBTAB 1: FOUNDER INFO */}
+        {activeSubTab === 'about_profile' && (
+          <AboutProfileSettings formData={formData} setFormData={setFormData} isAr={isAr} triggerToast={triggerToast} />
+        )}
+
         {activeSubTab === 'founder' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
             <div className="form-group-item">
@@ -449,49 +512,18 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label htmlFor="fcms-field-14">{isAr ? 'رابط الصورة الشخصية للمؤسس:' : 'Founder Photo URL:'}</label>
-              <input id="fcms-field-14"
-                type="text"
-                placeholder="/founder-dr-mahmoud-elbaz.jpg"
-                value={formData.founderPhoto || ''}
-                onChange={(e) => setFormData({ ...formData, founderPhoto: e.target.value })}
+              {/* Uploaded from the device only; empty falls back to the official portrait shipped with the site */}
+              <ImageUploadField
+                label={isAr ? 'الصورة الشخصية للمؤسس' : 'Founder photo'}
+                value={formData.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'}
+                onChange={(url) => setFormData({ ...formData, founderPhoto: url || '/founder-dr-mahmoud-elbaz.jpg' })}
+                name="founder"
+                maxWidth={900}
+                maxHeight={1200}
+                previewShape="portrait"
+                isAr={isAr}
+                hint={isAr ? '«شيل الصورة» بيرجّع الصورة الرسمية.' : 'Remove brings back the official portrait.'}
               />
-              {/* Photo Live Preview */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                <div style={{
-                  width: '56px',
-                  height: '68px',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  border: '1.5px solid rgba(212, 175, 55, 0.6)',
-                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.25)',
-                  background: 'var(--crm-surface-ink-deep)',
-                  flexShrink: 0
-                }}>
-                  <img
-                    src={formData.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'}
-                    alt="Founder Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 12%' }}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/founder-dr-mahmoud-elbaz.jpg";
-                    }}
-                  />
-                </div>
-                <div>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 700, display: 'block' }}>
-                    {isAr ? '✓ صورة المؤسس د. محمود الباز معتمدة' : '✓ Accredited Founder Portrait'}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-xs btn-ghost"
-                    onClick={() => setFormData({ ...formData, founderPhoto: '/founder-dr-mahmoud-elbaz.jpg' })}
-                    style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', marginTop: '2px', padding: '0' }}
-                  >
-                    {isAr ? 'استعادة الصورة الرسمية' : 'Restore Official Photo'}
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div className="form-group-item">

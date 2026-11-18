@@ -1,0 +1,19 @@
+/* «سجل المراجعة»: rows that stack on phones */
+.al-panel { font-family: var(--ui-font); max-width: 900px; }
+.al-head h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1.15rem; }
+.al-head p { margin: 0 0 12px; color: var(--ui-text-3); line-height: 1.7; }
+.al-filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+.al-filters label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; flex: 1 1 200px; }
+.al-filters select { min-height: 42px; padding: 0 10px; border: 1px solid var(--ui-line-strong); border-radius: 10px; font: inherit; background: var(--ui-surface); color: inherit; }
+.al-note { color: var(--ui-text-3); }
+.al-note.is-bad { color: var(--ui-danger); font-weight: 700; }
+.al-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.al-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--ui-line-strong); border-radius: 12px; background: var(--ui-surface); }
+.al-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.al-main span { color: var(--ui-text-3); font-size: 0.9rem; }
+.al-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: end; font-size: 0.9rem; overflow-wrap: anywhere; }
+.al-meta small { color: var(--ui-text-3); }
+@media (max-width: 560px) {
+  .al-row { flex-direction: column; }
+  .al-meta { align-items: flex-start; text-align: start; }
+}

@@ -52,7 +52,7 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
   const isCommercial = ['commercial', 'office'].includes(form.type);
 
   const legal = form.legalStatus || {};
-  // Empty legal record = null, so the listing shows "review not published" instead of a badge
+  // Empty legal record = null, so the listing shows "not reviewed yet" instead of a badge
   const setLegal = (k, v) => setForm((f) => {
     const next = { ...(f.legalStatus || {}), [k]: v };
     const hasAny = Object.values(next).some((x) => String(x ?? '').trim() !== '');
@@ -91,7 +91,7 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
 
   return (
     <div className="pxe">
-      <Section icon={Scale} title={L('الموقف القانوني (بعد المراجعة الفعلية فقط)', 'Legal status (after an actual review only)')} hint={form.legalStatus ? L('يظهر كـ«مستندات مراجَعة»', 'Shows as "Documents reviewed"') : L('فارغ = «المراجعة لم تُنشر بعد»', 'Empty = "review not published"')}>
+      <Section icon={Scale} title={L('الموقف القانوني (بعد المراجعة الفعلية فقط)', 'Legal status (after an actual review only)')} hint={form.legalStatus ? L('يظهر كـ«مستندات مراجَعة»', 'Shows as "Documents reviewed"') : L('فارغ = «لم يراجع بعد»', 'Empty = "Not reviewed yet"')}>
         <p className="pxe-note">{L('اكتب فقط ما راجعته فعلاً من مستندات. أي خانة فارغة لا تظهر، ولو كل الخانات فاضية العقار يظهر بدون شارة «مستندات مراجَعة».', 'Only record what you actually reviewed. Empty fields stay hidden; if all are empty the listing shows no "Documents reviewed" badge.')}</p>
         <div className="pxe-grid">
           <TextField label={L('سند الملكية', 'Title')} value={legal.ownershipType_ar} onChange={(v) => setLegal('ownershipType_ar', v)} placeholder={L('مثال: عقد مسجل شهر عقاري', 'e.g. Registered deed')} />
@@ -154,7 +154,7 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
           <NumField label={L('المدفوع لجهاز المدينة', 'Paid to the city authority')} value={finance.paidToAuthority} onChange={(v) => setFinance('paidToAuthority', v)} suffix={EGP} />
           <TextField label={L('ملاحظة الأوفر برايس', 'Over-price note')} value={finance.overPriceNote_ar} onChange={(v) => setFinance('overPriceNote_ar', v)} placeholder={L('مثال: متبقي 3 أقساط لجهاز المدينة', 'e.g. 3 authority installments left')} />
           <NumField label={L('تكاليف المرافق (عدادات/غاز) استرشادي', 'Utilities (meters/gas), indicative')} value={finance.utilitiesCost} onChange={(v) => setFinance('utilitiesCost', v)} suffix={EGP} />
-          <NumField label={L('تكلفة نقل الملكية/التسجيل استرشادي', 'Transfer/registration, indicative')} value={finance.transferCost} onChange={(v) => setFinance('transferCost', v)} suffix={EGP} />
+          <NumField label={L('مراجعة سندات الملكية وتحرير العقود (استرشادي)', 'Title-deed review & contracts, indicative')} value={finance.transferCost} onChange={(v) => setFinance('transferCost', v)} suffix={EGP} />
           <TextField label={L('ملاحظة التكاليف', 'Fees note')} value={finance.feesNote_ar} onChange={(v) => setFinance('feesNote_ar', v)} placeholder={L('مثال: التسجيل بالشهر العقاري على المشتري', 'e.g. registry fees paid by buyer')} />
         </div>
       </Section>

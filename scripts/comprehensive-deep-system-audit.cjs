@@ -29,7 +29,14 @@ if (typeof global.sessionStorage === 'undefined') {
 if (typeof global.window === 'undefined') {
   global.window = {
     addEventListener: () => {},
-    removeEventListener: () => {}
+    removeEventListener: () => {},
+    dispatchEvent: () => true,
+    location: {
+      pathname: '/',
+      href: 'http://localhost/',
+      origin: 'http://localhost',
+      search: ''
+    }
   };
 }
 

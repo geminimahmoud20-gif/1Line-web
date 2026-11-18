@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ConsentNote from './common/ConsentNote';
 import { 
   Sparkles, 
   ShieldCheck, 
@@ -15,6 +16,8 @@ import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { checkFormSpamProtection } from '../utils/securityShield';
+import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 export const SpecialRequests = ({
   lang = 'ar',
@@ -34,7 +37,7 @@ export const SpecialRequests = ({
   // Fallback internal state if not managed externally
   const [internalForm, setInternalForm] = useState({
     propertyType: 'apartment',
-    area: 'new_sohag',
+    area: '',
     budget: '',
     minSize: '',
     priority: 'high',
@@ -73,8 +76,9 @@ export const SpecialRequests = ({
       return;
     }
 
-    if (!form.name || !form.name.trim()) {
-      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم (إلزامي)' : 'Please enter your name', 'error');
+    const nameErr = nameProblem(form.name, isAr);
+    if (nameErr) {
+      triggerToast?.(nameErr, 'error');
       return;
     }
 
@@ -107,12 +111,12 @@ export const SpecialRequests = ({
     const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(form.whatsapp.trim()) : true;
 
     if (!isPhoneValid) {
-      setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setPhoneError(phoneProblem(form.phone.trim(), phoneCountry, isAr));
       return;
     }
     
     if (!isWhatsappValid) {
-      setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setWhatsappError(phoneProblem(form.whatsapp.trim(), whatsappCountry, isAr));
       return;
     }
 
@@ -131,7 +135,7 @@ export const SpecialRequests = ({
       type: 'special_request',
       status: 'pending',
       createdAt: new Date().toISOString(),
-      timestamp: new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US')
+      timestamp: new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')
     };
 
     try {
@@ -239,7 +243,7 @@ export const SpecialRequests = ({
               setIsSubmitted(false);
               setForm({
                 propertyType: 'apartment',
-                area: 'new_sohag',
+                area: '',
                 budget: '',
                 minSize: '',
                 priority: 'high',
@@ -332,11 +336,8 @@ export const SpecialRequests = ({
                 onChange={(e) => setForm({ ...form, area: e.target.value })}
                 style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600', lineHeight: 'normal' }}
               >
-                {areas.map(a => (
-                  <option key={a.id} value={a.id}>
-                    {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-                  </option>
-                ))}
+                <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
+                <AreaOptions areas={areas} isAr={isAr} includeAll={areas.some((a) => a?.id === 'all')} />
               </select>
             </div>
           </div>
@@ -491,9 +492,10 @@ export const SpecialRequests = ({
           disabled={submitting}
           className="btn btn-primary btn-full" 
           style={{ 
-            height: '52px', 
-            fontSize: '1.05rem', 
-            fontWeight: '800', 
+            minHeight: '52px',
+            fontSize: '1rem',
+            fontWeight: '800',
+            whiteSpace: 'nowrap',
             background: 'linear-gradient(135deg, #0d48a1 0%, #092347 100%)',
             boxShadow: '0 6px 20px rgba(13, 72, 161, 0.3)',
             display: 'flex',
@@ -507,10 +509,11 @@ export const SpecialRequests = ({
           ) : (
             <>
               <Send size={18} />
-              <span>{isAr ? 'إرسال الطلب للاستحواذ والبحث العقاري الذكي 🚀' : 'Submit Bespoke Request 🚀'}</span>
+              <span>{isAr ? 'أرسل طلبك' : 'Send request'}</span>
             </>
           )}
         </button>
+        <ConsentNote isAr={isAr} />
       </form>
     </div>
   );

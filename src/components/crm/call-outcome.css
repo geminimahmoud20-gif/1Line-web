@@ -1,0 +1,10 @@
+/* «حصل إيه في المكالمة؟» */
+.co-sheet { position: fixed; inset-inline: var(--ui-s-3); bottom: calc(var(--ui-s-3) + env(safe-area-inset-bottom, 0px)); z-index: 60; max-width: 520px; margin-inline: auto; display: grid; gap: var(--ui-s-3); padding: var(--ui-s-4); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-lg); background: var(--ui-surface); color: var(--ui-text); box-shadow: 0 10px 30px color-mix(in srgb, var(--ui-text) 25%, transparent); font-family: var(--ui-font); }
+.co-sheet__head { display: flex; align-items: center; gap: var(--ui-s-2); }
+.co-sheet__head strong { flex: 1; min-width: 0; line-height: 1.5; }
+.co-x { width: 44px; height: 44px; margin: -8px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--ui-text-3); cursor: pointer; }
+.co-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-s-2); }
+.co-btn { min-height: 48px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text); font: inherit; font-weight: var(--ui-fw-semibold); cursor: pointer; }
+.co-btn--answered { border-color: var(--ui-success); color: var(--ui-success); }
+.co-btn--wrong { border-color: var(--ui-danger); color: var(--ui-danger); }
+.co-skip { min-height: 40px; border: 0; background: none; color: var(--ui-text-3); font: inherit; cursor: pointer; }

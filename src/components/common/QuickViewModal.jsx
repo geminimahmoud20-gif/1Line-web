@@ -1,11 +1,25 @@
 import { useState } from 'react';
-import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
+import { isAgricultural, isIndustrial, isLandType } from '../../utils/propertyKinds';
+import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, FileText, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video, Layers3, Clock3, ShieldCheck, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
 import '../../styles/expat-suite.css';
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
+import { isWatermarked } from '../../utils/watermark';
+import useClientDownload from '../../hooks/useClientDownload';
+import { countLabel } from '../../utils/arabicCount';
+import { paymentTerms, isPlanType, everyLabel, installmentsPhrase, yearlyPhrase } from '../../utils/paymentTerms';
+import { areaLabel } from '../../utils/placeLabels';
+import { getAreas } from '../../utils/areasData';
+import { listingCaption } from '../../utils/listingShare';
+import { readablePhone } from '../../utils/phoneDisplay';
+import { listingBadges } from '../../utils/listingBadges';
+import { cardFeatures } from '../../utils/buildingFeatures';
+import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
+import './quickview.css';
+import { siteLink } from '../../config/siteConfig';
 
 export default function QuickViewModal({ 
   property, 
@@ -16,8 +30,8 @@ export default function QuickViewModal({
   triggerToast
 }) {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const download = useClientDownload();
   const [viewMode, setViewMode] = useState('photos'); // 'photos' | 'floorplan'
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [imgError, setImgError] = useState(false);
   const { openRemoteInspection } = useUIModal();
 
@@ -30,21 +44,45 @@ export default function QuickViewModal({
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
 
   // Sector classification
-  const isLand = property.type === 'land' || (title && title.includes('أرض'));
-  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
-  const priceData = formatCurrencyPrice(property.price, currency, lang);
-  const downPaymentVal = Number(property.downPayment) || 0;
-  const monthlyInstallmentVal = Number(property.monthlyInstallment) || 0;
-  const downPaymentData = formatCurrencyPrice(downPaymentVal, currency, lang);
-  const monthlyInstallmentData = formatCurrencyPrice(monthlyInstallmentVal, currency, lang);
+  const isSpecial = isAgricultural(property) || isIndustrial(property);
+  const isLand = isLandType(property.type) || (!isIndustrial(property) && title && title.includes('أرض'));
+  const isCommercial = !isLand && !isSpecial && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isLand && !isCommercial && !isSpecial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  // Cash, or the plan set in CRM → طريقة السداد; a plan leads with what is paid now
+  const terms = paymentTerms(property);
+  const priceData = formatCurrencyPrice(isPlanType(terms.type) && terms.amount > 0 ? (terms.down || terms.amount) : property.price, currency, lang);
+  const money = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
+  // Where it is: the written address, else the area's name; nothing when neither is known
+  const place = String(location || '').trim() || (property.areaKey ? areaLabel(property.areaKey, isAr, getAreas()) : '');
+  // Price per m², the first number buyers compare (not for whole buildings or farmland by feddan)
+  const perM2 = !isMultiUnitOrBuilding(property) && !isAgricultural(property) && Number(property.size) > 0 && Number(property.price) > 0
+    ? Math.round(Number(property.price) / Number(property.size))
+    : 0;
+  const hasRooms = !isLand && !isCommercial && !isOffice && !isSpecial;
+  const floorText = !hasRooms || property.floor === undefined || property.floor === null || property.floor === ''
+    ? ''
+    : (Number(property.floor) === 0 ? (isAr ? 'أرضي' : 'Ground floor') : (isAr ? `الدور ${property.floor}` : `Floor ${property.floor}`));
+  const handoverText = property.completionStatus === 'ready'
+    ? (isAr ? 'استلام فوري' : 'Ready now')
+    : property.deliveryYear
+      ? (isAr ? `استلام ${property.deliveryYear}` : `Handover ${property.deliveryYear}`)
+      : ['under_construction', 'off_plan'].includes(property.completionStatus) ? (isAr ? 'تحت الإنشاء' : 'Under construction') : '';
+  const extras = cardFeatures(property, isAr);
+  const review = listingBadges(property, isAr).review;
+  const updated = property.updatedAt && !property.isDemo ? new Date(property.updatedAt) : null;
+  const updatedText = updated && !Number.isNaN(updated.getTime())
+    ? updated.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  const brief = String(description || '').trim();
+  // Only a floor plan the team uploaded is shown; there is no generic drawing
+  const floorPlan = property.floorPlan || property.floorPlanImage || '';
 
   const imagesList = Array.isArray(property.images) && property.images.length > 0 
     ? property.images 
-    : [property.image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'];
+    : [property.image || '/no-photo.svg'];
 
   const currentImage = imgError
-    ? 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
+    ? '/no-photo.svg'
     : (imagesList[activeImageIdx] || imagesList[0]);
 
   const handleNextImage = (e) => {
@@ -57,23 +95,10 @@ export default function QuickViewModal({
     setActiveImageIdx((prev) => (prev - 1 + imagesList.length) % imagesList.length);
   };
 
-  const handleDownloadPdf = async () => {
-    setIsGeneratingPdf(true);
-    try {
-      const { generatePropertyPdf } = await import('../../utils/pdfBrochure');
-      generatePropertyPdf(property, lang);
-    } catch (err) {
-      console.error('Failed to generate PDF:', err);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
-
   const handleShare = () => {
-    const propUrl = `${window.location.origin}/properties/${property.id}`;
-    const shareText = isAr 
-      ? `تفقد هذا العقار المعتمد على منصة 1Line: ${title} بسعر ${priceData.primary} ${priceData.symbol}\n${propUrl}`
-      : `Check out this verified property on 1Line: ${title} for ${priceData.primary} ${priceData.symbol}\n${propUrl}`;
+    const propUrl = siteLink(`/properties/${property.id}`);
+    // The same caption as the listing page's share bar (utils/listingShare): price or plan, facts, link
+    const shareText = listingCaption(property, { url: propUrl, phone: readablePhone(getDynamicPhone()), areaName: place, isAr });
 
     if (onOpenShare) {
       onOpenShare({
@@ -86,8 +111,7 @@ export default function QuickViewModal({
     } else if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title,
-        text: shareText,
-        url: propUrl
+        text: shareText
       }).catch((err) => {
         if (err?.name !== 'AbortError') {
           navigator.clipboard?.writeText(propUrl);
@@ -130,7 +154,8 @@ export default function QuickViewModal({
                   className="quickview-img" 
                   onError={() => setImgError(true)}
                 />
-                <BrandWatermark size="md" position="bottom-right" />
+                {/* Centred: the corners hold the controls and the price */}
+                {!isWatermarked(currentImage) && <BrandWatermark size="sm" position="center" />}
 
                 {/* Multi-Image Navigation Controls */}
                 {imagesList.length > 1 && (
@@ -151,10 +176,6 @@ export default function QuickViewModal({
                     >
                       <ChevronLeft size={18} />
                     </button>
-                    <div className="quickview-img-counter">
-                      {activeImageIdx + 1} / {imagesList.length}
-                    </div>
-
                     {/* Mini Thumbnail Dots */}
                     <div className="quickview-thumb-dots">
                       {imagesList.map((_, idx) => (
@@ -171,38 +192,13 @@ export default function QuickViewModal({
                 )}
               </>
             ) : (
-              /* Floor Plan CAD Blueprint View */
               <div className="quickview-floorplan-preview">
-                <svg viewBox="0 0 800 500" className="quickview-cad-svg" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="800" height="500" fill="#081426" />
-                  <defs>
-                    <pattern id="cadgrid-mini" width="30" height="30" patternUnits="userSpaceOnUse">
-                      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#142e54" strokeWidth="0.8" />
-                    </pattern>
-                  </defs>
-                  <rect width="800" height="500" fill="url(#cadgrid-mini)" />
-                  <rect x="50" y="40" width="700" height="420" fill="none" stroke="#38bdf8" strokeWidth="3" rx="4" />
-                  <line x1="360" y1="40" x2="360" y2="460" stroke="#38bdf8" strokeWidth="2" />
-                  <line x1="50" y1="260" x2="360" y2="260" stroke="#38bdf8" strokeWidth="2" />
-                  <text x="200" y="150" fill="#fdcb42" fontFamily="sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
-                    {isAr ? 'الريسبشن المفتوح' : 'Reception'}
-                  </text>
-                  <text x="200" y="370" fill="#fdcb42" fontFamily="sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle">
-                    {isAr ? 'المطبخ والخدمات' : 'Kitchen'}
-                  </text>
-                  <text x="580" y="240" fill="#fdcb42" fontFamily="sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
-                    {isAr ? 'أجنحة النوم والحمام' : 'Bedrooms & Bath'}
-                  </text>
-                  <rect x="60" y="50" width="220" height="30" rx="6" fill="#0b4ea2" opacity="0.9" />
-                  <text x="170" y="70" fill="#ffffff" fontFamily="sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle">
-                    1LINE CAD SCHEMATIC
-                  </text>
-                </svg>
+                <img src={floorPlan} alt={isAr ? `مخطط ${title}` : `${title} floor plan`} className="quickview-img is-plan" />
               </div>
             )}
 
-            {/* Mode Toggle Button (Photos vs CAD Floorplan) */}
-            <div className="quickview-mode-toggle">
+            {/* Photos / floor plan: only when the listing has a floor plan */}
+            {floorPlan && <div className="quickview-mode-toggle">
               <button 
                 type="button" 
                 className={`mode-toggle-btn ${viewMode === 'photos' ? 'active' : ''}`}
@@ -218,25 +214,32 @@ export default function QuickViewModal({
                 <Layers size={12} />
                 <span>{isAr ? 'المخطط' : 'Floor Plan'}</span>
               </button>
-            </div>
+            </div>}
 
-            {/* Floating Price Tag */}
-            <div className="quickview-price-badge-floating">
-              <span className="price-tag-big">{priceData.primary} {priceData.symbol}</span>
-              <span style={{ fontSize: '0.68rem', display: 'block', fontWeight: 800, color: '#34d399', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px', marginTop: '2px' }}>
-                ✓ {isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}
-              </span>
-            </div>
           </div>
 
           {/* Right Info Section */}
           <div className="quickview-info">
-            <div className="quickview-loc">
-              <MapPin size={15} className="text-primary" />
-              <span>{location}</span>
+            <div className="qv-meta">
+              {place && (
+                <span className="quickview-loc">
+                  <MapPin size={15} className="text-primary" aria-hidden="true" />
+                  <span>{place}</span>
+                </span>
+              )}
+              <bdi className="qv-code" dir="ltr">{String(property.id).toUpperCase()}</bdi>
             </div>
 
             <h2 className="quickview-title">{title}</h2>
+
+            {/* Price, how it is paid and the price per m² */}
+            <div className="qv-price">
+              <strong className="qv-price-num"><bdi>{priceData.primary}</bdi> <small>{priceData.symbol}</small></strong>
+              <span className={`qv-pay-chip ${terms.type === 'cash' ? 'is-cash' : 'is-plan'}`}>
+                {terms.type === 'cash' ? (isAr ? 'كاش' : 'Cash') : terms.type === 'resale' ? (isAr ? 'إعادة بيع بالتقسيط' : 'Resale, installments left') : (isAr ? 'تقسيط' : 'Installments')}
+              </span>
+              {perM2 > 0 && <span className="qv-per-m2"><bdi>{perM2.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م/م²' : 'EGP/m²'}</span>}
+            </div>
 
             {/* Spec Pills with Finishing Badge */}
             <div className="quickview-specs-row">
@@ -285,42 +288,82 @@ export default function QuickViewModal({
                   {property.bedrooms > 0 && (
                     <div className="spec-pill">
                       <BedDouble size={14} className="text-primary" />
-                      <span>{property.bedrooms} {isAr ? 'غرف' : 'Beds'}</span>
+                      <span>{countLabel('room', property.bedrooms, isAr)}</span>
                     </div>
                   )}
                   {property.bathrooms > 0 && (
                     <div className="spec-pill">
                       <Bath size={14} className="text-primary" />
-                      <span>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</span>
+                      <span>{countLabel('bath', property.bathrooms, isAr)}</span>
                     </div>
                   )}
                 </>
               )}
+              {floorText && (
+                <div className="spec-pill">
+                  <Layers3 size={14} className="text-primary" aria-hidden="true" />
+                  <span>{floorText}</span>
+                </div>
+              )}
               {finishing && (
-                <div className="spec-pill highlight-pill" title={finishing}>
-                  <Sparkles size={13} className="text-gold" />
-                  <span>{finishing.split(' ')[0]}</span>
+                <div className="spec-pill highlight-pill">
+                  <Sparkles size={13} className="text-gold" aria-hidden="true" />
+                  <span>{finishing}</span>
+                </div>
+              )}
+              {handoverText && (
+                <div className="spec-pill">
+                  <Clock3 size={14} className="text-primary" aria-hidden="true" />
+                  <span>{handoverText}</span>
                 </div>
               )}
             </div>
 
-            <p className="quickview-desc">{description}</p>
+            {/* Elevator, garage, garden, land share: only what the unit has */}
+            {extras.length > 0 && (
+              <ul className="qv-extras" aria-label={isAr ? 'مميزات المبنى' : 'Building features'}>
+                {extras.map((f) => <li key={f.key}><Check size={13} aria-hidden="true" />{f.label}</li>)}
+              </ul>
+            )}
 
-            {/* Structured 2-Column Finance & Installment Box */}
-            <div className="quickview-finance-grid">
-              <div className="finance-cell">
-                <span className="finance-lbl">{isAr ? 'المقدم المطلوب' : 'Required Downpayment'}</span>
-                <strong className="finance-val">
-                  {downPaymentVal > 0 ? `${downPaymentData.primary} ${downPaymentData.symbol}` : (isAr ? 'بدون مقدم' : 'No Downpayment')}
-                </strong>
+            {brief && <p className="quickview-desc qv-brief">{brief}</p>}
+
+            {/* An installment plan's figures; a cash listing says so in the chip by the price */}
+            {isPlanType(terms.type) && (
+              <div className="quickview-finance-grid">
+                <div className="finance-cell">
+                  <span className="finance-lbl">{terms.type === 'resale' ? (isAr ? 'المطلوب كاش للمالك' : 'Cash to the seller') : (isAr ? 'المقدم' : 'Down payment')}</span>
+                  <strong className="finance-val">{terms.down > 0 ? money(terms.down) : (isAr ? 'بدون مقدم' : 'None')}</strong>
+                </div>
+                {terms.amount > 0 && (
+                  <div className="finance-cell highlight-cell">
+                    <span className="finance-lbl">
+                      {terms.periods > 0 ? installmentsPhrase(terms.periods, terms.every, isAr) : (isAr ? `القسط ال${everyLabel(terms.every)}` : `Installment (${everyLabel(terms.every, false)})`)}
+                    </span>
+                    <strong className="finance-val text-primary">{money(terms.amount)}</strong>
+                  </div>
+                )}
+                {terms.yearlyAmount > 0 && (
+                  <div className="finance-cell">
+                    <span className="finance-lbl">{yearlyPhrase(terms.yearlyCount, isAr)}</span>
+                    <strong className="finance-val">{money(terms.yearlyAmount)}</strong>
+                  </div>
+                )}
+                {terms.months > 0 && terms.total > 0 && (
+                  <div className="finance-cell">
+                    <span className="finance-lbl">{isAr ? 'الإجمالي' : 'Total'}</span>
+                    <strong className="finance-val">{money(terms.total)}</strong>
+                  </div>
+                )}
               </div>
-              <div className="finance-cell highlight-cell">
-                <span className="finance-lbl">{isAr ? 'القسط الشهري' : 'Monthly Installment'}</span>
-                <strong className="finance-val text-primary">
-                  {monthlyInstallmentVal > 0 ? `${monthlyInstallmentData.primary} ${monthlyInstallmentData.symbol}` : (isAr ? 'كاش فوري' : 'Full Cash')}
-                </strong>
+            )}
+
+            {(review || updatedText) && (
+              <div className="qv-trust">
+                {review && <span className={`qv-trust-badge is-${review.tone}`}><ShieldCheck size={13} aria-hidden="true" />{review.label}</span>}
+                {updatedText && <span>{isAr ? `آخر تحديث: ${updatedText}` : `Updated ${updatedText}`}</span>}
               </div>
-            </div>
+            )}
 
             {/* Clean, Non-Crammed Actions Hierarchy */}
             <div className="quickview-actions-wrapper">
@@ -330,22 +373,9 @@ export default function QuickViewModal({
                 className="btn btn-primary btn-full quickview-primary-btn"
                 onClick={onClose}
               >
-                <span>{isAr ? 'عرض كامل تفاصيل العقار والمخطط' : 'View Full Property Details'}</span>
+                <span>{isAr ? 'عرض كامل تفاصيل العقار' : 'View Full Property Details'}</span>
                 {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
               </Link>
-
-              {/* معاينة الغربة — hands this listing over to the remote-inspection modal */}
-              <button
-                type="button"
-                className="xs-remote-cta"
-                onClick={() => { onClose?.(); openRemoteInspection(property); }}
-              >
-                <span className="xs-remote-cta-icon"><Video size={18} aria-hidden="true" /></span>
-                <span className="xs-remote-cta-text">
-                  <strong>{isAr ? 'طلب معاينة الغربة' : 'Book a remote inspection'}</strong>
-                  <small>{isAr ? 'فيديو حي / شارع وجيران / درون جوي' : 'Live video · street · drone'}</small>
-                </span>
-              </button>
 
               {/* Secondary 2-Column Actions */}
               <div className="quickview-secondary-actions-row">
@@ -362,14 +392,22 @@ export default function QuickViewModal({
                 <button
                   type="button"
                   className="btn btn-pdf-action quickview-half-btn"
-                  onClick={handleDownloadPdf}
-                  disabled={isGeneratingPdf}
-                  title={isAr ? 'تحميل بروشور العقار' : 'Download Property PDF'}
+                  onClick={() => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
+                    const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+                    await generatePropertyPdf(property);
+                  })}
+                  title={isAr ? 'تحميل بروشور الوحدة' : 'Download the brochure'}
                 >
-                  {isGeneratingPdf ? <Loader2 size={15} className="spin-animation" /> : <Download size={15} />}
-                  <span>{isGeneratingPdf ? (isAr ? 'جاري التحميل...' : 'Loading...') : (isAr ? 'بروشور PDF' : 'PDF Brochure')}</span>
+                  <FileText size={15} />
+                  <span>{isAr ? 'بروشور PDF' : 'Brochure PDF'}</span>
                 </button>
               </div>
+
+              {/* معاينة الغربة — a quiet link under the main actions */}
+              <button type="button" className="qv-remote-link" onClick={() => { onClose?.(); openRemoteInspection(property); }}>
+                <Video size={15} aria-hidden="true" />
+                <span>{isAr ? 'مسافر؟ اطلب معاينة بالفيديو الحي' : 'Abroad? Book a live video tour'}</span>
+              </button>
             </div>
           </div>
         </div>

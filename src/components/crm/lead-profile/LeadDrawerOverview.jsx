@@ -1,209 +1,334 @@
-import { Phone, MessageSquare, Calendar, Send } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass } from 'lucide-react';
+import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
+import { Button, Badge, Select, Input } from '../../ui';
+import LeadCommissionBox from './LeadCommissionBox';
+import SellerAskingPrice from './SellerAskingPrice';
+import { auditContactUse } from '../../../utils/contactAudit';
+import { isSellerLead, firstContactPatch } from '../../../utils/crmLeadViews';
+import { askingPriceOf } from '../../../utils/leadPipeline';
+import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
+import { SITE_URL } from '../../../config/siteConfig';
+import { useState } from 'react';
+import { answersFacts } from '../../../utils/buyerMatch';
+import { attributionFacts } from '../../../utils/attributionTouches';
+import LeadTasks from './LeadTasks';
+import ClientTimeline from '../client-file/ClientTimeline';
+import { buildTimeline } from '../../../utils/clientTimeline';
+import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../../utils/sellerRole';
+import { PROPERTY_TYPES } from '../../../data/propertiesData';
+import { getAreas } from '../../../utils/areasData';
+import { areaNameOf } from '../../../utils/areaLookup';
+import { OUTCOMES, STAGE_RULES, attemptsOf } from '../../../utils/stageGate';
+import { LOST_REASONS } from '../../../utils/crmLeadViews';
 
 export default function LeadDrawerOverview({
+  lead,
   egWhatsapp,
   handleLogCall,
   handleScheduleViewing,
   isAr,
-  properties,
+  onConvertToProperty,
+  properties = [],
   selectedViewingPropId,
   setSelectedViewingPropId,
   setShowViewingForm,
   setViewingDateTime,
   showViewingForm,
   viewingDateTime,
-  whatsappTemplates
+  whatsappTemplates,
+  onUpdateLead,
+  triggerToast,
+  newNote,
+  setNewNote,
+  onAddNote
 }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* 1. Quick Call Logger */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '12px',
-        padding: '14px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-          <Phone size={15} style={{ color: 'var(--crm-accent, var(--crm-accent-text))' }} />
-          <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تسجيل نتيجة مكالمة سريعة بنقرة واحدة:' : 'Log Call Outcome (1-Click):'}</strong>
-        </div>
+  const details = lead?.details || {};
+  const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
+  const scheduledTime = lead?.nextFollowUpAt || details.visitDate;
+  const scheduledDate = scheduledTime ? new Date(scheduledTime) : null;
+  const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
+  const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
+  const L = (ar, en) => (isAr ? ar : en);
+  const sellerRole = sellerRoleOf(lead);
+  // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
+  const stageOutcomes = (STAGE_RULES.find((s) => s.id === (lead?.status || 'new'))?.outcomes || []).map((id) => OUTCOMES.find((o) => o.id === id)).filter(Boolean);
+  const attempts = attemptsOf(lead || {});
+  const [pendingNeg, setPendingNeg] = useState('');
+  const [negReason, setNegReason] = useState('');
+  // Sending a message counts as the first reply: the "no reply" clock stops
+  const markContacted = () => {
+    auditContactUse(lead, 'whatsapp');
+    const patch = firstContactPatch(lead);
+    if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
+  };
+  // «ابعتله صفحة»: a page of the site on WhatsApp, owners' pages first for an owner
+  const pages = sharePagesFor(isSeller);
+  const [pagePath, setPagePath] = useState(pages[0].path);
+  const page = pages.find((p) => p.path === pagePath) || pages[0];
+  const pageMessage = sharePageMessage(page, { name: lead?.name, siteUrl: SITE_URL });
 
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {[
-            { label: isAr ? 'لم يرد' : 'No Answer', color: 'var(--crm-muted)' },
-            { label: isAr ? 'طلب مهلة للاتصال' : 'Callback', color: 'var(--crm-warn)' },
-            { label: isAr ? 'مهتم ويبحث بجدية' : 'Interested', color: 'var(--crm-positive)' },
-            { label: isAr ? 'تم تحديد موعد معاينة' : 'Viewing Set', color: 'var(--crm-info)' },
-            { label: isAr ? 'غير مناسب / ميزانية أقل' : 'Not Match', color: 'var(--crm-danger)' }
-          ].map((btn, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => handleLogCall(btn.label)}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 600,
-                background: 'var(--crm-subtle)',
-                border: '1px solid var(--crm-line)',
-                color: btn.color,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
+  const handleDownloadCalendar = () => {
+    if (!hasSchedule) return;
+    const propTitle = viewingProp ? (isAr ? viewingProp.title_ar : viewingProp.title_en) : L('عقار 1Line', '1Line Property');
+    downloadIcsFile({
+      title: `معاينة: ${propTitle} (${lead.name})`,
+      description: `معاينة ميدانية مع العميل: ${lead.name}\nالهاتف: ${lead.phone || lead.whatsapp}\nكود العقار: ${viewingProp?.id || '—'}\nملاحظات: ${lead.notes || '—'}`,
+      location: lead.area || 'سوهاج',
+      start: scheduledDate,
+      filename: `viewing-${lead.name || 'client'}.ics`
+    });
+  };
+
+  const googleCalUrl = hasSchedule ? getGoogleCalendarUrl({
+    title: `معاينة عقار 1Line: ${lead?.name || ''}`,
+    description: `معاينة مع العميل ${lead?.name || ''} - هاتف: ${lead?.phone || lead?.whatsapp || ''}`,
+    location: lead?.area || 'سوهاج',
+    start: scheduledDate
+  }) : '';
+
+  // What the one-step card collects (it asks little by design): type, area and the rough price; the size, address
+  // and photos only come from the full form
+  const isQuick = /1-step/i.test(String(lead?.source || ''));
+  const rawArea = details.area || lead?.area;
+  const quickType = PROPERTY_TYPES.find((t) => t.id === (details.propertyType || lead?.propertyType))?.name_ar;
+  const quickArea = !rawArea ? '' : rawArea === 'all' ? L('كل المناطق', 'All areas') : areaNameOf(rawArea, getAreas(), isAr);
+  const quickPrice = !askingPriceOf(lead) && lead?.budget ? `${lead.budget} ${L('ج.م (تقريبي)', 'EGP (approx.)')}` : '';
+  const sellerFacts = [
+    [L('نوع العقار', 'Type'), quickType],
+    [L('المنطقة', 'Area'), quickArea],
+    [L('السعر المطلوب', 'Asking price'), quickPrice],
+    [L('المساحة', 'Size'), details.size && `${details.size} ${L('م²', 'm²')}`],
+    [askingPriceOf(lead) ? L('السعر المطلوب', 'Asking price') : L('التقدير الآلي', 'Estimate'), (askingPriceOf(lead) || details.estimatedAvg) && `${Number(askingPriceOf(lead) || details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
+    [L('الغرف', 'Rooms'), details.rooms],
+    [L('الدور', 'Floor'), details.floor && (details.floor === 'ground' ? L('أرضي', 'Ground') : details.floor)],
+    [L('التشطيب', 'Finishing'), details.finishingLabelAr],
+    [L('العنوان', 'Address'), details.address, true],
+    [L('المميزات', 'Features'), Array.isArray(details.featuresAr) && details.featuresAr.join('، '), true],
+    [L('المستندات', 'Legal'), details.legalSummaryAr]
+  ].filter(([, v]) => v);
+  // Newer requests name each photo's spot (street, frontage…) in photoLabels, same order as images
+  const sellerPhotos = (Array.isArray(details.images) ? details.images : [])
+    .filter((url) => typeof url === 'string' && url)
+    .map((url, i) => ({ url, label: Array.isArray(details.photoLabels) ? details.photoLabels[i] || '' : '' }));
+
+  // What the buyer answered in «رشح لي عقاري» (saved with the lead as data)
+  const matchFacts = isSeller ? [] : answersFacts(details.matchAnswers, Array.isArray(details.areas) ? details.areas.filter(Boolean) : []);
+
+  // Where the client came from: the source, the campaign and ad, the page, and a return after an earlier visit
+  const sourceFacts = attributionFacts(lead);
+  // What the client wrote himself (the notes without the team's log lines)
+  const words = buildTimeline(lead).words;
+
+  return (
+    <div className="crm-ld__stack">
+      {/* 1. What to do next, and what just happened */}
+      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} />
+
+      <section className="crm-ld__block" aria-labelledby="crm-ld-call">
+        <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('حصل إيه؟', 'What happened?')}</h3>
+        <p className="crm-ld__hint">
+          {L('سجّل نتيجة آخر نشاط: ده اللي بيفتح المرحلة اللي بعدها.', 'Log the result of the last activity: it unlocks the next stage.')}
+          {attempts > 0 && ` ${L(`آخر ${attempts} محاولة بلا رد.`, `${attempts} tries without an answer.`)}`}
+        </p>
+        <div className="crm-ld__row">
+          {stageOutcomes.map((o) => (
+            <Button
+              key={o.id}
+              variant="secondary"
+              size="sm"
+              onClick={() => (o.kind === 'negative' ? (setPendingNeg(o.id), setNegReason('')) : handleLogCall(o.id))}
             >
-              {btn.label}
-            </button>
+              {o.ar}
+            </Button>
           ))}
         </div>
-      </div>
-
-      {/* 2. WhatsApp Pre-formatted Pitches */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '12px',
-        padding: '14px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-          <MessageSquare size={15} style={{ color: 'var(--brand-whatsapp)' }} />
-          <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'رسائل واتساب تسويقية جاهزة للإرسال:' : 'Instant WhatsApp Pitches:'}</strong>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {whatsappTemplates.map((tpl, i) => {
-            const waHref = `https://wa.me/${egWhatsapp}?text=${encodeURIComponent(tpl.msg)}`;
-            return (
-              <div
-                key={i}
-                style={{
-                  background: 'var(--crm-subtle)',
-                  border: '1px solid var(--crm-line)',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '10px'
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>{tpl.title}</div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', lineClamp: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>
-                    {tpl.msg}
-                  </div>
-                </div>
-
-                <a
-                  href={waHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm"
-                  style={{
-                    background: 'var(--brand-whatsapp-solid)',
-                    color: 'var(--crm-on-dark)',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    flexShrink: 0
-                  }}
-                >
-                  <Send size={12} />
-                  <span>{isAr ? 'إرسال' : 'Send'}</span>
-                </a>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Schedule Viewing Toggle / Form */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '12px',
-        padding: '14px'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Calendar size={15} style={{ color: 'var(--crm-accent, var(--crm-accent-text))' }} />
-            <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'جدولة موعد معاينة ميدانية:' : 'Schedule Property Viewing:'}</strong>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowViewingForm(!showViewingForm)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--crm-accent, var(--crm-accent-text))',
-              fontWeight: 700,
-              fontSize: 'var(--crm-text-xs)',
-              cursor: 'pointer'
-            }}
+        {pendingNeg && (
+          <form
+            className="crm-ld__form"
+            onSubmit={(e) => { e.preventDefault(); if (!negReason) return; handleLogCall(pendingNeg, { reason: negReason }); setPendingNeg(''); setNegReason(''); }}
           >
-            {showViewingForm ? (isAr ? 'إلغاء' : 'Cancel') : (isAr ? '+ جدولة الآن' : '+ Schedule')}
-          </button>
-        </div>
-
-        {showViewingForm && (
-          <form onSubmit={handleScheduleViewing} style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: 600, marginBottom: '4px' }}>
-                {isAr ? 'اختر الوحدة المراد معاينتها:' : 'Select Property:'}
-              </label>
-              <select
-                value={selectedViewingPropId}
-                onChange={(e) => setSelectedViewingPropId(e.target.value)}
-                required
-                className="form-input"
-                style={{ width: '100%', padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: '8px' }}
-              >
-                <option value="">{isAr ? '-- اختر العقار من المحفظة --' : '-- Choose Property --'}</option>
-                {properties.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.id.toUpperCase()} — {p.title_ar || p.title_en} ({p.price?.toLocaleString()} ج.م)
-                  </option>
-                ))}
-              </select>
+            <Select
+              label={`${OUTCOMES.find((o) => o.id === pendingNeg)?.ar}: ${L('السبب', 'reason')}`}
+              required
+              value={negReason}
+              onChange={(e) => setNegReason(e.target.value)}
+              placeholder={L('اختار السبب', 'Choose a reason')}
+              options={LOST_REASONS.map((r) => ({ value: r.id, label: r.ar }))}
+            />
+            <div className="crm-ld__row">
+              <Button type="submit" size="sm" disabled={!negReason}>{L('سجّل', 'Log')}</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => { setPendingNeg(''); setNegReason(''); }}>{L('إلغاء', 'Cancel')}</Button>
             </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: 600, marginBottom: '4px' }}>
-                {isAr ? 'تاريخ ووقت المعاينة المفضل:' : 'Date & Time:'}
-              </label>
-              <input
-                type="datetime-local"
-                value={viewingDateTime}
-                onChange={(e) => setViewingDateTime(e.target.value)}
-                required
-                className="form-input"
-                style={{ width: '100%', padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: '8px' }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: 'var(--crm-text-sm)',
-                fontWeight: 700,
-                background: 'var(--crm-accent)',
-                color: 'var(--crm-on-dark)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              {isAr ? 'تأكيد المعاينة وجدولة التنبيه' : 'Confirm Viewing Schedule'}
-            </button>
           </form>
         )}
-      </div>
-    </div>
+      </section>
 
+      {hasSchedule && (
+        <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-visit">
+          <div className="crm-ld__block-head">
+            <h3 id="crm-ld-visit" className="crm-ld__h"><Calendar size={16} aria-hidden="true" />{L('موعد المعاينة', 'Viewing')}</h3>
+            <strong className="crm-ld__when">
+              {scheduledDate.toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
+            </strong>
+          </div>
+          <div className="crm-ld__row">
+            <Button variant="secondary" size="sm" icon={<Download size={16} aria-hidden="true" />} onClick={handleDownloadCalendar}>
+              {L('حفظ في تقويم الموبايل', 'Save to phone calendar')}
+            </Button>
+            {googleCalUrl && (
+              <a href={googleCalUrl} target="_blank" rel="noopener noreferrer" className="ui-btn ui-btn--secondary ui-btn--sm">
+                <ExternalLink size={16} aria-hidden="true" />{L('تقويم Google', 'Google Calendar')}
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 2. What he asked for */}
+      {(isSeller || matchFacts.length > 0 || words) && (
+        <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
+          <div className="crm-ld__block-head">
+            <h3 id="crm-ld-seller" className="crm-ld__h">
+              {isSeller ? <Building size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+              {isSeller ? L('العقار المعروض للبيع', 'Property for sale') : L('طلب العميل', 'What he asked for')}
+            </h3>
+            {isSeller && sellerRole && <Badge tone={sellerRole === 'broker' ? 'warning' : 'accent'}>{L(`من ${SELLER_ROLE_LABEL[sellerRole].ar}`, `From ${SELLER_ROLE_LABEL[sellerRole].en.toLowerCase()}`)}</Badge>}
+          </div>
+          {isSeller && isQuick && (
+            <p className="crm-ld__hint">{L('طلب سريع: الاسم والرقم ونوع العقار بس. المساحة والعنوان والصور لسه محتاجة منه (ابعتله صفحة «سجّل وحدتك» من «الأدوات»).', 'Quick request: name, phone and type only. Size, address and photos are still to collect (send the listing page from Tools).')}</p>
+          )}
+          {(isSeller ? sellerFacts : matchFacts).length > 0 && (
+            <dl className="crm-ld__facts">
+              {(isSeller ? sellerFacts : matchFacts).map(([label, value, wide]) => (
+                <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
+              ))}
+            </dl>
+          )}
+          {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
+          {isSeller && sellerPhotos.length > 0 && (
+            <ul className="crm-ld__photos" aria-label={L('صور العقار', 'Property photos')}>
+              {sellerPhotos.map((p, i) => (
+                <li key={p.url}>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer">
+                    <img src={p.url} alt={p.label || L(`صورة ${i + 1} للعقار`, `Property photo ${i + 1}`)} loading="lazy" />
+                    {p.label && <span>{p.label}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {isSeller && onUpdateLead && <SellerAskingPrice key={lead.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />}
+          {isSeller && onConvertToProperty && (
+            <Button block icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
+              {L('اعمل منه مسودة عقار', 'Create a listing draft')}
+            </Button>
+          )}
+        </section>
+      )}
+
+      {/* 3. Everything that happened */}
+      <ClientTimeline lead={lead} isAr={isAr} newNote={newNote} setNewNote={setNewNote} onAddNote={onAddNote} />
+
+      {/* 4. Tools, folded */}
+      {sourceFacts.length > 0 && (
+        <details className="crm-ld__block crm-ld__fold">
+          <summary className="crm-ld__fold-sum"><Compass size={16} aria-hidden="true" />{L('من فين جه؟', 'Where from')}</summary>
+          <dl className="crm-ld__facts">
+            {sourceFacts.map(([label, value, wide]) => (
+              <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
+        </details>
+      )}
+
+      <LeadCommissionBox key={lead?.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />
+
+      {egWhatsapp && (
+        <details className="crm-ld__block crm-ld__fold">
+          <summary className="crm-ld__fold-sum"><MessageSquare size={16} aria-hidden="true" />{L('رسايل واتساب جاهزة', 'WhatsApp templates')}</summary>
+          <ul className="crm-ld__list">
+            {whatsappTemplates.map((tpl) => (
+              <li key={tpl.title} className="crm-ld__tpl">
+                <div className="crm-ld__tpl-text">
+                  <span className="crm-ld__tpl-title">{tpl.title}</span>
+                  <span className="crm-ld__tpl-msg">{tpl.msg}</span>
+                </div>
+                <a
+                  href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(tpl.msg)}`}
+                  onClick={markContacted}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ui-btn ui-btn--secondary ui-btn--sm"
+                >
+                  <Send size={16} aria-hidden="true" />{L('ابعت', 'Send')}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {egWhatsapp && (
+        <details className="crm-ld__block crm-ld__fold">
+          <summary className="crm-ld__fold-sum"><ExternalLink size={16} aria-hidden="true" />{L('ابعتله صفحة من الموقع', 'Send a page of the site')}</summary>
+          <Select
+            label={L('الصفحة', 'Page')}
+            value={pagePath}
+            onChange={(e) => setPagePath(e.target.value)}
+            options={pages.map((p) => ({ value: p.path, label: p.ar }))}
+          />
+          <p className="crm-ld__tpl-msg crm-ld__page-preview">{pageMessage}</p>
+          <div className="crm-ld__row">
+            <a
+              href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(pageMessage)}`}
+              onClick={markContacted}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ui-btn ui-btn--secondary ui-btn--sm"
+            >
+              <Send size={16} aria-hidden="true" />{L('ابعتها واتساب', 'Send on WhatsApp')}
+            </a>
+          </div>
+        </details>
+      )}
+
+      <section className="crm-ld__block" aria-labelledby="crm-ld-schedule">
+        <div className="crm-ld__block-head">
+          <h3 id="crm-ld-schedule" className="crm-ld__h"><Calendar size={16} aria-hidden="true" />{L('حجز معاينة', 'Book a viewing')}</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={showViewingForm ? null : <Plus size={16} aria-hidden="true" />}
+            aria-expanded={showViewingForm}
+            onClick={() => setShowViewingForm(!showViewingForm)}
+          >
+            {showViewingForm ? L('إلغاء', 'Cancel') : L('احجز', 'Book')}
+          </Button>
+        </div>
+        {showViewingForm && (
+          <form onSubmit={handleScheduleViewing} className="crm-ld__form">
+            <Select
+              label={L('العقار', 'Property')}
+              required
+              value={selectedViewingPropId}
+              onChange={(e) => setSelectedViewingPropId(e.target.value)}
+              placeholder={L('اختار من المحفظة', 'Choose from the portfolio')}
+              options={properties.map((p) => ({
+                value: p.id,
+                label: `${String(p.id).toUpperCase()} — ${p.title_ar || p.title_en}${p.price ? ` (${Number(p.price).toLocaleString('en-US')} ${L('ج.م', 'EGP')})` : ''}`
+              }))}
+            />
+            <Input
+              label={L('اليوم والساعة', 'Date and time')}
+              type="datetime-local"
+              required
+              value={viewingDateTime}
+              onChange={(e) => setViewingDateTime(e.target.value)}
+            />
+            <Button type="submit">{L('أكّد المعاينة', 'Confirm viewing')}</Button>
+          </form>
+        )}
+      </section>
+    </div>
   );
 }

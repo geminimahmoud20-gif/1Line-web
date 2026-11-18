@@ -6,6 +6,11 @@ import {
   Check, 
   Zap
 } from 'lucide-react';
+import { parseMoney, leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
+import { openWhatsAppSafely } from '../../utils/founderCmsData';
+import LeadScorePill from './LeadScorePill';
+
+const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
 
 export default function RetargetingHub({
   leads = [],
@@ -29,9 +34,9 @@ export default function RetargetingHub({
 
   const propTitle = isAr ? selectedProperty.title_ar : selectedProperty.title_en;
   const propLocation = isAr ? selectedProperty.locationName_ar : selectedProperty.locationName_en;
-  const propPrice = selectedProperty.price ? selectedProperty.price.toLocaleString() + ' ج.م' : 'سعر مميز';
-  const propDownPayment = selectedProperty.downPayment ? selectedProperty.downPayment.toLocaleString() + ' ج.م' : 'مقدم ميسر';
-  const propInstallment = selectedProperty.monthlyInstallment ? selectedProperty.monthlyInstallment.toLocaleString() + ' ج.م' : 'أقساط مرنة';
+  const propPrice = selectedProperty.price ? selectedProperty.price.toLocaleString('en-US') + ' ج.م' : 'سعر مميز';
+  const propDownPayment = selectedProperty.downPayment ? selectedProperty.downPayment.toLocaleString('en-US') + ' ج.م' : 'مقدم ميسر';
+  const propInstallment = selectedProperty.monthlyInstallment ? selectedProperty.monthlyInstallment.toLocaleString('en-US') + ' ج.م' : 'أقساط مرنة';
 
   // Dynamic Segmentation Engine
   const segmentedLeads = useMemo(() => {
@@ -39,11 +44,11 @@ export default function RetargetingHub({
 
     return {
       vip_cash: leads.filter(l => {
-        const budget = parseInt(l.details?.budget) || parseInt(l.details?.expectedPrice) || 0;
-        return (budget >= 3500000 || l.score >= 90) && l.status !== 'closed';
+        const budget = amountOf(l);
+        return (budget >= 3500000 || leadScore(l).score >= LEAD_SCORE_HIGH) && l.status !== 'closed';
       }),
       installment: leads.filter(l => {
-        const budget = parseInt(l.details?.budget) || parseInt(l.details?.expectedPrice) || 0;
+        const budget = amountOf(l);
         return (budget > 0 && budget < 3500000) && l.status !== 'closed';
       }),
       investors: leads.filter(l => {
@@ -67,8 +72,8 @@ export default function RetargetingHub({
 
   // Total purchasing power of current segment
   const segmentTotalVolume = currentList.reduce((acc, curr) => {
-    const budget = parseInt(curr.details?.budget) || parseInt(curr.details?.expectedPrice) || 2500000;
-    return acc + budget;
+    // Recorded amounts only (an unknown budget adds nothing, it is not assumed to be 2.5M)
+    return acc + amountOf(curr);
   }, 0);
 
   // Generate Personalized WhatsApp Copy per Segment
@@ -118,16 +123,16 @@ export default function RetargetingHub({
       return isAr
         ? `📈 *دراسة جدوى استثمارية بعائد إيجاري مرتفع — 1LINE INVEST*\n\n` +
           `أهلاً أستاذ *${name}*،\n` +
-          `فرصة استثمارية واعدة بسوهاج تحقق عائداً سنوياً يفوق 14% ونمواً رأسمالياً سريعاً:\n\n` +
+          `فرصة استثمارية متاحة الآن بسوهاج:\n\n` +
           `🏢 *الأصل العقاري:* ${propTitle}\n` +
           `📍 *الموقع التجاري والحيوي:* ${propLocation}\n` +
-          `💵 *السعر الإجمالي:* ${propPrice} (مع تسهيلات سداد)\n` +
-          `⚖️ *الموقف القانوني:* مفحوص ومعتمد 100% بدون أي نزاعات\n\n` +
-          `📊 لطلب ملف التدفقات النقدية وجدول الأرباح المتوقعة، رد على هذه الرسالة وسنرسل لك التقرير فوراً.`
-        : `📈 *High-Yield Investment Opportunity — 1Line Real Estate*\n\n` +
+          `💵 *السعر الإجمالي:* ${propPrice} \n` +
+          `📄 المستندات متاحة للمراجعة القانونية قبل التعاقد.\n\n` +
+          `📊 لطلب تفاصيل العقار وإيجارات مقارنة في المنطقة، رد على هذه الرسالة.`
+        : `📈 *Investment Opportunity — 1Line Real Estate*\n\n` +
           `Dear ${name},\n` +
-          `An exceptional investment asset with 14%+ ROI is now available: *${propTitle}*.\n` +
-          `Reply to receive the detailed financial prospectus.`;
+          `An investment property is now available: *${propTitle}*.\n` +
+          `Reply to receive details and comparable rents in the area.`;
     }
 
     if (activeSegment === 'price_drop') {
@@ -160,7 +165,7 @@ export default function RetargetingHub({
     const text = getWhatsAppMessage(lead);
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+      openWhatsAppSafely(text, cleanPhone);
       
       // Update Lead Activity Log
       if (onUpdateLead) {
@@ -171,7 +176,7 @@ export default function RetargetingHub({
         onUpdateLead(lead.id, {
           activityLogs: [newLog, ...(lead.activityLogs || [])],
           lastRetargeted: new Date().toISOString()
-        });
+        }, lead.version);
       }
 
       if (triggerToast) {
@@ -191,38 +196,32 @@ export default function RetargetingHub({
   return (
     <div className="retargeting-hub-card animate-fadeIn">
       {/* Top Banner */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Zap size={22} className="text-gold" />
-            {isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي' : 'Smart Lead Retargeting & Nurturing Engine'}
-          </h3>
-          <p className="section-subtitle" style={{ margin: '4px 0 0' }}>
-            {isAr ? 'تقسيم العملاء حسب القوة الشرائية وتنشيطهم بحملات WhatsApp ديناميكية بنقرة واحدة' : 'Segment leads by purchasing power & trigger 1-click personalized WhatsApp campaigns'}
-          </p>
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Zap size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي' : 'Smart Lead Retargeting Engine'}</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr ? 'تقسيم العملاء حسب القوة الشرائية وتنشيطهم بحملات WhatsApp ديناميكية بنقرة واحدة' : 'Segment leads by purchasing power & trigger 1-click personalized WhatsApp campaigns'}
+            </span>
+          </div>
         </div>
 
         {/* Target Property Switcher for Campaigns */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-            🏢 {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', minWidth: 0, maxWidth: '100%' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 600 }}>
+            {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
           </span>
           <select
             value={selectedPropertyId}
             onChange={(e) => setSelectedPropertyId(e.target.value)}
-            className="form-input"
-            style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}
+            className="crm-select-custom-pill"
           >
             {properties.map(p => (
               <option key={p.id} value={p.id}>
-                {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString()} ج.م)
+                {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString('en-US')} ج.م)
               </option>
             ))}
           </select>
@@ -242,7 +241,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('vip_cash')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>💎</span>
           <strong>{isAr ? 'عملاء VIP كاش' : 'VIP Cash'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.vip_cash.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -253,7 +251,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('installment')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>🏦</span>
           <strong>{isAr ? 'باحثو الأقساط' : 'Installments'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.installment.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -264,7 +261,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('investors')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>📈</span>
           <strong>{isAr ? 'المستثمرون' : 'Investors'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.investors.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -275,7 +271,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('price_drop')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>⚡</span>
           <strong>{isAr ? 'تخفيض الأسعار' : 'Price Drops'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.price_drop.length} {isAr ? 'مهتم' : 'leads'})</small>
         </button>
@@ -286,7 +281,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('dormant')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>❄️</span>
           <strong>{isAr ? 'عملاء باردون خاملون' : 'Dormant (>30d)'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.dormant.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -358,24 +352,22 @@ export default function RetargetingHub({
                   <tr key={lead.id}>
                     <td>
                       <strong>{lead.name}</strong>
-                      <span className={`lead-score-pill ${lead.score >= 85 ? 'score-high' : 'score-medium'}`} style={{ marginInlineStart: '6px', fontSize: 'var(--crm-text-xs)' }}>
-                        {lead.score || 85}%
-                      </span>
+                      <LeadScorePill lead={lead} isAr={isAr} style={{ marginInlineStart: '6px', fontSize: 'var(--crm-text-xs)' }} />
                     </td>
                     <td style={{ direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
                       {lead.phone}
                     </td>
                     <td>
                       <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-positive)', fontWeight: 'bold', display: 'block' }}>
-                        💰 {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString() + ' ج.م' : 'مرنة'}
+                        {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString('en-US') + ' ج.م' : 'مرنة'}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        📍 {lead.details?.area || 'سوهاج'}
+                        {lead.details?.area || 'سوهاج'}
                       </span>
                     </td>
                     <td style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                       {lead.lastRetargeted 
-                        ? (isAr ? `أرسلت حملة في ${new Date(lead.lastRetargeted).toLocaleDateString('ar-EG')}` : `Retargeted on ${new Date(lead.lastRetargeted).toLocaleDateString()}`)
+                        ? (isAr ? `أرسلت حملة في ${new Date(lead.lastRetargeted).toLocaleDateString('ar-EG-u-nu-latn')}` : `Retargeted on ${new Date(lead.lastRetargeted).toLocaleDateString('en-GB')}`)
                         : (isAr ? 'لم يُرسل له سابقاً' : 'Not retargeted yet')}
                     </td>
                     <td>

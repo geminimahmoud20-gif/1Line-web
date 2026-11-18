@@ -3,14 +3,22 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 const UIModalContext = createContext(null);
 
 export function UIModalProvider({ children }) {
-  // Toasts
+  // Toasts with optimistic undo support
   const [toasts, setToasts] = useState([]);
-  const triggerToast = useCallback((message, type = 'info') => {
+  const triggerToast = useCallback((message, typeOrOptions = 'info', options = null) => {
     const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    const isObj = typeof typeOrOptions === 'object' && typeOrOptions !== null;
+    const opts = isObj ? typeOrOptions : options;
+    const type = isObj ? (opts?.type || 'info') : (typeOrOptions || 'info');
+
+    const duration = opts?.duration || (opts?.onUndo ? 6000 : 4000);
+    const onUndo = opts?.onUndo || null;
+    const undoLabel = opts?.undoLabel || null;
+
+    setToasts((prev) => [...prev, { id, message, type, onUndo, undoLabel }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, duration);
   }, []);
 
   const dismissToast = useCallback((id) => {

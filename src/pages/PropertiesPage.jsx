@@ -1,4 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { inBounds } from '../utils/mapPins';
+import { getAreas } from '../utils/areasData';
+import { hasNoRooms } from '../utils/propertyKinds';
 import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, 
@@ -12,17 +15,34 @@ import { FAMILY_KINDS } from '../utils/propertyInsights';
 import '../styles/expat-suite.css';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
-import PropertyMapView from '../components/properties/PropertyMapView';
+// Leaflet (~45KB) is only needed once the visitor switches to the map view
+const PropertyMapView = lazy(() => import('../components/properties/PropertyMapView'));
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
-import { DEMO_PROPERTIES } from '../data/demoData';
-import { updatePageSeo } from '../utils/seoHelper';
+import Pagination from '../components/common/Pagination';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
+import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
+import { hasLandShare } from '../utils/buildingFeatures';
+import { finishingGroupOf } from '../utils/unitHandover';
+import '../styles/light-headers.css';
+import LandingLinks from '../components/properties/LandingLinks';
+import { inArea } from '../utils/areaLookup';
+import { blockedByApproval } from '../utils/publishApproval';
+
+// Area centre for listings placed only by their area (map bubbles, "search this area")
+const areaCenterOf = (key) => {
+  const c = getAreas().find((a) => a.id === key)?.center;
+  return c && Number.isFinite(Number(c.lat)) ? { lat: Number(c.lat), lng: Number(c.lng) } : null;
+};
 
 // Slider ceiling; a maxPrice at the cap means "no upper limit"
 const MAX_PRICE_CAP = 15000000;
 
 // Budget keys used by the hero search, lifestyle links and quick filters
-function budgetRange(key) {
+function budgetRange(key, maxParam) {
+  // ?maxPrice=2500000 (e.g. from the market page's budget tool) caps the range directly
+  const cap = Number(maxParam);
+  if (cap > 0) return { minPrice: 0, maxPrice: Math.min(cap, MAX_PRICE_CAP) };
   switch (key) {
     case 'under_3m': return { minPrice: 0, maxPrice: 3000000 };
     case '3m_to_6m': return { minPrice: 3000000, maxPrice: 6000000 };
@@ -47,7 +67,8 @@ export default function PropertiesPage({
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 9;
 
   // Dynamic SEO for Properties Catalog
   useEffect(() => {
@@ -58,7 +79,12 @@ export default function PropertiesPage({
         ? 'تصفح أحدث العقارات المفحوصة والمعتمدة قانونياً في سوهاج وسوهاج الجديدة مع منصة 1Line.' 
         : 'Explore certified properties in Sohag and New Sohag with 1Line Real Estate.',
       url: '/properties',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'العقارات' : 'Properties', url: '/properties' }
+      ])
     });
   }, [lang]);
 
@@ -67,7 +93,7 @@ export default function PropertiesPage({
     query: searchParams.get('q') || '',
     type: searchParams.get('type') || 'all',
     area: searchParams.get('area') || 'all',
-    ...budgetRange(searchParams.get('budget')),
+    ...budgetRange(searchParams.get('budget'), searchParams.get('maxPrice')),
     bedrooms: searchParams.get('bedrooms') || 'all',
     completionStatus: 'all',
     finishing: 'all',
@@ -92,7 +118,7 @@ export default function PropertiesPage({
     const q = searchParams.get('q') || '';
     const type = searchParams.get('type') || 'all';
     const area = searchParams.get('area') || 'all';
-    const { minPrice, maxPrice } = budgetRange(searchParams.get('budget'));
+    const { minPrice, maxPrice } = budgetRange(searchParams.get('budget'), searchParams.get('maxPrice'));
     const bedrooms = searchParams.get('bedrooms') || 'all';
     const paymentPlan = searchParams.get('paymentPlan') || (searchParams.get('financing') === 'true' ? 'installments' : 'all');
 
@@ -105,17 +131,33 @@ export default function PropertiesPage({
   }
 
   // Reset pagination on filter or sort change without cascading effect renders
-  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy });
-  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy) {
-    setPrevFilterState({ filters, sortBy });
-    setVisibleCount(12);
+  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy, familyFilter });
+  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy || prevFilterState.familyFilter !== familyFilter) {
+    setPrevFilterState({ filters, sortBy, familyFilter });
+    setCurrentPage(1);
   }
+
+  // What visitors look for (area / type / budget) once they stop changing the filters
+  const searchSignature = JSON.stringify([filters.query, filters.type, filters.area, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.paymentPlan]);
+  useEffect(() => {
+    const [query, type, area, minPrice, maxPrice, bedrooms, payment] = JSON.parse(searchSignature);
+    const chosen = query || type !== 'all' || area !== 'all' || minPrice > 0 || (maxPrice && maxPrice < MAX_PRICE_CAP) || bedrooms !== 'all' || payment !== 'all';
+    if (!chosen) return undefined;
+    // The slider's own bounds (0 … cap) mean "no budget chosen"
+    const budget = {
+      minPrice: minPrice > 0 ? minPrice : undefined,
+      maxPrice: maxPrice && maxPrice < MAX_PRICE_CAP ? maxPrice : undefined,
+    };
+    const t = setTimeout(() => track('search', { query, type, area, ...budget, bedrooms, payment }), 2000);
+    return () => clearTimeout(t);
+  }, [searchSignature]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleResetFilters = () => {
+    setMapBounds(null);
     setFilters({
       query: '',
       type: 'all',
@@ -133,7 +175,8 @@ export default function PropertiesPage({
   };
 
   // Safe properties pool fallback to ensure verified catalog is never empty
-  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : DEMO_PROPERTIES;
+  // Complete listings only (utils/siteReady); samples fill the list while the catalogue loads
+  const safeProperties = useMemo(() => (Array.isArray(properties) ? properties : []), [properties]);
 
   // Parse semantic query tags if query is present
   const parsedSemantic = useMemo(() => {
@@ -142,10 +185,10 @@ export default function PropertiesPage({
   }, [filters.query]);
 
   // Filter & Sort Properties
-  const filteredProperties = useMemo(() => {
+  const matchedProperties = useMemo(() => {
     // 1. Initial pool: exclude deleted, trash, hidden, draft
     const pool = safeProperties.filter((prop) => {
-      return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft');
+      return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft' || blockedByApproval(prop));
     });
 
     // 2. If semantic query exists, rank by semantic engine
@@ -163,7 +206,8 @@ export default function PropertiesPage({
       if (filters.type && filters.type !== 'all' && prop.type !== filters.type) return false;
 
       // Area filter
-      if (filters.area && filters.area !== 'all' && prop.areaKey !== filters.area) return false;
+      // A main area shows its sub-areas' listings too
+      if (filters.area && filters.area !== 'all' && !inArea(prop.areaKey, filters.area, getAreas())) return false;
 
       // Max Price filter
       if (filters.maxPrice && filters.maxPrice < MAX_PRICE_CAP && prop.price > filters.maxPrice) return false;
@@ -171,7 +215,7 @@ export default function PropertiesPage({
 
       // Bedrooms filter - strictly applies to residential properties only
       if (filters.bedrooms && filters.bedrooms !== 'any' && filters.bedrooms !== 'all' && String(filters.bedrooms).trim() !== '') {
-        const isNonResidential = prop.type === 'commercial' || prop.type === 'land' || prop.type === 'office' || prop.category === 'commercial' || prop.category === 'land' || prop.category === 'administrative';
+        const isNonResidential = hasNoRooms(prop.type) || ['commercial', 'land', 'administrative', 'agricultural', 'industrial'].includes(prop.category);
         if (isNonResidential) return false;
 
         if (filters.bedrooms === '4+') {
@@ -199,15 +243,9 @@ export default function PropertiesPage({
 
       // Finishing Quality filter
       if (filters.finishing && filters.finishing !== 'all') {
-        if (filters.finishing === 'lux') {
-          const isLux = (prop.finishing_ar && (prop.finishing_ar.includes('لوكس') || prop.finishing_ar.includes('سوبر'))) ||
-            (prop.finishing_en && prop.finishing_en.toLowerCase().includes('lux'));
-          if (!isLux) return false;
-        } else if (filters.finishing === 'core') {
-          const isCore = (prop.finishing_ar && (prop.finishing_ar.includes('محارة') || prop.finishing_ar.includes('نصف'))) ||
-            (prop.finishing_en && prop.finishing_en.toLowerCase().includes('core'));
-          if (!isCore) return false;
-        }
+        const group = finishingGroupOf(prop);
+        if (filters.finishing === 'lux' && group !== 'finished') return false;
+        if (filters.finishing === 'core' && group !== 'core') return false;
       }
 
       // Payment Plan filter
@@ -250,8 +288,7 @@ export default function PropertiesPage({
             if (!isLic) return false;
           }
           if (tag === 'land_share') {
-            const hasShare = Boolean(prop.legalStatus?.landShare_ar) || 
-              (prop.features_ar && prop.features_ar.some(f => f.includes('حصة بالأرض') || f.includes('حصة في الأرض') || f.includes('حصة شائعة')));
+            const hasShare = hasLandShare(prop);
             if (!hasShare) return false;
           }
           if (tag === 'investment') {
@@ -277,6 +314,20 @@ export default function PropertiesPage({
     });
   }, [safeProperties, filters, sortBy, familyFilter]);
 
+  // Map view: "ابحث في المنطقة دي" limits the list to what the map shows
+  const [mapBounds, setMapBounds] = useState(null);
+  const boundsActive = viewMode === 'split' && !!mapBounds;
+  const filteredProperties = useMemo(
+    () => (boundsActive ? matchedProperties.filter((p) => inBounds(p, mapBounds, areaCenterOf)) : matchedProperties),
+    [matchedProperties, boundsActive, mapBounds]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE));
+  const paginatedProperties = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredProperties.slice(start, start + PAGE_SIZE);
+  }, [filteredProperties, currentPage, PAGE_SIZE]);
+
   return (
     <div className="properties-page-wrapper">
       {/* Page Header Bar - Compact Executive Luxury */}
@@ -292,7 +343,7 @@ export default function PropertiesPage({
               </span>
             </div>
             <p className="page-header-subtitle">
-              {lang === 'ar' ? 'تصفح أحدث الشقق، الفيلات، المحلات التجارية والأراضي المعروضة حصرياً والمعتمدة رسمياً' : 'Browse verified apartments, commercial units, and lands'}
+              {lang === 'ar' ? 'شقق، فيلات، محلات، أراضي، وعقارات زراعية وصناعية معروضة في سوهاج. الوحدات اللي اتراجع ورقها عليها شارة «مراجَع ومعتمد».' : 'Apartments, villas, shops, land, farmland and industrial units in Sohag. Listings whose papers we checked carry a "Reviewed & approved" badge.'}
             </p>
           </div>
 
@@ -339,18 +390,18 @@ export default function PropertiesPage({
         <div className="certified-explainer-inner">
           <div className="certified-badge-pill">
             <ShieldCheck size={14} className="text-emerald" />
-            <span>{lang === 'ar' ? 'معيار 1Line المعتمد:' : '1Line Certified:'}</span>
+            <span>{lang === 'ar' ? 'شغلنا معاك:' : 'How we work:'}</span>
           </div>
           <div className="certified-points-row">
             {/* Process commitments (what 1Line does), not per-listing certifications */}
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'مراجعة المستندات قبل العرض' : 'Documents reviewed before listing'}</span>
+              <span>{lang === 'ar' ? 'بنراجع الورق معاك قبل أي حجز' : 'We check the papers with you before any reservation'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'تسعير بمقارنات فعلية في المنطقة' : 'Priced from local comparables'}</span>
+              <span>{lang === 'ar' ? 'بنقارن السعر بأسعار المنطقة' : 'We compare the price with the area'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
@@ -370,20 +421,22 @@ export default function PropertiesPage({
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
           totalResults={filteredProperties.length}
+          extraActive={familyFilter !== 'all' ? 1 : 0}
+          extra={(
+            <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات بيت العيلة' : 'Family categories'}>
+              <span className="xs-family-chips-label"><Users size={14} aria-hidden="true" /> {lang === 'ar' ? 'بيت العيلة:' : 'Family hub:'}</span>
+              <button type="button" className={familyFilter === 'all' ? 'is-on' : ''} onClick={() => setFamilyFilter('all')} aria-pressed={familyFilter === 'all'}>
+                {lang === 'ar' ? 'الكل' : 'All'}
+              </button>
+              {FAMILY_KINDS.map((k) => (
+                <button key={k.id} type="button" className={familyFilter === k.id ? 'is-on' : ''} onClick={() => setFamilyFilter(k.id)} aria-pressed={familyFilter === k.id}>
+                  {lang === 'ar' ? k.ar : k.en}
+                </button>
+              ))}
+            </nav>
+          )}
         />
 
-        {/* بيت العيلة — family-sized categories */}
-        <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات بيت العيلة' : 'Family categories'}>
-          <span className="xs-family-chips-label"><Users size={14} aria-hidden="true" /> {lang === 'ar' ? 'بيت العيلة:' : 'Family hub:'}</span>
-          <button type="button" className={familyFilter === 'all' ? 'is-on' : ''} onClick={() => setFamilyFilter('all')} aria-pressed={familyFilter === 'all'}>
-            {lang === 'ar' ? 'الكل' : 'All'}
-          </button>
-          {FAMILY_KINDS.map((k) => (
-            <button key={k.id} type="button" className={familyFilter === k.id ? 'is-on' : ''} onClick={() => setFamilyFilter(k.id)} aria-pressed={familyFilter === k.id}>
-              {lang === 'ar' ? k.ar : k.en}
-            </button>
-          ))}
-        </nav>
 
         {/* 🤖 AI Semantic Recognition Active Banner */}
         {parsedSemantic && parsedSemantic.tagsFound && parsedSemantic.tagsFound.length > 0 && (
@@ -434,14 +487,21 @@ export default function PropertiesPage({
         )}
 
         {/* View Layout Container */}
+        <div id="properties-catalog-anchor" style={{ scrollMarginTop: '110px' }} />
         {viewMode === 'split' ? (
           <div className="split-view-container">
             {/* Cards List Column */}
             <div className="split-cards-column">
+              {boundsActive && (
+                <div className="map-bounds-chip" role="status">
+                  <span>{lang === 'ar' ? `${filteredProperties.length} وحدة في حدود الخريطة` : `${filteredProperties.length} in the map view`}</span>
+                  <button type="button" onClick={() => setMapBounds(null)}>{lang === 'ar' ? 'اعرض الكل' : 'Show all'}</button>
+                </div>
+              )}
               {filteredProperties.length > 0 ? (
                 <>
                   <div className="properties-grid-split">
-                    {filteredProperties.slice(0, visibleCount).map((prop) => (
+                    {paginatedProperties.map((prop) => (
                       <div 
                         key={prop.id}
                         id={`prop-card-${prop.id}`}
@@ -466,23 +526,15 @@ export default function PropertiesPage({
                     ))}
                   </div>
 
-                  {visibleCount < filteredProperties.length && (
-                    <div style={{ textAlign: 'center', marginTop: '24px', padding: '16px 0' }}>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-                        {lang === 'ar' 
-                          ? `عرض ${Math.min(visibleCount, filteredProperties.length)} من أصل ${filteredProperties.length} عقاراً معتمداً` 
-                          : `Showing ${Math.min(visibleCount, filteredProperties.length)} of ${filteredProperties.length} verified properties`}
-                      </p>
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        style={{ padding: '8px 20px', fontWeight: 'bold', borderColor: 'var(--accent-gold)', color: 'var(--text-primary)' }}
-                        onClick={() => setVisibleCount(prev => prev + 12)}
-                      >
-                        <span>{lang === 'ar' ? 'عرض المزيد من العقارات ➕' : 'Load More Properties ➕'}</span>
-                      </button>
-                    </div>
-                  )}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredProperties.length}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={setCurrentPage}
+                    isAr={lang === 'ar'}
+                    scrollToId="properties-catalog-anchor"
+                  />
                 </>
               ) : (
                 <ZeroResultsFallback
@@ -500,6 +552,7 @@ export default function PropertiesPage({
 
             {/* Sticky Map Column */}
             <div className="split-map-column">
+              <Suspense fallback={null}>
               <PropertyMapView
                 properties={filteredProperties.length > 0 ? filteredProperties : properties}
                 selectedProperty={selectedProperty}
@@ -526,7 +579,10 @@ export default function PropertiesPage({
                 currency={currency}
                 lang={lang}
                 centerArea={filters.area}
+                viewBounds={boundsActive ? mapBounds : null}
+                onBoundsChange={(b) => { setMapBounds(b); setCurrentPage(1); }}
               />
+              </Suspense>
             </div>
           </div>
         ) : (
@@ -535,7 +591,7 @@ export default function PropertiesPage({
             {filteredProperties.length > 0 ? (
               <>
                 <div className="properties-grid-full">
-                  {filteredProperties.slice(0, visibleCount).map((prop) => (
+                  {paginatedProperties.map((prop) => (
                     <PropertyCard
                       key={prop.id}
                       property={prop}
@@ -550,23 +606,15 @@ export default function PropertiesPage({
                   ))}
                 </div>
 
-                {visibleCount < filteredProperties.length && (
-                  <div style={{ textAlign: 'center', marginTop: '30px', padding: '20px 0' }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                      {lang === 'ar' 
-                        ? `عرض ${Math.min(visibleCount, filteredProperties.length)} من أصل ${filteredProperties.length} عقاراً معتمداً` 
-                        : `Showing ${Math.min(visibleCount, filteredProperties.length)} of ${filteredProperties.length} verified properties`}
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      style={{ padding: '10px 24px', fontWeight: 'bold', borderColor: 'var(--accent-gold)', color: 'var(--text-primary)' }}
-                      onClick={() => setVisibleCount(prev => prev + 12)}
-                    >
-                      <span>{lang === 'ar' ? 'عرض المزيد من العقارات ➕' : 'Load More Properties ➕'}</span>
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredProperties.length}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setCurrentPage}
+                  isAr={lang === 'ar'}
+                  scrollToId="properties-catalog-anchor"
+                />
               </>
             ) : (
               <ZeroResultsFallback
@@ -583,6 +631,7 @@ export default function PropertiesPage({
           </div>
         )}
       </div>
+      <LandingLinks properties={properties} isAr={lang === 'ar'} />
     </div>
   );
 }

@@ -2,8 +2,14 @@ import { useState } from 'react';
 import { 
   Send, 
   Car,
-  X
+  X,
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { leadScore } from '../../utils/crmLeadViews';
+import { getGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarHelper';
+import { CONTACT } from '../../config/siteConfig';
 
 export default function SiteVisitModal({
   isOpen,
@@ -22,8 +28,9 @@ export default function SiteVisitModal({
     return tomorrow.toISOString().slice(0, 10);
   });
   const [visitTime, setVisitTime] = useState('16:00');
-  const [agentName, setAgentName] = useState(lead?.assignedTo || 'Dr. Mahmoud Elbaz');
-  const [meetingLocation, setMeetingLocation] = useState('مقر شركة 1Line العقارية - شرق سوهاج');
+  // The person who goes with the client: typed in (it is sent to the client), not picked from sample names
+  const [agentName, setAgentName] = useState('');
+  const [meetingLocation, setMeetingLocation] = useState(`مقر الشركة: ${CONTACT.address_ar}`);
   const [notes, setNotes] = useState('معاينة ميدانية للوحدة مع شرح الموقف القانوني');
 
   if (!isOpen || !lead) return null;
@@ -75,7 +82,7 @@ export default function SiteVisitModal({
         `🤝 *Accompanying Advisor:* ${agentName}`;
 
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank');
+      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank');
     }
 
     if (triggerToast) {
@@ -119,13 +126,13 @@ export default function SiteVisitModal({
               <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{lead.phone}</span>
             </div>
             <span className="badge" style={{ background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}>
-              {isAr ? 'عميل مؤكد الجدية' : 'Verified Lead'} ({lead.score || 85}%)
+              {isAr ? 'درجة الاهتمام' : 'Lead score'} ({leadScore(lead).score}%)
             </span>
           </div>
 
           <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             {/* Property Select */}
-            <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
               <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'العقار المراد معاينته *' : 'Target Property *'}</label>
               <select
                 value={selectedPropertyId}
@@ -135,7 +142,7 @@ export default function SiteVisitModal({
               >
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
-                    {isAr ? p.title_ar : p.title_en} — {p.price?.toLocaleString()} ج.م ({p.areaKey})
+                    {isAr ? p.title_ar : p.title_en} — {p.price?.toLocaleString('en-US')} ج.م
                   </option>
                 ))}
               </select>
@@ -146,6 +153,7 @@ export default function SiteVisitModal({
               <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تاريخ المعاينة *' : 'Visit Date *'}</label>
               <input
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
                 required
@@ -167,17 +175,16 @@ export default function SiteVisitModal({
 
             {/* Assigned Consultant */}
             <div className="form-group-item">
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'المستشار المرافق بالمعاينة' : 'Accompanying Advisor'}</label>
-              <select
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'المستشار المرافق بالمعاينة *' : 'Accompanying Advisor *'}</label>
+              <input
+                type="text"
+                required
+                maxLength={60}
                 value={agentName}
+                placeholder={isAr ? 'اسم الموظف اللي هيحضر مع العميل' : 'Name of the staff member attending'}
                 onChange={(e) => setAgentName(e.target.value)}
                 style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
-              >
-                <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                <option value="Sales Team A - م/ أحمد عثمان">م/ أحمد عثمان (Sales A)</option>
-                <option value="Sales Team B - أ/ كريم الشريف">أ/ كريم الشريف (Sales B)</option>
-                <option value="Executive Management">Executive Management</option>
-              </select>
+              />
             </div>
 
             {/* Meeting Point */}
@@ -206,14 +213,58 @@ export default function SiteVisitModal({
             />
           </div>
 
-          <div className="cms-modal-actions" style={{ marginTop: '20px' }}>
-            <button type="button" className="btn btn-outline" onClick={onClose} style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}>
-              {isAr ? 'إلغاء' : 'Cancel'}
-            </button>
-            <button type="submit" className="btn btn-primary" style={{ background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
-              <Send size={16} />
-              <span>{isAr ? 'تأكيد المعاينة وإرسال WhatsApp للعميل' : 'Confirm & Send WhatsApp'}</span>
-            </button>
+          <div className="cms-modal-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                style={{ fontSize: 'var(--crm-text-xs)', borderRadius: '6px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => {
+                  if (!visitDate) return;
+                  const startDt = new Date(`${visitDate}T${visitTime || '16:00'}`);
+                  const propTitle = selectedProperty ? (isAr ? selectedProperty.title_ar : selectedProperty.title_en) : (isAr ? 'عقار 1Line' : '1Line Property');
+                  downloadIcsFile({
+                    title: `معاينة: ${propTitle} (${lead.name})`,
+                    description: `معاينة ميدانية مع العميل: ${lead.name}\nالهاتف: ${lead.phone || lead.whatsapp}\nالمستشار: ${agentName}\nنقطة اللقاء: ${meetingLocation}\nملاحظات: ${notes}`,
+                    location: meetingLocation || 'سوهاج',
+                    start: startDt,
+                    filename: `viewing-${lead.name}-${visitDate}.ics`
+                  });
+                  if (triggerToast) triggerToast(isAr ? 'تم تنزيل موعد المعاينة لتقويم الهاتف' : 'Viewing downloaded to calendar (.ics)', 'success');
+                }}
+                title={isAr ? 'تنزيل موعد المعاينة لتقويم الهاتف (Apple / Android)' : 'Download .ics calendar event'}
+              >
+                <Calendar size={14} />
+                <span>{isAr ? 'حفظ بالتقويم (.ICS)' : 'Save (.ICS)'}</span>
+              </button>
+
+              <a
+                href={getGoogleCalendarUrl({
+                  title: `معاينة: ${selectedProperty ? (isAr ? selectedProperty.title_ar : selectedProperty.title_en) : 'عقار 1Line'} (${lead?.name})`,
+                  description: `معاينة مع العميل ${lead?.name} - هاتف: ${lead?.phone || lead?.whatsapp}\nالمستشار: ${agentName}\nنقطة اللقاء: ${meetingLocation}`,
+                  location: meetingLocation || 'سوهاج',
+                  start: new Date(`${visitDate}T${visitTime || '16:00'}`)
+                })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm btn-outline"
+                style={{ fontSize: 'var(--crm-text-xs)', borderRadius: '6px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+                title={isAr ? 'فتح في تقويم Google' : 'Open Google Calendar'}
+              >
+                <ExternalLink size={13} />
+                <span>{isAr ? 'تقويم Google' : 'Google Cal'}</span>
+              </a>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" className="btn btn-outline" onClick={onClose} style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}>
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button type="submit" className="btn btn-primary" style={{ background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
+                <Send size={16} />
+                <span>{isAr ? 'تأكيد وإرسال WhatsApp للعميل' : 'Confirm & Send WhatsApp'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -78,7 +78,7 @@ export default function ClientErrorsPanel({ lang = 'ar', triggerToast }) {
               <div style={{ flex: '1 1 260px', minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: 'var(--crm-ink)', overflowWrap: 'anywhere' }} dir="ltr">{g.message}</div>
                 <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: 4 }}>
-                  {isAr ? k.ar : k.en} · {g.ids.length}× · {isAr ? 'آخر مرة' : 'last'} {g.last ? new Date(g.last).toLocaleString(isAr ? 'ar-EG' : 'en-GB') : '—'}
+                  {isAr ? k.ar : k.en} · {g.ids.length}× · {isAr ? 'آخر مرة' : 'last'} {g.last ? new Date(g.last).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB') : '—'}
                   {' · '}<span dir="ltr">{[...g.paths].slice(0, 4).join('  ')}</span>
                 </div>
               </div>

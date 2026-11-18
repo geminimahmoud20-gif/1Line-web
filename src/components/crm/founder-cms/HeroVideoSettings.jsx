@@ -1,18 +1,22 @@
-import { Loader2, Film, Upload, Trash2, Plus, Play, Maximize2 } from 'lucide-react';
+import { Loader2, Film, Upload, Trash2, Plus, Play, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { DEFAULT_FOUNDER_CMS } from '../../../utils/founderCmsData';
+import ImageUploadField from '../ImageUploadField';
 
 export default function HeroVideoSettings({
   canCancelUpload,
   cancelUploadRef,
+  clipNeedsPoster,
   formData,
   handleAddClip,
   handleAddVideoByUrl,
   handleKeepOnlyActiveClip,
+  handleMakeClipPosters,
   handleRemoveClip,
   handleUpdateClip,
   handleVideoFileUpload,
   isAr,
   pastedVideoUrl,
+  postersBusy,
   setFormData,
   setPastedVideoUrl,
   storageStatus,
@@ -50,7 +54,7 @@ export default function HeroVideoSettings({
             onChange={(e) => setFormData({ ...formData, heroVideoEnabled: e.target.checked })}
             style={{ width: '20px', height: '20px', accentColor: 'var(--crm-info-solid)' }}
           />
-          <span>{formData.heroVideoEnabled !== false ? (isAr ? 'مفعّل 🟢' : 'Enabled') : (isAr ? 'معطّل ⚪' : 'Disabled')}</span>
+          <span>{formData.heroVideoEnabled !== false ? (isAr ? 'مفعّل' : 'Enabled') : (isAr ? 'معطّل' : 'Disabled')}</span>
         </label>
       </div>
 
@@ -81,8 +85,8 @@ export default function HeroVideoSettings({
               ? 'MP4 أو WebM أو MOV. يُضغط تلقائياً (720p بدون صوت) ويُحفظ داخل ملفات الموقع في public/videos، ويظهر للزوار بعد نشر الموقع.'
               : 'MP4, WebM or MOV. Compressed (720p, muted) into public/videos; live after the next deploy.')
             : (isAr
-              ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع مباشرة إلى التخزين السحابي ويظهر للزوار فوراً. للخلفية يكفي مقطع 10–15 ثانية.'
-              : 'MP4, WebM or MOV up to 60MB. Uploaded straight to cloud storage; live immediately.')}
+              ? 'MP4 أو WebM أو MOV حتى 20 ميجابايت. يُرفع مباشرة إلى التخزين السحابي ويظهر لزوار الكمبيوتر فقط (الموبايل يشوف صورة من كل فيديو وبتتبدّل، عشان استهلاك البيانات). للخلفية يكفي مقطع 10–15 ثانية.'
+              : 'MP4, WebM or MOV up to 20MB. Uploaded straight to cloud storage; shown on desktops only (phones see a still from each video to save data).')}
         </p>
         {storageStatus === 'checking' && (
           <span role="status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
@@ -206,7 +210,7 @@ export default function HeroVideoSettings({
                 style={{ accentColor: 'var(--accent-gold)' }}
               />
               <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
-                {isAr ? '🔳 تغطية سينمائية كاملة (Cover)' : 'Cinematic Fill (Cover)'}
+                {isAr ? 'تغطية سينمائية كاملة (Cover)' : 'Cinematic Fill (Cover)'}
               </strong>
             </div>
             <small style={{ color: 'var(--crm-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
@@ -235,7 +239,7 @@ export default function HeroVideoSettings({
                 style={{ accentColor: 'var(--accent-gold)' }}
               />
               <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
-                {isAr ? '🖼️ إظهار كامل إطار الفيديو 100% (Contain)' : 'Full Frame (Contain)'}
+                {isAr ? 'إظهار كامل إطار الفيديو 100% (Contain)' : 'Full Frame (Contain)'}
               </strong>
             </div>
             <small style={{ color: 'var(--crm-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
@@ -324,7 +328,7 @@ export default function HeroVideoSettings({
                 title={isAr ? 'إلغاء المقاطع الافتراضية وتشغيل المقطع الأساسي فقط' : 'Keep only active clip'}
                 style={{ color: 'var(--crm-accent-text)', borderColor: 'rgba(212, 175, 55, 0.4)' }}
               >
-                {isAr ? '⭐ تشغيل مقطعي فقط (حذف الافتراضية)' : 'Keep My Video Only'}
+                {isAr ? 'تشغيل مقطعي فقط (حذف الافتراضية)' : 'Keep My Video Only'}
               </button>
             )}
 
@@ -337,6 +341,20 @@ export default function HeroVideoSettings({
               />
               <span>{isAr ? 'تبديل تلقائي سلس' : 'Auto-cycle clips'}</span>
             </label>
+
+            {(formData.heroVideoClips || []).some(clipNeedsPoster) && (
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => handleMakeClipPosters()}
+                disabled={postersBusy}
+                title={isAr ? 'الموبايل مابيشغّلش الفيديو، فبيعرض صورة من كل فيديو ويبدّل بينهم' : 'Phones show one still per video instead of the video'}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                {postersBusy ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+                <span>{postersBusy ? (isAr ? 'بيتعمل…' : 'Working…') : (isAr ? 'اعمل صور للموبايل من الفيديوهات' : 'Make phone stills')}</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -422,6 +440,29 @@ export default function HeroVideoSettings({
                     style={{ fontSize: 'var(--crm-text-sm)' }}
                   />
                 </div>
+
+                {/* The still phones show instead of this video */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {clip.poster && !clipNeedsPoster(clip) ? (
+                    <img src={clip.poster} alt="" loading="lazy" style={{ width: '96px', height: '54px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-light)' }} />
+                  ) : (
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
+                      {isAr ? 'لسه مالوش صورة للموبايل — الموبايل بيعرض الصورة الافتراضية' : 'No phone still yet'}
+                    </span>
+                  )}
+                  {clip.url && (
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-outline"
+                      onClick={() => handleMakeClipPosters(idx)}
+                      disabled={postersBusy}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <ImageIcon size={12} />
+                      <span>{clipNeedsPoster(clip) ? (isAr ? 'اعمل صورة للموبايل' : 'Make phone still') : (isAr ? 'صورة تانية من الفيديو' : 'Retake still')}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -452,7 +493,7 @@ export default function HeroVideoSettings({
                 heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4'
               })}
             >
-              🏢 {isAr ? 'أبراج معمارية حديثة' : 'Modern Architecture'}
+              {isAr ? 'أبراج معمارية حديثة' : 'Modern Architecture'}
             </button>
             <button
               type="button"
@@ -462,7 +503,7 @@ export default function HeroVideoSettings({
                 heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-luxury-pool-resort-41553-large.mp4'
               })}
             >
-              🏡 {isAr ? 'منتجع وقصور فاخرة' : 'Luxury Resort'}
+              {isAr ? 'منتجع وقصور فاخرة' : 'Luxury Resort'}
             </button>
             <button
               type="button"
@@ -472,18 +513,21 @@ export default function HeroVideoSettings({
                 heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-modern-residential-neighborhood-41555-large.mp4'
               })}
             >
-              🏘️ {isAr ? 'حي سكني راقٍ دروني' : 'Drone Neighborhood'}
+              {isAr ? 'حي سكني راقٍ دروني' : 'Drone Neighborhood'}
             </button>
           </div>
         </div>
 
         <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
-          <label htmlFor="fcms-field-4">{isAr ? 'رابط صورة البوستر البديلة:' : 'Fallback Poster Image URL:'}</label>
-          <input id="fcms-field-4"
-            type="url"
+          {/* Uploaded from the device only, stored with the site's own files */}
+          <ImageUploadField
+            label={isAr ? 'صورة البوستر البديلة' : 'Fallback poster image'}
             value={formData.heroPosterUrl || ''}
-            onChange={(e) => setFormData({ ...formData, heroPosterUrl: e.target.value })}
-            placeholder="https://images.unsplash.com/photo-..."
+            onChange={(url) => setFormData({ ...formData, heroPosterUrl: url })}
+            name="hero-poster"
+            maxWidth={1600}
+            maxHeight={1200}
+            isAr={isAr}
           />
           <small style={{ color: 'var(--crm-muted)', display: 'block', marginTop: '4px' }}>
             {isAr ? 'تظهر في أول أجزاء من الثانية لضمان سرعة التحميل أو على الأجهزة التي تعطل تشغيل الفيديو التلقائي.' : 'Shown before video loads or on power-save devices.'}

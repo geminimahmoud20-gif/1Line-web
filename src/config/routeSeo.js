@@ -21,6 +21,12 @@ export const ROUTE_SEO = {
     desc_ar: 'خدمة سرية لكبار الملاك والمستثمرين: عرض وشراء أصول عالية القيمة دون إعلان عام، بموجب اتفاقية سرية ومستشار مخصص.',
     desc_en: 'Confidential service for owners and investors: buy or sell high-value assets without public listing, under NDA with a dedicated advisor.',
   },
+  '/trade-in': {
+    title_ar: 'منصة البدل والمقايضة العقارية في سوهاج والصعيد',
+    title_en: 'Property Trade-In & Exchange Platform in Sohag',
+    desc_ar: 'بدّل شقتك أو أرضك أو مقرك التجاري بعقار مناسب بفرق سعر أو رأس برأس في سوهاج، مع فحص قانوني ومطابقة عقارية موثقة.',
+    desc_en: 'Swap your apartment, land, or commercial unit in Sohag and Upper Egypt with or without cash difference, backed by certified legal review.',
+  },
   '/investor': {
     title_ar: 'مركز المستثمرين — دراسات عائد وفرص استثمارية',
     title_en: 'Investor Center — yield studies and opportunities',
@@ -42,8 +48,8 @@ export const ROUTE_SEO = {
   '/referral': {
     title_ar: 'برنامج الترشيحات',
     title_en: 'Referral program',
-    desc_ar: 'رشّح مالكاً أو مشترياً لـ 1Line واحصل على مكافأة عند إتمام الصفقة وفق شروط مكتوبة.',
-    desc_en: 'Refer an owner or buyer and receive a reward when the deal closes, under written terms.',
+    desc_ar: 'رشّح مالكاً أو مشترياً لـ 1Line ونتواصل معه مباشرة.',
+    desc_en: 'Refer an owner or buyer to 1Line and we contact them directly.',
   },
   '/special': {
     title_ar: 'طلبات عقارية خاصة',

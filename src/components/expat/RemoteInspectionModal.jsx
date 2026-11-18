@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X, Video, Plane, Footprints, CalendarDays, Clock, ShieldCheck, CheckCircle2, MessageCircle, Globe2, Crown } from 'lucide-react';
+import { X, Video, Footprints, CalendarDays, Clock, ShieldCheck, CheckCircle2, MessageCircle, Globe2, Crown } from 'lucide-react';
 import { submitIntakeRecord } from '../../firebaseLazy';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { EXPAT_COUNTRIES, getCountry, cleanText, normalizeLocalPhone, clockIn } from '../../utils/expatIntake';
 import '../../styles/expat-suite.css';
+import DayChips from '../common/DayChips';
+import { thumbUrl } from '../../utils/imageThumbs';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 const COVERAGE = [
   { id: 'live_call', icon: Video, ar: 'مكالمة فيديو حية على واتساب', en: 'Live WhatsApp video call', desc_ar: 'تمشي مع الاستشاري جوه الوحدة وتسأل وقت ما تحب', desc_en: 'Walk the unit with the advisor and ask anything' },
-  { id: 'street', icon: Footprints, ar: 'فيديو ميداني للشارع والمداخل', en: 'Street & entrance footage', desc_ar: 'الشارع، المدخل، السلم، ومستوى الجيران والمنطقة', desc_en: 'Street, entrance, stairs and the neighbourhood' },
-  { id: 'drone', icon: Plane, ar: 'جولة درون جوية للمشروع', en: 'Aerial drone tour', desc_ar: 'لقطة جوية للموقع والمحيط — حسب توفر تصاريح التصوير', desc_en: 'Aerial view of the site — subject to filming permits' }
+  { id: 'street', icon: Footprints, ar: 'فيديو ميداني للشارع والمداخل', en: 'Street & entrance footage', desc_ar: 'الشارع، المدخل، السلم، ومستوى الجيران والمنطقة', desc_en: 'Street, entrance, stairs and the neighbourhood' }
 ];
 
 const SLOTS = [
@@ -19,13 +21,8 @@ const SLOTS = [
   { id: 'weekend', ar: 'الجمعة / السبت', en: 'Friday / Saturday' }
 ];
 
-const todayIso = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
 /**
- * "معاينة الغربة": an expat books a live video / street / drone inspection of a listing.
+ * "معاينة الغربة": an expat books a live video / street footage inspection of a listing.
  * Stores the request (remote_inspections + a VIP lead in the CRM inbox) and hands the visitor
  * straight to WhatsApp with a prepared message.
  */
@@ -116,13 +113,17 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
     if (!spam.allowed) { setError(isAr ? spam.message_ar : spam.message_en); return; }
 
     const cleanName = cleanText(name, 100);
-    if (cleanName.length < 2) { setError(isAr ? 'اكتب اسمك من فضلك' : 'Please enter your name'); return; }
+    const nameErr = nameProblem(cleanName, isAr);
+    if (nameErr) { setError(nameErr); return; }
 
     const local = normalizeLocalPhone(phone);
     const cc = dialCode.replace(/[^\d+]/g, '');
     if (!/^\+\d{1,4}$/.test(cc)) { setError(isAr ? 'اكتب كود الدولة، مثال: +44' : 'Enter a country code, e.g. +44'); return; }
     if (local.length < 6 || local.length > 13) { setError(isAr ? 'رقم الهاتف غير مكتمل' : 'Phone number looks incomplete'); return; }
     const fullPhone = `${cc}${local}`;
+    // Egyptian and Gulf mobiles only (owner's rule), not placeholder numbers
+    const phoneErr = phoneProblem(fullPhone, null, isAr);
+    if (phoneErr) { setError(phoneErr); return; }
 
     // Open WhatsApp inside the click so popup blockers allow it; storage continues in the background
     const waUrl = buildWhatsApp(fullPhone);
@@ -155,9 +156,8 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
       type: 'remote_inspection',
       source: 'expat_remote_inspection',
       temperature: 'hot',
-      score: 95,
       isVip: true,
-      area: property?.areaKey || 'new_sohag',
+      area: property?.areaKey || '',
       propertyType: property?.type || 'apartment',
       propertyId: property?.id || '',
       notes: `🌍 عميل مغترب VIP (${country.ar}) — معاينة الغربة: ${COVERAGE.filter((c) => coverage.includes(c.id)).map((c) => c.ar).join(' + ')}${property ? ` | عقار #${code}` : ''}${date ? ` | ${date}` : ''} | ${SLOTS.find((s) => s.id === slot)?.ar || ''}${record.notes ? ` | ${record.notes}` : ''}`,
@@ -165,7 +165,7 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
     });
 
     setSent({ waUrl, fullPhone });
-    triggerToast?.(isAr ? 'تم تسجيل طلب معاينة الغربة — كمّل على واتساب' : 'Request saved — continue on WhatsApp', 'success');
+    triggerToast?.(isAr ? 'تم تسجيل طلب المعاينة بالفيديو — كمّل على واتساب' : 'Request saved — continue on WhatsApp', 'success');
   };
 
   return (
@@ -188,18 +188,18 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
           <span className="xs-crown" aria-hidden="true"><Crown size={20} /></span>
           <div>
             <p className="xs-kicker">{isAr ? 'خدمة المغتربين' : 'Expat service'}</p>
-            <h2 id="xs-ri-title">{isAr ? 'معاينة الغربة' : 'Remote expat inspection'}</h2>
+            <h2 id="xs-ri-title">{isAr ? 'معاينة بالفيديو للمغتربين' : 'Video tour for expats'}</h2>
             <p className="xs-lede">
               {isAr
-                ? 'شوف العقار كأنك واقف قدامه: فيديو حي، ولقطات للشارع والجيران، وجولة جوية للموقع.'
-                : 'See the property as if you were there: live video, street footage and an aerial tour.'}
+                ? 'شوف العقار كأنك واقف قدامه: فيديو حي، ولقطات للشارع والجيران.'
+                : 'See the property as if you were there: live video and street footage.'}
             </p>
           </div>
         </header>
 
         {property && (
           <div className="xs-prop">
-            {property.images?.[0] && <img src={property.images[0]} alt="" loading="lazy" />}
+            {property.images?.[0] && <img src={thumbUrl(property.images[0])} alt="" loading="lazy" />}
             <div>
               <strong>{title}</strong>
               <span><bdi>#{code}</bdi></span>
@@ -273,11 +273,11 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
 
             <fieldset className="xs-fieldset">
               <legend><CalendarDays size={15} aria-hidden="true" /> {isAr ? 'الموعد المفضل' : 'Preferred time'}</legend>
-              <div className="xs-row">
-                <label className="xs-field">
+              <div className="xs-row xs-row--day">
+                <div className="xs-field">
                   <span>{isAr ? 'اليوم (اختياري)' : 'Day (optional)'}</span>
-                  <input type="date" min={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
-                </label>
+                  <DayChips value={date} onChange={setDate} isAr={isAr} label={isAr ? 'اليوم' : 'Day'} />
+                </div>
                 <div className="xs-slots" role="radiogroup" aria-label={isAr ? 'الفترة' : 'Time slot'}>
                   {SLOTS.map((s) => (
                     <button key={s.id} type="button" role="radio" aria-checked={slot === s.id} className={`xs-slot ${slot === s.id ? 'is-on' : ''}`} onClick={() => setSlot(s.id)}>

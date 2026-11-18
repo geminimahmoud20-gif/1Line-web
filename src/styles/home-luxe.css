@@ -46,7 +46,8 @@
 .hx-hero {
   position: relative;
   isolation: isolate;
-  min-height: min(calc(100svh - 64px), 900px);
+  /* Tall enough for the video, short enough that search and chips fit the first screen */
+  min-height: min(calc(100svh - 64px), 760px);
   display: grid;
   /* minmax(0,1fr): without it the non-wrapping mobile pill row sets the column width and the hero overflows */
   grid-template-columns: minmax(0, 1fr);
@@ -76,6 +77,18 @@
 }
 .hx-hero .hero-cinematic-video.clip-fading { opacity: 0; }
 
+/* Phones: stills from the hero videos, stacked and cross-faded */
+.hx-hero .hero-cinematic-video.hero-still {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s var(--hx-ease);
+}
+.hx-hero .hero-cinematic-video.hero-still.is-active { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .hx-hero .hero-cinematic-video.hero-still { transition: none; }
+}
+
 /* Soft ambient vignette — top and bottom only, plus a faint centre veil for type legibility */
 /* Deep ambient vignette — protects text contrast 100% against light and white video backgrounds */
 .hx-vignette {
@@ -87,11 +100,108 @@
     radial-gradient(ellipse 85% 72% at 50% 44%, rgba(6, 17, 33, 0.74) 0%, rgba(6, 17, 33, 0.35) 80%);
 }
 
-.hx-hero .hero-video-controls-badge {
+/* Video controls: one compact glass pill centred at the bottom of the hero.
+   (App.css pins it to a corner with right/left, which together with the logical insets used to
+   stretch it across the whole hero.) */
+.hx-hero .hero-video-controls-badge,
+.hx-hero .hero-video-controls-badge[class] {
   position: absolute;
-  inset-block-end: 20px;
-  inset-inline-end: 20px;
+  inset: auto auto 18px 50%;
+  transform: translateX(-50%);
   z-index: 3;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(8, 18, 36, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+.hx-hero .hero-media-ctrl-btn {
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  background: transparent;
+  opacity: 0.85;
+}
+
+.hx-hero .hero-media-ctrl-btn:hover,
+.hx-hero .hero-media-ctrl-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  opacity: 1;
+  transform: none;
+}
+
+.hx-hero .hero-clips-switcher,
+[dir="rtl"] .hx-hero .hero-clips-switcher {
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* The clip name stays available as the dots' tooltip; the pill shows only the dots */
+.hx-hero .hero-clip-title-label {
+  display: none;
+}
+
+.hx-hero .hero-clip-dots {
+  gap: 5px;
+}
+
+.hx-hero .hero-clip-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.hx-hero .hero-clip-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: none;
+}
+
+.hx-hero .hero-clip-dot.active {
+  width: 22px;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+}
+
+.hx-hero .hero-clip-progress-fill {
+  background: var(--accent-gold, #d4a24c);
+}
+
+/* Stills pill: dots only, each with a finger-sized tap area */
+.hx-hero .hero-stills-badge .hero-clips-switcher,
+[dir="rtl"] .hx-hero .hero-stills-badge .hero-clips-switcher {
+  border-inline-start: 0;
+  padding: 6px 10px;
+}
+.hx-hero .hero-stills-badge .hero-clip-dots { gap: 12px; }
+.hx-hero .hero-stills-badge .hero-clip-dot { position: relative; overflow: visible; }
+.hx-hero .hero-stills-badge .hero-clip-dot::after {
+  content: '';
+  position: absolute;
+  inset: -18px -6px;
+}
+
+@media (max-width: 768px) {
+  .hx-hero .hero-video-controls-badge,
+  .hx-hero .hero-video-controls-badge[class] {
+    position: absolute !important;
+    inset: auto auto 12px 50% !important;
+    margin: 0 !important;
+    padding: 3px !important;
+  }
+  .hx-hero .hero-media-ctrl-btn {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 .hx-hero-inner {
@@ -100,11 +210,12 @@
   width: min(1120px, 100% - 32px);
   min-width: 0;
   margin-inline: auto;
-  padding-block: clamp(56px, 9vh, 104px) clamp(48px, 7vh, 80px);
+  padding-block: clamp(32px, 5vh, 64px) clamp(40px, 6vh, 72px);
   text-align: center;
 }
 
 .hx-eyebrow {
+  line-height: 1.6;
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
@@ -426,9 +537,13 @@
 
 @media (max-width: 600px) {
   .hx-hero { min-height: auto; }
-  .hx-hero-inner { width: calc(100% - 24px); padding-block: 36px 32px; }
-  .hx-eyebrow { font-size: 0.68rem; letter-spacing: 0.16em; margin-bottom: 16px; gap: 8px; }
-  .hx-eyebrow .hx-eyebrow-emblem { width: 20px; height: 20px; }
+  .hx-hero-inner { width: calc(100% - 24px); padding-block: 20px 24px; }
+  /* Phones: the headline and the search fit the first screen, above the bottom bar */
+  .hx-lede { display: none; }
+  .hx-title { font-size: clamp(1.5rem, 6.6vw, 1.8rem); line-height: 1.35; margin-bottom: 16px; }
+  /* The page's <h1> stays on phones (Google reads the phone page) as one short line: «عقارات سوهاج • …» */
+  .hx-eyebrow { font-size: 0.74rem; letter-spacing: 0.04em; margin-bottom: 10px; gap: 8px; }
+  .hx-eyebrow .hx-eyebrow-emblem, .hx-eyebrow span[dir="ltr"] { display: none; }
   .hx-eyebrow i { display: none; }
   .hx-lede { margin: 14px auto 24px; line-height: 1.8; }
   .hx-lede span {
@@ -1025,10 +1140,10 @@
   animation: hxLivePulse 2s infinite;
 }
 
+/* Transform and opacity only, so the pulse runs on the compositor instead of repainting */
 @keyframes hxLivePulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0%, 100% { transform: scale(0.95); opacity: 1; }
+  70% { transform: scale(1.15); opacity: 0.55; }
 }
 
 .hx-seller-tag-icon {
@@ -1277,7 +1392,8 @@
 .hx-cert-sub-id {
   font-size: 0.68rem;
   color: #94A3B8;
-  font-family: monospace;
+  font-family: var(--font-ar);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.05em;
   display: block;
 }
@@ -1540,7 +1656,7 @@
 
 .hx-radar-viewport {
   position: relative;
-  height: 130px;
+  height: 150px;
   border-radius: 14px;
   background: radial-gradient(circle at 50% 50%, rgba(197, 160, 89, 0.08), transparent 75%), #070D18;
   border: 1px solid rgba(197, 160, 89, 0.2);
@@ -1618,9 +1734,22 @@
   white-space: nowrap;
 }
 
-.hx-blip--1 { top: 16px; inset-inline-end: 18px; }
-.hx-blip--2 { bottom: 18px; inset-inline-start: 16px; }
-.hx-blip--3 { top: 48px; inset-inline-start: 14px; }
+.hx-blip--1 { top: 12px; inset-inline-start: 12px; }
+.hx-blip--2 { top: 12px; inset-inline-end: 12px; }
+.hx-blip--3 { top: 50%; transform: translateY(-50%); inset-inline-start: 12px; }
+.hx-blip--4 { bottom: 12px; inset-inline-end: 12px; }
+.hx-blip--5 { bottom: 12px; inset-inline-start: 12px; }
+
+/* Narrow cards: one chip per row, alternating sides, so the five areas never overlap */
+@media (max-width: 640px) {
+  .hx-radar-viewport { height: 166px; }
+  .hx-radar-blip { top: auto; bottom: auto; inset-inline: auto; transform: none; }
+  .hx-blip--1 { top: 8px; inset-inline-start: 10px; }
+  .hx-blip--2 { top: 38px; inset-inline-end: 10px; }
+  .hx-blip--3 { top: 68px; inset-inline-start: 10px; }
+  .hx-blip--4 { top: 98px; inset-inline-end: 10px; }
+  .hx-blip--5 { top: 128px; inset-inline-start: 10px; }
+}
 
 .hx-radar-footer {
   display: flex;
@@ -2258,7 +2387,7 @@
   color: #ECC875 !important;
   min-width: 46px !important;
   text-align: center !important;
-  font-family: var(--font-number, monospace) !important;
+  font-family: var(--font-number) !important;
 }
 
 /* Center Stage & Image */
@@ -2723,20 +2852,6 @@
   font-family: var(--font-number, inherit) !important;
 }
 
-.property-detail-hero-stage .buyer-commission-badge {
-  margin-top: 14px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #34D399;
-  font-size: 0.77rem;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  backdrop-filter: blur(8px);
-}
 
 /* ── Tri-Media Mode Switcher Tabs ───────────────────────────── */
 .property-detail-hero-stage .gallery-media-mode-tabs {
@@ -2791,7 +2906,7 @@
 
 .property-detail-hero-stage .gallery-main-item {
   position: relative;
-  height: 480px;
+  height: 380px;
   cursor: pointer;
   overflow: hidden;
   border-radius: 18px;
@@ -2924,7 +3039,7 @@
     height: auto;
   }
   .property-detail-hero-stage .gallery-main-item {
-    height: 320px;
+    height: 250px;
   }
   .property-detail-hero-stage .gallery-side-thumbs {
     grid-template-columns: repeat(3, 1fr);
@@ -3274,3 +3389,89 @@
 }
 
 
+
+/* Room under the search chips for the controls pill */
+.hx-hero:has(> .hero-video-controls-badge) .hx-hero-inner {
+  padding-block-end: calc(clamp(48px, 7vh, 80px) + 28px);
+}
+
+/* Property page on phones: shorter — the main photo opens the full gallery, so the thumbnail row
+   goes, and similar listings become one row you swipe through */
+@media (max-width: 640px) {
+  .property-detail-hero-stage .gallery-side-thumbs { display: none; }
+  .similar-properties-section .properties-grid-3 {
+    display: grid;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: min(82%, 320px);
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .similar-properties-section .properties-grid-3::-webkit-scrollbar { display: none; }
+  .similar-properties-section .properties-grid-3 > * { scroll-snap-align: start; }
+}
+
+/* Offer: one full-width strip under title + price (details left, CTA right) */
+.property-detail-hero-stage .pd-offer-strip {
+  flex: 1 1 100%;
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+  align-items: center;
+}
+.property-detail-hero-stage .pd-offer-strip > * { grid-column: 1; }
+.property-detail-hero-stage .pd-offer-strip .pd-offer-head { justify-content: flex-start; }
+.property-detail-hero-stage .pd-offer-strip .pd-offer-pct { margin-inline-start: 4px; }
+.property-detail-hero-stage .pd-offer-strip .pd-offer-cta {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+  margin: 0;
+  padding: 14px 28px;
+  min-width: 220px;
+}
+@media (max-width: 700px) {
+  .property-detail-hero-stage .pd-offer-strip { display: block; }
+  .property-detail-hero-stage .pd-offer-strip .pd-offer-cta { margin-top: 12px; min-width: 0; }
+}
+@media (max-width: 600px) {
+  /* A swiped row read as cut off at the edge; three to a line, wrapping, shows every fact */
+}
+
+/* ── Homepage marketplace grid: columns follow the card count so rows are always full ──
+   (featuredSlots.homeGridCount: 6 → 3×2, 4 → 4×1, 3 → 3×1, 2 → 2×1, 1 → one centred card) */
+@media (min-width: 701px) {
+  .homepage-wrapper .properties-grid-4.hx-home-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .homepage-wrapper .properties-grid-4.hx-home-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .homepage-wrapper .properties-grid-4.hx-home-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 820px; margin-inline: auto; }
+  .homepage-wrapper .properties-grid-4.hx-home-grid--1 { grid-template-columns: minmax(0, 420px); justify-content: center; }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  /* Tablets: 6 and 4 cards as two-column rows, 3 stay in one row */
+  .homepage-wrapper .properties-grid-4.hx-home-grid--6,
+  .homepage-wrapper .properties-grid-4.hx-home-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Phones: the illustration panels (audit sheet, price bars, radar, video call, seller photo cards)
+   double each section's height and repeat the copy beside them, so only the copy stays */
+@media (max-width: 640px) {
+  .hx-cert-modern, .hx-comps-modern, .hx-radar-modern, .hx-expat-modern, .hx-seller-media { display: none; }
+}
+
+/* Quick-browse shortcuts under the homepage listings (they used to float over the hero video) */
+.hx-quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; }
+.hx-quick-label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-inline-end: 4px; }
+.hx-quick .hx-pill {
+  border-color: var(--border-hover); background: var(--bg-card); color: var(--text-primary);
+  -webkit-backdrop-filter: none; backdrop-filter: none; font-weight: 600;
+}
+.hx-quick .hx-pill svg { color: var(--accent-gold); }
+.hx-quick .hx-pill:hover { background: var(--accent-gold-light); border-color: var(--accent-gold); }
+@media (max-width: 640px) {
+  .hx-quick { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .hx-quick::-webkit-scrollbar { display: none; }
+  .hx-quick .hx-pill, .hx-quick-label { flex: none; }
+}

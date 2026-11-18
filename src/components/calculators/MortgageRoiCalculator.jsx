@@ -1,8 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Calculator, TrendingUp, Sparkles, Copy, Check, Building2, Landmark, Handshake, ShieldCheck } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import '../../styles/roi-years.css';
+import { roiPlan } from '../../utils/roiPlan';
+
+// Big amounts read as 3,500,000 while typing; the field takes digits only
+const groupDigits = (n) => (Number(n) > 0 ? Number(n).toLocaleString('en-US') : '');
+const onlyDigits = (v) => String(v).replace(/[^\d]/g, '');
 
 export default function MortgageRoiCalculator({ 
   lang = 'ar', 
@@ -23,26 +29,38 @@ export default function MortgageRoiCalculator({
   const [interestRate, setInterestRate] = useState(initialInterestRate); // Annual rate in % (step 1%)
   const [copied, setCopied] = useState(false);
 
+  // Report a real use of the calculator once the visitor stops adjusting it (not on first render):
+  // the price, down payment and years they try say a lot about their budget.
+  const initialPlan = useRef({ price, downpaymentPercent, years });
+  useEffect(() => {
+    const first = initialPlan.current;
+    if (first.price === price && first.downpaymentPercent === downpaymentPercent && first.years === years) return undefined;
+    const t = setTimeout(() => {
+      trackEvent('calculator_used', { price, downPct: downpaymentPercent, years, type: activeTab });
+      initialPlan.current = { price, downpaymentPercent, years };
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [price, downpaymentPercent, years, activeTab]);
+
   // ROI States
   const [monthlyRent, setMonthlyRent] = useState(initialMonthlyRent);
-  const annualMaintenance = useMemo(() => {
-    // 0.5% من قيمة الوحدة سنوياً بحد أدنى 6,000 ج.م وحد أقصى 35,000 ج.م
-    return Math.min(35000, Math.max(6000, Math.round(price * 0.005)));
-  }, [price]);
   const [annualAppreciation, setAnnualAppreciation] = useState(15); // Capital growth %
+  const [rentGrowth, setRentGrowth] = useState(10); // yearly rent rise %
+  const [vacantMonths, setVacantMonths] = useState(1); // months a year with no tenant
   const isAr = lang === 'ar';
 
+  // Prices are in EGP; for visitors browsing in another currency the copied plan adds the equivalent
   const formatCurrency = (valInEgp) => {
-    const formatted = formatCurrencyPrice(valInEgp, 'EGP', lang);
-    return `${formatted.primary} ${formatted.symbol}`;
+    const formatted = formatCurrencyPrice(valInEgp, currency, lang);
+    return `${formatted.primary} ${formatted.symbol}${formatted.approx ? ` (${formatted.approx})` : ''}`;
   };
 
-  // Egyptian Financing Programs Presets
+  // Egyptian Financing Programs Presets (Reflected on 2026 banking rates)
   const FINANCING_PROGRAMS = [
-    { id: 'dev_0', name_ar: 'تقسيط مباشر من المطور', name_en: 'Direct Developer 0%', rate: 0, desc_ar: 'بدون فوائد بنكية', icon: Handshake },
-    { id: 'cbe_3', name_ar: 'مبادرة البنك المركزي (3%)', name_en: 'CBE 3% Initiative', rate: 3, desc_ar: 'لمحدودي ومتوسطي الدخل', icon: Landmark },
-    { id: 'cbe_8', name_ar: 'مبادرة التمويل العقاري (8%)', name_en: 'Mortgage 8% Initiative', rate: 8, desc_ar: 'فائدة متناقصة ميسرة', icon: Landmark },
-    { id: 'bank_12', name_ar: 'مرابحة بنكية / تمويل تجاري (12%)', name_en: 'Islamic Murabaha / Bank 12%', rate: 12, desc_ar: 'تمويل سريع للوحدات الفاخرة', icon: Building2 },
+    { id: 'dev_0', name_ar: 'تقسيط مباشر من المالك / المطور (0% فائدة)', name_en: 'Direct Developer Plan 0%', rate: 0, desc_ar: 'سداد مباشر بدون وساطة بنكية أو فوائد تمويلية', icon: Handshake },
+    { id: 'bank_market', name_ar: 'تمويل عقاري بنكي حر (26% متناقصة)', name_en: 'Commercial Bank Mortgage (26%)', rate: 26, desc_ar: 'وفق أسعار الكوريدور المصرفية والبنك المركزي الحالية', icon: Building2 },
+    { id: 'islamic_murabaha', name_ar: 'مرابحة بنكية إسلامية (16% ربح سنوي)', name_en: 'Islamic Murabaha (16% Flat)', rate: 16, desc_ar: 'صيغة مرابحة إسلامية معتمدة بهامش ربح سنوي محدد', icon: Landmark },
+    { id: 'cbe_subsidized', name_ar: 'مبادرات الإسكان المدعومة (سقف سعر محدد)', name_en: 'CBE Subsidized Program', rate: 8, desc_ar: 'خاصة بمحدودي ومتوسطي الدخل ولها شروط دخل وسقف للوحدة', icon: Landmark, restricted: true },
   ];
 
   // Mortgage Calculations
@@ -83,18 +101,18 @@ export default function MortgageRoiCalculator({
   // Dynamic slider track fill percentages for active color fill
   const priceFillPct = Math.min(100, Math.max(0, ((price - 500000) / (20000000 - 500000)) * 100));
   const downpaymentFillPct = Math.min(100, Math.max(0, ((downpaymentPercent - 10) / (80 - 10)) * 100));
-  const yearsFillPct = Math.min(100, Math.max(0, ((effectiveYears - 1) / (15 - 1)) * 100));
+  const yearsFillPct = Math.min(100, Math.max(0, ((effectiveYears - 1) / (30 - 1)) * 100));
   const interestFillPct = Math.min(100, Math.max(0, (effectiveRate / 24) * 100));
   const rentFillPct = Math.min(100, Math.max(0, ((monthlyRent - 2000) / (100000 - 2000)) * 100));
   const growthFillPct = Math.min(100, Math.max(0, ((annualAppreciation - 3) / (35 - 3)) * 100));
 
   // ROI Calculations
-  const annualGrossRent = useMemo(() => monthlyRent * 12, [monthlyRent]);
-  const annualNetIncome = useMemo(() => Math.max(0, annualGrossRent - annualMaintenance), [annualGrossRent, annualMaintenance]);
-  const netYield = useMemo(() => ((annualNetIncome / (price || 1)) * 100).toFixed(2), [annualNetIncome, price]);
-  const estimatedValueAfter5Years = useMemo(() => {
-    return Math.round(price * Math.pow(1 + (annualAppreciation / 100), 5));
-  }, [price, annualAppreciation]);
+  // Upkeep, empty months, rising rent and the 2.5% sale tax (utils/roiPlan)
+  const plan = useMemo(() => roiPlan({ price, monthlyRent, growthPct: annualAppreciation, rentGrowthPct: rentGrowth, vacantMonths }),
+    [price, monthlyRent, annualAppreciation, rentGrowth, vacantMonths]);
+  const annualGrossRent = monthlyRent * 12;
+  const netYield = plan.netYield.toFixed(2);
+  const estimatedValueAfter5Years = plan.saleValue;
 
   const handleCopyPlan = () => {
     const text = isAr 
@@ -105,7 +123,7 @@ export default function MortgageRoiCalculator({
         `• مدة التقسيط: ${years} سنوات (${years * 12} شهر)\n` +
         `• معدل الفائدة/المرابحة: ${interestRate}%\n` +
         `• إجمالي المبلغ المسترد: ${formatCurrency(totalPaid)}\n` +
-        `📞 للاستفسار وحجز الوحدة: +20 122 322 2956`
+        `📞 للاستفسار وحجز الوحدة: ${getDynamicPhone()}`
       : `🏢 Mortgage & Payment Plan - 1Line Real Estate (${currency})\n` +
         `• Price: ${formatCurrency(price)}\n` +
         `• Downpayment (${downpaymentPercent}%): ${formatCurrency(downPaymentAmount)}\n` +
@@ -113,10 +131,10 @@ export default function MortgageRoiCalculator({
         `• Duration: ${years} Years\n` +
         `• Rate: ${interestRate}%\n` +
         `• Total Repayment: ${formatCurrency(totalPaid)}\n` +
-        `📞 Hotline & Booking: +20 122 322 2956`;
+        `📞 Hotline & Booking: ${getDynamicPhone()}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
-    trackEvent('calculator_used', { price, monthlyInstallment, type: activeTab });
+    trackEvent('calculator_used', { price, downPct: downpaymentPercent, years, type: activeTab });
     setTimeout(() => setCopied(false), 3000);
   };
 
@@ -167,12 +185,14 @@ export default function MortgageRoiCalculator({
               </label>
               <div className="calc-direct-input-wrap">
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
                   min="300000"
                   max="50000000"
                   step="25000"
-                  value={price}
-                  onChange={(e) => setPrice(Math.min(50000000, Math.max(0, parseInt(e.target.value) || 0)))}
+                  value={groupDigits(price)}
+                  onChange={(e) => setPrice(Math.min(50000000, Math.max(0, parseInt(onlyDigits(e.target.value)) || 0)))}
                   className="direct-num-input"
                   title={isAr ? 'اكتب السعر هنا مباشرة' : 'Type price directly'}
                 />
@@ -195,9 +215,9 @@ export default function MortgageRoiCalculator({
                 }}
               />
               <div className="calc-range-limits-ltr">
-                <span>{isAr ? '500 ألف ج.م' : '500K'}</span>
+                <span>{isAr ? '500 ألف' : '500K'}</span>
                 <span>{isAr ? '10 مليون' : '10M'}</span>
-                <span>{isAr ? '20 مليون ج.م' : '20M EGP'}</span>
+                <span>{isAr ? '20 مليون' : '20M'}</span>
               </div>
             </div>
             
@@ -210,7 +230,7 @@ export default function MortgageRoiCalculator({
                   className={`calc-chip-btn ${price === pVal ? 'active' : ''}`}
                   onClick={() => setPrice(pVal)}
                 >
-                  {(pVal / 1000000).toLocaleString()} {isAr ? 'مليون' : 'M'}
+                  {(pVal / 1000000).toLocaleString('en-US')} {isAr ? 'مليون' : 'M'}
                 </button>
               ))}
             </div>
@@ -244,12 +264,14 @@ export default function MortgageRoiCalculator({
 
                     <div className="calc-direct-input-wrap">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        dir="ltr"
                         min="50000"
                         max={price}
                         step="10000"
-                        value={downPaymentAmount}
-                        onChange={(e) => handleDownpaymentAmountChange(e.target.value)}
+                        value={groupDigits(downPaymentAmount)}
+                        onChange={(e) => handleDownpaymentAmountChange(onlyDigits(e.target.value))}
                         className="direct-num-input"
                         aria-label={isAr ? 'قيمة الدفعة الأولى بالجنيه' : 'Downpayment amount in EGP'}
                         title={isAr ? 'اكتب قيمة المقدم بالجنيه مباشرة' : 'Type downpayment amount in EGP'}
@@ -274,9 +296,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>10% ({isAr ? 'أدنى مقدم' : 'Min'})</span>
+                    <span>10%</span>
                     <span>40%</span>
-                    <span>80% ({isAr ? 'أقصى مقدم' : 'Max'})</span>
+                    <span>80%</span>
                   </div>
                 </div>
 
@@ -305,7 +327,7 @@ export default function MortgageRoiCalculator({
                     <input
                       type="number"
                       min="1"
-                      max="15"
+                      max="30"
                       step="1"
                       value={years === '' ? '' : years}
                       onChange={(e) => {
@@ -314,7 +336,7 @@ export default function MortgageRoiCalculator({
                           setYears('');
                         } else {
                           const parsed = parseInt(val);
-                          setYears(isNaN(parsed) ? '' : Math.min(25, Math.max(1, parsed)));
+                          setYears(isNaN(parsed) ? '' : Math.min(30, Math.max(1, parsed)));
                         }
                       }}
                       onBlur={() => {
@@ -335,7 +357,7 @@ export default function MortgageRoiCalculator({
                   <input
                     type="range"
                     min="1"
-                    max="15"
+                    max="30"
                     step="1"
                     value={effectiveYears}
                     onChange={(e) => setYears(parseInt(e.target.value))}
@@ -347,7 +369,7 @@ export default function MortgageRoiCalculator({
                   <div className="calc-range-limits-ltr">
                     <span>{isAr ? 'سنة واحدة' : '1 Year'}</span>
                     <span>{isAr ? '7 سنوات' : '7 Years'}</span>
-                    <span>{isAr ? '15 سنة' : '15 Years'}</span>
+                    <span>{isAr ? '30 سنة' : '30 Years'}</span>
                   </div>
                 </div>
 
@@ -416,9 +438,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>0% ({isAr ? 'بدون فوائد' : '0%'})</span>
+                    <span>0%</span>
                     <span>12%</span>
-                    <span>24% ({isAr ? 'أقصى نسبة' : '24% Max'})</span>
+                    <span>24%</span>
                   </div>
                 </div>
 
@@ -444,6 +466,13 @@ export default function MortgageRoiCalculator({
                     );
                   })}
                 </div>
+                {FINANCING_PROGRAMS.some((prog) => prog.restricted && prog.rate === interestRate) && (
+                  <p className="calc-program-note" role="note" style={{ margin: '10px 0 0', fontSize: 'var(--text-xs, 12px)', lineHeight: 1.6, color: 'var(--text-muted)' }}>
+                    {isAr
+                      ? 'المبادرات المدعومة مش لأي وحدة: ليها سقف لسعر الوحدة وحد للدخل وشروط ترخيص، ومدتها ممكن توصل لعشرات السنين. الرقم هنا تقديري، والشروط والسقف الحاليين بيحددهم البنك.'
+                      : 'Subsidised initiatives have a unit-price cap, income limits and licensing conditions, with longer terms. This is an estimate; the bank sets the current terms and caps.'}
+                  </p>
+                )}
               </div>
             </>
           ) : (
@@ -454,12 +483,14 @@ export default function MortgageRoiCalculator({
                   <label className="calc-field-title">{isAr ? 'الإيجار الشهري المتوقع' : 'Expected Monthly Rent'}</label>
                   <div className="calc-direct-input-wrap">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      dir="ltr"
                       min="2000"
                       max="200000"
                       step="500"
-                      value={monthlyRent}
-                      onChange={(e) => setMonthlyRent(Math.max(0, parseInt(e.target.value) || 0))}
+                      value={groupDigits(monthlyRent)}
+                      onChange={(e) => setMonthlyRent(Math.max(0, parseInt(onlyDigits(e.target.value)) || 0))}
                       className="direct-num-input"
                       aria-label={isAr ? 'الإيجار الشهري المتوقع بالجنيه' : 'Expected monthly rent'}
                     />
@@ -481,9 +512,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>2,000 {isAr ? 'ج.م' : 'EGP'}</span>
+                    <span>2,000</span>
                     <span>50,000</span>
-                    <span>100,000 {isAr ? 'ج.م' : 'EGP'}</span>
+                    <span>100,000</span>
                   </div>
                 </div>
 
@@ -495,7 +526,7 @@ export default function MortgageRoiCalculator({
                       className={`calc-chip-btn ${monthlyRent === rVal ? 'active' : ''}`}
                       onClick={() => setMonthlyRent(rVal)}
                     >
-                      {rVal.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                      {rVal.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
                     </button>
                   ))}
                 </div>
@@ -504,7 +535,7 @@ export default function MortgageRoiCalculator({
               {/* ROI: Expected Annual Appreciation (1% Precision Slider + Direct % Typing) */}
               <div className="calc-input-card">
                 <div className="calc-label-row">
-                  <label className="calc-field-title">{isAr ? 'معدل نمو سعر العقار السنوي (Capital Growth)' : 'Annual Capital Appreciation'}</label>
+                  <label className="calc-field-title">{isAr ? 'زيادة سعر العقار في السنة' : 'Annual Capital Appreciation'}</label>
                   <div className="calc-direct-input-wrap mini-wrap">
                     <input
                       type="number"
@@ -534,9 +565,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>3% ({isAr ? 'متحفظ' : 'Conservative'})</span>
-                    <span>18% ({isAr ? 'متوسط سوهاج' : 'Avg'})</span>
-                    <span>35% ({isAr ? 'سوهاج الجديدة' : 'Max'})</span>
+                    <span>3%</span>
+                    <span>18%</span>
+                    <span>35%</span>
                   </div>
                 </div>
 
@@ -553,6 +584,26 @@ export default function MortgageRoiCalculator({
                   ))}
                 </div>
               </div>
+
+              {/* ROI: what an owner really loses and gains on the rent */}
+              <div className="calc-input-card">
+                <label className="calc-field-title">{isAr ? 'شهور ممكن الوحدة تفضل فاضية في السنة' : 'Months a year without a tenant'}</label>
+                <div className="calc-quick-chips-row">
+                  {[0, 1, 2, 3].map((m) => (
+                    <button key={m} type="button" className={`calc-chip-btn ${vacantMonths === m ? 'active' : ''}`} onClick={() => setVacantMonths(m)}>
+                      {isAr ? (m === 0 ? 'ولا شهر' : m === 1 ? 'شهر' : m === 2 ? 'شهرين' : '3 شهور') : `${m} mo`}
+                    </button>
+                  ))}
+                </div>
+                <label className="calc-field-title" style={{ marginTop: '12px', display: 'block' }}>{isAr ? 'زيادة الإيجار كل سنة' : 'Yearly rent increase'}</label>
+                <div className="calc-quick-chips-row">
+                  {[0, 5, 10, 15].map((r) => (
+                    <button key={r} type="button" className={`calc-chip-btn ${rentGrowth === r ? 'active' : ''}`} onClick={() => setRentGrowth(r)}>
+                      {r === 0 ? (isAr ? 'ثابت' : 'Flat') : `${r}%`}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -565,11 +616,11 @@ export default function MortgageRoiCalculator({
               <div className="result-highlight-box">
                 <span className="result-label">{isAr ? 'القسط الشهري التقديري' : 'Estimated Monthly Payment'}</span>
                 <h2 className="result-primary-number">
-                  {formatCurrency(monthlyInstallment)} <span className="curr">{isAr ? '/ شهر' : '/ mo'}</span>
+                  {formatCurrencyPrice(monthlyInstallment, 'EGP', lang).primary} <span className="curr">{formatCurrencyPrice(monthlyInstallment, 'EGP', lang).symbol} {isAr ? '/ شهر' : '/ mo'}</span>
                 </h2>
                 {currency !== 'EGP' && (
                   <div style={{ fontSize: '0.74rem', color: 'var(--crm-faint)', marginTop: '4px' }}>
-                    ({monthlyInstallment.toLocaleString()} ج.م / شهر)
+                    ({monthlyInstallment.toLocaleString('en-US')} ج.م / شهر)
                   </div>
                 )}
                 <div className="result-center-gold-line" />
@@ -640,33 +691,54 @@ export default function MortgageRoiCalculator({
           ) : (
             <div className="calc-results-card roi-results">
               <div className="result-highlight-box">
-                <span className="result-label">{isAr ? 'صافي العائد الإيجاري السنوي (Cap Rate)' : 'Net Rental Yield'}</span>
+                <span className="result-label">{isAr ? 'صافي العائد من الإيجار في السنة' : 'Net Rental Yield'}</span>
                 <h2 className="result-primary-number text-success">
                   {netYield}% <span className="curr">{isAr ? 'سنوياً' : '/ year'}</span>
                 </h2>
+                <span className="result-label" style={{ marginTop: '4px' }}>
+                  {isAr ? `قبل المصاريف ${plan.grossYield.toFixed(2)}%` : `Gross ${plan.grossYield.toFixed(2)}%`}
+                </span>
                 <div className="result-center-gold-line bg-success" />
               </div>
 
               <div className="calc-breakdown-list">
                 <div className="calc-breakdown-glass-row">
-                  <span className="glass-row-lbl">{isAr ? 'إجمالي الدخل الإيجاري السنوي' : 'Gross Annual Rent'}</span>
+                  <span className="glass-row-lbl">{isAr ? 'الإيجار في السنة' : 'Gross annual rent'}</span>
                   <strong className="glass-row-val text-gold">{formatCurrency(annualGrossRent)}</strong>
                 </div>
-
                 <div className="calc-breakdown-glass-row">
-                  <span className="glass-row-lbl">{isAr ? 'القيمة الرأسمالية المتوقعة (5 سنوات)' : 'Est. Property Value (5 Yrs)'}</span>
+                  <span className="glass-row-lbl">
+                    {isAr
+                      ? `ناقص صيانة${plan.vacant ? ` و${plan.vacant === 1 ? 'شهر' : plan.vacant === 2 ? 'شهرين' : `${plan.vacant} شهور`} فاضية` : ''}`
+                      : `Less upkeep${plan.vacant ? ` and ${plan.vacant} empty month(s)` : ''}`}
+                  </span>
+                  <strong className="glass-row-val">{formatCurrency(plan.firstYearCosts)}</strong>
+                </div>
+                <div className="calc-breakdown-glass-row">
+                  <span className="glass-row-lbl">{isAr ? 'صافي الإيجار في أول سنة' : 'Net rent, first year'}</span>
+                  <strong className="glass-row-val text-success">{formatCurrency(plan.firstYearNet)}</strong>
+                </div>
+                <div className="calc-breakdown-glass-row">
+                  <span className="glass-row-lbl">{isAr ? 'سعر العقار المتوقع بعد 5 سنين' : 'Est. property value after 5 yrs'}</span>
                   <strong className="glass-row-val text-blue-light">{formatCurrency(estimatedValueAfter5Years)}</strong>
                 </div>
-
+                <div className="calc-breakdown-glass-row">
+                  <span className="glass-row-lbl">{isAr ? 'ناقص ضريبة التصرفات عند البيع (2.5%)' : 'Less sale tax (2.5%)'}</span>
+                  <strong className="glass-row-val">{formatCurrency(plan.saleTax)}</strong>
+                </div>
                 <div className="calc-breakdown-glass-row total-highlight-row">
-                  <span className="glass-row-lbl">{isAr ? 'إجمالي الأرباح والعوائد (5 سنوات)' : 'Total 5-Yr Returns'}</span>
-                  <strong className="glass-row-val text-success">
-                    {formatCurrency(estimatedValueAfter5Years - price + (annualNetIncome * 5))}
-                  </strong>
+                  <span className="glass-row-lbl">
+                    {isAr ? 'صافي ربحك في 5 سنين (الإيجار + زيادة السعر)' : '5-yr net profit (rent + price increase)'}
+                    <small style={{ display: 'block', opacity: 0.8, fontWeight: 500 }}>
+                      {isAr
+                        ? `يعني ${plan.profitPct.toFixed(0)}% من سعر الشراء، حوالي ${plan.yearlyPct.toFixed(1)}% في السنة`
+                        : `${plan.profitPct.toFixed(0)}% of the price, about ${plan.yearlyPct.toFixed(1)}% a year`}
+                    </small>
+                  </span>
+                  <strong className="glass-row-val text-success">{formatCurrency(plan.profit)}</strong>
                 </div>
               </div>
 
-              {/* Net vs Gross Yield & Methodology Disclosure */}
               <div style={{
                 fontSize: '0.71rem',
                 color: '#cbd5e1',
@@ -675,17 +747,11 @@ export default function MortgageRoiCalculator({
                 padding: '7px 12px',
                 borderRadius: '8px',
                 margin: '8px 0 10px',
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'flex-start',
-                lineHeight: 1.5
+                lineHeight: 1.6
               }}>
-                <span style={{ color: '#ffca28', fontSize: '0.85rem' }}>ℹ️</span>
-                <span>
-                  {isAr 
-                    ? 'النسبة تمثل صافي العائد الإيجاري (Net Yield) بعد خصم مخصص الصيانة والتشغيل السنوي. نسبة النمو الرأسمالي افتراض تختاره أنت وليست توقعاً مضموناً.' 
-                    : 'Reflects Net Rental Yield after deducting estimated annual maintenance. Capital appreciation is indicative based on historical Sohag transactions.'}
-                </span>
+                {isAr
+                  ? `الصيانة محسوبة ${plan.upkeep.toLocaleString('en-US')} ج.م في السنة (0.5% من السعر). ${plan.paybackYears ? `الإيجار لوحده بيرجّعلك تمن الوحدة في حوالي ${plan.paybackYears} سنة. ` : ''}الأرقام تقديرية من اختياراتك، مش وعد بعائد، وقبل رسوم التسجيل والوساطة.`
+                  : `Upkeep is ${plan.upkeep.toLocaleString('en-US')} EGP a year (0.5% of the price). Estimates from your choices, not a promised return; before registration and brokerage fees.`}
               </div>
 
               {/* 💼 Turnkey Rental Management for Investors */}
@@ -724,7 +790,7 @@ export default function MortgageRoiCalculator({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700 }}>
                     <Sparkles size={14} style={{ color: '#ffca28' }} />
-                    <span>{isAr ? 'نمو رأس المال التراكمي (5 سنوات)' : '5-Year Wealth Forecast'}</span>
+                    <span>{isAr ? 'سعر العقار المتوقع سنة بسنة' : 'Expected value, year by year'}</span>
                   </span>
                   <span style={{
                     background: 'rgba(255, 202, 40, 0.2)',
@@ -735,41 +801,47 @@ export default function MortgageRoiCalculator({
                     fontSize: '0.72rem',
                     fontWeight: 700
                   }}>
-                    +{Math.round(((estimatedValueAfter5Years - price) / price) * 100)}% {isAr ? 'عائد رأسمالي' : 'Gain'}
+                    +{Math.round(((estimatedValueAfter5Years - price) / price) * 100)}% {isAr ? 'في 5 سنين' : 'in 5 yrs'}
                   </span>
                 </div>
 
-                {/* Micro Progression Timeline */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', textAlign: 'center', margin: '10px 0' }}>
-                  {[1, 2, 3, 4, 5].map((yr) => {
-                    const yrVal = Math.round(price * Math.pow(1 + (annualAppreciation / 100), yr));
+                {/* Value year by year: five columns on a wide screen, one row per year on a phone
+                    (five columns of full prices ran off the card) */}
+                <ol className="roi-years">
+                  {plan.years.map(({ year: yr, value: yrVal }) => {
+                    const share = Math.round((yrVal / Math.max(1, estimatedValueAfter5Years)) * 100);
                     return (
-                      <div key={yr} style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '6px', padding: '6px 2px' }}>
-                        <div style={{ fontSize: '0.66rem', color: 'var(--crm-faint)' }}>{isAr ? `سنة ${yr}` : `Yr ${yr}`}</div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ffca28', marginTop: '2px' }}>
-                          {formatCurrency(yrVal)}
-                        </div>
-                      </div>
+                      <li key={yr} className="roi-year">
+                        <span className="roi-year-label">{isAr ? `بعد ${yr === 1 ? 'سنة' : yr === 2 ? 'سنتين' : `${yr} سنين`}` : `Year ${yr}`}</span>
+                        <bdi className="roi-year-value">{formatCurrency(yrVal)}</bdi>
+                        <span className="roi-year-bar" aria-hidden="true"><span style={{ width: `${share}%` }} /></span>
+                      </li>
                     );
                   })}
-                </div>
+                </ol>
 
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: '10px',
                   paddingTop: '8px',
                   borderTop: '1px solid rgba(255, 255, 255, 0.15)',
                   fontSize: '0.76rem'
                 }}>
-                  <span style={{ color: '#cbd5e1' }}>{isAr ? 'صافي الربح التراكمي المتوقع:' : 'Net Capital Profit:'}</span>
-                  <strong style={{ color: 'var(--crm-positive)', fontWeight: 700 }}>+{formatCurrency(estimatedValueAfter5Years - price)}</strong>
+                  <span style={{ color: '#cbd5e1' }}>{isAr ? 'زيادة سعر العقار المتوقعة (5 سنين):' : 'Expected price increase (5 yrs):'}</span>
+                  <strong style={{ color: '#4ADE80', fontWeight: 800, whiteSpace: 'nowrap' }}><bdi dir="ltr">+{formatCurrency(estimatedValueAfter5Years - price)}</bdi></strong>
                 </div>
+                <p className="roi-years-note">
+                  {isAr
+                    ? `محسوبة على زيادة ${annualAppreciation}% في السنة اللي اخترتها، مش وعد بعائد.`
+                    : `Estimates at the ${annualAppreciation}% yearly growth you chose, not a promised return; before sale tax and fees.`}
+                </p>
               </div>
 
               <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
                 <a
-                  href={getWhatsAppUrl(`مرحباً 1Line، أريد دراسة جدوى استثمارية لعقار بقيمة ${formatCurrency(price)} بعائد إيجاري ${netYield}% ونمو سنوي ${annualAppreciation}%`)}
+                  href={getWhatsAppUrl(`مرحباً 1Line، أريد دراسة جدوى استثمارية لعقار بقيمة ${formatCurrency(price)} بعائد إيجاري صافي ${netYield}% ونمو سنوي ${annualAppreciation}%`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-full calc-cta-btn"

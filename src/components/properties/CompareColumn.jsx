@@ -1,13 +1,16 @@
-import { getPriceBenchmark, formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import { getPriceBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { countLabel } from '../../utils/arabicCount';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 // One property's column in the comparison matrix.
 export default function CompareColumn({ prop, isAr, lang, currency, verdicts, customDownPercent, onRemoveFromCompare, activeTab, setCustomDownPercent, onClose }) {
+  const isMulti = isMultiUnitOrBuilding(prop);
   const title = isAr ? prop.title_ar : prop.title_en;
   const location = isAr ? prop.locationName_ar : prop.locationName_en;
   const finishing = isAr ? prop.finishing_ar : prop.finishing_en;
-  const ppm = prop.pricePerMeter || (prop.size ? Math.round(prop.price / prop.size) : 0);
+  const ppm = !isMulti ? (prop.pricePerMeter || (prop.size ? Math.round(prop.price / prop.size) : 0)) : 0;
   const benchmark = getPriceBenchmark(prop, lang);
   const priceData = formatCurrencyPrice(prop.price, currency, lang);
   const isBestPpm = prop.id === verdicts.bestPpmId;
@@ -58,7 +61,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
 
         <div className="compare-thumb-wrap">
           <img 
-            src={prop.images && prop.images[0] ? prop.images[0] : ''} 
+            src={prop.images && prop.images[0] ? thumbUrl(prop.images[0]) : ''} 
             alt={title} 
             className="compare-thumb" 
           />
@@ -81,7 +84,9 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           {/* Price Per SqM */}
           <div className="compare-cell">
             <span className={`cell-ppm-val ${isBestPpm ? 'text-gold fw-bold' : ''}`}>
-              {ppm.toLocaleString()} {isAr ? 'ج.م / م²' : 'EGP / m²'}
+              {benchmark?.isMultiUnit
+                ? (isAr ? 'عقار كامل (سكني + تجاري)' : 'Multi-Unit Building')
+                : `${ppm.toLocaleString('en-US')} ${isAr ? 'ج.م / م²' : 'EGP / m²'}`}
             </span>
           </div>
 
@@ -103,7 +108,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           <div className="compare-cell">
             {prop.downPayment ? (
               <span className="fw-semibold">
-                {prop.downPayment.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                {prop.downPayment.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
                 <span className="text-muted" style={{ fontSize: '0.75rem', marginRight: '4px' }}>
                   ({Math.round((prop.downPayment / prop.price) * 100)}%)
                 </span>
@@ -117,7 +122,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           <div className="compare-cell highlight-blue">
             {prop.monthlyInstallment ? (
               <strong className="text-emerald">
-                {prop.monthlyInstallment.toLocaleString()} {isAr ? 'ج.م/شهر' : 'EGP/mo'}
+                {prop.monthlyInstallment.toLocaleString('en-US')} {isAr ? 'ج.م/شهر' : 'EGP/mo'}
               </strong>
             ) : (
               <span className="text-muted">{isAr ? 'غير متاح (كاش)' : 'N/A (Cash only)'}</span>
@@ -142,7 +147,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
 
           <div className="compare-cell highlight-simulator" style={{ minHeight: '62px' }}>
             <div className="sim-cell-box">
-              <span className="sim-down-val">{simDownVal.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+              <span className="sim-down-val">{simDownVal.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
               <div className="sim-slider-wrap">
                 <span className="sim-slider-pct">{customDownPercent}%</span>
                 <input 
@@ -161,7 +166,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
 
           <div className="compare-cell highlight-simulator" style={{ minHeight: '62px' }}>
             <div className="sim-cell-box">
-              <span className="sim-monthly-val">~ {simMonthlyVal.toLocaleString()} {isAr ? 'ج.م/شهر' : 'EGP/mo'}</span>
+              <span className="sim-monthly-val">~ {simMonthlyVal.toLocaleString('en-US')} {isAr ? 'ج.م/شهر' : 'EGP/mo'}</span>
               <span className="sim-sub-note">
                 {isAr ? `على ${simYears} سنوات` : `over ${simYears} yrs`}
               </span>
@@ -198,7 +203,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
               ) : (prop.type === 'office' || prop.category === 'administrative') ? (
                 prop.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Admin Office / Clinic')
               ) : (
-                `${prop.bedrooms || 0} ${isAr ? 'غرف' : 'Beds'} • ${prop.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`
+                `${countLabel('room', prop.bedrooms || 0, isAr)} • ${countLabel('bath', prop.bathrooms || 0, isAr)}`
               )}
             </span>
           </div>

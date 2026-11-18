@@ -1,20 +1,32 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Building2, MapPin, CheckCircle2, MessageSquare, Sparkles, FileDown, ArrowRight, ArrowLeft } from 'lucide-react';
-import { MEGA_PROJECTS } from '../data/projectsData';
-import BrandWatermark from '../components/common/BrandWatermark';
-import { getWhatsAppUrl } from '../utils/founderCmsData';
-import { updatePageSeo } from '../utils/seoHelper';
-import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { MessageSquare, ArrowRight, ArrowLeft, LayoutGrid, Home, Store, SearchX, Building2 } from 'lucide-react';
+import { useDevelopers, projectDeveloper } from '../utils/developers';
+import { getAreas } from '../utils/areasData';
+import { areaPathName, mainAreas, inArea, shortAreaName } from '../utils/areaLookup';
+import ProjectCard from '../components/projects/ProjectCard';
+import '../styles/projects-modern.css';
+import { openWhatsAppSafely } from '../utils/founderCmsData';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 
 export default function ProjectsPage({ 
   projects = [],
   lang = 'ar', 
-  currency = 'EGP',
-  triggerToast 
+  currency = 'EGP'
 }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const navigate = useNavigate();
+  // Area and developer filters live in the address (?area=…&developer=…) so a filtered list can be shared
+  const [params, setParams] = useSearchParams();
+  const areaFilter = params.get('area') || '';
+  const devFilter = params.get('developer') || '';
+  const setFilter = (key, value) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (value) next.set(key, value); else next.delete(key);
+    return next;
+  }, { replace: true });
+  const developers = useDevelopers();
+  const areas = useMemo(() => getAreas(), []);
 
   const isAr = lang === 'ar';
 
@@ -26,47 +38,73 @@ export default function ProjectsPage({
         ? 'تصفح الكمبوندات السكنية والمولات التجارية والأبراج الإدارية بسوهاج مع متابعة حية لنسب التنفيذ الإنشائي.' 
         : 'Explore gated compounds, retail malls, and executive towers with live construction progress updates.',
       url: '/projects',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'دليل المشروعات' : 'Projects', url: '/projects' }
+      ])
     });
   }, [lang, isAr]);
 
-  const allProjects = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
+  // Only real projects: the bundled samples are never shown to visitors
+  const allProjects = useMemo(() => (Array.isArray(projects) ? projects : []), [projects]);
 
-  const filteredProjects = useMemo(() => {
-    if (selectedCategory === 'all') return allProjects;
-    return allProjects.filter(p => p.category === selectedCategory);
-  }, [selectedCategory, allProjects]);
+  const filteredProjects = useMemo(() => allProjects.filter((p) =>
+    (selectedCategory === 'all' || p.category === selectedCategory)
+    && (!areaFilter || inArea(p.areaKey, areaFilter, areas))
+    && (!devFilter || projectDeveloper(p, developers)?.id === devFilter)
+  ), [selectedCategory, allProjects, areaFilter, devFilter, areas, developers]);
+
+  // Only the areas and developers that have a project here are offered
+  const areaChoices = useMemo(() => mainAreas(areas).filter((a) => allProjects.some((p) => inArea(p.areaKey, a.id, areas))), [areas, allProjects]);
+  const devChoices = useMemo(() => developers.filter((d) => allProjects.some((p) => projectDeveloper(p, developers)?.id === d.id)), [developers, allProjects]);
+  const cardFacts = (p) => {
+    const d = projectDeveloper(p, developers);
+    return {
+      developerName: d ? (isAr ? d.name_ar : d.name_en || d.name_ar) : '',
+      areaName: p.areaKey ? areaPathName(p.areaKey, areas, isAr) : ''
+    };
+  };
 
   const handleInquireProject = (project) => {
     const title = isAr ? project.title_ar : project.title_en;
+    // A sample project can't be visited: ask about real projects of the same kind instead
+    if (project.isDemo) {
+      const kind = isAr ? (project.type_ar || 'مشروع') : (project.type_en || 'project');
+      openWhatsAppSafely(isAr
+        ? `مرحباً 1Line، أبحث عن ${kind} في سوهاج. ما المشروعات المتاحة حالياً؟`
+        : `Hello 1Line, I'm looking for a ${kind} in Sohag. Which projects are available now?`);
+      return;
+    }
     const msg = isAr 
       ? `مرحباً 1Line، أريد حجز موعد معاينة ميدانية ومعرفة الوحدات المتاحة في مشروع: ${title}`
       : `Hello 1Line, I would like to book a viewing tour and request unit availability for: ${title}`;
-    window.open(getWhatsAppUrl(msg), '_blank');
+    openWhatsAppSafely(msg);
   };
 
-  const handleDownloadBrochure = (project) => {
-    const title = isAr ? project.title_ar : project.title_en;
-    const brochureUrl = (Array.isArray(project.images) && project.images.length > 0) ? project.images[0] : null;
-    if (!brochureUrl) {
-      if (triggerToast) {
-        triggerToast(isAr ? 'بروشور المشروع قيد التجهيز والاعتماد' : 'Brochure is being prepared by developer', 'info');
-      }
-      return;
-    }
-    if (triggerToast) {
-      triggerToast(isAr ? `جاري تجهيز وتحميل بروشور مشروع ${title}...` : `Downloading brochure for ${title}...`, 'success');
-    }
-    window.open(brochureUrl, '_blank');
-  };
+  const categories = [
+    { id: 'all', label_ar: 'الكل', label_en: 'All', Icon: LayoutGrid },
+    { id: 'residential', label_ar: 'سكني', label_en: 'Residential', Icon: Home },
+    { id: 'commercial', label_ar: 'تجاري', label_en: 'Commercial', Icon: Store }
+  ];
+  const countFor = (id) => (id === 'all' ? allProjects.length : allProjects.filter((p) => p.category === id).length);
+
+  const askCustom = () => openWhatsAppSafely(isAr
+    ? 'مرحباً 1Line، أبحث عن وحدة في مشروع بمواصفات معيّنة في سوهاج. المواصفات: '
+    : 'Hello 1Line, I am looking for a unit in a specific kind of project in Sohag. Details: ');
 
   return (
-    <div className="projects-page-wrapper">
-      {/* Hero Header */}
-      <div className="projects-hero-banner">
-        <div className="projects-hero-container">
+    <div className="pj-page">
+      <header className="pj-hero">
+        <div className="pj-wrap">
           {/* Quick Back Navigation Bar */}
           <div className="page-top-back-bar">
+            <div className="page-breadcrumb-sub">
+              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span>/</span>
+              <span className="crumb-current">{isAr ? 'دليل المشروعات' : 'Projects'}</span>
+            </div>
             <button
               type="button"
               className="btn-back-step"
@@ -80,184 +118,115 @@ export default function ProjectsPage({
               title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
             >
               {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+              <span>{isAr ? 'رجوع' : 'Back'}</span>
             </button>
-            <div className="page-breadcrumb-sub">
-              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
-              <span>/</span>
-              <span className="crumb-current">{isAr ? 'دليل المشروعات' : 'Mega Projects'}</span>
-            </div>
           </div>
 
-          <div className="projects-badge-pill">
-            <Sparkles size={16} className="text-gold" />
-            <span>{isAr ? 'دليل المشروعات والكمبوندات الكبرى في سوهاج' : 'Mega Projects & Flagship Compounds'}</span>
-          </div>
-          <h1>{isAr ? 'أضخم المشروعات العقارية والتجارية بسوهاج 2026' : 'Premier Real Estate Developments in Sohag'}</h1>
-          <p>
-            {isAr 
-              ? 'تصفح الكمبوندات السكنية المغلقة، المولات التجارية، والأبراج الإدارية مع متابعة حية لنسب الإنجاز الإنشائي الميداني.' 
-              : 'Explore gated residential compounds, retail malls, and executive towers with live construction progress updates.'}
+          <h1 className="pj-hero-title">
+            {isAr ? <>المشروعات العقارية والتجارية <em>في سوهاج</em></> : <>Residential & commercial projects <em>in Sohag</em></>}
+          </h1>
+          <p className="pj-hero-sub">
+            {isAr
+              ? 'كمبوندات سكنية ومولات وأبراج إدارية: نسبة التنفيذ على الأرض، نظام السداد، وموعد التسليم لكل مشروع في مكان واحد.'
+              : 'Compounds, malls and office towers: on-site progress, payment plan and delivery date for each project in one place.'}
           </p>
 
-          {/* Category Tabs */}
-          <div className="projects-category-pills">
-            {[
-              { id: 'all', label_ar: 'جميع المشروعات', label_en: 'All Projects' },
-              { id: 'residential', label_ar: 'كمبوندات سكنية', label_en: 'Residential Compounds' },
-              { id: 'commercial', label_ar: 'مولات ومقرات تجارية', label_en: 'Commercial & Malls' }
-            ].map((cat) => (
+          <div className="pj-filter" role="tablist" aria-label={isAr ? 'نوع المشروع' : 'Project type'}>
+            {categories.map(({ id, label_ar, label_en, Icon }) => (
               <button
-                key={cat.id}
+                key={id}
                 type="button"
-                className={`proj-cat-btn ${selectedCategory === cat.id ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(cat.id)}
+                role="tab"
+                aria-selected={selectedCategory === id}
+                className={selectedCategory === id ? 'is-active' : ''}
+                onClick={() => setSelectedCategory(id)}
               >
-                {isAr ? cat.label_ar : cat.label_en}
+                <Icon size={16} aria-hidden="true" />
+                <span>{isAr ? label_ar : label_en}</span>
+                <b>{countFor(id)}</b>
               </button>
             ))}
           </div>
+
+          {(areaChoices.length > 0 || devChoices.length > 0) && (
+            <div className="pj-subfilters">
+              {areaChoices.length > 0 && (
+                <label>
+                  <span>{isAr ? 'المنطقة' : 'Area'}</span>
+                  <select value={areaFilter} onChange={(e) => setFilter('area', e.target.value)}>
+                    <option value="">{isAr ? 'كل المناطق' : 'All areas'}</option>
+                    {areaChoices.map((a) => <option key={a.id} value={a.id}>{shortAreaName(a, areas, isAr)}</option>)}
+                  </select>
+                </label>
+              )}
+              {devChoices.length > 0 && (
+                <label>
+                  <span>{isAr ? 'شركة التطوير' : 'Developer'}</span>
+                  <select value={devFilter} onChange={(e) => setFilter('developer', e.target.value)}>
+                    <option value="">{isAr ? 'كل الشركات' : 'All developers'}</option>
+                    {devChoices.map((d) => <option key={d.id} value={d.id}>{isAr ? d.name_ar : d.name_en || d.name_ar}</option>)}
+                  </select>
+                </label>
+              )}
+              {developers.length > 0 && (
+                <Link to="/developers" className="pj-devs-link"><Building2 size={16} aria-hidden="true" />{isAr ? 'شركات التطوير' : 'Developers'}</Link>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      </header>
 
-      {/* Projects Grid */}
-      <div className="projects-content-container">
-        <div className="projects-list-grid">
-          {filteredProjects.map((project) => {
-            const title = isAr ? project.title_ar : project.title_en;
-            const location = isAr ? project.location_ar : project.location_en;
-            const dev = isAr ? project.developer_ar : project.developer_en;
-            const delivery = isAr ? project.deliveryDate_ar : project.deliveryDate_en;
-            const desc = isAr ? project.description_ar : project.description_en;
-            const feats = isAr ? project.features_ar : project.features_en;
-            const priceData = formatCurrencyPrice(project.startPrice, currency, lang);
+      <div className="pj-wrap pj-main">
+        {allProjects.length === 0 ? (
+          <div className="pj-empty">
+            <SearchX size={36} aria-hidden="true" />
+            <p>{isAr ? 'بنجهّز قائمة المشروعات. كلمنا على واتساب ونقولك المتاح دلوقتي.' : 'Projects are on their way. Message us on WhatsApp for what is available now.'}</p>
+            <button type="button" className="pj-btn pj-btn--ghost" onClick={() => openWhatsAppSafely(isAr ? 'مرحباً 1Line، إيه المشروعات المتاحة دلوقتي في سوهاج؟' : 'Hello 1Line, which projects are available in Sohag now?')}>
+              {isAr ? 'اسأل على واتساب' : 'Ask on WhatsApp'}
+            </button>
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="pj-empty">
+            <SearchX size={36} aria-hidden="true" />
+            <p>{isAr ? 'مفيش مشروعات بالاختيارات دي دلوقتي.' : 'No projects match these filters right now.'}</p>
+            <button type="button" className="pj-btn pj-btn--ghost" onClick={() => { setSelectedCategory('all'); setParams({}, { replace: true }); }}>
+              {isAr ? 'عرض كل المشروعات' : 'Show all projects'}
+            </button>
+          </div>
+        ) : (
+          <div className="pj-grid">
+            {filteredProjects.map((project, i) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                isAr={isAr}
+                lang={lang}
+                currency={currency}
+                index={i}
+                featured={i === 0}
+                onInquire={handleInquireProject}
+                {...cardFacts(project)}
+              />
+            ))}
+          </div>
+        )}
 
-            return (
-              <div key={project.id} className="mega-project-card">
-                {/* Media & Progress Badge */}
-                <div className="project-card-media-wrap">
-                  <img 
-                    src={(Array.isArray(project.images) && project.images[0]) || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80'} 
-                    alt={title} 
-                    className="project-card-img" 
-                  />
-                  <div className="project-overlay-gradient" />
-
-                  {/* Brand Watermark Overlay */}
-                  <BrandWatermark size="md" position="bottom-right" />
-
-                  {/* Progress Tag Badge */}
-                  <div className="project-progress-badge">
-                    <span className="prog-percent">{project.progress}%</span>
-                    <span className="prog-lbl">{isAr ? 'إنجاز إنشائي' : 'Constructed'}</span>
-                  </div>
-
-                  {/* Developer Tag */}
-                  <div className="project-dev-pill">
-                    <Building2 size={13} />
-                    <span>{dev}</span>
-                  </div>
-                </div>
-
-                {/* Project Content */}
-                <div className="project-card-body">
-                  <div className="project-header-top">
-                    <div className="proj-loc-row">
-                      <MapPin size={14} className="text-gold" />
-                      <span>{location}</span>
-                    </div>
-                    <div className="project-title-row">
-                      <h3 className="project-title-text">{title}</h3>
-                      {project.brandTag && (
-                        <span className="project-brand-pill">{project.brandTag}</span>
-                      )}
-                    </div>
-                    <p className="project-desc-snippet">{desc}</p>
-                  </div>
-
-                  {/* Construction Progress Breakdown */}
-                  <div className="project-construction-box">
-                    <div className="prog-header-flex">
-                      <span className="prog-title-lbl">{isAr ? 'معدل التنفيذ الميداني' : 'Construction Progress'}</span>
-                      <span className="prog-status-pill">{project.progress}% {isAr ? 'مكتمل' : 'Completed'}</span>
-                    </div>
-                    <div className="prog-track">
-                      <div className="prog-fill" style={{ width: `${project.progress}%` }} />
-                    </div>
-                    <div className="prog-milestones-row">
-                      <span className="milestone-chip"><strong>100%</strong> {isAr ? 'خرسانات' : 'Structure'}</span>
-                      <span className="milestone-chip"><strong>{project.progressBreakdown.masonry}%</strong> {isAr ? 'مباني' : 'Masonry'}</span>
-                      <span className="milestone-chip"><strong>{project.progressBreakdown.finishing}%</strong> {isAr ? 'تشطيب' : 'Finishing'}</span>
-                    </div>
-                  </div>
-
-                  {/* Key Metrics Strip */}
-                  <div className="project-metrics-grid">
-                    <div className="proj-metric-item">
-                      <span className="metric-lbl">{isAr ? 'يبدأ من' : 'Starting From'}</span>
-                      <strong className="metric-val text-primary">{priceData.primary} {priceData.symbol}</strong>
-                      {priceData.isConverted && (
-                        <small style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', fontWeight: '700' }}>
-                          ≈ {priceData.originalEgp}
-                        </small>
-                      )}
-                    </div>
-
-                    <div className="proj-metric-item">
-                      <span className="metric-lbl">{isAr ? 'مقدم ونظام التقسيط' : 'Downpayment & Plan'}</span>
-                      <strong className="metric-val">
-                        {isAr 
-                          ? `${project.downPaymentPercent}% مقدم • ${project.installmentYears} سنوات` 
-                          : `${project.downPaymentPercent}% Down • ${project.installmentYears} Yrs`}
-                      </strong>
-                    </div>
-
-                    <div className="proj-metric-item">
-                      <span className="metric-lbl">{isAr ? 'تاريخ التسليم' : 'Delivery Target'}</span>
-                      <strong className="metric-val">{delivery}</strong>
-                    </div>
-
-                    <div className="proj-metric-item">
-                      <span className="metric-lbl">{isAr ? 'الوحدات المتاحة' : 'Available Units'}</span>
-                      <strong className="metric-val text-success">{project.availableUnits} {isAr ? 'وحدة متبقية' : 'Units'}</strong>
-                    </div>
-                  </div>
-
-                  {/* Features List */}
-                  <div className="project-features-pills">
-                    {feats.slice(0, 3).map((f, i) => (
-                      <span key={i} className="proj-feat-tag">
-                        <CheckCircle2 size={13} className="text-gold" />
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Card Actions */}
-                  <div className="project-card-footer-actions">
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-project-cta"
-                      onClick={() => handleInquireProject(project)}
-                    >
-                      <MessageSquare size={15} />
-                      <span>{isAr ? 'حجز معاينة ميدانية' : 'Book Viewing Tour'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-project-brochure"
-                      onClick={() => handleDownloadBrochure(project)}
-                    >
-                      <FileDown size={15} />
-                      <span>{isAr ? 'الكتالوج PDF' : 'Brochure PDF'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <section className="pj-cta">
+          <div>
+            <h2>{isAr ? 'مش لاقي المشروع اللي بتدور عليه؟' : "Can't find the project you want?"}</h2>
+            <p>{isAr ? 'قولنا المنطقة والميزانية ونوع الوحدة، ونرشّح لك المشروعات المناسبة ونرتّب المعاينة.' : 'Tell us the area, budget and unit type; we suggest matching projects and arrange the visit.'}</p>
+          </div>
+          <div className="pj-cta-actions">
+            <button type="button" className="pj-btn pj-btn--primary" onClick={askCustom}>
+              <MessageSquare size={17} aria-hidden="true" />
+              <span>{isAr ? 'كلّمنا على واتساب' : 'Message us on WhatsApp'}</span>
+            </button>
+            <Link to="/special-requests" className="pj-btn pj-btn--ghost">
+              <span>{isAr ? 'طلب بمواصفات خاصة' : 'Custom request'}</span>
+              {isAr ? <ArrowLeft size={16} aria-hidden="true" /> : <ArrowRight size={16} aria-hidden="true" />}
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -4,8 +4,9 @@
  * and injects Google-compliant Schema.org RealEstateListing & Organization schemas.
  */
 
-import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS } from '../config/siteConfig';
+import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS, OFFICE_HOURS, siteLink } from '../config/siteConfig';
 import { getDynamicPhone } from './founderCmsData';
+import { getSiteSettings, subscribeSiteSettings } from './siteSettings';
 
 const BASE_URL = SITE_URL;
 const DEFAULT_TITLE = '1Line Solutions | وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى';
@@ -41,21 +42,28 @@ export function injectJsonLdSchema(schemaId, schemaObject) {
   script.textContent = JSON.stringify(schemaObject, null, 2);
 }
 
+// The title/description the CRM set for this path (إعدادات الموقع → جوجل), in the page's language
+function seoOverride(path) {
+  const entry = getSiteSettings().seo[path];
+  if (!entry) return {};
+  const en = typeof document !== 'undefined' && document.documentElement.lang === 'en';
+  return { title: en ? entry.title_en : entry.title_ar, description: en ? entry.description_en : entry.description_ar };
+}
+
+// Pages set their SEO once on mount; settings can arrive later, so the last call is re-applied
+let lastSeoCall = null;
+subscribeSiteSettings(() => { if (lastSeoCall) updatePageSeo(lastSeoCall); });
+
 /**
  * Update Page SEO & Social Sharing Tags dynamically
  */
-export function updatePageSeo({
-  title,
-  description,
-  image,
-  url,
-  price,
-  type = 'website',
-  schemaId,
-  schema,
-  noindex = false
-}) {
+export function updatePageSeo(args) {
   if (typeof document === 'undefined') return;
+  lastSeoCall = args;
+  const { image, url, price, type = 'website', schemaId, schema, noindex = false } = args;
+  const override = noindex ? {} : seoOverride(url || window.location.pathname);
+  const title = override.title || args.title;
+  const description = override.description || args.description;
 
   setMetaTag('name', 'robots', noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large');
 
@@ -63,7 +71,10 @@ export function updatePageSeo({
   const finalDesc = description || DEFAULT_DESC;
   const finalImage = image ? (image.startsWith('http') ? image : `${BASE_URL}${image}`) : `${BASE_URL}${DEFAULT_IMAGE}`;
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const finalUrl = `${BASE_URL}${url || currentPath}`;
+  const targetPath = (url || currentPath).split('?')[0].split('#')[0];
+  const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
+  const finalPath = cleanPath === '/' ? '/' : cleanPath.replace(/\/+$/, '');
+  const finalUrl = `${BASE_URL}${finalPath}`;
 
   // 1. Standard HTML Title & Description
   document.title = finalTitle;
@@ -119,10 +130,10 @@ export function generateSocialShareSnippet(property, lang = 'ar') {
   const isAr = lang === 'ar';
   const title = isAr ? (property.title_ar || property.title) : (property.title_en || property.title);
   const location = isAr ? (property.locationName_ar || property.areaKey) : (property.locationName_en || property.areaKey);
-  const priceFormatted = property.price ? Number(property.price).toLocaleString() + ' ج.م' : '';
+  const priceFormatted = property.price ? Number(property.price).toLocaleString('en-US') + ' ج.م' : '';
   const sizeFormatted = property.size ? `${property.size} م²` : '';
   const propUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/properties/${property.id}`
+    ? siteLink(`/properties/${property.id}`)
     : `${BASE_URL}/properties/${property.id}`;
 
   if (isAr) {
@@ -131,7 +142,7 @@ export function generateSocialShareSnippet(property, lang = 'ar') {
       `📍 *الموقع:* ${location}`,
       priceFormatted ? `💰 *السعر:* ${priceFormatted}` : '',
       sizeFormatted ? `📐 *المساحة:* ${sizeFormatted}` : '',
-      property.downPayment ? `💳 *المقدم:* ${Number(property.downPayment).toLocaleString()} ج.م` : '',
+      property.downPayment ? `💳 *المقدم:* ${Number(property.downPayment).toLocaleString('en-US')} ج.م` : '',
       `🔍 *معاينة تفاصيل الوحدة والتقرير القانوني:*`,
       propUrl,
       `\nمنصة 1Line للاستثمار العقاري المعتمد - سوهاج`
@@ -207,7 +218,8 @@ export function buildOrganizationSchema() {
     image: `${BASE_URL}${DEFAULT_IMAGE}`,
     description: DEFAULT_DESC,
     telephone: getDynamicPhone(),
-    email: CONTACT.email,
+    email: getSiteSettings().contact.email,
+    ...(Object.keys(getSiteSettings().social).length ? { sameAs: Object.values(getSiteSettings().social) } : {}),
     founder: {
       '@type': 'Person',
       name: BRAND.founder_ar,
@@ -222,12 +234,12 @@ export function buildOrganizationSchema() {
       addressCountry: 'EG'
     },
     geo: { '@type': 'GeoCoordinates', latitude: CONTACT.geo.lat, longitude: CONTACT.geo.lng },
-    hasMap: CONTACT.mapsUrl,
+    hasMap: getSiteSettings().contact.mapsUrl,
     openingHoursSpecification: [{
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
-      opens: '10:00',
-      closes: '22:00'
+      opens: `${String(OFFICE_HOURS.open).padStart(2, '0')}:00`,
+      closes: `${String(OFFICE_HOURS.close).padStart(2, '0')}:00`
     }],
     areaServed: [
       { '@type': 'AdministrativeArea', name: 'محافظة سوهاج' },
@@ -239,3 +251,29 @@ export function buildOrganizationSchema() {
     priceRange: 'EGP 1,000,000+'
   };
 }
+
+/**
+ * Build Schema.org BreadcrumbList from route items
+ * @param {Array<{name: string, url: string}>} items
+ */
+export function buildBreadcrumbSchema(items) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => {
+      let itemUrl = item.url || '/';
+      if (!itemUrl.startsWith('http')) {
+        const cleanPath = itemUrl.startsWith('/') ? itemUrl : `/${itemUrl}`;
+        itemUrl = `${BASE_URL}${cleanPath === '/' ? '/' : cleanPath.replace(/\/+$/, '')}`;
+      }
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: itemUrl
+      };
+    })
+  };
+}
+

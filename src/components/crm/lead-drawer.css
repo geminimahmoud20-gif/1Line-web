@@ -1,0 +1,154 @@
+/* Lead drawer (CRM redesign phase 3): built on the kit Drawer; only the layout lives here. */
+.crm-ld { display: flex; flex-direction: column; gap: var(--ui-s-4); font-family: var(--ui-font); color: var(--ui-text); }
+.crm-ld__nav { display: flex; align-items: center; gap: 2px; }
+.crm-ld__counter { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
+.crm-ld__delete { color: var(--ui-danger); margin-inline-end: auto; }
+
+.crm-ld__summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.crm-ld__contact { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
+.crm-ld__phone { display: inline-flex; align-items: center; gap: var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); font-variant-numeric: tabular-nums; }
+.crm-ld__quick { display: flex; gap: var(--ui-s-2); }
+
+.crm-ld__stage { padding: var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
+.crm-ld__stage-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--ui-s-2); }
+.crm-ld__stages { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.crm-ld__lost[aria-pressed='true'] { background: var(--ui-danger); border-color: var(--ui-danger); color: var(--ui-on-danger); }
+
+.crm-ld__h { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.crm-ld__h svg { color: var(--ui-text-3); }
+.crm-ld__hint { margin: 0; font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text-3); }
+.crm-ld__stack { display: flex; flex-direction: column; gap: var(--ui-s-4); }
+.crm-ld__block { display: flex; flex-direction: column; gap: var(--ui-s-3); padding: var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.crm-ld__block--info { background: var(--ui-info-tint); border-color: transparent; }
+.crm-ld__block--warn { background: var(--ui-warning-tint); border-color: transparent; }
+.crm-ld__block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.crm-ld__when { font-size: var(--ui-fs-2); color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.crm-ld__row { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.crm-ld__row a.ui-btn, .crm-ld__tpl a.ui-btn { text-decoration: none; color: var(--ui-text); }
+.crm-ld__form { display: flex; flex-direction: column; gap: var(--ui-s-3); }
+
+.crm-ld__facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--ui-s-3); }
+.crm-ld__facts dt { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-ld__fact--wide { grid-column: 1 / -1; }
+.crm-ld__facts dd { margin: 2px 0 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); font-variant-numeric: tabular-nums; }
+.crm-ld__photos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--ui-s-2); }
+.crm-ld__photos a { display: flex; flex-direction: column; gap: var(--ui-s-1); color: var(--ui-text-2); text-decoration: none; font-size: var(--ui-fs-1); }
+.crm-ld__photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--ui-r-sm); border: 1px solid var(--ui-line); }
+
+.crm-ld__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.crm-ld__tpl { display: flex; align-items: center; gap: var(--ui-s-3); padding: var(--ui-s-2) var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
+.crm-ld__tpl-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.crm-ld__tpl-title { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+.crm-ld__tpl-msg { font-size: var(--ui-fs-1); color: var(--ui-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.crm-ld__pick { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-2) var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
+.crm-ld__pick-title { flex: 1; min-width: 0; font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-ld__price { font-size: var(--ui-fs-2); color: var(--ui-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.crm-ld__match { display: flex; gap: var(--ui-s-3); padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); }
+.crm-ld__match img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--ui-r-md); flex-shrink: 0; }
+.crm-ld__match-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-s-1); }
+.crm-ld__match-top { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.crm-ld__match-title { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-ld__match-meta { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-ld__match .crm-ld__row { margin-top: var(--ui-s-1); }
+
+.crm-ld__timeline { display: flex; flex-direction: column; gap: var(--ui-s-4); }
+.crm-ld__note-form { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-s-2); }
+.crm-ld__note-form .ui-field { width: 100%; }
+.crm-ld__events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.crm-ld__events li {
+  position: relative; display: flex; flex-direction: column; gap: 2px;
+  padding: 0 var(--ui-s-4) var(--ui-s-4); border-inline-start: 2px solid var(--ui-line); margin-inline-start: 5px;
+}
+.crm-ld__events li::before {
+  content: ''; position: absolute; inset-inline-start: -6px; top: 4px; width: 10px; height: 10px;
+  border-radius: var(--ui-r-full); background: var(--ui-surface); border: 2px solid var(--ui-accent);
+}
+.crm-ld__events li:last-child { border-color: transparent; }
+.crm-ld__event-meta { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+.crm-ld__event-text { font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); }
+
+@media (max-width: 639px) {
+  .crm-ld__quick { width: 100%; }
+  .crm-ld__quick .ui-btn { flex: 1; }
+}
+
+.crm-ld__facts dd small { font-weight: var(--ui-fw-regular); color: var(--ui-text-3); }
+.crm-ld__commission-edit { display: grid; grid-template-columns: 1fr 120px auto; gap: var(--ui-s-2); align-items: start; margin-top: var(--ui-s-3); }
+.crm-ld__commission-edit > .ui-btn { margin-top: 26px; }
+@media (max-width: 479px) { .crm-ld__commission-edit { grid-template-columns: 1fr 1fr; } .crm-ld__commission-edit > .ui-btn { grid-column: 1 / -1; margin-top: 0; } }
+.crm-ld__page-preview { white-space: pre-wrap; padding: var(--ui-s-2) var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); margin: var(--ui-s-2) 0; overflow-wrap: anywhere; }
+
+/* Tidier on a phone: one-line header, one-row stage strip, folded secondary blocks */
+.crm-ld__desc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-ld__stages { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--ui-s-3) * -1); padding-inline: var(--ui-s-3); }
+.crm-ld__stages::-webkit-scrollbar { display: none; }
+.crm-ld__stages > * { flex: 0 0 auto; }
+.crm-ld__fold { padding: 0; gap: 0; }
+.crm-ld__fold-sum { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-3) var(--ui-s-4); cursor: pointer; list-style: none; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); min-height: 44px; }
+.crm-ld__fold-sum::-webkit-details-marker { display: none; }
+.crm-ld__fold-sum::after { content: ''; margin-inline-start: auto; width: 8px; height: 8px; border-inline-end: 2px solid var(--ui-text-3); border-block-end: 2px solid var(--ui-text-3); transform: rotate(45deg); transition: transform 0.15s; }
+.crm-ld__fold[open] > .crm-ld__fold-sum::after { transform: rotate(-135deg); }
+.crm-ld__fold > :not(summary) { margin: 0 var(--ui-s-4) var(--ui-s-4); }
+@media (max-width: 639px) {
+  .crm-ld, .crm-ld__stack { gap: var(--ui-s-3); }
+  .crm-ld__block { padding: var(--ui-s-3); }
+  .crm-ld__stage { padding: var(--ui-s-2) var(--ui-s-3); }
+  .crm-ld__stage-head { margin-bottom: var(--ui-s-1); }
+  .crm-ld__fold { padding: 0; }
+  .crm-ld__fold > :not(summary) { margin: 0 var(--ui-s-3) var(--ui-s-3); }
+}
+
+.crm-ld__stages::after { content: ''; flex: 0 0 var(--ui-s-3); }
+
+/* The client file: history, the client's own words */
+.cf-count { margin-inline-start: var(--ui-s-2); min-width: 22px; padding: 0 var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); color: var(--ui-text-2); font-size: var(--ui-fs-1); line-height: 22px; text-align: center; font-weight: var(--ui-fw-regular); }
+.cf-note { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-s-2); }
+.cf-note .ui-field { width: 100%; }
+.cf-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cf-event { position: relative; display: flex; gap: var(--ui-s-3); padding-bottom: var(--ui-s-4); }
+.cf-event::before { content: ''; position: absolute; inset-inline-start: 13px; top: 28px; bottom: 0; width: 2px; background: var(--ui-line); }
+.cf-event:last-child { padding-bottom: 0; }
+.cf-event:last-child::before { display: none; }
+.cf-event__icon { flex: 0 0 28px; width: 28px; height: 28px; border-radius: var(--ui-r-full); display: grid; place-items: center; background: var(--ui-surface-2); color: var(--ui-text-3); }
+.cf-event--outcome .cf-event__icon { background: var(--ui-info-tint); color: var(--ui-info); }
+.cf-event--request .cf-event__icon { background: var(--ui-warning-tint); color: var(--ui-warning); }
+.cf-event--task .cf-event__icon { background: var(--ui-success-tint); color: var(--ui-success); }
+.cf-event__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding-top: 3px; }
+.cf-event__text { font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); overflow-wrap: anywhere; }
+.cf-event__meta { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+.cf-words { margin: 0; padding: var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); overflow-wrap: anywhere; }
+.cf-words small { display: block; margin-bottom: 2px; color: var(--ui-text-3); font-size: var(--ui-fs-1); }
+.crm-ld__fold-hint { margin-inline-start: auto; margin-inline-end: var(--ui-s-3); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-regular); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+
+/* «الخطوة الجاية؟» sheet */
+.crm-nextstep { display: grid; gap: var(--space-3, 12px); }
+.crm-nextstep__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3, 12px); }
+.crm-nextstep__f { display: grid; gap: 4px; font-size: var(--text-sm, 13px); }
+.crm-nextstep__f select { min-height: 44px; border-radius: var(--radius-md, 10px); border: 1px solid var(--border); padding: 0 10px; background: var(--surface); color: inherit; }
+.crm-nextstep__err { color: var(--danger); margin: 0; font-size: var(--text-sm, 13px); }
+
+/* ── The client file in the same visual language as the cards ──
+   Each block is a raised card with round corners; the colour edge carries the client's stage (the colours are
+   defined in client-card.css), and the summary strip gets a tinted band so the first thing you see is who this is. */
+.crm-ld { --lead-accent: var(--ui-line-strong); }
+.crm-ld[data-stage='new'] { --lead-accent: var(--ui-accent); }
+.crm-ld[data-stage='contacted'] { --lead-accent: var(--ui-info); }
+.crm-ld[data-stage='site_visit'] { --lead-accent: var(--ui-primary); }
+.crm-ld[data-stage='negotiating'] { --lead-accent: var(--ui-warning); }
+.crm-ld[data-stage='closing'],
+.crm-ld[data-stage='closed'] { --lead-accent: var(--ui-success); }
+.crm-ld[data-stage='inactive'],
+.crm-ld[data-stage='lost'] { --lead-accent: var(--ui-text-3); }
+.crm-ld__summary {
+  padding: var(--ui-s-3) var(--ui-s-4); border-radius: 18px; border-inline-start: 5px solid var(--lead-accent);
+  background: color-mix(in srgb, var(--lead-accent) 9%, var(--ui-surface));
+}
+.crm-ld__block {
+  border-radius: 18px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent), 0 14px 26px -20px color-mix(in srgb, var(--ui-n900) 30%, transparent);
+}
+/* The next step is the block to act on: it carries the stage colour on its edge */
+.crm-ld__stack > .crm-ld__block:first-child { border-inline-start: 5px solid var(--lead-accent); }
+.crm-ld__stack { gap: var(--ui-s-4); }

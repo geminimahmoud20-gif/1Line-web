@@ -2,13 +2,15 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Building, MapPin, Layers, Calculator, TrendingUp, FileText, ArrowRight, ArrowLeft, CornerDownLeft, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData.js';
-import { MEGA_PROJECTS } from '../../data/projectsData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
+import { areaPrice } from '../../utils/areaPricing.js';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 export default function QuickSearchModal({
   isOpen,
   onClose,
   properties = [],
+  projects = [],
   lang = 'ar',
   currency = 'EGP',
   onOpenAddDemand
@@ -69,7 +71,7 @@ export default function QuickSearchModal({
     {
       id: 'tool-financing',
       type: 'tool',
-      title: isAr ? 'حاسبة التمويل والأقساط العقارية' : 'Financing & Mortgage Calculator',
+      title: isAr ? 'حاسبة تقسيط المشروعات' : 'Project installment calculator',
       desc: isAr ? 'احسب قسطك الشهري والدفعة المقدمة وجدول السداد' : 'Calculate monthly installments and down payment',
       icon: Calculator,
       action: () => { navigate('/financing'); onClose(); }
@@ -123,7 +125,8 @@ export default function QuickSearchModal({
     }).slice(0, 4);
 
     // 3. Matching Mega Projects
-    const matchedProjects = (MEGA_PROJECTS || []).filter((proj) => {
+    // Projects added in the CRM (never the bundled samples)
+    const matchedProjects = projects.filter((proj) => !proj.isDemo).filter((proj) => {
       const titleAr = (proj.title_ar || '').toLowerCase();
       const titleEn = (proj.title_en || '').toLowerCase();
       const devAr = (proj.developer_ar || '').toLowerCase();
@@ -142,7 +145,7 @@ export default function QuickSearchModal({
       projects: matchedProjects,
       tools: matchedTools
     };
-  }, [query, properties, areas, tools]);
+  }, [query, properties, projects, areas, tools]);
 
   // Flatten items for keyboard navigation
   const flatItems = useMemo(() => {
@@ -294,7 +297,7 @@ export default function QuickSearchModal({
                           onMouseEnter={() => setSelectedIndex(thisIndex)}
                         >
                           <img
-                            src={p.images?.[0] || p.image || '/favicon.svg'}
+                            src={thumbUrl(p.images?.[0] || p.image) || '/favicon.svg'}
                             alt={p.title_ar}
                             className="item-thumb-img"
                             loading="lazy"
@@ -328,7 +331,9 @@ export default function QuickSearchModal({
                     {searchResults.areas.map((a) => {
                       const thisIndex = runningIndex++;
                       const isSelected = selectedIndex === thisIndex;
-                      const benchmarkObj = formatCurrencyPrice(a.avgPricePerMeter, currency, lang);
+                      // The same figure as the market page (listings or the team's own), never a seeded one
+                      const ap = areaPrice(a, properties, areas);
+                      const benchmarkObj = ap.ppm > 0 ? formatCurrencyPrice(ap.ppm, currency, lang) : null;
                       return (
                         <div
                           key={a.id}
@@ -343,10 +348,12 @@ export default function QuickSearchModal({
                             <span className="item-main-title">{isAr ? a.name_ar : a.name_en}</span>
                             <span className="item-sub-meta">{isAr ? a.description_ar : a.label_en}</span>
                           </div>
-                          <div className="item-end-price">
-                            <span className="area-meter-label">{isAr ? 'متوسط المتر' : 'Avg/m²'}</span>
-                            <strong className="area-meter-val">{benchmarkObj.primary} {benchmarkObj.symbol}</strong>
-                          </div>
+                          {benchmarkObj && (
+                            <div className="item-end-price">
+                              <span className="area-meter-label">{isAr ? 'متوسط المتر' : 'Avg/m²'}</span>
+                              <strong className="area-meter-val">{benchmarkObj.primary} {benchmarkObj.symbol}</strong>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

@@ -1,0 +1,82 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { buildPropertyShell, buildProjectShell, routeBody, isPublicListing, newestFirst } from '../../src/utils/seoShell.js';
+
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const template = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replaceAll('%VITE_SITE_URL%', 'https://www.1lineestate.com');
+const rootText = (html) => html.slice(html.indexOf('<div id="root">'), html.indexOf('</main></div>'));
+
+test('a listing page carries its text for search engines, without contact data', () => {
+  const html = buildPropertyShell(template, {
+    id: 'prop-9', title_ar: 'شقة 150م للبيع غرب سوهاج', type: 'apartment', price: 1500000, size: 150, bedrooms: 3, bathrooms: 2, floor: 4,
+    locationName_ar: 'غرب سوهاج', description_ar: 'تشطيب سوبر لوكس، للتواصل 01012345678', features_ar: ['أسانسير', 'جراج'],
+    images: ['https://example.com/a.jpg']
+  }, 'https://www.1lineestate.com');
+  const body = rootText(html);
+  assert.match(body, /<h1>شقة 150م للبيع غرب سوهاج<\/h1>/);
+  assert.match(body, /السعر: 1,500,000 ج.م/);
+  assert.match(body, /المساحة: 150 م²/);
+  assert.match(body, /الغرف: 3/);
+  assert.match(body, /<li>أسانسير<\/li>/);
+  assert.match(body, /<img src="https:\/\/example.com\/a.jpg" alt="شقة 150م/);
+  assert.match(body, /href="\/properties"/);
+  assert.doesNotMatch(body, /01012345678/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/www.1lineestate.com\/properties\/prop-9"/);
+});
+
+test('page text is escaped', () => {
+  const body = rootText(buildPropertyShell(template, { id: 'x1', title_ar: '<script>alert(1)</script>', description_ar: 'a <b>b</b>' }, ''));
+  assert.doesNotMatch(body, /<script>alert/);
+  assert.match(body, /&lt;script&gt;/);
+});
+
+test('a project page gets its own shell', () => {
+  const html = buildProjectShell(template, { id: 'mega-1', title_ar: 'كمبوند النخيل', developer_ar: 'شركة الأمل', location_ar: 'سوهاج الجديدة', startPrice: 900000, progress: 40 }, 'https://www.1lineestate.com');
+  assert.match(html, /<title>كمبوند النخيل \| 1Line Solutions<\/title>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/www.1lineestate.com\/projects\/mega-1"/);
+  assert.match(rootText(html), /الأسعار تبدأ من: 900,000 ج.م/);
+  assert.match(rootText(html), /نسبة التنفيذ: 40%/);
+});
+
+test('section pages link every listing, newest first; hidden ones are left out', () => {
+  const listings = newestFirst([
+    { id: 'a', title_ar: 'أقدم', createdAt: '2026-01-01' },
+    { id: 'b', title_ar: 'أحدث', createdAt: '2026-10-01' },
+    { id: 'c', title_ar: 'مخفي', status: 'hidden' },
+    { id: 'd', title_ar: 'مستني موافقة', approval: 'pending' }
+  ].filter(isPublicListing));
+  const body = routeBody({ h1: 'العقارات', desc: 'كل العقارات', path: 'properties', listings });
+  assert.ok(body.indexOf('/properties/b') < body.indexOf('/properties/a'));
+  assert.doesNotMatch(body, /\/properties\/c|\/properties\/d/);
+  assert.match(body, /<h1>العقارات<\/h1>/);
+});
+
+test('a shared buyer request previews as what is wanted, where and for how much', async () => {
+  const { buildDemandShell } = await import('../../src/utils/seoShell.js');
+  const html = buildDemandShell(template, { id: 'd1', type: 'apartment', area_ar: 'سوهاج الجديدة', budget: 4000000, text_ar: 'مطلوب شقة بكمبوند ريتاج 2 فوق 150م، للتواصل 01012345678' }, 'https://www.1lineestate.com');
+  assert.match(html, /<meta property="og:title" content="مطلوب للشراء: شقة سكنية في سوهاج الجديدة بميزانية 4,000,000 ج.م"/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/www.1lineestate.com\/demands\/d1"/);
+  assert.match(rootText(html), /<h1>مطلوب للشراء: شقة سكنية في سوهاج الجديدة<\/h1>/);
+  assert.doesNotMatch(html, /01012345678/);
+});
+
+test('a listing page names where it is, and links to nearby listings and its kind pages', async () => {
+  const { listingSeoTitle, relatedListings } = await import('../../src/utils/seoShell.js');
+  const tpl = template;
+  const p = { id: 'a1', type: 'apartment', title_ar: 'شقة جاردن سيتي 4', areaKey: 'new_sohag', status: 'published', price: 2_000_000, size: 150, createdAt: '2026-11-01' };
+  const near = { id: 'a2', type: 'apartment', title_ar: 'شقة تانية', areaKey: 'new_sohag', status: 'published', price: 1_800_000, size: 120, createdAt: '2026-11-02' };
+  const hidden = { ...near, id: 'a3', status: 'hidden' };
+  assert.equal(listingSeoTitle(p), 'شقة جاردن سيتي 4 — سوهاج الجديدة');
+  assert.equal(listingSeoTitle({ title_ar: 'شقة في سوهاج' }), 'شقة في سوهاج');
+  assert.deepEqual(relatedListings(p, [p, near, hidden]).map((x) => x.id), ['a2']);
+  const html = buildPropertyShell(tpl, p, 'https://www.1lineestate.com', [p, near, hidden]);
+  assert.ok(html.includes('<title>شقة جاردن سيتي 4 — سوهاج الجديدة | 1Line Solutions</title>'));
+  assert.ok(html.includes('href="/properties/a2"'));
+  assert.ok(!html.includes('href="/properties/a3"'));
+  assert.ok(html.includes('href="/sohag/apartments-for-sale/new-sohag"'));
+  assert.ok(html.includes('سعر المتر: 13,333 ج.م'));
+  assert.equal((html.match(/<h1/g) || []).length, 1);
+});

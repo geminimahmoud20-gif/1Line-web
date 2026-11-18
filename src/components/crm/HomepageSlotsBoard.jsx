@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Star, ChevronUp, ChevronDown, CalendarClock, X, GripVertical, Eye, Pencil } from 'lucide-react';
+import { Star, StarOff, ChevronUp, ChevronDown, CalendarClock, X, GripVertical, Eye, EyeOff, Pencil, Building2, Hourglass, AlertTriangle, RotateCcw, Plus } from 'lucide-react';
 import {
   HOME_FEATURED_SLOTS,
   getHomepageSlots,
@@ -7,11 +7,16 @@ import {
   featuredState,
   featuredDaysLeft,
   toDayInput,
-  addDays
+  addDays,
+  isPublishedProperty,
+  featuredBlocker,
+  homepageSummary
 } from '../../utils/featuredSlots';
 import './homepage-slots.css';
+import { thumbUrl } from '../../utils/imageThumbs';
+import { countPhrase } from '../../utils/arabicCount';
 
-const fmtDay = (v, isAr) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : '');
+const fmtDay = (v, isAr) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' }) : '');
 
 export function FeaturedPeriodLabel({ property, isAr }) {
   const state = featuredState(property);
@@ -28,10 +33,12 @@ export function FeaturedPeriodLabel({ property, isAr }) {
 }
 
 /** Schedule dialog used by the star button and the board */
-export function FeaturedSlotModal({ property, isAr, onSave, onClose, nextOrder }) {
-  const [from, setFrom] = useState(() => property.featuredFrom || toDayInput(Date.now()));
-  const [until, setUntil] = useState(() => property.featuredUntil || addDays(29));
-  const [openEnded, setOpenEnded] = useState(property.featured && !property.featuredUntil);
+export function FeaturedSlotModal({ property, isAr, onSave, onClose, onRemove, nextOrder }) {
+  // Renewing an expired listing starts a fresh period; re-saving the old dates would keep it expired
+  const fresh = !property.featured || featuredState(property) === 'expired';
+  const [from, setFrom] = useState(() => (!fresh && property.featuredFrom) || toDayInput(Date.now()));
+  const [until, setUntil] = useState(() => (!fresh && property.featuredUntil) || addDays(29));
+  const [openEnded, setOpenEnded] = useState(!fresh && !property.featuredUntil);
   const [order, setOrder] = useState(property.featuredOrder ?? nextOrder);
   const [error, setError] = useState('');
 
@@ -48,6 +55,7 @@ export function FeaturedSlotModal({ property, isAr, onSave, onClose, nextOrder }
     if (!openEnded && until < from) return setError(isAr ? 'تاريخ النهاية قبل البداية' : 'End date is before start date');
     onSave({
       featured: true,
+      homeExcluded: false,
       featuredFrom: from,
       featuredUntil: openEnded ? null : until,
       featuredOrder: Number(order) || 1
@@ -105,6 +113,11 @@ export function FeaturedSlotModal({ property, isAr, onSave, onClose, nextOrder }
         {error && <p className="hs-error" role="alert">{error}</p>}
 
         <div className="hs-modal-actions">
+          {property.featured && onRemove && (
+            <button type="button" className="btn btn-ghost hs-danger-btn" onClick={onRemove} style={{ marginInlineEnd: 'auto' }}>
+              <StarOff size={15} /> {isAr ? 'إلغاء التمييز' : 'Remove'}
+            </button>
+          )}
           <button type="button" className="btn btn-ghost" onClick={onClose}>{isAr ? 'إلغاء' : 'Cancel'}</button>
           <button type="submit" className="btn btn-primary">{isAr ? 'حفظ التمييز' : 'Save'}</button>
         </div>
@@ -151,6 +164,27 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
   };
 
   const title = (p) => (isAr ? p.title_ar : (p.title_en || p.title_ar));
+  const summary = useMemo(() => homepageSummary(properties, now), [properties, now]);
+  const BLOCK_REASON = {
+    hidden: isAr ? 'مخفي من الموقع' : 'hidden from the site',
+    draft: isAr ? 'مسودة' : 'draft',
+    sold: isAr ? 'اتباع' : 'sold',
+    incomplete: isAr ? 'ناقصها صور أو سعر أو مساحة أو منطقة' : 'missing photos, price, size or area'
+  };
+  // Listings that could be pinned from here: on the site and not already pinned
+  const pinnable = useMemo(
+    () => properties.filter((p) => isPublishedProperty(p) && !p.featured)
+      .sort((a, b) => String(a.title_ar || '').localeCompare(String(b.title_ar || ''), 'ar')),
+    [properties]
+  );
+  const setExcluded = (id, on) => onUpdateProperty(id, { homeExcluded: on });
+
+  // Take a listing off the homepage; the rest close the gap (1..n)
+  const unfeature = (id) => {
+    if (onUpdateProperty(id, { featured: false, featuredOrder: null }) === false) return false;
+    applyOrder(liveIds.filter((x) => x !== id));
+    return true;
+  };
 
   return (
     <section className="hs-board" aria-labelledby="hs-board-title">
@@ -182,7 +216,9 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
               onDrop={() => isFeatured && dropOn(p.id)}
             >
               <span className="hs-slot-num">{idx + 1}</span>
-              <img src={p.images?.[0]} alt="" loading="lazy" />
+              {p.images?.[0]
+                ? <img src={thumbUrl(p.images[0])} alt="" loading="lazy" />
+                : <span className="hs-slot-noimg" aria-hidden="true" title={isAr ? 'عقار بدون صورة' : 'No photo'}><Building2 size={20} /></span>}
               <div className="hs-slot-body">
                 <strong title={title(p)}>{title(p)}</strong>
                 <div className="hs-slot-meta">
@@ -198,10 +234,21 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
                       <GripVertical size={16} className="hs-grip" aria-hidden="true" />
                       <button type="button" className="hs-icon-btn" onClick={() => move(p.id, -1)} disabled={liveIds.indexOf(p.id) === 0} aria-label={isAr ? 'تقديم' : 'Move up'}><ChevronUp size={16} /></button>
                       <button type="button" className="hs-icon-btn" onClick={() => move(p.id, 1)} disabled={liveIds.indexOf(p.id) === liveIds.length - 1} aria-label={isAr ? 'تأخير' : 'Move down'}><ChevronDown size={16} /></button>
-                      <button type="button" className="hs-icon-btn" onClick={() => setEditing(p)} aria-label={isAr ? 'تعديل المدة' : 'Edit period'}><Pencil size={15} /></button>
+                      <button type="button" className="hs-icon-btn" onClick={() => setEditing(p)} aria-label={isAr ? 'تعديل المدة' : 'Edit period'} title={isAr ? 'تعديل المدة' : 'Edit period'}><Pencil size={15} /></button>
+                      <button type="button" className="hs-icon-btn hs-icon-btn--danger" onClick={() => unfeature(p.id)} aria-label={isAr ? 'إلغاء التمييز' : 'Remove from homepage'} title={isAr ? 'إلغاء التمييز' : 'Remove from homepage'}><StarOff size={15} /></button>
                     </>
                   ) : (
-                    <button type="button" className="hs-link-btn" onClick={() => setEditing(p)}><Star size={13} /> {isAr ? 'ثبّته' : 'Pin'}</button>
+                    <>
+                      <button type="button" className="hs-link-btn" onClick={() => setEditing(p)}><Star size={13} /> {isAr ? 'ثبّته' : 'Pin'}</button>
+                      <button
+                        type="button"
+                        className="hs-link-btn hs-link-btn--muted"
+                        onClick={() => setExcluded(p.id, true)}
+                        title={isAr ? 'متظهرش الوحدة دي في الواجهة تلقائياً، واللي بعدها ياخد مكانها' : 'Keep this listing out of the homepage; the next one takes its place'}
+                      >
+                        <EyeOff size={13} /> {isAr ? 'شيلها من الواجهة' : 'Remove'}
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -210,11 +257,75 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
         })}
       </ol>
 
+      {canEdit && pinnable.length > 0 && (
+        <div className="hs-add">
+          <Plus size={15} aria-hidden="true" />
+          <label htmlFor="hs-add-select">{isAr ? 'ثبّت وحدة تانية في الواجهة:' : 'Pin another listing:'}</label>
+          <select
+            id="hs-add-select"
+            className="ui-select"
+            value=""
+            onChange={(e) => { const p = properties.find((x) => String(x.id) === e.target.value); if (p) setEditing(p); }}
+          >
+            <option value="">{isAr ? `اختار من ${countPhrase('unit', pinnable.length)} معروضة` : `Choose from ${pinnable.length} live listings`}</option>
+            {pinnable.map((p) => <option key={p.id} value={p.id}>{title(p)} · {String(p.id).toUpperCase()}</option>)}
+          </select>
+        </div>
+      )}
+
+      {summary.blocked.length > 0 && (
+        <div className="hs-warn" role="status">
+          <p>
+            <AlertTriangle size={14} aria-hidden="true" />
+            <strong>
+              {isAr
+                ? `${summary.blocked.length} وحدة متثبّتة بس مش ظاهرة في الواجهة`
+                : `${summary.blocked.length} pinned listings are not on the homepage`}
+            </strong>
+            {isAr ? '— انشرها من الجدول علشان تظهر، أو شيل التثبيت.' : '— publish them from the table, or unpin them.'}
+          </p>
+          <ul>
+            {summary.blocked.map((p) => (
+              <li key={p.id}>
+                <span className="hs-warn-title" title={title(p)}>{title(p)}</span>
+                <span className="hs-tag">{BLOCK_REASON[featuredBlocker(p)] || BLOCK_REASON.hidden}</span>
+                {canEdit && (
+                  <button type="button" className="hs-link-btn hs-link-btn--muted" onClick={() => onUpdateProperty(p.id, { featured: false, featuredOrder: null })}>
+                    <StarOff size={13} /> {isAr ? 'شيل التثبيت' : 'Unpin'}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {summary.excluded.length > 0 && (
+        <div className="hs-queue">
+          <p>
+            <EyeOff size={14} aria-hidden="true" />
+            <strong>{isAr ? 'مستبعدة من الواجهة:' : 'Kept off the homepage:'}</strong>
+            {summary.excluded.map((p) => (
+              <button
+                type="button"
+                key={p.id}
+                className="hs-queue-item"
+                disabled={!canEdit}
+                onClick={() => setExcluded(p.id, false)}
+                title={isAr ? 'رجّعها للواجهة' : 'Allow on the homepage again'}
+              >
+                {title(p)} <RotateCcw size={12} aria-hidden="true" />
+              </button>
+            ))}
+          </p>
+        </div>
+      )}
+
       {(queue.overflow.length > 0 || queue.scheduled.length > 0 || queue.expired.length > 0) && (
         <div className="hs-queue">
           {queue.overflow.length > 0 && (
-            <p><strong>{isAr ? 'في الانتظار (الأماكن ممتلئة):' : 'Waiting (slots full):'}</strong> {queue.overflow.map((p) => (
-              <button type="button" key={p.id} className="hs-queue-item" onClick={() => setEditing(p)}>{title(p)}</button>
+            <p><Hourglass size={14} /> <strong>{isAr ? 'في الانتظار (الأماكن ممتلئة):' : 'Waiting (slots full):'}</strong> {queue.overflow.map((p) => (
+              <button type="button" key={p.id} className="hs-queue-item" onClick={() => setEditing(p)}>{title(p)} <FeaturedPeriodLabel property={p} isAr={isAr} /></button>
             ))}</p>
           )}
           {queue.scheduled.length > 0 && (
@@ -236,7 +347,8 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
           isAr={isAr}
           nextOrder={nextOrder}
           onClose={() => setEditing(null)}
-          onSave={(patch) => { onUpdateProperty(editing.id, patch); setEditing(null); }}
+          onRemove={canEdit ? () => { if (unfeature(editing.id)) setEditing(null); } : undefined}
+          onSave={(patch) => { if (onUpdateProperty(editing.id, patch) !== false) setEditing(null); }}
         />
       )}
     </section>

@@ -3,6 +3,9 @@ import { Building2, Store, Briefcase, Video, PhoneCall, Download, Sparkles } fro
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
+import useClientDownload from '../hooks/useClientDownload';
+import AreaOptions from './common/AreaOptions';
+import { contactProblem } from '../utils/contactValidation';
 
 // Dynamic ROI Yields based on property type in Sohag
 const YIELD_RATES = {
@@ -31,6 +34,7 @@ export const InvestorCenter = ({
   const [whatsappError, setWhatsappError] = useState('');
   const [meetingFormat, setMeetingFormat] = useState('video_tour'); // 'video_tour' | 'phone_call' | 'in_person'
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const download = useClientDownload();
   const [areasList, setAreasList] = useState(() => getAreas().filter(a => a.id !== 'all'));
 
   // Live listen for area data updates from Admin CRM
@@ -45,7 +49,7 @@ export const InvestorCenter = ({
   const isAr = lang === 'ar';
 
   const formatConverted = (valEgp) => {
-    return `${valEgp.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
+    return `${valEgp.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
   };
 
   const selectedYield = YIELD_RATES[invPropType] || YIELD_RATES.commercial;
@@ -73,7 +77,9 @@ export const InvestorCenter = ({
     const cleanPhone = (investorForm.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (investorForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
-    if (!investorForm.name || !investorForm.name.trim()) {
+    const problem = contactProblem({ name: investorForm.name, phone: cleanPhone, phoneCountry, phoneOptional: true, whatsapp: cleanWhatsapp, whatsappCountry }, isAr);
+    if (problem) {
+      triggerToast?.(problem, 'error');
       return;
     }
 
@@ -98,7 +104,7 @@ export const InvestorCenter = ({
       return;
     }
 
-    const targetArea = investorForm.area || 'new_sohag';
+    const targetArea = investorForm.area || ''; // required select: no preset area
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
@@ -121,7 +127,7 @@ export const InvestorCenter = ({
     submitInvestorForm(updatedForm);
   };
 
-  const handleDownloadProspectus = async () => {
+  const handleDownloadProspectus = () => download({ kind: 'investor_prospectus', itemTitle: `${invPropType} — ${invAmount}` }, async () => {
     setIsDownloadingPdf(true);
     try {
       const { generateInvestorProspectusPdf } = await import('../utils/pdfBrochure');
@@ -133,7 +139,7 @@ export const InvestorCenter = ({
         currency
       });
       if (triggerToast) {
-        triggerToast(isAr ? 'تم إنشاء وتحميل دراسة الجدوى الاستثمارية بنجاح' : 'Prospectus PDF generated and downloaded successfully', 'success');
+        triggerToast(isAr ? 'تم تحميل ملف المحاكاة' : 'Simulation PDF downloaded', 'success');
       }
     } catch (err) {
       console.error('Error generating investor PDF:', err);
@@ -143,7 +149,7 @@ export const InvestorCenter = ({
     } finally {
       setIsDownloadingPdf(false);
     }
-  };
+  });
 
   return (
     <div className="smart-valuation-wizard-box">
@@ -237,13 +243,13 @@ export const InvestorCenter = ({
         <div className="cert-header">
           <div className="cert-badge">
             <Sparkles size={16} className="text-gold" />
-            <span>{isAr ? 'توقعات العائد المالي التراكمي' : 'Projected Investment Returns'}</span>
+            <span>{isAr ? 'محاكاة تقديرية للعائد' : 'Indicative Return Simulation'}</span>
           </div>
           <span className="cert-date">{isAr ? `خلال ${invPeriod} سنوات` : `${invPeriod} Years Simulation`}</span>
         </div>
 
         <div className="cert-price-range">
-          <span className="range-lbl">{isAr ? 'صافي الأرباح الرأسمالية والإيجارية المتوقعة:' : 'Projected Net Cumulative Profits:'}</span>
+          <span className="range-lbl">{isAr ? 'صافي الربح التقديري (حسب افتراضاتك):' : 'Indicative net gain (your assumptions):'}</span>
           <div className="range-numbers">
             <strong>+{formatConverted(investmentSim.netProfit)}</strong>
           </div>
@@ -254,11 +260,11 @@ export const InvestorCenter = ({
 
         <div className="calc-breakdown-list">
           <div className="calc-breakdown-glass-row">
-            <span className="glass-row-lbl">{isAr ? 'العائد الإيجاري السنوي المتوقع' : 'Estimated Annual Rent'}</span>
+            <span className="glass-row-lbl">{isAr ? 'الإيجار السنوي التقديري' : 'Estimated Annual Rent'}</span>
             <strong className="text-emerald">{formatConverted(investmentSim.annualRent)} / {isAr ? 'سنوياً' : 'yr'}</strong>
           </div>
           <div className="calc-breakdown-glass-row">
-            <span className="glass-row-lbl">{isAr ? 'القيمة السوقية المتوقعة للأصل بعد المدة' : 'Projected Asset Capital Value'}</span>
+            <span className="glass-row-lbl">{isAr ? 'القيمة التقديرية للأصل بعد المدة' : 'Indicative Asset Value'}</span>
             <strong className="text-gold">{formatConverted(investmentSim.futureCapitalValue)}</strong>
           </div>
           <div className="calc-breakdown-glass-row">
@@ -266,6 +272,12 @@ export const InvestorCenter = ({
             <strong className="text-sky">{formatConverted(investmentSim.totalRentOverPeriod)}</strong>
           </div>
         </div>
+
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '10px 0 0' }}>
+          {isAr
+            ? 'محاكاة حسابية للاسترشاد فقط مبنية على افتراضات، وليست عرضاً أو ضماناً لأي عائد أو ربح من 1Line.'
+            : 'An indicative simulation based on assumptions; not an offer or a guarantee of any return by 1Line.'}
+        </p>
 
         {/* Institutional Prospectus Download Action */}
         <div className="prospectus-download-bar">
@@ -276,7 +288,7 @@ export const InvestorCenter = ({
             className="btn-download-prospectus"
           >
             <Download size={15} />
-            <span>{isDownloadingPdf ? (isAr ? 'جاري إنشاء الملف...' : 'Generating...') : (isAr ? 'تحميل دراسة الجدوى والملف الاستثماري PDF' : 'Download Institutional Prospectus PDF')}</span>
+            <span>{isDownloadingPdf ? (isAr ? 'جاري إنشاء الملف...' : 'Generating...') : (isAr ? 'تحميل المحاكاة PDF' : 'Download Simulation PDF')}</span>
           </button>
         </div>
       </div>
@@ -335,15 +347,12 @@ export const InvestorCenter = ({
             <label>{isAr ? 'الموقع / المنطقة المستهدفة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
             <select
               className="form-input-styled"
-              value={investorForm.area || 'new_sohag'}
+              value={investorForm.area || ''}
               onChange={(e) => setInvestorForm({ ...investorForm, area: e.target.value })}
               required
             >
-              {areasList.map(a => (
-                <option key={a.id} value={a.id}>
-                  {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-                </option>
-              ))}
+              <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
+              <AreaOptions areas={areasList} isAr={isAr} includeAll={areasList.some((a) => a?.id === 'all')} />
             </select>
           </div>
         </div>

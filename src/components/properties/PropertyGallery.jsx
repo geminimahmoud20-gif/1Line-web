@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Maximize2, 
   Minimize2,
@@ -15,18 +16,26 @@ import {
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
+import { isWatermarked } from '../../utils/watermark';
 import VirtualTourViewer from './VirtualTourViewer';
+import PhotoTour from './PhotoTour';
+import './property-gallery.css';
+import { thumbUrl, thumbFallback } from '../../utils/imageThumbs';
 
 export default function PropertyGallery({
-  images = [],
+  images: rawImages = [],
   title = '',
-  virtualTour = true,
+  virtualTour = false,
   lang = 'ar',
   floorPlan = null
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  // "All photos" page; null while closed, else the photo it opens at
+  const [tourAt, setTourAt] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [activeViewMode, setActiveViewMode] = useState('photos'); // 'photos' | 'floorplan' | '360'
+  // The "no photo" placeholder is not a photo of the unit
+  const images = (Array.isArray(rawImages) ? rawImages : []).filter((u) => u && !/no-photo\.svg/.test(u));
+  const [viewMode, setActiveViewMode] = useState('photos'); // 'photos' | 'floorplan' | '360'
 
   // Zoom, Pan & Rotation States
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -39,6 +48,9 @@ export default function PropertyGallery({
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
   const thumbsContainerRef = useRef(null);
+  // Phone carousel: which photo is in view
+  const trackRef = useRef(null);
+  const [slideIndex, setSlideIndex] = useState(0);
 
   const isAr = lang === 'ar';
   const imgContainerRef = useRef(null);
@@ -179,11 +191,11 @@ export default function PropertyGallery({
     // Minimum swipe threshold of 45px, ensure predominantly horizontal movement
     if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
       if (deltaX > 0) {
-        // Swiped Right -> Previous in LTR, Next in RTL
-        isAr ? handlePrev() : handlePrev();
+        // Swiped Right -> Next in RTL, Previous in LTR
+        isAr ? handleNext() : handlePrev();
       } else {
-        // Swiped Left -> Next in LTR, Prev in RTL
-        isAr ? handleNext() : handleNext();
+        // Swiped Left -> Previous in RTL, Next in LTR
+        isAr ? handlePrev() : handleNext();
       }
     }
     touchStartXRef.current = null;
@@ -200,85 +212,122 @@ export default function PropertyGallery({
   }, [activeImageIndex, lightboxOpen]);
 
   const [floorPlanError, setFloorPlanError] = useState(false);
+  // Only a real plan uploaded for this unit is shown: no generic drawing with made-up dimensions
+  const hasPlan = Boolean(floorPlan) && !floorPlanError;
+  const activeViewMode = viewMode === 'floorplan' && !hasPlan ? 'photos' : viewMode;
+  const tabCount = 1 + (hasPlan ? 1 : 0) + (virtualTour ? 1 : 0);
 
   return (
     <div className="property-gallery-component">
-      {/* Tri-Media Tab Switcher */}
-      <div className="gallery-media-mode-tabs">
-        <button
-          type="button"
-          className={`media-tab-btn ${activeViewMode === 'photos' ? 'active' : ''}`}
-          onClick={() => setActiveViewMode('photos')}
-        >
-          <ImageIcon size={15} />
-          <span>{isAr ? `معرض الصور (${images.length})` : `Photos (${images.length})`}</span>
-        </button>
-
-        <button
-          type="button"
-          className={`media-tab-btn ${activeViewMode === 'floorplan' ? 'active' : ''}`}
-          onClick={() => setActiveViewMode('floorplan')}
-        >
-          <Layers size={15} />
-          <span>{isAr ? 'المخطط الهندسي للدور (Floor Plan)' : 'Architectural Floor Plan'}</span>
-        </button>
-
-        {virtualTour && (
+      {/* Tri-Media Tab Switcher: only when there is more than the photos to switch to */}
+      {tabCount > 1 && (
+        <div className="gallery-media-mode-tabs">
           <button
             type="button"
-            className={`media-tab-btn tab-360 ${activeViewMode === '360' ? 'active' : ''}`}
-            onClick={() => setActiveViewMode('360')}
+            className={`media-tab-btn ${activeViewMode === 'photos' ? 'active' : ''}`}
+            onClick={() => setActiveViewMode('photos')}
           >
-            <Rotate3d size={15} />
-            <span>{isAr ? 'جولة تفاعلية بانورامية 360°' : '360° Virtual Tour'}</span>
+            <ImageIcon size={15} />
+            <span>{isAr ? `معرض الصور (${images.length})` : `Photos (${images.length})`}</span>
           </button>
-        )}
-      </div>
 
-      {/* 1. Photos Bento Grid Mode */}
-      {activeViewMode === 'photos' && (
-        <div className="property-gallery-grid">
-          {/* Main Large Hero Image */}
-          <div className="gallery-main-item" onClick={() => handleOpenLightbox(0)}>
-            <img 
-              src={images[0]} 
-              alt={title} 
-              draggable={false}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-            <BrandWatermark size="md" position="bottom-right" />
-            <div className="gallery-hover-overlay">
-              <div className="view-all-pill">
-                <Maximize2 size={16} />
-                <span>{isAr ? 'عرض وتكبير ملء الشاشة' : 'View & Zoom Fullscreen'}</span>
-              </div>
-            </div>
-          </div>
+          {hasPlan && (
+            <button
+              type="button"
+              className={`media-tab-btn ${activeViewMode === 'floorplan' ? 'active' : ''}`}
+              onClick={() => setActiveViewMode('floorplan')}
+            >
+              <Layers size={15} />
+              <span>{isAr ? 'المخطط الهندسي' : 'Floor plan'}</span>
+            </button>
+          )}
 
-          {/* Side Smaller Bento Thumbnails */}
-          <div className="gallery-side-thumbs">
-            {images.slice(1, 4).map((imgUrl, idx) => (
-              <div
+          {virtualTour && (
+            <button
+              type="button"
+              className={`media-tab-btn tab-360 ${activeViewMode === '360' ? 'active' : ''}`}
+              onClick={() => setActiveViewMode('360')}
+            >
+              <Rotate3d size={15} />
+              <span>{isAr ? 'عرض بانورامي للصور' : 'Panoramic photo view'}</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* No photos uploaded yet: say so instead of an empty frame */}
+      {activeViewMode === 'photos' && images.length === 0 && (
+        <div className="gallery-empty-state" role="note">
+          <ImageIcon size={28} aria-hidden="true" />
+          <strong>{isAr ? 'صور الوحدة لسه بتتجهّز' : 'Photos are being prepared'}</strong>
+          <span>{isAr ? 'اطلب الصور أو فيديو للوحدة من المستشار وهيوصلك على واتساب.' : 'Ask your advisor for photos or a video on WhatsApp.'}</span>
+        </div>
+      )}
+
+      {/* 1. Photos. Wide screens: the cover beside four equal photos, the last showing how many more.
+             Phones: full-width photos you swipe, with dots and a counter. */}
+      {activeViewMode === 'photos' && images.length > 0 && (
+        <>
+          <div className={`pg-mosaic has-${Math.min(4, images.length - 1)}`}>
+            {images.slice(0, 5).map((imgUrl, idx) => (
+              <button
                 key={idx}
-                className="gallery-sub-item gallery-thumb-item"
-                onClick={() => handleOpenLightbox(idx + 1)}
+                type="button"
+                className={`pg-tile ${idx === 0 ? 'is-cover' : ''}`}
+                onClick={() => setTourAt(idx)}
+                aria-label={isAr ? `افتح الصورة ${idx + 1} من ${images.length}` : `Open photo ${idx + 1} of ${images.length}`}
               >
-                <img 
-                  src={imgUrl} 
-                  alt={`${title} ${idx + 2}`} 
+                <img
+                  src={idx === 0 ? imgUrl : thumbUrl(imgUrl)}
+                  onError={idx === 0 ? undefined : thumbFallback(imgUrl)}
+                  alt={idx === 0 ? title : `${title} ${idx + 1}`}
                   draggable={false}
+                  loading={idx === 0 ? 'eager' : 'lazy'}
                   onContextMenu={(e) => e.preventDefault()}
                 />
-                <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />
-                {idx === 2 && images.length > 4 && (
-                  <div className="gallery-more-overlay">
-                    <span>+{images.length - 4} {isAr ? 'صور إضافية' : 'More'}</span>
-                  </div>
-                )}
-              </div>
+                {idx === 0 && !isWatermarked(imgUrl) && <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />}
+              </button>
             ))}
+            <button type="button" className="pg-all" onClick={() => setTourAt(0)}>
+              <ImageIcon size={15} aria-hidden="true" />
+              <span>{isAr ? `كل الصور (${images.length})` : `All photos (${images.length})`}</span>
+            </button>
           </div>
-        </div>
+
+          <div className="pg-carousel">
+            <div
+              className="pg-track"
+              ref={trackRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const i = Math.round(Math.abs(el.scrollLeft) / Math.max(1, el.clientWidth));
+                if (i !== slideIndex) setSlideIndex(Math.min(images.length - 1, i));
+              }}
+            >
+              {images.map((imgUrl, idx) => (
+                <button key={idx} type="button" className="pg-slide" onClick={() => setTourAt(idx)}
+                  aria-label={isAr ? `افتح الصورة ${idx + 1} من ${images.length}` : `Open photo ${idx + 1} of ${images.length}`}>
+                  <img
+                    src={idx === 0 ? imgUrl : thumbUrl(imgUrl)}
+                    onError={idx === 0 ? undefined : thumbFallback(imgUrl)}
+                    alt={idx === 0 ? title : `${title} ${idx + 1}`}
+                    draggable={false}
+                    loading={idx < 2 ? 'eager' : 'lazy'}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                </button>
+              ))}
+            </div>
+            {images.length > 1 && (
+              <>
+                <span className="pg-count" dir="ltr">{slideIndex + 1} / {images.length}</span>
+                <div className="pg-dots" aria-hidden="true">
+                  {images.slice(0, 8).map((_, idx) => <i key={idx} className={idx === Math.min(slideIndex, 7) ? 'is-on' : ''} />)}
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {/* 2. Architectural Floor Plan View */}
@@ -288,75 +337,12 @@ export default function PropertyGallery({
             <Layers size={14} />
             <span>{isAr ? 'مخطط تقسيم الغرف والأبعاد الهندسية (انقر للتكبير)' : 'Architectural Room Dimensions & Layout (Click to Zoom)'}</span>
           </div>
-          {floorPlan && !floorPlanError ? (
-            <img 
-              src={floorPlan} 
-              alt={title || "Floor Plan"} 
-              className="floorplan-main-img" 
-              onError={() => setFloorPlanError(true)}
-            />
-          ) : (
-            <div className="floorplan-svg-wrap">
-              <svg 
-                viewBox="0 0 1200 800" 
-                className="floorplan-main-svg"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect width="1200" height="800" fill="#081426" />
-                <defs>
-                  <pattern id="cadgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#142e54" strokeWidth="0.8" />
-                  </pattern>
-                </defs>
-                <rect width="1200" height="800" fill="url(#cadgrid)" />
-                {/* Outer CAD Border */}
-                <rect x="100" y="80" width="1000" height="640" fill="none" stroke="#38bdf8" strokeWidth="3.5" rx="4" />
-                
-                {/* Partitions */}
-                <line x1="520" y1="80" x2="520" y2="720" stroke="#38bdf8" strokeWidth="2.5" />
-                <line x1="100" y1="400" x2="520" y2="400" stroke="#38bdf8" strokeWidth="2.5" />
-                <line x1="520" y1="380" x2="1100" y2="380" stroke="#38bdf8" strokeWidth="2.5" />
-                
-                {/* Reception */}
-                <text x="310" y="210" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'الريسبشن المفتوح (Grand Reception)' : 'Grand Reception Area'}
-                </text>
-                <text x="310" y="250" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
-                  8.5m x 5.4m • {isAr ? 'أرضيات رخام وبورسلين فاخرة' : 'Premium Marble Flooring'}
-                </text>
-                
-                {/* Kitchen */}
-                <text x="310" y="520" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'المطبخ والخدمات (Gourmet Kitchen)' : 'Gourmet Kitchen & Pantry'}
-                </text>
-                <text x="310" y="560" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
-                  4.2m x 3.6m • {isAr ? 'شرفة خدمات وتوصيلات غاز' : 'Balcony & Gas Outlets'}
-                </text>
-                
-                {/* Master Suite */}
-                <text x="810" y="200" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'الجناح الرئيسي (Master Suite)' : 'Master Bedroom Suite'}
-                </text>
-                <text x="810" y="240" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
-                  5.6m x 4.4m • Dressing Room • {isAr ? 'حمام خاص' : 'Ensuite Bath'}
-                </text>
-                
-                {/* Family Bedrooms */}
-                <text x="810" y="500" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'أجنحة النوم (Family Bedrooms)' : 'Family & Guest Bedrooms'}
-                </text>
-                <text x="810" y="540" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
-                  4.2m x 4.0m • 4.0m x 3.8m • {isAr ? 'إطلالة بحرية' : 'Open Views'}
-                </text>
-
-                {/* 1Line CAD Seal */}
-                <rect x="120" y="100" width="310" height="42" rx="10" fill="#0b4ea2" opacity="0.9" />
-                <text x="275" y="127" fill="#ffffff" fontFamily="sans-serif" fontSize="13" fontWeight="bold" textAnchor="middle">
-                  1LINE CERTIFIED CAD SCHEMATIC
-                </text>
-              </svg>
-            </div>
-          )}
+          <img
+            src={floorPlan}
+            alt={title || 'Floor Plan'}
+            className="floorplan-main-img"
+            onError={() => setFloorPlanError(true)}
+          />
         </div>
       )}
 
@@ -372,7 +358,20 @@ export default function PropertyGallery({
       )}
 
       {/* 🌟 FULLSCREEN INTERACTIVE LIGHTBOX & HD ZOOM VIEWER */}
-      {lightboxOpen && (
+      {tourAt !== null && (
+        <PhotoTour
+          images={images}
+          title={title}
+          isAr={isAr}
+          startAt={tourAt}
+          viewerOpen={lightboxOpen}
+          onPick={handleOpenLightbox}
+          onClose={() => setTourAt(null)}
+        />
+      )}
+
+      {/* Rendered on <body>: the sticky section tabs would otherwise sit on top of it */}
+      {lightboxOpen && createPortal(
         <div 
           className="gallery-lightbox-modal" 
           onClick={handleCloseLightbox}
@@ -500,8 +499,8 @@ export default function PropertyGallery({
               }}
             />
 
-            {/* Permanent Watermark on Lightbox Fullscreen */}
-            <BrandWatermark size="lg" position="bottom-right" />
+            {/* Watermark on the fullscreen view, unless the photo already carries it in the file */}
+            {!isWatermarked(images[activeImageIndex]) && <BrandWatermark size="lg" position="bottom-right" />}
 
             {zoomLevel > 1 && (
               <div className="zoom-pan-hint">
@@ -532,13 +531,13 @@ export default function PropertyGallery({
                     setActiveImageIndex(i);
                   }}
                 >
-                  <img src={imgUrl} alt="" />
+                  <img src={thumbUrl(imgUrl)} onError={thumbFallback(imgUrl)} alt="" loading="lazy" />
                 </div>
               ))}
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }

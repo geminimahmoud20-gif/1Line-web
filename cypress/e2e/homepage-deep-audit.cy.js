@@ -37,10 +37,22 @@ describe('Homepage Exhaustive Deep Audit', () => {
   });
 
   it('2. Image Integrity: Zero Broken Images on Homepage', () => {
-    cy.get('img').each(($img) => {
-      cy.wrap($img).scrollIntoView({ duration: 150 }).should(($el) => {
-        expect($el[0].naturalWidth, `Image source "${$el[0].src}" failed to load`).to.be.greaterThan(0);
-      });
+    // Look each image up again by index: sections re-render their images while they scroll into
+    // view, so a wrapped element from the first query can be detached by the time it is checked.
+    cy.get('img').its('length').then((count) => {
+      for (let i = 0; i < count; i += 1) {
+        // Scroll and check against a fresh list each time, and never via .eq(i): a lazy section
+        // can swap its images out between two queries, and .eq(i) then waits for an element that
+        // no longer exists (the "Expected to find element: 8" failure).
+        cy.get('img').then(($imgs) => {
+          if (i < $imgs.length) $imgs[i].scrollIntoView({ block: 'center' });
+        });
+        cy.get('img').should(($all) => {
+          if (i >= $all.length) return; // a lazy section swapped its images out
+          const img = $all[i];
+          expect(img.naturalWidth, `Image source "${img.src}" failed to load`).to.be.greaterThan(0);
+        });
+      }
     });
   });
 
@@ -53,24 +65,29 @@ describe('Homepage Exhaustive Deep Audit', () => {
     });
   });
 
-  it('4. Hero Smart Search & Suggestions Dropdown', () => {
-    cy.get('.hx-field--keyword input').should('be.visible').type('سوهاج', { force: true });
-    cy.get('.hero-live-suggestions-dropdown').should('be.visible');
-    cy.get('.hero-clear-input-btn').should('be.visible').click();
-    cy.get('.hx-field--keyword input').should('have.value', '');
-    cy.get('.hero-live-suggestions-dropdown').should('not.exist');
+  it('4. Hero «رشح لي عقاري» card leads to the buyer questions', () => {
+    // The hero search filters were replaced by this card on the owner's request
+    cy.get('.hx-match').should('be.visible');
+    cy.get('.hx-match .adv').should('be.visible');
+    cy.get('.hx-match-btn').should('have.attr', 'href', '/match').click();
+    cy.location('pathname').should('eq', '/match');
+    cy.get('.mt-question').should('contain', 'مستشارك في 1Line');
   });
 
   it('5. Marketplace Tabs Switching (Properties vs Cash Demands)', () => {
     cy.get('.hx-seg-btn').first().should('have.attr', 'aria-selected', 'true');
     cy.get('.properties-grid-4').should('exist');
     cy.get('.hx-seg-btn').eq(1).click();
-    cy.get('.demands-metrics-strip').should('be.visible');
+    // Metrics show once real demands are published; until then an invitation replaces the zeros
+    cy.get('.demands-metrics-strip, .demands-empty-invite').should('be.visible');
+    cy.get('.demands-grid-compact .demand-card-box').should('have.length.at.least', 1);
+    // Sample cards never carry "urgent"/"serious buyer" badges
+    cy.get('.demand-card-box.is-sample .urgency-badge').should('not.exist');
     cy.get('.hx-seg-btn').first().click();
     cy.get('.properties-grid-4').should('be.visible');
   });
 
-  it('6. Hero discovery pills point at real listing filters', () => {
+  it('6. Quick-browse pills under the listings point at real listing filters', () => {
     cy.get('.hx-pill').should('have.length.at.least', 3).each(($pill) => {
       expect($pill.attr('href')).to.match(/^\/properties\?/);
     });
@@ -85,7 +102,7 @@ describe('Homepage Exhaustive Deep Audit', () => {
     // The remote-inspection modal is rendered at app level
     cy.get('.xs-modal[role="dialog"]').should('be.visible');
     cy.get('.xs-country').should('have.length.at.least', 6);
-    cy.get('.xs-cover').should('have.length', 3);
+    cy.get('.xs-cover').should('have.length', 2); // live video + street footage (no drone)
     // Validation: submitting without a name is refused and nothing opens
     cy.get('.xs-modal button[type="submit"]').click();
     cy.get('.xs-error').should('be.visible');
@@ -138,9 +155,11 @@ describe('Homepage Exhaustive Deep Audit', () => {
   });
 
   it('12. Dark Mode Toggle Visual Consistency', () => {
-    cy.get('.theme-toggle-btn').first().click();
+    // On wide screens the switch lives in the ⋯ menu (the bar button is for phones)
+    cy.get('.tools-trigger-btn').click();
+    cy.get('[data-theme-toggle]').click();
     cy.get('html').should('have.attr', 'data-theme', 'dark');
-    cy.get('.theme-toggle-btn').first().click();
+    cy.get('[data-theme-toggle]').click();
     cy.get('html').should('have.attr', 'data-theme', 'light');
   });
 });

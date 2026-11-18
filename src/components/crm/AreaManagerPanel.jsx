@@ -1,10 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
-import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, X, AlertTriangle } from 'lucide-react';
-import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault } from '../../utils/areasData';
+import { Fragment, useState, useEffect, useMemo } from 'react';
+import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, AlertTriangle } from 'lucide-react';
+import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey, saveAreas } from '../../utils/areasData';
+import { groupedAreas, childrenOf, mainAreas, areaFamily, isMainArea, suggestedArrangement } from '../../utils/areaLookup';
+import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
+import { areaPrice, priceModeOf } from '../../utils/areaPricing';
+import { moveLeadsToArea, moveDemandsToArea } from '../../firebaseLazy';
+import { useConfirm } from '../ui';
 
 export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties = [] }) {
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
   const [areas, setAreas] = useState(() => getAreas());
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -13,6 +19,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
   const [modalMode, setModalMode] = useState(null); // 'add' | 'edit' | null
   const [activeArea, setActiveArea] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [moveToId, setMoveToId] = useState('');
+  const { handleUpdateProperty } = useProperties();
 
   // Form State for Add / Edit
   const [formData, setFormData] = useState({
@@ -24,7 +32,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     lat: 26.5569,
     lng: 31.7001,
     zoom: 14,
-    description_ar: ''
+    description_ar: '',
+    parentId: ''
   });
 
   // Listen to external/cloud updates
@@ -60,17 +69,39 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     };
   }, [modalMode, deleteConfirmId, isSaving]);
 
+  // Each main area followed by its sub-areas ("كل المناطق" first)
+  const orderedAreas = useMemo(() => {
+    const all = areas.filter((a) => a.id === 'all');
+    return [...all, ...groupedAreas(areas).flatMap((g) => [g.main, ...g.children])];
+  }, [areas]);
+
   // Filtered areas
   const filteredAreas = useMemo(() => {
-    if (!searchQuery.trim()) return areas;
+    if (!searchQuery.trim()) return orderedAreas;
     const q = searchQuery.toLowerCase().trim();
-    return areas.filter(a => 
+    return orderedAreas.filter(a => 
       a.name_ar?.toLowerCase().includes(q) ||
       a.name_en?.toLowerCase().includes(q) ||
       a.label_ar?.toLowerCase().includes(q) ||
       a.id?.toLowerCase().includes(q)
     );
-  }, [areas, searchQuery]);
+  }, [orderedAreas, searchQuery]);
+
+  // The agreed arrangement (main areas + where each street goes), offered until it is applied
+  const arrangement = useMemo(() => suggestedArrangement(areas), [areas]);
+  const handleApplyArrangement = async () => {
+    setIsSaving(true);
+    try {
+      await saveAreas(arrangement.list);
+      setAreas(getAreas());
+      if (triggerToast) triggerToast(isAr ? 'تم ترتيب المناطق: رئيسية وتحتها الفرعية' : 'Areas arranged into main areas and sub-areas', 'success');
+    } catch (err) {
+      console.error('Error arranging areas:', err);
+      if (triggerToast) triggerToast(isAr ? 'تعذّر حفظ الترتيب' : 'Could not save the arrangement', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Statistics
   const stats = useMemo(() => {
@@ -92,8 +123,10 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       lng: 31.7001,
       zoom: 14,
       description_ar: '',
-      avgPricePerMeter: 15000,
-      annualGrowthRate: 75
+      avgPricePerMeter: '',
+      priceMode: 'auto',
+      annualGrowthRate: 0,
+      parentId: ''
     });
     setModalMode('add');
   };
@@ -111,8 +144,10 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       lng: area.center?.lng ?? 31.7001,
       zoom: area.zoom ?? 14,
       description_ar: area.description_ar || '',
-      avgPricePerMeter: area.avgPricePerMeter ?? 15000,
-      annualGrowthRate: area.annualGrowthRate ?? 0
+      avgPricePerMeter: area.avgPricePerMeter ?? '',
+      priceMode: priceModeOf(area),
+      annualGrowthRate: area.annualGrowthRate ?? 0,
+      parentId: isMainArea(area, areas) ? '' : (area.parentId || '')
     });
     setModalMode('edit');
   };
@@ -126,14 +161,16 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     }
     const lat = Number(formData.lat);
     const lng = Number(formData.lng);
-    const price = Number(formData.avgPricePerMeter);
+    const manual = formData.priceMode === 'manual';
+    // From listings the typed figure is optional (kept for later); manual needs one
+    const price = formData.avgPricePerMeter === '' ? 0 : Number(formData.avgPricePerMeter);
     const growth = Number(formData.annualGrowthRate);
     // Egypt bounding box — catches swapped or mistyped coordinates before they reach the public map
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 22 || lat > 32 || lng < 24.5 || lng > 37) {
       if (triggerToast) triggerToast(isAr ? 'الإحداثيات خارج مصر — تأكد من خط العرض (22–32) وخط الطول (24.5–37)' : 'Coordinates must be inside Egypt', 'error');
       return;
     }
-    if (!Number.isFinite(price) || price < 1000 || price > 1000000) {
+    if ((manual || price) && (!Number.isFinite(price) || price < 1000 || price > 1000000)) {
       if (triggerToast) triggerToast(isAr ? 'متوسط سعر المتر يجب أن يكون بين 1,000 و 1,000,000 ج.م' : 'Price per m² must be 1,000–1,000,000 EGP', 'error');
       return;
     }
@@ -155,7 +192,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar,
           avgPricePerMeter: price,
-          annualGrowthRate: growth
+          priceMode: manual ? 'manual' : 'auto',
+          annualGrowthRate: growth,
+          parentId: formData.parentId || ''
         });
         if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة' : 'Area added', 'success');
       } else if (modalMode === 'edit' && activeArea) {
@@ -168,7 +207,10 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar.trim(),
           avgPricePerMeter: price,
-          annualGrowthRate: growth
+          priceMode: manual ? 'manual' : 'auto',
+          annualGrowthRate: growth,
+          // A main area with sub-areas stays main (one level only)
+          parentId: childrenOf(activeArea.id, areas).length ? '' : (formData.parentId || '')
         });
         if (triggerToast) triggerToast(isAr ? 'تم حفظ تعديلات المنطقة' : 'Area updated', 'success');
       }
@@ -182,19 +224,37 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     }
   };
 
-  // Delete Area
+  // Delete Area — listings in it are moved first, so none is left pointing at a missing area
   const handleDeleteArea = async (id) => {
     if (id === 'all') {
       if (triggerToast) triggerToast(isAr ? 'لا يمكن حذف خيار "كل المناطق" لأنه خيار نظامي رئيسي' : 'Cannot delete system default', 'error');
       return;
     }
+    const linked = areaProperties(id);
+    // Leads and requests can point at the area too (most aren't loaded here), so a destination is always required
+    if (!moveToId || !handleUpdateProperty) {
+      if (triggerToast) triggerToast(isAr ? 'اختار المنطقة اللي هينتقل لها العقارات والعملاء والطلبات الأول' : 'Choose where to move listings, leads and requests first', 'error');
+      return;
+    }
 
     setIsSaving(true);
     try {
+      linked.forEach((p) => handleUpdateProperty(p.id, { areaKey: moveToId }));
+      const [leadsMoved, demandsMoved] = await Promise.all([moveLeadsToArea(id, moveToId), moveDemandsToArea(id, moveToId)]);
+      if (!leadsMoved.ok || !demandsMoved.ok) {
+        // Keep the area: deleting it now would orphan the records that failed to move
+        if (triggerToast) triggerToast(isAr ? 'تعذّر نقل العملاء/الطلبات، المنطقة لم تُحذف. حاول تاني.' : 'Could not move leads/requests; area kept. Try again.', 'error');
+        return;
+      }
       await deleteArea(id);
       setAreas(getAreas());
       setDeleteConfirmId(null);
-      if (triggerToast) triggerToast(isAr ? 'تم حذف المنطقة بنجاح وتحديث فلاتر الموقع! 🗑️' : 'Area deleted successfully!', 'success');
+      setMoveToId('');
+      if (triggerToast) {
+        triggerToast(isAr
+          ? `تم حذف المنطقة ونقل ${linked.length} عقار و${leadsMoved.moved} عميل و${demandsMoved.moved} طلب`
+          : `Area deleted: ${linked.length} listings, ${leadsMoved.moved} leads, ${demandsMoved.moved} requests moved`, 'success');
+      }
     } catch (err) {
       console.error('Error deleting area:', err);
       if (triggerToast) triggerToast(isAr ? 'حدث خطأ أثناء الحذف' : 'Failed to delete', 'error');
@@ -205,12 +265,12 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
   // Reset to Defaults
   const handleResetDefaults = async () => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من رغبتك في استعادة قائمة الأحياء والمناطق الافتراضية الأصلية لسوهاج؟' : 'Reset areas to default?')) {
+    if (await confirm({ message: isAr ? 'هل أنت متأكد من رغبتك في استعادة قائمة الأحياء والمناطق الافتراضية الأصلية لسوهاج؟' : 'Reset areas to default?', tone: 'danger' })) {
       setIsSaving(true);
       try {
         await resetAreasToDefault();
         setAreas(getAreas());
-        if (triggerToast) triggerToast(isAr ? 'تمت استعادة قائمة الأحياء الافتراضية بنجاح 🔄' : 'Areas reset to defaults', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تمت استعادة قائمة الأحياء الافتراضية بنجاح' : 'Areas reset to defaults', 'success');
       } catch (err) {
         console.error('Error resetting areas:', err);
       } finally {
@@ -219,152 +279,170 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     }
   };
 
-  // Count properties in area
-  const getAreaPropertiesCount = (areaId) => {
-    if (areaId === 'all') return properties.length;
-    return properties.filter(p => p.location === areaId).length;
+  // Listings saved under this area (areaKey, in any of its legacy spellings)
+  const areaProperties = (areaId) => (areaId === 'all'
+    ? properties
+    : properties.filter((p) => p && !p.isDemo && normalizeAreaKey(p.areaKey || p.location || '') === areaId));
+  const getAreaPropertiesCount = (areaId) => areaProperties(areaId).length;
+  // A main area counts its sub-areas' listings too
+  const getFamilyPropertiesCount = (areaId) => areaFamily(areaId, areas).reduce((n, id) => n + getAreaPropertiesCount(id), 0);
+
+  // What the site shows for an area's price per m², and where it comes from
+  const areaPriceLabel = (area) => {
+    const r = areaPrice(area, properties, areas);
+    const fmt = (v) => v.toLocaleString('en-US');
+    if (r.source === 'manual') return isAr ? `يدوي: ${fmt(r.ppm)} ج.م/م²` : `Manual: ${fmt(r.ppm)} EGP/m²`;
+    if (r.source === 'listings') return isAr ? `من المعروض: ${fmt(r.ppm)} ج.م/م² (${r.sample} ${r.sample === 1 ? 'عرض' : 'عروض'})` : `From listings: ${fmt(r.ppm)} EGP/m² (${r.sample})`;
+    return r.mode === 'manual' ? (isAr ? 'يدوي: مفيش سعر مكتوب' : 'Manual: no figure') : (isAr ? 'من المعروض: لسه مفيش عروض' : 'From listings: none yet');
+  };
+  const modeCounts = useMemo(() => {
+    const places = areas.filter((a) => a.id !== 'all');
+    const manual = places.filter((a) => priceModeOf(a) === 'manual').length;
+    return { manual, auto: places.length - manual };
+  }, [areas]);
+  // One switch for every area at once; each area can still be changed on its own from «تعديل»
+  const handleAllPriceMode = async (mode) => {
+    const missing = mode === 'manual' ? areas.filter((a) => a.id !== 'all' && !(Number(a.avgPricePerMeter) > 0)).length : 0;
+    const ok = await confirm({
+      title: isAr ? (mode === 'manual' ? 'كل المناطق بسعر يدوي؟' : 'كل المناطق من متوسط المعروض؟') : 'Change every area?',
+      message: isAr
+        ? (mode === 'manual'
+          ? `الموقع هيعرض السعر اللي مكتوب في كل منطقة.${missing ? ` فيه ${missing} منطقة مفيهاش سعر مكتوب ومش هيظهر لها سعر لحد ما تكتبه.` : ''}`
+          : 'الموقع هيحسب سعر المتر في كل منطقة من الوحدات المعروضة فيها دلوقتي. الأسعار اللي مكتوبة بتفضل محفوظة لو رجعت لليدوي.')
+        : 'Every area switches to this pricing source.',
+      confirmLabel: isAr ? 'طبّق' : 'Apply',
+      tone: 'default'
+    });
+    if (!ok) return;
+    setIsSaving(true);
+    try {
+      await saveAreas(areas.map((a) => (a.id === 'all' ? a : { ...a, priceMode: mode })));
+      setAreas(getAreas());
+      if (triggerToast) triggerToast(isAr ? 'اتغيّر تسعير كل المناطق' : 'Pricing updated for every area', 'success');
+    } catch (err) {
+      console.error('Error saving price mode:', err);
+      if (triggerToast) triggerToast(isAr ? 'حصل خطأ في الحفظ' : 'Save failed', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="crm-subpanel-container animate-fadeIn">
-      {/* Top Banner & Header */}
-      <div className="crm-card" style={{ marginBottom: '20px', borderLeft: '4px solid var(--crm-accent)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(180, 83, 9, 0.4))', 
-                padding: '8px', 
-                borderRadius: '10px', 
-                color: 'var(--crm-accent-text)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <MapPin size={22} />
-              </div>
-              <div>
-                <h2 style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 700, color: 'var(--crm-ink)', margin: 0 }}>
-                  {isAr ? '🗺️ إدارة المناطق والأحياء' : '🗺️ Sohag Districts & Areas CMS'}
-                </h2>
-                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)' }}>
-                  {isAr ? 'إضافة وتعديل وحذف مناطق محافظة سوهاج مع المزامنة السحابية الفورية لكافة شاشات وفلاتر الموقع' : 'Manage all districts & sync real-time across platform'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: '700',
-              background: 'rgba(16, 185, 129, 0.15)',
-              color: 'var(--crm-positive)',
-              border: '1px solid rgba(16, 185, 129, 0.3)'
-            }}>
-              <CheckCircle2 size={13} />
-              {isAr ? 'مزامنة سحابية حية' : 'Live Cloud Sync'}
+      {/* Modern Header Strip */}
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h3 className="crm-header-main-title">
+            <MapPin size={22} style={{ color: 'var(--crm-accent)' }} />
+            <span>{isAr ? 'إدارة المناطق والأحياء' : 'Sohag Districts & Areas CMS'}</span>
+          </h3>
+          <div className="crm-header-subtitle">
+            <span>{isAr ? 'إجمالي المناطق والأحياء:' : 'Total Districts:'} <strong className="crm-header-count-pill">{stats.total}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'المخصصة:' : 'Custom:'} <strong>{stats.custom}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'الأساسية الرسمية:' : 'Core:'} <strong>{stats.system}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--crm-positive)' }}>
+              <CheckCircle2 size={12} />
+              <span>{isAr ? 'مزامنة سحابية حية' : 'Live Cloud Sync'}</span>
             </span>
-
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleOpenAdd}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'linear-gradient(135deg, var(--crm-warn-solid), var(--crm-warn-solid))',
-                color: 'var(--crm-ink)',
-                padding: '9px 16px',
-                borderRadius: '10px',
-                fontWeight: 'bold',
-                fontSize: 'var(--crm-text-base)'
-              }}
-            >
-              <Plus size={16} />
-              <span>{isAr ? 'إضافة حي / منطقة جديدة' : 'Add New District'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={handleResetDefaults}
-              title={isAr ? 'استعادة الأحياء الافتراضية' : 'Reset Defaults'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '9px 14px',
-                fontSize: 'var(--crm-text-sm)',
-                color: 'var(--crm-body)',
-                borderColor: 'var(--crm-line-strong)'
-              }}
-            >
-              <RotateCcw size={14} />
-              <span>{isAr ? 'استعادة الافتراضيات' : 'Reset'}</span>
-            </button>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
-          gap: '12px', 
-          marginTop: '18px',
-          paddingTop: '16px',
-          borderTop: '1px solid var(--crm-line)'
-        }}>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', marginTop: '2px' }}>{stats.total} {isAr ? 'منطقة' : 'Areas'}</strong>
-          </div>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)', marginTop: '2px' }}>{stats.custom} {isAr ? 'حي إضافي' : 'Custom'}</strong>
-          </div>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-info)', marginTop: '2px' }}>{stats.system} {isAr ? 'مناطق رئيسية' : 'Core'}</strong>
-          </div>
+        <div className="crm-header-actions-group">
+          <button
+            type="button"
+            className="crm-btn-primary-gold"
+            onClick={handleOpenAdd}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة حي / منطقة جديدة' : 'Add New District'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="crm-btn-secondary-modern"
+            onClick={handleResetDefaults}
+            title={isAr ? 'استعادة الأحياء الافتراضية' : 'Reset Defaults'}
+          >
+            <RotateCcw size={14} />
+            <span>{isAr ? 'استعادة الافتراضيات' : 'Reset'}</span>
+          </button>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="crm-card" style={{ marginBottom: '20px', padding: '14px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Search size={18} style={{ color: 'var(--crm-faint)' }} />
+      <div style={{ marginBottom: '20px' }}>
+        <div className="crm-search-pill-wrapper">
+          <Search size={16} className="crm-search-pill-icon" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isAr ? 'بحث سريع باسم الحي، المعرف، أو المعالم الرئيسية...' : 'Search districts by name, ID, or landmarks...'}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--crm-ink)',
-              fontSize: 'var(--crm-text-base)',
-              outline: 'none'
-            }}
+            className="crm-search-pill-input"
           />
           {searchQuery && (
             <button 
               type="button" 
               onClick={() => setSearchQuery('')}
-              style={{ background: 'transparent', border: 'none', color: 'var(--crm-faint)', cursor: 'pointer' }}
+              className="crm-search-pill-clear"
+              title={isAr ? 'مسح البحث' : 'Clear search'}
             >
-              <X size={16} />
+              ✕
             </button>
           )}
         </div>
       </div>
+
+      {/* Where the site's price per m² comes from: per area, with one switch for all */}
+      <div className="crm-card area-price-mode-bar">
+        <div>
+          <strong>{isAr ? 'تسعير المناطق على الموقع' : 'Area prices on the site'}</strong>
+          <span>
+            {isAr
+              ? `${modeCounts.auto} من متوسط المعروض، ${modeCounts.manual} يدوي. تقدر تغيّر أي منطقة لوحدها من «تعديل».`
+              : `${modeCounts.auto} from listings, ${modeCounts.manual} manual. Change any area from Edit.`}
+          </span>
+        </div>
+        <div className="area-price-mode-actions">
+          <button type="button" className="crm-btn-secondary-modern" disabled={isSaving || modeCounts.manual === 0} onClick={() => handleAllPriceMode('auto')}>
+            {isAr ? 'الكل من المعروض' : 'All from listings'}
+          </button>
+          <button type="button" className="crm-btn-secondary-modern" disabled={isSaving || modeCounts.auto === 0} onClick={() => handleAllPriceMode('manual')}>
+            {isAr ? 'الكل يدوي' : 'All manual'}
+          </button>
+        </div>
+      </div>
+
+      {/* One-click arrangement into main areas and sub-areas */}
+      {(arrangement.added.length > 0 || arrangement.placed.length > 0) && (
+        <div className="crm-card" style={{ marginBottom: '20px', padding: '16px 18px', borderRadius: '12px', border: '1px solid rgba(217, 119, 6, 0.35)', background: 'rgba(217, 119, 6, 0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
+            {isAr ? 'رتّب المناطق: مناطق رئيسية وتحتها مناطق فرعية' : 'Arrange areas into main areas and sub-areas'}
+          </strong>
+          {arrangement.added.length > 0 && (
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)' }}>
+              {isAr ? 'هتتضاف مناطق رئيسية: ' : 'Main areas to add: '}<b>{arrangement.added.join('، ')}</b>
+            </span>
+          )}
+          {arrangement.placed.length > 0 && (
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)' }}>
+              {isAr ? `هتتحط ${arrangement.placed.length} منطقة تحت «سوهاج غرب» و«سوهاج شرق» حسب اسمها، ويتصلح «سوهاح» لـ«سوهاج».` : `${arrangement.placed.length} areas go under West / East Sohag by their names.`}
+            </span>
+          )}
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
+            {isAr ? 'العقارات والعملاء مش هيتغيروا. تقدر تعدّل أي منطقة بعدين من «تعديل ← تابعة لـ».' : 'Listings and leads are not changed. Edit any area later via Edit → Belongs to.'}
+          </span>
+          <div>
+            <button type="button" className="crm-btn-primary-gold" onClick={handleApplyArrangement} disabled={isSaving}>
+              <CheckCircle2 size={16} />
+              <span>{isSaving ? (isAr ? 'جاري الحفظ…' : 'Saving…') : (isAr ? 'طبّق الترتيب ده' : 'Apply this arrangement')}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Areas Grid */}
       <div style={{ 
@@ -373,10 +451,21 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
         gap: '16px' 
       }}>
         {filteredAreas.map((area) => {
-          const propCount = getAreaPropertiesCount(area.id);
+          const isMain = area.id !== 'all' && isMainArea(area, areas);
+          const subCount = isMain ? childrenOf(area.id, areas).length : 0;
+          const propCount = isMain ? getFamilyPropertiesCount(area.id) : getAreaPropertiesCount(area.id);
+          const parent = !isMain && area.id !== 'all' ? areas.find((a) => a.id === area.parentId) : null;
           const isSystem = area.isSystem || area.id === 'all';
 
           return (
+            <Fragment key={area.id}>
+            {isMain && !searchQuery.trim() && (
+              <h4 style={{ gridColumn: '1 / -1', margin: '10px 0 0', paddingBottom: '6px', borderBottom: '2px solid rgba(217, 119, 6, 0.35)', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MapPin size={16} style={{ color: 'var(--crm-accent)' }} />
+                <span>{area.name_ar}</span>
+                <small style={{ color: 'var(--crm-muted)', fontWeight: 600 }}>{isAr ? (subCount ? `${subCount} منطقة فرعية` : 'من غير مناطق فرعية') : `${subCount} sub-areas`}</small>
+              </h4>
+            )}
             <div 
               key={area.id} 
               className="crm-card area-item-card animate-fadeIn"
@@ -410,6 +499,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       }}>
                         #{area.id}
                       </span>
+                      {area.id !== 'all' && (
+                        <span style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, background: isMain ? 'rgba(217, 119, 6, 0.15)' : 'var(--crm-subtle)', color: isMain ? 'var(--crm-accent-text)' : 'var(--crm-body)' }}>
+                          {isMain ? (isAr ? 'رئيسية' : 'Main') : (isAr ? `فرعية من ${parent?.name_ar || ''}` : `Sub-area of ${parent?.name_en || parent?.name_ar || ''}`)}
+                        </span>
+                      )}
                     </div>
                     <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)', marginTop: '2px', display: 'block' }}>
                       {area.name_en || area.id}
@@ -424,7 +518,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     background: propCount > 0 ? 'rgba(16, 185, 129, 0.15)' : 'var(--crm-subtle)',
                     color: propCount > 0 ? 'var(--crm-positive)' : 'var(--crm-muted)'
                   }}>
-                    {propCount} {isAr ? 'عقار' : 'Props'}
+                    {propCount} {isAr ? (subCount ? 'عقار مع الفرعية' : 'عقار') : 'Props'}
                   </span>
                 </div>
 
@@ -461,9 +555,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-accent-text)',
                     border: '1px solid rgba(217, 119, 6, 0.25)'
                   }}>
-                    {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString()} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString()} EGP/m²`}
+                    {areaPriceLabel(area)}
                   </span>
-                  <span style={{
+                  {Number(area.annualGrowthRate) > 0 && <span style={{
                     fontSize: 'var(--crm-text-xs)',
                     fontWeight: '700',
                     padding: '3px 8px',
@@ -472,8 +566,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-positive)',
                     border: '1px solid rgba(16, 185, 129, 0.25)'
                   }}>
-                    {isAr ? `نمو: +${area.annualGrowthRate ?? 0}%` : `Growth: +${area.annualGrowthRate ?? 0}%`}
-                  </span>
+                    {isAr ? `نمو: +${area.annualGrowthRate}%` : `Growth: +${area.annualGrowthRate}%`}
+                  </span>}
                   {area.amenities?.length > 0 && (
                     <span style={{
                       fontSize: 'var(--crm-text-xs)',
@@ -538,7 +632,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   <button
                     type="button"
                     className="btn-action-mini"
-                    onClick={() => setDeleteConfirmId(area.id)}
+                    onClick={() => { setMoveToId(''); setDeleteConfirmId(area.id); }}
                     aria-label={isAr ? `حذف ${area.name_ar}` : `Delete ${area.name_en || area.id}`}
                     style={{
                       display: 'flex',
@@ -559,6 +653,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 )}
               </div>
             </div>
+            </Fragment>
           );
         })}
       </div>
@@ -580,8 +675,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           isAr={isAr}
           isSaving={isSaving}
           modalMode={modalMode}
+          parentChoices={mainAreas(areas).filter((a) => a.id !== activeArea?.id || modalMode === 'add')}
+          hasChildren={modalMode === 'edit' && Boolean(activeArea) && childrenOf(activeArea.id, areas).length > 0}
           setFormData={setFormData}
           setModalMode={setModalMode}
+          pricePreview={activeArea && modalMode === 'edit' ? areaPrice({ ...activeArea, priceMode: 'auto' }, properties, areas) : null}
         />
       )}
 
@@ -608,17 +706,33 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 ? `حذف «${areas.find((a) => a.id === deleteConfirmId)?.name_ar || deleteConfirmId}»؟`
                 : 'Confirm District Deletion'}
             </h3>
-            <p style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-base)', marginBottom: getAreaPropertiesCount(deleteConfirmId) > 0 ? '10px' : '20px' }}>
+            <p style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-base)', marginBottom: '10px' }}>
               {isAr
-                ? 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.'
+                ? (childrenOf(deleteConfirmId, areas).length
+                  ? `سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع. مناطقها الفرعية (${childrenOf(deleteConfirmId, areas).length}) هتبقى مناطق رئيسية.`
+                  : 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.')
                 : 'The district will be removed from all search filters.'}
             </p>
-            {getAreaPropertiesCount(deleteConfirmId) > 0 && (
-              <p style={{ color: 'var(--crm-on-dark-danger)', fontSize: 'var(--crm-text-sm)', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px', marginBottom: '18px' }}>
-                {isAr
-                  ? `تنبيه: ${getAreaPropertiesCount(deleteConfirmId)} عقار مرتبط بهذا الحي وسيظهر بدون اسم منطقة. انقلها لحي آخر أولاً.`
-                  : `${getAreaPropertiesCount(deleteConfirmId)} listings use this district.`}
-              </p>
+            {(
+              <div style={{ color: 'var(--crm-on-dark-danger)', fontSize: 'var(--crm-text-sm)', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '10px', marginBottom: '18px', textAlign: 'start' }}>
+                <label htmlFor="area-move-to" style={{ display: 'block', marginBottom: '6px' }}>
+                  {isAr
+                    ? `انقل العقارات (${getAreaPropertiesCount(deleteConfirmId)}) والعملاء والطلبات اللي على المنطقة دي إلى:`
+                    : `Move its listings (${getAreaPropertiesCount(deleteConfirmId)}), leads and requests to:`}
+                </label>
+                <select
+                  id="area-move-to"
+                  value={moveToId}
+                  onChange={(e) => setMoveToId(e.target.value)}
+                  disabled={isSaving}
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', fontWeight: 600 }}
+                >
+                  <option value="">{isAr ? 'اختار منطقة…' : 'Choose an area…'}</option>
+                  {areas.filter((a) => a.id !== 'all' && a.id !== deleteConfirmId).map((a) => (
+                    <option key={a.id} value={a.id}>{isAr ? a.name_ar : (a.name_en || a.name_ar)}</option>
+                  ))}
+                </select>
+              </div>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
@@ -635,7 +749,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <button
                 type="button"
                 onClick={() => handleDeleteArea(deleteConfirmId)}
-                disabled={isSaving}
+                disabled={isSaving || !moveToId}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

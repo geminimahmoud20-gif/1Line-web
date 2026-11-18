@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Zap, ShieldCheck } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
+import { useProperties } from '../../context/PropertiesContext';
+import { areaPrice } from '../../utils/areaPricing';
 
 // Every figure here comes from data the 1Line team maintains — nothing is hard-coded:
-//  • price per m²  → Areas CMS in the CRM (avgPricePerMeter per district)
+//  • price per m²  → per area as chosen in the CRM: the median of its listings (3+), or the typed figure
 //  • buyer demand  → latest published demand (admin-approved)
 const toNumber = (v) => (typeof v === 'number' ? v : parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0);
 // Latin digits everywhere, matching prices on the rest of the site
@@ -24,17 +26,22 @@ export default function MarketTickerBar({ lang = 'ar', demands = [] }) {
     return () => window.removeEventListener('oneline_areas_updated', onUpdate);
   }, []);
 
+  const { properties = [] } = useProperties();
+
   const items = useMemo(() => {
     const priced = areas
-      .filter((a) => a.id !== 'all' && toNumber(a.avgPricePerMeter) > 0)
-      .sort((a, b) => toNumber(b.avgPricePerMeter) - toNumber(a.avgPricePerMeter))
+      .filter((a) => a.id !== 'all')
+      .map((a) => ({ a, r: areaPrice(a, properties, areas) }))
+      // One or two listings are those units' own prices, not the area's
+      .filter(({ r }) => r.source === 'manual' || (r.source === 'listings' && r.sample >= 3))
+      .sort((x, y) => y.r.ppm - x.r.ppm)
       .slice(0, 6)
-      .map((a) => ({
+      .map(({ a, r }) => ({
         key: `area-${a.id}`,
         icon: MapPin,
         to: `/properties?area=${encodeURIComponent(a.id)}`,
         label: isAr ? `متوسط سعر المتر — ${a.name_ar}` : `Avg. price / m² — ${a.name_en || a.name_ar}`,
-        value: isAr ? `${fmt(toNumber(a.avgPricePerMeter))} ج.م` : `EGP ${fmt(toNumber(a.avgPricePerMeter))}`,
+        value: isAr ? `${fmt(r.ppm)} ج.م` : `EGP ${fmt(r.ppm)}`,
       }));
 
     const latestDemand = demands
@@ -66,7 +73,7 @@ export default function MarketTickerBar({ lang = 'ar', demands = [] }) {
       value: isAr ? 'نراجع مستندات الملكية قبل نشر أي عقار' : 'Title documents reviewed before any listing goes live',
     });
     return out;
-  }, [areas, demands, isAr]);
+  }, [areas, properties, demands, isAr]);
 
   if (items.length === 0) return null;
 

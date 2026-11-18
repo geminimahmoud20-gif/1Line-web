@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { isAgricultural, isIndustrial, isLandType, sizeLabel, filledSpecs, QIRAT_M2 } from '../../utils/propertyKinds';
 import { Link } from 'react-router-dom';
 import {
   MapPin,
@@ -13,7 +14,10 @@ import {
   Scale,
   ShieldCheck,
   Building,
+  Building2,
   Store,
+  Sprout,
+  Factory,
   Briefcase,
   ChevronRight,
   ChevronLeft,
@@ -21,16 +25,30 @@ import {
   Rotate3d,
   Images,
   TrendingDown,
-  Wallet,
-  Video
+  Video,
+  Flame,
+  Clock3,
+  ShieldQuestion,
+  ArrowUpDown,
+  Car,
+  Trees,
+  Landmark
 } from 'lucide-react';
+import { cardFeatures } from '../../utils/buildingFeatures';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
-import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
-import { formatApprox } from '../../utils/fxRates';
+import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
 import { useUIModal } from '../../context/UIModalContext';
+import { getActiveOffer } from '../../utils/propertyOffers';
+import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
+import { countWord } from '../../utils/arabicCount';
+import { listingBadges } from '../../utils/listingBadges';
+import { thumbUrl } from '../../utils/imageThumbs';
+import { paymentTerms, planSummary } from '../../utils/paymentTerms';
 
-const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
+const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
+
+const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3C/svg%3E";
 
 // Latin digits everywhere, matching prices on the rest of the site
 const fmt = (n) => (Number(n) || 0).toLocaleString('en-US');
@@ -110,42 +128,92 @@ export default function PropertyCard({
   const imagesList = (Array.isArray(property.images) && property.images.length > 0) ? property.images : [FALLBACK_PROPERTY_IMG];
   const photoCount = imagesList.length;
   const currentSrc = imagesList[activeImageIndex] || FALLBACK_PROPERTY_IMG;
-  const priceData = formatCurrencyPrice(property.price, currency, lang);
+  // A running limited-time offer (CRM → العروض); samples never carry one
+  // Samples and sold units never carry one
+  const offer = property.isDemo || property.status === 'sold' ? null : getActiveOffer(property);
+  // A plan (installments / resale) shows what is paid now, with the installment under it
+  const terms = paymentTerms(property);
+  const plan = offer ? null : planSummary(terms, (n) => `${fmt(n)} ${isAr ? 'ج.م' : 'EGP'}`, isAr);
+  const priceData = formatCurrencyPrice(offer ? offer.price : (plan ? (plan.now ? plan.now.amount : terms.amount) : property.price), currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
 
-  // "Below area average" chip: only when the listing is clearly under the district benchmark
+  // Multi-unit / whole building detection
+  const isMultiUnit = isMultiUnitOrBuilding(property);
+  const unitBreakdown = isMultiUnit ? (benchmark?.unitBreakdown || parseUnitBreakdown(property, isAr)) : null;
+
+  // "Below area average" chip: only for single residential/commercial units when under district benchmark
   const belowAvgPct = (() => {
+    if (isMultiUnit) return 0;
     const m = benchmark?.badgeType === 'deal' && /(\d+)%/.exec(benchmark.badgeLabel || '');
     return m ? Number(m[1]) : 0;
   })();
 
-  // One restrained status badge at most: private deal, or documents reviewed (only with a legal record)
+  // At most two chips on the photo: availability (متاح / قيد التفاوض / تم البيع) and one more,
+  // a private deal or the review badge. Each is switched on or off per listing in the CRM.
+  const badges = listingBadges(property, isAr);
+  const REVIEW_ICONS = { verified: ShieldCheck, in_review: Clock3, not_reviewed: ShieldQuestion };
   const statusBadge = (property.isOffMarket || property.isPrivateDeal)
     ? { label: isAr ? 'صفقة خاصة' : 'Private deal', Icon: Sparkles, tone: 'deal' }
-    : property.legalStatus
-      ? { label: isAr ? 'مستندات مراجَعة' : 'Documents reviewed', Icon: ShieldCheck, tone: 'verified' }
+    : badges.review
+      ? { label: badges.review.label, hint: badges.review.hint, Icon: REVIEW_ICONS[badges.review.key], tone: badges.review.tone }
       : null;
+  const isSold = badges.availability?.key === 'sold';
 
-  // Sector separation: land, commercial, office, residential
-  const isLand = property.type === 'land' || (title && title.includes('أرض'));
-  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  // Sector separation: full building, land, commercial, office, residential
+  const isAgri = !isMultiUnit && isAgricultural(property);
+  const isIndustry = !isMultiUnit && isIndustrial(property);
+  const isLand = !isMultiUnit && (isLandType(property.type) || (!isIndustry && title && title.includes('أرض')));
+  const isCommercial = !isMultiUnit && !isLand && !isIndustry && !isAgri && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isMultiUnit && !isLand && !isCommercial && !isIndustry && !isAgri && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
-  const sectorLabel = isCommercial
-    ? (isAr ? 'تجاري' : 'Commercial')
-    : isOffice
-      ? (isAr ? 'إداري' : 'Office')
-      : isLand
-        ? (isAr ? 'أرض' : 'Land')
-        : (isAr ? 'سكني' : 'Residential');
+  const sectorLabel = isMultiUnit
+    ? (isAr ? 'عقار كامل' : 'Full Building')
+    : isAgri
+      ? (isAr ? 'زراعي' : 'Agricultural')
+    : isIndustry
+      ? (isAr ? 'صناعي' : 'Industrial')
+    : isCommercial
+      ? (isAr ? 'تجاري' : 'Commercial')
+      : isOffice
+        ? (isAr ? 'إداري' : 'Office')
+        : isLand
+          ? (isAr ? 'أرض' : 'Land')
+          : (isAr ? 'سكني' : 'Residential');
 
-  // Residential: up to three cells (area, beds, baths); others: two wider cells
+  // Price per m² on every single unit (the benchmark only covers some types): not for whole
+  // buildings (land + floors) or farmland (sold by the feddan)
+  const ownPricePerM2 = !isMultiUnit && !isAgri && Number(property.price) > 0 && Number(property.size) > 0
+    ? Math.round((offer ? offer.price : Number(property.price)) / Number(property.size))
+    : 0;
+
+  // Specs: for multi-unit buildings, display footprint area + unit composition (apartments + shops)
   const specs = [
-    { key: 'size', Icon: Maximize2, value: fmt(property.size), unit: isAr ? 'م²' : 'm²', label: isAr ? 'المساحة' : 'Area' }
+    {
+      key: 'size',
+      Icon: Maximize2,
+      value: isAgri ? sizeLabel(property, isAr) : fmt(property.size),
+      unit: isAgri && Number(property.size) >= QIRAT_M2 ? '' : (isAr ? 'م²' : 'm²'),
+      label: isMultiUnit ? (isAr ? 'مسطح الأرض' : 'Plot Area') : (isAr ? 'المساحة' : 'Area')
+    }
   ];
-  // Non-residential: two wide cells (the sector chip on the photo already names the category)
-  if (isCommercial) {
+
+  if (isMultiUnit) {
+    // Floors / flats / shops when the listing says how many; a generic "mixed-use" line only
+    // repeated the "عقار كامل" chip, so it is left out
+    const ub = unitBreakdown || {};
+    if (ub.floors || ub.residentialUnits || ub.commercialUnits) {
+      specs.push({
+        key: 'units',
+        Icon: Building2,
+        value: ub.summary,
+        label: isAr ? 'مكونات العقار' : 'Asset Units'
+      });
+    }
+  } else if (isAgri || isIndustry) {
+    const first = filledSpecs(property, isAr)[0];
+    if (first) specs.push({ key: 'kind', Icon: isAgri ? Sprout : Factory, value: first.value, label: first.label });
+  } else if (isCommercial) {
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
     else specs.push({ key: 'kind', Icon: Store, value: formatCommercialSpec(property.commercialType_ar, lang), label: floorLabel(property.floor ?? 0, isAr) });
   } else if (isOffice) {
@@ -154,12 +222,12 @@ export default function PropertyCard({
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
     else specs.push({ key: 'kind', Icon: Building, value: formatLandSpec(property.landType_ar, lang), label: isAr ? 'النوع' : 'Type' });
   } else {
-    if (property.bedrooms > 0) specs.push({ key: 'beds', Icon: BedDouble, value: property.bedrooms, label: isAr ? 'غرف' : 'Beds' });
-    if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: isAr ? 'حمام' : 'Baths' });
+    if (property.bedrooms > 0) specs.push({ key: 'beds', Icon: BedDouble, value: property.bedrooms, label: countWord('room', property.bedrooms, isAr) });
+    if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: countWord('bath', property.bathrooms, isAr) });
   }
 
-  const hasInstallments = Number(property.monthlyInstallment) > 0;
-  const installmentYears = Number(property.installmentYears) || 0;
+
+  const features = cardFeatures(property, isAr);
 
   const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
   const goTo = (idx) => setActiveImageIndex((idx + photoCount) % photoCount);
@@ -188,14 +256,21 @@ export default function PropertyCard({
   const img = (
     <img
       key={currentSrc}
-      src={currentSrc}
+      src={thumbUrl(currentSrc)}
       alt={title}
       className={`pcx-img ${loadedSrc.has(currentSrc) ? 'is-loaded' : ''}`}
       loading="lazy"
       decoding="async"
       onLoad={() => setLoadedSrc((s) => (s.has(currentSrc) ? s : new Set(s).add(currentSrc)))}
       onError={(e) => {
-        e.currentTarget.src = FALLBACK_PROPERTY_IMG;
+        const el = e.currentTarget;
+        // A missing small copy falls back to the full photo before the placeholder
+        if (!el.dataset.thumbFallback && thumbUrl(currentSrc) !== currentSrc) {
+          el.dataset.thumbFallback = '1';
+          el.src = currentSrc;
+          return;
+        }
+        el.src = FALLBACK_PROPERTY_IMG;
         setLoadedSrc((s) => new Set(s).add(currentSrc));
       }}
     />
@@ -206,14 +281,18 @@ export default function PropertyCard({
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { id: property.id, title, intent: 'quick_inquiry' } }));
     }
-    const msg = isAr
-      ? `مرحباً 1Line، استفسار سريع بخصوص عقار: "${title}" بسعر ${fmt(property.price)} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
-      : `Hello 1Line, quick inquiry about property "${title}" priced at ${fmt(property.price)} EGP (ID: #${property.id}).`;
+    const msg = offer
+      ? (isAr
+        ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على عقار: "${title}" بسعر ${fmt(offer.price)} ج.م بدلاً من ${fmt(offer.basePrice)} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
+        : `Hello 1Line, I'd like the cash offer on "${title}" at ${fmt(offer.price)} EGP instead of ${fmt(offer.basePrice)} EGP (ID: #${property.id}).`)
+      : (isAr
+        ? `مرحباً 1Line، استفسار سريع بخصوص عقار: "${title}" بسعر ${fmt(property.price)} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
+        : `Hello 1Line, quick inquiry about property "${title}" priced at ${fmt(property.price)} EGP (ID: #${property.id}).`);
     window.open(getWhatsAppUrl(msg), '_blank', 'noopener');
   };
 
   return (
-    <article className="property-card-modern pcx" data-property-id={property.id}>
+    <article className={`property-card-modern pcx${offer ? ' pcx--offer' : ''}${isSold ? ' pcx--sold' : ''}`} data-property-id={property.id}>
       {/* ── Media ───────────────────────────────────────────── */}
       <div className="pcx-media" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {onQuickView ? (
@@ -242,17 +321,32 @@ export default function PropertyCard({
         {/* Top row: status (start) · actions (end) */}
         <div className="pcx-top">
           <div className="pcx-chips">
-            {property.isDemo && (
-              <span className="pcx-chip pcx-chip--demo" title={isAr ? 'عقار توضيحي لعرض إمكانيات المنصة — ليس معروضاً للبيع' : 'Sample listing — not for sale'}>
-                {isAr ? 'مثال توضيحي' : 'Sample'}
-              </span>
-            )}
-            {!property.isDemo && statusBadge && (
-              <span className={`pcx-chip pcx-chip--${statusBadge.tone}`}>
-                <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
-                <span>{statusBadge.label}</span>
-              </span>
-            )}
+            {/* Two at most, by what matters most, so the photo stays visible */}
+            {[
+              property.isDemo && (
+                <span key="demo" className="pcx-chip pcx-chip--demo" title={isAr ? 'عقار توضيحي لعرض إمكانيات المنصة — ليس معروضاً للبيع' : 'Sample listing — not for sale'}>
+                  {isAr ? 'مثال توضيحي' : 'Sample'}
+                </span>
+              ),
+              offer && (
+                <span key="offer" className="pcx-chip pcx-chip--offer">
+                  <Flame size={12} strokeWidth={2.25} aria-hidden="true" />
+                  <span>{isAr ? offer.label.ar : offer.label.en} <bdi dir="ltr">−{offer.pct}%</bdi></span>
+                </span>
+              ),
+              badges.availability && (
+                <span key="avail" className={`pcx-chip pcx-chip--avail is-${badges.availability.tone}`} title={badges.availability.hint}>
+                  <span className="pcx-avail-dot" aria-hidden="true" />
+                  <span>{badges.availability.label}</span>
+                </span>
+              ),
+              !property.isDemo && !offer && statusBadge && (
+                <span key="status" className={`pcx-chip pcx-chip--${statusBadge.tone}`} title={statusBadge.hint}>
+                  <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
+                  <span>{statusBadge.label}</span>
+                </span>
+              )
+            ].filter(Boolean).slice(0, 2)}
           </div>
 
           <div className="pcx-actions">
@@ -311,17 +405,16 @@ export default function PropertyCard({
             {/* معاينة الغربة — expat remote inspection */}
             <button
               type="button"
-              className="pcx-chip pcx-chip--remote"
+              className="pcx-chip pcx-chip--remote pcx-chip--icon"
               onClick={(e) => { stop(e); openRemoteInspection(property); }}
-              title={isAr ? 'طلب معاينة الغربة: فيديو حي أو جولة درون' : 'Remote inspection: live video or drone tour'}
+              title={isAr ? 'للمغتربين: معاينة بالفيديو الحي ولقطات للشارع والجيران' : 'For expats: live video tour and street footage'}
+              aria-label={isAr ? 'معاينة بالفيديو' : 'Video tour'}
             >
-              <Video size={12} strokeWidth={2} aria-hidden="true" />
-              <span>{isAr ? 'معاينة الغربة' : 'Remote tour'}</span>
+              <Video size={13} strokeWidth={2} aria-hidden="true" />
             </button>
             {property.virtualTour && (
-              <span className="pcx-chip pcx-chip--glass" title={isAr ? 'جولة افتراضية 360°' : '360° virtual tour'}>
-                <Rotate3d size={12} strokeWidth={2} aria-hidden="true" />
-                <span>360°</span>
+              <span className="pcx-chip pcx-chip--glass pcx-chip--icon" title={isAr ? 'عرض بانورامي لصور الوحدة' : 'Panoramic photo view'} role="img" aria-label={isAr ? 'بانوراما' : 'Panorama'}>
+                <Rotate3d size={13} strokeWidth={2} aria-hidden="true" />
               </span>
             )}
           </div>
@@ -347,14 +440,29 @@ export default function PropertyCard({
           <div className="pcx-price">
             <bdi className="pcx-price-val">{priceData.primary}</bdi>
             <span className="pcx-price-cur">{priceData.symbol}</span>
+            {offer && <span className="pcx-price-tag">{isAr ? 'كاش' : 'cash'}</span>}
+            {plan && <span className="pcx-price-tag pcx-price-tag--plan">{plan.now ? (plan.resale ? (isAr ? 'كاش للمالك' : 'to seller') : (isAr ? 'مقدم' : 'down')) : (isAr ? 'قسط' : 'installment')}</span>}
           </div>
-          {benchmark?.pricePerMeterFormatted && (
+          {benchmark?.pricePerMeterFormatted ? (
             <span className="pcx-ppm" title={benchmark.badgeLabel}>
               <bdi>{fmt(benchmark.pricePerMeter)}</bdi>
               <small>{isAr ? 'ج.م/م²' : 'EGP/m²'}</small>
             </span>
-          )}
+          ) : ownPricePerM2 > 0 ? (
+            <span className="pcx-ppm" title={isAr ? 'السعر مقسوم على المساحة' : 'Price divided by size'}>
+              <bdi>{fmt(ownPricePerM2)}</bdi>
+              <small>{isAr ? 'ج.م/م²' : 'EGP/m²'}</small>
+            </span>
+          ) : null}
         </div>
+
+        {plan && (
+          <span className="pcx-plan">
+            {isAr
+              ? `${plan.now ? '+ ' : ''}${plan.then}${plan.yearly ? ` + ${plan.yearly}` : ''}`
+              : `${plan.now ? '+ ' : ''}${plan.then}${plan.yearly ? ` + ${plan.yearly}` : ''}`}
+          </span>
+        )}
 
         {priceData.approx && (
           <span className="pcx-fx" title={isAr ? 'سعر استرشادي بعملة العرض المختارة — التعاقد بالجنيه' : 'Indicative, in your display currency — contract in EGP'}>
@@ -362,7 +470,17 @@ export default function PropertyCard({
           </span>
         )}
 
-        {belowAvgPct > 0 && (
+        {offer && (
+          <div className="pcx-offer">
+            <span className="pcx-offer-was">
+              {isAr ? 'بدلاً من ' : 'was '}<del><bdi>{fmt(offer.basePrice)}</bdi></del>
+              <span className="pcx-offer-save">{isAr ? ` · وفّر ${fmt(offer.savings)} ج.م` : ` · save ${fmt(offer.savings)} EGP`}</span>
+            </span>
+            <OfferCountdown endsAt={offer.endsAt} isAr={isAr} />
+          </div>
+        )}
+
+        {!offer && belowAvgPct > 0 && (
           <span className="pcx-insight" title={isAr ? 'مقارنة استرشادية بمتوسط سعر المتر في المنطقة' : 'Indicative, vs. the district average price per m²'}>
             <TrendingDown size={13} strokeWidth={2} aria-hidden="true" />
             <span>{isAr ? `أقل ${belowAvgPct}% من متوسط المنطقة` : `${belowAvgPct}% below area average`}</span>
@@ -390,31 +508,18 @@ export default function PropertyCard({
           ))}
         </ul>
 
-        {hasInstallments ? (
-          <div className="pcx-finance">
-            <div className="pcx-fin-cell">
-              <span className="pcx-fin-label">{isAr ? 'المقدم' : 'Down payment'}</span>
-              <span className="pcx-fin-val"><bdi>{fmt(property.downPayment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
-              {currency !== 'EGP' && formatApprox(property.downPayment, currency, lang) && (
-                <span className="pcx-fin-fx"><bdi>{formatApprox(property.downPayment, currency, lang)}</bdi></span>
-              )}
-            </div>
-            <div className="pcx-fin-cell pcx-fin-cell--accent">
-              <span className="pcx-fin-label">
-                {isAr ? 'القسط الشهري' : 'Monthly'}
-                {installmentYears > 0 && <em>{isAr ? `${installmentYears} سنوات` : `${installmentYears} yrs`}</em>}
-              </span>
-              <span className="pcx-fin-val"><bdi>{fmt(property.monthlyInstallment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
-              {currency !== 'EGP' && formatApprox(property.monthlyInstallment, currency, lang) && (
-                <span className="pcx-fin-fx"><bdi>{formatApprox(property.monthlyInstallment, currency, lang)}</bdi></span>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="pcx-finance pcx-finance--cash">
-            <Wallet size={15} strokeWidth={1.75} aria-hidden="true" />
-            <span>{isAr ? 'سداد كاش — بدون أقساط' : 'Cash payment — no installments'}</span>
-          </div>
+        {features.length > 0 && (
+          <ul className="pcx-feats" aria-label={isAr ? 'مميزات المبنى' : 'Building features'}>
+            {features.map(({ key, label }) => {
+              const Icon = FEATURE_ICONS[key];
+              return (
+                <li key={key} className="pcx-feat">
+                  <Icon size={13} strokeWidth={1.9} aria-hidden="true" />
+                  <span>{label}</span>
+                </li>
+              );
+            })}
+          </ul>
         )}
 
         <div className="pcx-cta">

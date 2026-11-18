@@ -1,0 +1,12 @@
+.consent-note {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+}
+.consent-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

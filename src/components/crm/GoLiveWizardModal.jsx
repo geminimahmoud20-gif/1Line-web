@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Rocket, CheckCircle2, AlertTriangle, X, Download, Trash2 } from 'lucide-react';
+import { Rocket, CheckCircle2, AlertTriangle, X, Download } from 'lucide-react';
 import { getFounderSettings, saveFounderSettings } from '../../utils/founderCmsData';
 
 export default function GoLiveWizardModal({
   isOpen,
   onClose,
   leads = [],
-  setLeads,
   properties = [],
   demands = [],
   lang = 'ar',
@@ -49,7 +48,7 @@ export default function GoLiveWizardModal({
     };
     await saveFounderSettings(updated);
     setFounderSettings(updated);
-    if (triggerToast) triggerToast(isAr ? 'تم حفظ رقم الهاتف والواتساب ونشره سحابياً على كامل الموقع! 📞' : 'Real phone saved across site & cloud!', 'success');
+    if (triggerToast) triggerToast(isAr ? 'تم حفظ رقم الهاتف والواتساب ونشره سحابياً على كامل الموقع!' : 'Real phone saved across site & cloud!', 'success');
   };
 
   // Safe Demo Cleansing: Download backup first, then purge
@@ -68,15 +67,7 @@ export default function GoLiveWizardModal({
     a.href = url;
     a.download = `OneLine_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
-    if (triggerToast) triggerToast(isAr ? 'تم تنزيل النسخة الاحتياطية بنجاح 💾' : 'Backup downloaded successfully', 'success');
-  };
-
-  const handlePurgeDemoLeads = () => {
-    if (window.confirm(isAr ? 'هل تريد بالتأكيد تفريغ العملاء التجريبيين والبدء بقاعدة بيانات حقيقية نظيفة؟ (تأكد من تنزيل نسخة احتياطية أولاً)' : 'Purge demo leads and start fresh?')) {
-      if (setLeads) setLeads([]);
-      localStorage.removeItem('crm_leads');
-      if (triggerToast) triggerToast(isAr ? 'تم تفريغ العملاء التجريبيين وبدء قاعدة بيانات الإنتاج النظيفة! 🚀' : 'Demo leads purged. Ready for live clients!', 'success');
-    }
+    if (triggerToast) triggerToast(isAr ? 'تم تنزيل النسخة الاحتياطية بنجاح' : 'Backup downloaded successfully', 'success');
   };
 
   return (
@@ -175,7 +166,7 @@ export default function GoLiveWizardModal({
               fontSize: 'var(--crm-text-md)',
               color: readinessScore >= 80 ? 'var(--crm-on-dark-positive)' : 'var(--crm-gold-on-dark)'
             }}>
-              {readinessScore}% {readinessScore >= 80 ? (isAr ? 'جاهز للإطلاق 🚀' : 'Ready') : (isAr ? 'يتطلب خطوات إضافية' : 'Pending steps')}
+              {readinessScore}% {readinessScore >= 80 ? (isAr ? 'جاهز للإطلاق' : 'Ready') : (isAr ? 'يتطلب خطوات إضافية' : 'Pending steps')}
             </strong>
           </div>
 
@@ -388,33 +379,13 @@ export default function GoLiveWizardModal({
 
             <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '16px', padding: '18px' }}>
               <h4 style={{ color: 'var(--crm-on-dark-danger)', margin: '0 0 8px 0', fontSize: 'var(--crm-text-md)' }}>
-                {isAr ? 'الخطوة 2: تصفير قاعدة بيانات العملاء التجريبيين' : 'Step 2: Purge Demo Leads'}
+                {isAr ? 'الخطوة 2: العملاء التجريبيين' : 'Step 2: Sample leads'}
               </h4>
-              <p style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)', marginBottom: '14px' }}>
-                {isAr 
-                  ? 'سيتم حذف كل أسماء العملاء الافتراضية والبدء بجدول عملاء نظيف تماماً لاستقبال طلبات الزوار الحقيقيين فور إطلاق الحملات التسويقية.' 
-                  : 'Clear mock leads to prepare the CRM for real incoming buyers.'}
+              <p style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)', margin: 0 }}>
+                {isAr
+                  ? 'مفيش حاجة تتمسح: العملاء التجريبيين مش بيتحمّلوا في الـ CRM أصلاً، وكل اللي في الجدول عملاء حقيقيين محفوظين في Firebase. حذف أي عميل حقيقي بيتم من جدول العملاء نفسه (للمدير العام بس).'
+                  : 'Nothing to purge: sample leads are never loaded, and every lead in the table is a real record in Firebase. Delete a real lead from the leads table (super admin only).'}
               </p>
-              <button
-                type="button"
-                onClick={handlePurgeDemoLeads}
-                style={{
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: 'var(--crm-on-dark-danger)',
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  fontSize: 'var(--crm-text-sm)',
-                  fontWeight: 'bold',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                <Trash2 size={15} />
-                <span>{isAr ? 'تصفير العملاء والبدء بقاعدة بيانات نظيفة 100%' : 'Purge Demo Leads'}</span>
-              </button>
             </div>
           </div>
         )}
@@ -424,7 +395,7 @@ export default function GoLiveWizardModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '18px' }}>
               <h4 style={{ color: 'var(--crm-on-dark)', margin: '0 0 8px 0', fontSize: 'var(--crm-text-md)' }}>
-                🌐 {isAr ? 'كيفية ربط الموقع بدومينكم الرسمي' : 'How to deploy to your official domain'}
+                {isAr ? 'كيفية ربط الموقع بدومينكم الرسمي' : 'How to deploy to your official domain'}
               </h4>
               <ol style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-sm)', lineHeight: 1.8, paddingRight: '20px' }}>
                 <li>قم بتشغيل أمر البناء النهائي: <code>npm run build</code> ليتم إنشاء مجلد <code>dist</code> جاهز للرفع.</li>

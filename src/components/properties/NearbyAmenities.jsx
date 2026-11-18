@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
-import { School, Hospital, ShoppingBag, Coffee, Train, MapPin, Clock, Navigation } from 'lucide-react';
+import {
+  School, Baby, Hospital, Pill, ShoppingCart, ShoppingBag, UtensilsCrossed, Landmark, Banknote, Building2,
+  Shield, Train, Route, Fuel, Trees, Dumbbell, Hotel, MapPin, Clock, Navigation
+} from 'lucide-react';
 import { getAreaById } from '../../utils/areasData';
+import { amenityCategory, categoriesIn } from '../../utils/amenityCategories';
+import { amenityMetrics, namedAmenities } from '../../utils/amenityDistance';
 
-const getCategoryIcon = (category) => {
-  switch (category) {
-    case 'education': return School;
-    case 'health': return Hospital;
-    case 'shopping': return ShoppingBag;
-    case 'transport': return Train;
-    case 'lifestyle': return Coffee;
-    default: return MapPin;
-  }
-};
+const ICONS = { School, Baby, Hospital, Pill, ShoppingCart, ShoppingBag, UtensilsCrossed, Landmark, Banknote, Building2, Shield, Train, Route, Fuel, Trees, Dumbbell, Hotel, MapPin };
+const iconFor = (category) => ICONS[amenityCategory(category).icon] || MapPin;
 
 export default function NearbyAmenities({ property, lang = 'ar' }) {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -29,9 +26,12 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
 
   // Listing landmarks first, then the area's landmarks from the CRM. No built-in generic list:
   // a New Sohag villa must not claim to be 500 m from the Corniche.
-  const fromListing = Array.isArray(property?.nearbyAmenities) && property.nearbyAmenities.length > 0;
-  const fromArea = !fromListing && Array.isArray(areaData?.amenities) && areaData.amenities.length > 0;
-  const rawAmenities = fromListing ? property.nearbyAmenities : fromArea ? areaData.amenities : [];
+  // Landmarks without a name (added in the CRM and never filled in) are left out
+  const listingAmenities = namedAmenities(property?.nearbyAmenities);
+  const areaAmenities = namedAmenities(areaData?.amenities);
+  const fromListing = listingAmenities.length > 0;
+  const fromArea = !fromListing && areaAmenities.length > 0;
+  const rawAmenities = fromListing ? listingAmenities : fromArea ? areaAmenities : [];
 
   if (rawAmenities.length === 0) {
     return (
@@ -54,8 +54,12 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
   const amenities = rawAmenities.map((item, idx) => ({
     ...item,
     id: item.id || idx + 1,
-    icon: typeof item.icon === 'function' ? item.icon : getCategoryIcon(item.category)
+    // Unknown kinds group under "other"
+    category: amenityCategory(item.category).id,
+    icon: typeof item.icon === 'function' ? item.icon : iconFor(item.category)
   }));
+  // A tab per kind this listing actually has; no tab bar when there is only one kind
+  const tabs = categoriesIn(amenities);
 
   const filteredAmenities = activeCategory === 'all'
     ? amenities
@@ -79,77 +83,62 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
         </div>
 
         {/* Categories Tab Filter */}
-        <div className="amenities-category-tabs">
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('all')}
-          >
-            {isAr ? 'الكل' : 'All'}
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'education' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('education')}
-          >
-            <School size={14} />
-            <span>{isAr ? 'التعليم' : 'Education'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'health' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('health')}
-          >
-            <Hospital size={14} />
-            <span>{isAr ? 'الصحة' : 'Health'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'shopping' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('shopping')}
-          >
-            <ShoppingBag size={14} />
-            <span>{isAr ? 'التسوق' : 'Shopping'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'transport' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('transport')}
-          >
-            <Train size={14} />
-            <span>{isAr ? 'المواصلات' : 'Transit'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'lifestyle' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('lifestyle')}
-          >
-            <Coffee size={14} />
-            <span>{isAr ? 'الترفيه' : 'Leisure'}</span>
-          </button>
-        </div>
+        {tabs.length > 1 && (
+          <div className="amenities-category-tabs">
+            <button
+              type="button"
+              className={`amenity-tab-btn ${activeCategory === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveCategory('all')}
+            >
+              {isAr ? 'الكل' : 'All'}
+            </button>
+            {tabs.map((c) => {
+              const Icon = iconFor(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`amenity-tab-btn ${activeCategory === c.id ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(c.id)}
+                >
+                  <Icon size={14} />
+                  <span>{isAr ? c.ar : c.en}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Amenities Grid */}
       <div className="amenities-items-grid">
         {filteredAmenities.map((item) => {
           const IconComponent = item.icon;
+          const m = amenityMetrics(item, isAr);
           return (
             <div key={item.id} className="amenity-item-card">
               <div className="amenity-item-icon-box">
                 <IconComponent size={20} />
               </div>
               <div className="amenity-item-content">
-                <h4>{isAr ? item.name_ar : item.name_en}</h4>
+                <h4>{isAr ? item.name_ar : (item.name_en || item.name_ar)}</h4>
+                {/* Walk / drive times worked out from the distance (utils/amenityDistance.js) */}
                 <div className="amenity-metrics-row">
-                  <span className="metric-dist">
-                    <Navigation size={13} />
-                    {item.distance}
-                  </span>
-                  <span className="metric-time">
-                    <Clock size={13} />
-                    {isAr ? `${item.timeDrive} بالسيارة (${item.timeWalk} سيراً)` : `${item.timeDrive} drive (${item.timeWalk} walk)`}
-                  </span>
+                  {m.distance && (
+                    <span className="metric-dist">
+                      <Navigation size={13} />
+                      {m.distance}
+                    </span>
+                  )}
+                  {(m.walk || m.drive) && (
+                    <span className="metric-time">
+                      <Clock size={13} />
+                      {[
+                        m.walk && (isAr ? `${m.walk} مشي` : `${m.walk} walk`),
+                        m.drive && (isAr ? `${m.drive} بالعربية` : `${m.drive} drive`)
+                      ].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

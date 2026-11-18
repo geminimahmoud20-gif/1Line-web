@@ -1,25 +1,11 @@
-import { db, isFirebaseConfigured } from '../firebase.js';
+import { db, auth, isFirebaseConfigured } from '../firebase.js';
+import { canPublishInventoryUser, getUserClaims } from './auth.js';
+import { isManagerRole } from '../utils/stageGate.js';
+import { approvalStamp, STAFF_IDENTITY_FIELDS } from '../utils/publishApproval.js';
 
-import { collection, addDoc, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
 
 // ===================== PROPERTIES =====================
-
-/**
- * Load all properties from Firestore (or return null for local fallback).
- */
-export const loadProperties = async (maxCount = 100) => {
-  if (isFirebaseConfigured() && db) {
-    try {
-      const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'), limit(maxCount));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-    } catch (error) {
-      console.error('Firebase loadProperties error:', error);
-      return null;
-    }
-  }
-  return null;
-};
 
 /**
  * Save a new property to Firestore.
@@ -58,10 +44,20 @@ const toFirestorePayload = (item) => {
  * Real-time listener for a catalog collection. Returns an unsubscribe function or null.
  * callback receives [{ id, ...data }] including tombstones.
  */
-export const subscribeToCatalog = (collectionName, callback) => {
+/** Listing statuses visitors may read (firestore.rules allows only these to non-staff) */
+export const SITE_STATUSES = ['published', 'under_negotiation', 'reserved', 'deposit_paid', 'contracted', 'sold'];
+
+/**
+ * Live listener on the catalog. `siteOnly` (visitors, when /api/catalog is unreachable) asks only
+ * for listings on the site, the query the rules let a visitor run; the CRM reads everything.
+ */
+export const subscribeToCatalog = (collectionName, callback, { siteOnly = false } = {}) => {
   if (!CATALOG_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db) return null;
   try {
-    return onSnapshot(collection(db, collectionName), (snapshot) => {
+    const source = siteOnly && collectionName === 'properties'
+      ? query(collection(db, collectionName), where('status', 'in', SITE_STATUSES))
+      : collection(db, collectionName);
+    return onSnapshot(source, (snapshot) => {
       callback(snapshot.docs.map((d) => ({ ...d.data(), id: d.data().id ?? d.id })));
     }, (err) => {
       console.warn(`Firebase subscribeToCatalog [${collectionName}] warning:`, err);
@@ -73,33 +69,112 @@ export const subscribeToCatalog = (collectionName, callback) => {
 };
 
 /**
- * Create or replace one catalog item. Resolves { ok, reason }:
- * reason = 'not-configured' | 'too-large' | Firestore error code.
+ * Who is saving: the general manager, or a role with «ينشر», publishes; anyone else's save waits
+ * for approval (src/utils/publishApproval.js; firestore.rules enforces the same).
+ */
+/** May this account move a client back a stage? Managers do; the local password session (no account) is the manager. */
+export const currentLeadManager = async () => {
+  const user = auth?.currentUser || null;
+  if (!user) return true;
+  try {
+    const claims = await getUserClaims(user);
+    return claims.admin === true || isManagerRole(claims.role) || (Array.isArray(claims.perms) && claims.perms.includes('ld.manage'));
+  } catch {
+    return false;
+  }
+};
+
+export const currentApprover = async () => {
+  const user = auth?.currentUser || null;
+  return { isManager: await canPublishInventoryUser(user) };
+};
+
+/**
+ * Removes the staff email older saves stamped on public listings / projects (submittedBy,
+ * approvedBy). The general manager's CRM session calls this once for the items that still
+ * carry it. Returns how many documents were cleaned.
+ */
+export const stripStaffIdentity = async (collectionName, ids = []) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db || ids.length === 0) return 0;
+  const unset = Object.fromEntries(STAFF_IDENTITY_FIELDS.map((k) => [k, deleteField()]));
+  // One update per document: a listing that exists only on this device fails alone
+  const results = await Promise.allSettled(ids.map((id) => updateDoc(doc(db, collectionName, String(id)), unset)));
+  const done = results.filter((r) => r.status === 'fulfilled').length;
+  if (done < ids.length) console.warn(`stripStaffIdentity [${collectionName}]: ${ids.length - done} not cleaned`);
+  return done;
+};
+
+/**
+ * Create or replace one catalog item. Resolves { ok, reason, item } (item = what was saved,
+ * with its approval stamp). reason = 'not-configured' | 'too-large' | Firestore error code.
  */
 export const upsertCatalogItem = async (collectionName, item) => {
   if (!CATALOG_COLLECTIONS.has(collectionName) || !item || item.id === undefined || item.id === null) {
     return { ok: false, reason: 'invalid' };
   }
   if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
-  const { data, bytes } = toFirestorePayload({ ...item, deleted: false, updatedAt: new Date().toISOString() });
+  const stamped = approvalStamp({ ...item, deleted: false, updatedAt: new Date().toISOString() }, await currentApprover());
+  const { data, bytes } = toFirestorePayload(stamped);
   if (bytes > MAX_DOC_BYTES) return { ok: false, reason: 'too-large' };
   try {
     await setDoc(doc(db, collectionName, String(item.id)), data);
-    return { ok: true };
+    return { ok: true, item: stamped };
   } catch (error) {
     console.error(`Firebase upsertCatalogItem [${collectionName}] error:`, error);
     return { ok: false, reason: error?.code || 'error' };
   }
 };
 
-export const deleteCatalogItem = async (collectionName, id) => {
+/**
+ * Removes an item. A tombstone ({ deleted: true }) is kept only for items the site also ships as
+ * bundled samples (`keepTombstone`), so the sample doesn't come back; anything else is deleted
+ * outright — every document left behind is read again on each catalog refresh.
+ */
+export const deleteCatalogItem = async (collectionName, id, { keepTombstone = true } = {}) => {
   if (!CATALOG_COLLECTIONS.has(collectionName) || id === undefined || id === null) return { ok: false, reason: 'invalid' };
   if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
   try {
+    if (!keepTombstone) {
+      await deleteDoc(doc(db, collectionName, String(id)));
+      return { ok: true };
+    }
     await setDoc(doc(db, collectionName, String(id)), { id, deleted: true, updatedAt: new Date().toISOString() });
     return { ok: true };
   } catch (error) {
     console.error(`Firebase deleteCatalogItem [${collectionName}] error:`, error);
     return { ok: false, reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Many catalog items in batched writes (file import). Items over the size limit are skipped.
+ * Returns { ok, written, skipped: [{ id, reason }], reason? } — one report for the whole import.
+ */
+export const upsertCatalogItems = async (collectionName, items = []) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName)) return { ok: false, written: 0, skipped: [], reason: 'invalid' };
+  if (!isFirebaseConfigured() || !db) return { ok: false, written: 0, skipped: [], reason: 'not-configured' };
+  const now = new Date().toISOString();
+  const approver = await currentApprover();
+  const skipped = [];
+  const docs = [];
+  for (const item of items) {
+    if (!item || item.id === undefined || item.id === null) { skipped.push({ id: item?.id, reason: 'invalid' }); continue; }
+    const { data, bytes } = toFirestorePayload(approvalStamp({ ...item, deleted: false, updatedAt: now }, { ...approver, now }));
+    if (bytes > MAX_DOC_BYTES) { skipped.push({ id: item.id, reason: 'too-large' }); continue; }
+    docs.push([String(item.id), data]);
+  }
+  let written = 0;
+  try {
+    // A batch takes up to 500 writes; stay well under for large documents
+    for (let i = 0; i < docs.length; i += 200) {
+      const batch = writeBatch(db);
+      for (const [id, data] of docs.slice(i, i + 200)) batch.set(doc(db, collectionName, id), data);
+      await batch.commit();
+      written += Math.min(200, docs.length - i);
+    }
+    return { ok: true, written, skipped };
+  } catch (error) {
+    console.error(`Firebase upsertCatalogItems [${collectionName}] error:`, error);
+    return { ok: false, written, skipped, reason: error?.code || 'error' };
   }
 };

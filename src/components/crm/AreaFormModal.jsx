@@ -1,11 +1,15 @@
 import { Plus, Edit3, Save, X } from 'lucide-react';
+import './area-pricing.css';
 
 export default function AreaFormModal({
   formData,
+  pricePreview = null,
   handleSubmitForm,
   isAr,
   isSaving,
   modalMode,
+  parentChoices = [],
+  hasChildren = false,
   setFormData,
   setModalMode
 }) {
@@ -88,6 +92,38 @@ export default function AreaFormModal({
             </div>
           </div>
 
+          {/* Main area or a sub-area of one */}
+          <div className="form-group-item" style={{ marginBottom: '14px' }}>
+            <label htmlFor="area-parent" style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
+              {isAr ? 'تابعة لـ' : 'Belongs to'}
+            </label>
+            <select
+              id="area-parent"
+              value={formData.parentId || ''}
+              onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
+              disabled={hasChildren}
+              style={{
+                width: '100%',
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                color: 'var(--crm-on-dark)',
+                fontSize: 'var(--crm-text-base)'
+              }}
+            >
+              <option value="">{isAr ? 'منطقة رئيسية (مش تابعة لحاجة)' : 'Main area'}</option>
+              {parentChoices.map((a) => (
+                <option key={a.id} value={a.id}>{isAr ? `فرعية من: ${a.name_ar}` : `Sub-area of ${a.name_en || a.name_ar}`}</option>
+              ))}
+            </select>
+            {hasChildren && (
+              <small style={{ display: 'block', marginTop: '4px', color: 'var(--crm-on-dark-muted)' }}>
+                {isAr ? 'المنطقة دي تحتها مناطق فرعية، فهتفضل رئيسية.' : 'This area has sub-areas, so it stays a main area.'}
+              </small>
+            )}
+          </div>
+
           {/* Detailed Label for Dropdowns */}
           <div className="form-group-item" style={{ marginBottom: '14px' }}>
             <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
@@ -155,11 +191,35 @@ export default function AreaFormModal({
             </div>
           </div>
 
+          {/* Price per m² on the site: worked out from the area's listings, or typed here */}
+          <div className="area-price-mode" role="radiogroup" aria-label={isAr ? 'تسعير المنطقة' : 'Area pricing'}>
+            <span className="area-price-mode-label">{isAr ? 'سعر المتر على الموقع' : 'Price per m² on the site'}</span>
+            <div className="area-price-mode-switch">
+              {[
+                ['auto', isAr ? 'من متوسط المعروض' : 'From listings'],
+                ['manual', isAr ? 'يدوي' : 'Manual']
+              ].map(([v, label]) => (
+                <button key={v} type="button" role="radio" aria-checked={(formData.priceMode || 'auto') === v}
+                  className={(formData.priceMode || 'auto') === v ? 'is-on' : ''}
+                  onClick={() => setFormData({ ...formData, priceMode: v })}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <small>
+              {(formData.priceMode || 'auto') === 'auto'
+                ? (pricePreview?.source === 'listings'
+                  ? (isAr ? `دلوقتي: ${pricePreview.ppm.toLocaleString('en-US')} ج.م/م² من ${pricePreview.sample} ${pricePreview.sample === 1 ? 'عرض' : 'عروض'}. بيتحدّث لوحده مع كل وحدة بتتضاف أو تتباع.` : `Now ${pricePreview.ppm.toLocaleString('en-US')} EGP/m² from ${pricePreview.sample} listings; updates by itself.`)
+                  : (isAr ? 'بيتحسب لوحده من الوحدات المعروضة في المنطقة (والمناطق الفرعية). لو مفيش عروض مش هيظهر سعر.' : 'Worked out from the listings in the area; nothing shows until there are some.'))
+                : (isAr ? 'الموقع هيعرض الرقم اللي تكتبه تحت.' : 'The site shows the figure you type below.')}
+            </small>
+          </div>
+
           {/* Market Benchmark: Avg Price Per Meter & Growth Rate */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div className="form-group-item">
               <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
-                {isAr ? 'متوسط سعر المتر (ج.م/م²) *' : 'Avg Price/m² (EGP) *'}
+                {(formData.priceMode || 'auto') === 'manual' ? (isAr ? 'سعر المتر اليدوي (ج.م/م²) *' : 'Manual price/m² (EGP) *') : (isAr ? 'سعر المتر اليدوي (احتياطي، اختياري)' : 'Manual price/m² (optional)')}
               </label>
               <input
                 type="number"
@@ -180,7 +240,7 @@ export default function AreaFormModal({
                 }}
               />
               <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '4px' }}>
-                {isAr ? 'يحدد معيار عدالة الأسعار التلقائي للحي' : 'Sets valuation benchmark for district'}
+                {isAr ? 'يتحفظ ويُستخدم لو اخترت «يدوي»' : 'Kept, and used when Manual is chosen'}
               </small>
             </div>
 

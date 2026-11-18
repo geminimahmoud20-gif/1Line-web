@@ -1,42 +1,14 @@
-import { useState, useEffect } from 'react';
 import { TrendingUp, Award, ArrowUpRight } from 'lucide-react';
-import { getAreaById } from '../../utils/areasData';
 
-export default function HistoricalPriceChart({ areaKey = 'east', customPoints = null, lang = 'ar' }) {
-  const [, setTick] = useState(0);
+export default function HistoricalPriceChart({ customPoints = null, lang = 'ar' }) {
   const isAr = lang === 'ar';
 
-  // Live listen for area data modifications from CRM
-  useEffect(() => {
-    const handleUpdate = () => setTick(t => t + 1);
-    window.addEventListener('oneline_areas_updated', handleUpdate);
-    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
-  }, []);
+  // Only price points saved on the listing itself. The areas' built-in 2023–2026 series were
+  // example figures (no screen edits them), so a chart drawn from them presented invented history.
+  const points = (Array.isArray(customPoints) && customPoints.length > 1) ? customPoints : null;
 
-  const areaData = getAreaById(areaKey);
-
-  // Points come from the listing or the area data kept in the CRM — never from a built-in series
-  const points = (Array.isArray(customPoints) && customPoints.length > 1)
-    ? customPoints
-    : (areaData?.historicalPrices?.length > 1 ? areaData.historicalPrices : null);
-
-  if (!points) {
-    return (
-      <div className="historical-price-chart-card">
-        <div className="chart-header">
-          <div className="chart-title-wrap">
-            <div className="chart-icon-glow">
-              <TrendingUp size={20} className="text-white" />
-            </div>
-            <div>
-              <h4>{isAr ? 'تاريخ أسعار المنطقة' : 'Area price history'}</h4>
-              <p>{isAr ? 'لا توجد بيانات تاريخية منشورة لهذه المنطقة بعد. اطلب من المستشار صفقات مقارنة حديثة.' : 'No published price history for this area yet. Ask an advisor for recent comparable deals.'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Nothing to chart without real points: the tab shows the price comparison alone
+  if (!points) return null;
 
   const startPrice = points[0]?.price || 1;
   const currentPrice = points[points.length - 1]?.price || startPrice;
@@ -111,7 +83,7 @@ export default function HistoricalPriceChart({ areaKey = 'east', customPoints = 
                 </text>
                 {idx === points.length - 1 && (
                   <text x={cx} y={cy - 10} textAnchor="middle" fontSize="11" fill="#0f172a" fontWeight="800">
-                    {pt.price.toLocaleString()} ج.م
+                    {pt.price.toLocaleString('en-US')} ج.م
                   </text>
                 )}
               </g>

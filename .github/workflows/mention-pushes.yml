@@ -1,0 +1,55 @@
+# Phone notifications for team @mentions (scripts/send-mention-pushes.mjs): when a colleague writes «@name» in the
+# team chat or in the notes of a client, listing or project, the person gets a push on their phone within about ten
+# minutes if they have not read it in the CRM. Sends only 08:00–23:00 Cairo time. Uses the same devices and key pair as
+# the follow-up reminders, so run that workflow once (it creates the key) and have each person turn on the phone
+# reminder in the CRM.
+#
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT (already used by the other workflows).
+name: Mention pushes
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only print who would be notified
+        type: boolean
+        default: false
+
+concurrency:
+  group: mention-pushes
+  cancel-in-progress: false
+
+env:
+  TZ: Africa/Cairo
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Key
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is missing."; exit 1; fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/service-account.json" >> "$GITHUB_ENV"
+
+      - name: Send pushes
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13 web-push@3
+          if [ "$DRY_RUN" = "true" ]; then node scripts/send-mention-pushes.mjs --dry-run; else node scripts/send-mention-pushes.mjs; fi
+
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"

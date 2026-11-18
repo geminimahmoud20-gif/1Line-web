@@ -1,7 +1,17 @@
 import { Link } from 'react-router-dom';
-import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react';
+import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Zap, Home, Landmark } from 'lucide-react';
 import PropertyCard from '../properties/PropertyCard';
 import ScrollReveal from '../common/ScrollReveal';
+import { recordTimeLabel } from '../../utils/relativeTime';
+
+const toBudget = (b) => (typeof b === 'number' ? b : Number(String(b ?? '').replace(/[^\d.]/g, '')) || 0);
+
+/** 3200000 → "3.2 مليون ج.م" / "EGP 3.2M" (one unit, not "3.2M مليون") */
+const formatMillions = (n, lang) => {
+  const m = n / 1e6;
+  const num = m >= 100 ? Math.round(m).toLocaleString('en-US') : String(Math.round(m * 10) / 10);
+  return lang === 'ar' ? `${num} مليون ج.م` : `EGP ${num}M`;
+};
 
 export default function HomeMarketplace({
   activeDemandsList,
@@ -21,6 +31,10 @@ export default function HomeMarketplace({
   setMarketplaceAreaFilter,
   setMarketplaceTab
 }) {
+  // getHomepageSlots already returns a count that makes full rows (6, 4, 3, 2 or 1); the grid
+  // picks its columns from that count so there is never an empty gap next to the last card
+  const homeProps = displayProperties || [];
+
   return (
     <section className="homepage-section bg-surface" id="marketplace-hub">
       <ScrollReveal>
@@ -33,10 +47,14 @@ export default function HomeMarketplace({
               </span>
             </div>
             <h2 className="section-heading-primary m-0">
-              {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
+              {realDemands.length > 0
+                ? (lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands')
+                : (lang === 'ar' ? 'أحدث العقارات وطلبات المشترين' : 'Featured Properties & Buyer Demands')}
             </h2>
             <p className="section-heading-desc mt-2 mb-0" style={{ marginInline: 0 }}>
-              {lang === 'ar' ? 'أحدث الوحدات المعروضة، وطلبات شراء منشورة من مشترين جادين يمكنك مطابقة عقارك معها.' : 'The latest listings, plus published buyer demands you can match your property against.'}
+              {realDemands.length > 0
+                ? (lang === 'ar' ? 'أحدث الوحدات المعروضة، وطلبات شراء منشورة من مشترين جادين يمكنك مطابقة عقارك معها.' : 'The latest listings, plus published buyer demands you can match your property against.')
+                : (lang === 'ar' ? 'أحدث الوحدات المعروضة، ومساحة ينشر فيها المشترون طلباتهم لنطابقها مع العقارات المتاحة.' : 'The latest listings, and a place for buyers to post what they want so we can match it.')}
             </p>
           </div>
 
@@ -56,7 +74,8 @@ export default function HomeMarketplace({
             >
               <Icon size={15} strokeWidth={1.75} aria-hidden="true" />
               <span>{lang === 'ar' ? ar : en}</span>
-              <span className="hx-seg-count"><span className="hx-live-dot" aria-hidden="true" />{count}</span>
+              {/* A "0" next to the tab reads as an empty marketplace; show the count once there is one */}
+              {count > 0 && <span className="hx-seg-count"><span className="hx-live-dot" aria-hidden="true" />{count}</span>}
             </button>
           ))}
         </div>
@@ -66,21 +85,24 @@ export default function HomeMarketplace({
       {marketplaceTab === 'properties' && (
         <div>
           {displayProperties.length > 0 ? (
-            <div className="properties-grid-4 hx-market-rail">
-              {displayProperties.map((prop) => (
-                <PropertyCard
-                  key={prop.id}
-                  property={prop}
-                  lang={lang}
-                  currency={currency}
-                  isFavorite={favorites.includes(prop.id)}
-                  onToggleFavorite={onToggleFavorite}
-                  isCompared={compareList.some(c => c.id === prop.id)}
-                  onToggleCompare={onToggleCompare}
-                  onQuickView={onQuickView}
-                />
-              ))}
-            </div>
+            <>
+              <div className={`properties-grid-4 hx-market-rail hx-home-grid hx-home-grid--${homeProps.length}`}>
+                {homeProps.map((prop) => (
+                  <PropertyCard
+                    key={prop.id}
+                    property={prop}
+                    lang={lang}
+                    currency={currency}
+                    isFavorite={favorites.includes(prop.id)}
+                    onToggleFavorite={onToggleFavorite}
+                    isCompared={compareList.some(c => c.id === prop.id)}
+                    onToggleCompare={onToggleCompare}
+                    onQuickView={onQuickView}
+                  />
+                ))}
+              </div>
+
+            </>
           ) : (
             <div className="marketplace-empty-box">
               <div className="empty-icon-circle">
@@ -99,6 +121,24 @@ export default function HomeMarketplace({
             </div>
           )}
 
+          {/* Quick shortcuts to common listing filters (moved here from the hero, next to the listings they open) */}
+          <nav className="hx-quick" aria-label={lang === 'ar' ? 'تصفّح بسرعة' : 'Quick browse'}>
+            <span className="hx-quick-label">{lang === 'ar' ? 'تصفّح بسرعة:' : 'Quick browse:'}</span>
+            {[
+              { ar: 'بيع كاش مباشر', en: 'Direct cash sale', to: '/properties?paymentPlan=cash', icon: Zap },
+              { ar: 'سوهاج الجديدة', en: 'New Sohag', to: '/properties?area=new_sohag', icon: MapPin },
+              { ar: 'كورنيش النيل', en: 'Nile Corniche', to: '/properties?area=corniche', icon: MapPin },
+              { ar: 'شارع الجمهورية', en: 'El-Gomhoreya St.', to: `/properties?q=${encodeURIComponent('الجمهورية')}`, icon: Landmark },
+              { ar: 'فيلات مستقلة', en: 'Villas', to: '/properties?type=villa', icon: Home },
+              { ar: 'محلات تجارية', en: 'Retail shops', to: '/properties?type=commercial', icon: Building }
+            ].map(({ ar, en, to, icon: Icon }) => (
+              <Link key={to} to={to} className="hx-pill">
+                <Icon size={14} strokeWidth={1.75} aria-hidden="true" />
+                <span>{lang === 'ar' ? ar : en}</span>
+              </Link>
+            ))}
+          </nav>
+
           {/* Clean, Refined Navigation Action */}
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: '28px' }}>
             <Link to="/properties" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontWeight: 'bold' }}>
@@ -112,47 +152,56 @@ export default function HomeMarketplace({
       {/* Tab 2: Buyer Demands */}
       {marketplaceTab === 'demands' && (
         <div>
-          {/* Live Demands Metrics Strip */}
-          <div className="demands-metrics-strip">
-            <div className="demand-metric-card">
-              <div className="metric-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-                <DollarSign size={20} />
+          {/* Live Demands Metrics Strip — only once real demands are published (zeros read as an empty market) */}
+          {realDemands.length > 0 ? (
+            <div className="demands-metrics-strip">
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                  <DollarSign size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'إجمالي القوة الشرائية المسجلة' : 'Total Purchasing Power'}</span>
+                  <strong>{formatMillions(realDemands.reduce((sum, d) => sum + toBudget(d.budget), 0), lang)}</strong>
+                </div>
               </div>
-              <div className="metric-info">
-                <span>{lang === 'ar' ? 'إجمالي القوة الشرائية المسجلة' : 'Total Purchasing Power'}</span>
-                <strong>
-                  {(realDemands.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000).toFixed(1)}M {lang === 'ar' ? 'مليون ج.م' : 'EGP'}
-                </strong>
-              </div>
-            </div>
 
-            {/* Figures below are computed from published demands — no fixed marketing numbers */}
-            <div className="demand-metric-card">
-              <div className="metric-icon" style={{ background: 'rgba(169, 130, 74, 0.14)', color: 'var(--gold-dark, #7C5E30)' }}>
-                <Users size={20} />
+              {/* Figures below are computed from published demands — no fixed marketing numbers */}
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(169, 130, 74, 0.14)', color: 'var(--gold-dark, #7C5E30)' }}>
+                  <Users size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'طلبات شراء منشورة الآن' : 'Published buyer demands'}</span>
+                  <strong>{realDemands.length} {lang === 'ar' ? 'طلب' : 'demands'}</strong>
+                </div>
               </div>
-              <div className="metric-info">
-                <span>{lang === 'ar' ? 'طلبات شراء منشورة الآن' : 'Published buyer demands'}</span>
-                <strong>{realDemands.length} {lang === 'ar' ? 'طلب' : 'demands'}</strong>
-              </div>
-            </div>
 
-            <div className="demand-metric-card">
-              <div className="metric-icon" style={{ background: 'rgba(13, 72, 161, 0.12)', color: '#0d48a1' }}>
-                <ShieldCheck size={20} />
-              </div>
-              <div className="metric-info">
-                <span>{lang === 'ar' ? 'مراجعة قبل النشر' : 'Reviewed before publishing'}</span>
-                <strong>{lang === 'ar' ? 'كل طلب يراجعه فريقنا' : 'Every demand is vetted'}</strong>
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(13, 72, 161, 0.12)', color: '#0d48a1' }}>
+                  <ShieldCheck size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'مراجعة قبل النشر' : 'Reviewed before publishing'}</span>
+                  <strong>{lang === 'ar' ? 'كل طلب يراجعه فريقنا' : 'Every demand is vetted'}</strong>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="demands-empty-invite">
+              <Sparkles size={18} className="text-gold" aria-hidden="true" />
+              <p>
+                {lang === 'ar'
+                  ? 'كن أول مشترٍ ينشر طلبه — نراجعه ثم نطابقه مع العقارات المتاحة ونتواصل معك. الكروت التالية أمثلة توضيحية لشكل الطلب.'
+                  : 'Be the first buyer to post a request — we review it, match it with available properties and get back to you. The cards below are examples.'}
+              </p>
+            </div>
+          )}
 
           <div className="demands-grid-compact">
             {activeDemandsList.slice(0, 4).map((dem) => (
               <div 
                 key={dem.id} 
-                className="demand-card-box titanium-card"
+                className={`demand-card-box titanium-card${dem.isDemo ? ' is-sample' : ''}`}
                 onClick={() => navigate('/demands')}
                 style={{ cursor: 'pointer' }}
                 title={lang === 'ar' ? 'انقر للانتقال إلى بوابة طلبات المشترين' : 'Click to view in Demands Portal'}
@@ -160,8 +209,9 @@ export default function HomeMarketplace({
                 <div className="demand-top-row">
                   {dem.isDemo
                     ? <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>
-                    : <span className="demand-time-tag">{dem.timestamp}</span>}
-                  <span
+                    : <span className="demand-time-tag">{recordTimeLabel(dem, lang === 'ar')}</span>}
+                  {/* "Urgent cash" / "serious buyer" describe a real person — never on a sample */}
+                  {!dem.isDemo && <span
                     className="urgency-badge"
                     style={dem.urgency === 'high' ? {
                       background: '#fee2e2',
@@ -176,7 +226,7 @@ export default function HomeMarketplace({
                     }}
                   >
                     {dem.urgency === 'high' ? (lang === 'ar' ? 'مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? 'طلب جاد' : 'Serious Buyer')}
-                  </span>
+                  </span>}
                 </div>
                 <p className="demand-text" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
                 <div className="demand-footer-clean">
@@ -188,7 +238,7 @@ export default function HomeMarketplace({
                     <div className="demand-meta-item">
                       <DollarSign size={14} className="text-gold" />
                       <span style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.94rem' }}>
-                        {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
+                        {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString('en-US')} {lang === 'ar' ? 'ج.م' : 'EGP'}
                       </span>
                     </div>
                   </div>
@@ -197,7 +247,8 @@ export default function HomeMarketplace({
                     className="btn-match-demand-full"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span>{lang === 'ar' ? 'عقاري يطابق هذا الطلب' : 'Match My Property'}</span>
+                    {/* A sample has no buyer behind it, so it can't be "matched" */}
+                    <span>{dem.isDemo ? (lang === 'ar' ? 'اعرض عقارك للبيع' : 'List your property') : (lang === 'ar' ? 'عقاري يطابق هذا الطلب' : 'Match My Property')}</span>
                     <span className="btn-match-arrow">{lang === 'ar' ? '←' : '→'}</span>
                   </Link>
                 </div>
@@ -218,7 +269,7 @@ export default function HomeMarketplace({
               </button>
             )}
             <Link to="/demands" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>{lang === 'ar' ? `استعراض كل طلبات المشترين (${realDemands.length})` : 'All Demands'}</span>
+              <span>{lang === 'ar' ? `استعراض كل طلبات المشترين${realDemands.length > 0 ? ` (${realDemands.length})` : ''}` : 'All Demands'}</span>
               {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
             </Link>
           </div>

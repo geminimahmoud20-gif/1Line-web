@@ -1,5 +1,6 @@
 // Constants shared by ClientAccountPage.jsx and its extracted sections.
 import { getAreas, normalizeAreaKey } from '../utils/areasData';
+import { areaLabel } from '../utils/placeLabels';
 
 export const LEAD_TYPE_NAMES = {
   buyer: 'شراء عقار',
@@ -41,7 +42,10 @@ export function getAreaDisplayName(areaKey, lang = 'ar') {
   const areas = getAreas();
   const found = areas.find(a => a.id === normKey || a.id === areaKey);
   if (found) {
-    return lang === 'ar' ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en);
+    return lang === 'ar' ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en || found.name_ar);
   }
-  return areaKey;
+  // An old id (east, kawthar…) shows its old name, never a code; anything else is just "Sohag"
+  const legacy = areaLabel(areaKey, lang === 'ar');
+  if (legacy && legacy !== areaKey) return legacy;
+  return /[\u0600-\u06FF]/.test(areaKey) ? areaKey : (lang === 'ar' ? 'سوهاج' : 'Sohag');
 }

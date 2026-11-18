@@ -1,10 +1,12 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { DESK_BY_ROLE, UNASSIGNED_DESK } from '../utils/rbacRules.js';
 import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../utils/leadQueue.js';
-import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp, startAfter, runTransaction } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
-import { notifyStaff } from './staffNotify.js';
+import { notifyStaff, requestAutoAssign } from './staffNotify.js';
+import { phoneVariants } from '../utils/phoneVariants.js';
+import { CONTACT_FIELDS, withoutContactFields } from '../utils/leadContactFields.js';
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
 
@@ -15,7 +17,7 @@ let isSyncingPendingLeads = false;
 // Client phone/WhatsApp/email live in lead_contacts/{leadId} (managers + the lead's desk only),
 // not on the lead itself, which read-only roles can list. Keep in sync with contactFields() in
 // firestore.rules. The contact doc mirrors the lead's desk in assignedTo.
-export const LEAD_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'altPhone'];
+export const LEAD_CONTACT_FIELDS = CONTACT_FIELDS;
 const CLIENT_ONLY_FIELDS = ['_cloud', '_inlineContact', 'queuedAt', 'id'];
 
 const splitLeadFields = (fields) => {
@@ -25,6 +27,8 @@ const splitLeadFields = (fields) => {
     if (CLIENT_ONLY_FIELDS.includes(key) || value === undefined) continue;
     if (LEAD_CONTACT_FIELDS.includes(key)) {
       if (value !== null && value !== '') contact[key] = String(value);
+    } else if (key === 'details') {
+      lead.details = value && typeof value === 'object' ? withoutContactFields(value) : value;
     } else {
       lead[key] = value;
     }
@@ -52,6 +56,7 @@ const writeLead = async (rawLead, extra = {}) => {
     batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
     await batch.commit();
     notifyStaff('leads', id);
+    requestAutoAssign(id);
     return { ...rawLead, id };
   };
   const appId = rawLead?.id;
@@ -211,14 +216,19 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     };
 
     const base = collection(db, 'leads');
-    // A desk's queue is filtered on assignedTo only (no orderBy), so it needs no composite index;
-    // it is sorted newest-first here. Desk queues are small, so a wider window keeps the newest.
-    const q = desk
-      ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), limit(maxCount * 4))
-      : query(base, orderBy('createdAt', 'desc'), limit(maxCount));
+    // A desk's queue, newest first on the server (index assignedTo + createdAt). Until that index
+    // is published the query fails with failed-precondition; it then falls back to the unordered
+    // filter (sorted here), which only sees an arbitrary slice of a large desk.
+    let deskOrdered = true;
+    const buildQuery = () => (desk
+      ? (deskOrdered
+        ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), orderBy('createdAt', 'desc'), limit(maxCount))
+        : query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), limit(maxCount * 4)))
+      : query(base, orderBy('createdAt', 'desc'), limit(maxCount)));
     // includeMetadataChanges: also hear "now confirmed by the server" (fromCache true → false),
     // which the CRM needs to know the list is complete
-    const unsubLeads = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+    let unsubLeads = () => {};
+    const start = () => { unsubLeads = onSnapshot(buildQuery(), { includeMetadataChanges: true }, (snapshot) => {
       leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
       if (desk) leads = leads.sort((x, y) => createdMillis(y) - createdMillis(x)).slice(0, maxCount);
       // fromCache snapshots can hold only this device's pending writes — not the full list
@@ -228,8 +238,14 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     }, (err) => {
       // Guests and non-CRM accounts have no lead access — expected, stay quiet
       if (err && err.code === 'permission-denied') return;
+      if (desk && deskOrdered && err?.code === 'failed-precondition') {
+        deskOrdered = false;
+        start();
+        return;
+      }
       console.warn('Firebase subscribeToLeads snapshot warning:', err);
-    });
+    }); };
+    start();
     return () => { unsubLeads(); stopContacts(); };
   };
 
@@ -255,9 +271,11 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
         claims = await getUserClaims(user);
       } catch { /* treat as no desk; rules decide */ }
       if (version !== authVersion) return; // a newer auth change already took over
-      const desk = DESK_BY_ROLE[claims.role] || null;
+      const desk = claims.desk || DESK_BY_ROLE[claims.role] || null;
       const seesAllContacts = claims.admin === true
-        || ['admin', 'super_admin', 'sales_manager'].includes(claims.role);
+        || ['admin', 'super_admin', 'sales_manager'].includes(claims.role)
+        || claims.perms?.includes('ld.manage')
+        || (claims.perms?.includes('ld.all') && claims.perms?.includes('ld.phone'));
       unsubSnapshot = listen(desk, desk ? 'desk' : (seesAllContacts ? 'all' : null));
     });
     return () => {
@@ -331,20 +349,428 @@ export const migrateInlineLeadContacts = async (leads) => {
 };
 
 /**
- * Delete a lead from Firestore.
+ * Delete one or multiple leads from Firestore using atomic batched writes.
  */
-export const deleteLead = async (leadId) => {
-  if (isFirebaseConfigured() && db) {
-    try {
+export const deleteLeads = async (leadIds) => {
+  const ids = Array.isArray(leadIds) ? leadIds : [leadIds];
+  if (!isFirebaseConfigured() || !db || ids.length === 0) return false;
+  try {
+    // 2 writes per lead (leads + lead_contacts); 200 per batch <= 500 limit
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
       const batch = writeBatch(db);
-      batch.delete(doc(db, 'leads', leadId));
-      batch.delete(doc(db, 'lead_contacts', leadId));
+      for (const id of chunk) {
+        batch.delete(doc(db, 'leads', String(id)));
+        batch.delete(doc(db, 'lead_contacts', String(id)));
+      }
       await batch.commit();
-      return true;
+    }
+    return true;
+  } catch (error) {
+    console.error('Firebase deleteLeads error:', error);
+    return false;
+  }
+};
+
+/**
+ * Delete a single lead from Firestore.
+ */
+export const deleteLead = async (leadId) => deleteLeads([leadId]);
+
+/**
+ * Staff file import: many leads, each with its contact doc, in batched writes. Unlike saveLead
+ * (public forms) it sends no staff alert per lead — an import of 200 clients isn't 200 new
+ * inquiries. Returns { ok, written, ids, reason? }.
+ */
+export const importLeads = async (leads = []) => {
+  if (!isFirebaseConfigured() || !db) return { ok: false, written: 0, ids: [], reason: 'not-configured' };
+  const ids = [];
+  let written = 0;
+  try {
+    // 2 writes per lead (lead + contact); 200 leads per batch stays under the 500-write limit
+    for (let i = 0; i < leads.length; i += 200) {
+      const batch = writeBatch(db);
+      for (const raw of leads.slice(i, i + 200)) {
+        const { lead, contact } = splitLeadFields(raw);
+        const id = doc(collection(db, 'leads')).id;
+        const payload = { ...lead, createdBy: auth?.currentUser?.uid || 'import', createdAt: serverTimestamp() };
+        batch.set(doc(db, 'leads', id), payload);
+        batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
+        ids.push(id);
+      }
+      await batch.commit();
+      written = ids.length;
+    }
+    return { ok: true, written, ids };
+  } catch (error) {
+    console.error('Firebase importLeads error:', error);
+    return { ok: false, written, ids: ids.slice(0, written), reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Restore leads from a CRM JSON backup into Firestore, keeping their original ids.
+ * Only leads missing from the database are written: a lead that still exists is never
+ * overwritten by an older copy. Returns { ok, restored, skipped, invalid, reason? }.
+ */
+const RESTORE_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
+const restoredCreatedAt = (value) => {
+  if (value && typeof value === 'object' && Number.isFinite(value.seconds)) return Timestamp.fromMillis(value.seconds * 1000);
+  if (typeof value === 'string' || typeof value === 'number') return value;
+  return serverTimestamp();
+};
+export const restoreLeads = async (leads = []) => {
+  if (!isFirebaseConfigured() || !db) return { ok: false, restored: 0, skipped: 0, invalid: 0, reason: 'not-configured' };
+  const valid = leads.filter((l) => l && typeof l === 'object' && RESTORE_ID_RE.test(String(l.id || '')) && String(l.name || '').trim().length >= 2);
+  const invalid = leads.length - valid.length;
+  let restored = 0;
+  let skipped = 0;
+  try {
+    for (let i = 0; i < valid.length; i += 30) {
+      const chunk = valid.slice(i, i + 30);
+      const existing = await getDocs(query(collection(db, 'leads'), where(documentId(), 'in', chunk.map((l) => String(l.id)))));
+      const present = new Set(existing.docs.map((d) => d.id));
+      const batch = writeBatch(db);
+      let writes = 0;
+      for (const raw of chunk) {
+        const id = String(raw.id);
+        if (present.has(id)) { skipped += 1; continue; }
+        const { lead, contact } = splitLeadFields(raw);
+        const payload = { ...lead, createdAt: restoredCreatedAt(raw.createdAt), restoredAt: serverTimestamp() };
+        batch.set(doc(db, 'leads', id), payload);
+        batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
+        writes += 1;
+      }
+      if (writes) await batch.commit();
+      restored += writes;
+    }
+    return { ok: true, restored, skipped, invalid };
+  } catch (error) {
+    console.error('Firebase restoreLeads error:', error);
+    return { ok: false, restored, skipped, invalid, reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Area deleted in the CRM: move every lead that points at it (lead.area or details.area) to
+ * another area, across the whole database (not only the leads loaded on screen).
+ * Returns { ok, moved }.
+ */
+export const moveLeadsToArea = async (fromArea, toArea) => {
+  if (!isFirebaseConfigured() || !db || !fromArea || !toArea) return { ok: false, moved: 0 };
+  try {
+    const [byArea, byDetails] = await Promise.all([
+      getDocs(query(collection(db, 'leads'), where('area', '==', fromArea))),
+      getDocs(query(collection(db, 'leads'), where('details.area', '==', fromArea))),
+    ]);
+    const changes = new Map();
+    byArea.docs.forEach((d) => changes.set(d.id, { area: toArea }));
+    byDetails.docs.forEach((d) => changes.set(d.id, { ...(changes.get(d.id) || {}), 'details.area': toArea }));
+    const entries = [...changes];
+    for (let i = 0; i < entries.length; i += 400) {
+      const batch = writeBatch(db);
+      entries.slice(i, i + 400).forEach(([id, fields]) => batch.update(doc(db, 'leads', id), { ...fields, updatedAt: serverTimestamp() }));
+      await batch.commit();
+    }
+    return { ok: true, moved: entries.length };
+  } catch (error) {
+    console.error('Firebase moveLeadsToArea error:', error);
+    return { ok: false, moved: 0 };
+  }
+};
+
+/**
+ * Merge duplicates in one atomic batch: the kept lead (and its contact doc) gets the merged
+ * fields and the duplicates (with their contact docs) are deleted — all or nothing.
+ */
+export const mergeLeads = async (keepId, mergedFields, removeIds = []) => {
+  if (!isFirebaseConfigured() || !db || !keepId) return false;
+  try {
+    const keepRef = doc(db, 'leads', String(keepId));
+    const { lead, contact } = splitLeadFields(mergedFields);
+    let desk = lead.assignedTo;
+    if (desk === undefined) {
+      const snap = await getDoc(keepRef);
+      desk = deskOf(snap.exists() ? snap.data() : {});
+    }
+    const batch = writeBatch(db);
+    batch.set(keepRef, { ...lead, updatedAt: serverTimestamp() }, { merge: true });
+    batch.set(doc(db, 'lead_contacts', String(keepId)), { ...contact, assignedTo: desk || UNASSIGNED_DESK }, { merge: true });
+    for (const id of removeIds) {
+      if (String(id) === String(keepId)) continue;
+      batch.delete(doc(db, 'leads', String(id)));
+      batch.delete(doc(db, 'lead_contacts', String(id)));
+    }
+    await batch.commit();
+    return true;
+  } catch (error) {
+    console.error('Firebase mergeLeads error:', error);
+    return false;
+  }
+};
+
+/**
+ * «دمج كل المكرر»: for each plan (utils/dedupePlan) one batch, all or nothing per client: the kept request gets
+ * the merged fields and the others are archived with mergedInto (never deleted, so it can be undone from the
+ * archive). Returns { done, failed } counts of clients.
+ */
+export const mergeDuplicateGroups = async (plans = []) => {
+  const out = { done: 0, failed: 0 };
+  if (!isFirebaseConfigured() || !db) return { done: 0, failed: plans.length };
+  for (const plan of plans) {
+    try {
+      const keepId = String(plan.keep.id);
+      const { lead, contact } = splitLeadFields(plan.merged);
+      const desk = lead.assignedTo || deskOf(plan.keep);
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'leads', keepId), { ...lead, updatedAt: serverTimestamp() }, { merge: true });
+      batch.set(doc(db, 'lead_contacts', keepId), { ...contact, assignedTo: desk || UNASSIGNED_DESK }, { merge: true });
+      for (const o of plan.others) {
+        if (String(o.id) === keepId) continue;
+        batch.set(doc(db, 'leads', String(o.id)), { ...plan.archive, updatedAt: serverTimestamp() }, { merge: true });
+      }
+      await batch.commit();
+      out.done += 1;
     } catch (error) {
-      console.error('Firebase deleteLead error:', error);
-      return false;
+      console.error('Firebase mergeDuplicateGroups error:', error);
+      out.failed += 1;
     }
   }
-  return false;
+  return out;
 };
+
+/**
+ * One client by id, with their phone when this account may see it. The live list holds only the
+ * newest 150, so a unit's owner who came in earlier isn't in it (the listing form's «صاحب الوحدة»).
+ * Returns { status: 'ok', lead } | { status: 'missing' } (deleted or merged away) |
+ * { status: 'denied' } (another desk's client) | { status: 'error' }.
+ */
+export const fetchLeadById = async (leadId) => {
+  if (!isFirebaseConfigured() || !db || !leadId) return { status: 'error' };
+  try {
+    const snap = await getDoc(doc(db, 'leads', String(leadId)));
+    if (!snap.exists()) return { status: 'missing' };
+    let contact = {};
+    try {
+      const c = await getDoc(doc(db, 'lead_contacts', String(leadId)));
+      if (c.exists()) contact = c.data();
+    } catch { /* this role doesn't see client phones */ }
+    const { assignedTo: _desk, ...phones } = contact;
+    return { status: 'ok', lead: { ...snap.data(), ...phones, id: snap.id } };
+  } catch (error) {
+    return { status: error?.code === 'permission-denied' ? 'denied' : 'error' };
+  }
+};
+
+/**
+ * Every lead this account may read (no contact docs), for dashboard totals. The live list only
+ * holds the newest 150, so numbers computed from it alone go wrong once there are more.
+ * Paged by document id (500 a page) up to `max`. Returns { ok, leads, truncated }.
+ */
+export const loadAllLeadsForStats = async (max = 20000) => {
+  if (!isFirebaseConfigured() || !db || !auth?.currentUser) return { ok: false, leads: [], truncated: false };
+  let claims = {};
+  try { claims = await getUserClaims(auth.currentUser); } catch { /* rules decide */ }
+  const desk = claims.desk || DESK_BY_ROLE[claims.role] || null;
+  const scope = desk ? [where('assignedTo', 'in', [desk, UNASSIGNED_DESK])] : [];
+  const out = [];
+  let last = null;
+  try {
+    while (out.length < max) {
+      const page = await getDocs(query(collection(db, 'leads'), ...scope, orderBy(documentId()), ...(last ? [startAfter(last)] : []), limit(500)));
+      page.docs.forEach((d) => out.push({ ...d.data(), id: d.id, _cloud: true }));
+      if (page.docs.length < 500) return { ok: true, leads: out, truncated: false, scoped: Boolean(desk) };
+      last = page.docs[page.docs.length - 1];
+    }
+    return { ok: true, leads: out, truncated: true, scoped: Boolean(desk) };
+  } catch (error) {
+    console.warn('Firebase loadAllLeadsForStats error:', error?.code || error);
+    return { ok: false, leads: out, truncated: true, scoped: Boolean(desk) };
+  }
+};
+
+/**
+ * Leads created or changed after `sinceMs` (server time), so the dashboard refreshes its totals
+ * by reading only what moved instead of every lead again. For accounts that see all leads: a
+ * desk-scoped version would need composite indexes, so those accounts reload in full instead.
+ * Returns { ok, leads, truncated }.
+ */
+export const loadLeadChangesSince = async (sinceMs, max = 1000) => {
+  if (!isFirebaseConfigured() || !db || !auth?.currentUser) return { ok: false, leads: [], truncated: false };
+  const since = Timestamp.fromMillis(Math.max(0, Number(sinceMs) || 0));
+  try {
+    const pages = await Promise.all(['createdAt', 'updatedAt'].map((field) =>
+      getDocs(query(collection(db, 'leads'), where(field, '>', since), limit(max)))));
+    const byId = new Map();
+    pages.forEach((page) => page.docs.forEach((d) => byId.set(d.id, { ...d.data(), id: d.id, _cloud: true })));
+    return { ok: true, leads: [...byId.values()], truncated: pages.some((page) => page.docs.length >= max) };
+  } catch (error) {
+    console.warn('Firebase loadLeadChangesSince error:', error?.code || error);
+    return { ok: false, leads: [], truncated: false };
+  }
+};
+
+// ===================== SEARCH BEYOND THE LOADED LIST =====================
+// The CRM keeps only the newest leads live; these find any client on the server.
+
+/**
+ * Leads matching a phone number (exact, any common format) or the start of a name, across all the
+ * leads this account may read. Returns up to `max` leads with their contacts merged in.
+ * { ok: true, leads } | { ok: false, error: 'index' | 'denied' | 'error' }
+ */
+export const searchLeads = async (term, max = 25) => {
+  const text = String(term || '').trim();
+  if (!isFirebaseConfigured() || !db || !auth?.currentUser || text.length < 2) return { ok: true, leads: [] };
+  let claims = {};
+  try { claims = await getUserClaims(auth.currentUser); } catch { /* rules decide */ }
+  const desk = claims.desk || DESK_BY_ROLE[claims.role] || null;
+  const seesAllContacts = claims.admin === true
+    || ['admin', 'super_admin', 'sales_manager'].includes(claims.role)
+    || claims.perms?.includes('ld.manage')
+    || (claims.perms?.includes('ld.all') && claims.perms?.includes('ld.phone'));
+  const deskFilter = desk ? [where('assignedTo', 'in', [desk, UNASSIGNED_DESK])] : [];
+  const found = new Map();
+
+  try {
+    const digits = text.replace(/\D/g, '');
+    if (digits.length >= 7) {
+      // Phones live in lead_contacts, readable by managers and (their queue) desk agents only
+      if (!seesAllContacts && !desk) return { ok: true, leads: [] };
+      const variants = phoneVariants(text);
+      for (const field of ['phone', 'whatsapp', 'altPhone']) {
+        const snap = await getDocs(query(collection(db, 'lead_contacts'), where(field, 'in', variants), ...deskFilter, limit(max)));
+        snap.docs.forEach((d) => found.set(d.id, { contact: d.data() }));
+      }
+      await Promise.all([...found.keys()].map(async (id) => {
+        const leadSnap = await getDoc(doc(db, 'leads', id)).catch(() => null);
+        if (leadSnap?.exists()) found.get(id).lead = { ...leadSnap.data(), id };
+      }));
+    } else {
+      const snap = await getDocs(query(collection(db, 'leads'), ...deskFilter, where('name', '>=', text), where('name', '<=', `${text}\uf8ff`), limit(max)));
+      snap.docs.forEach((d) => found.set(d.id, { lead: { ...d.data(), id: d.id } }));
+      if (seesAllContacts || desk) {
+        await Promise.all([...found.keys()].map(async (id) => {
+          const c = await getDoc(doc(db, 'lead_contacts', id)).catch(() => null);
+          if (c?.exists()) found.get(id).contact = c.data();
+        }));
+      }
+    }
+  } catch (err) {
+    if (err?.code === 'failed-precondition') return { ok: false, error: 'index' };
+    if (err?.code === 'permission-denied') return { ok: false, error: 'denied' };
+    console.warn('Lead search error:', err);
+    return { ok: false, error: 'error' };
+  }
+
+  const leads = [...found.values()].filter((x) => x.lead).map(({ lead, contact }) => {
+    const merged = { ...lead };
+    if (contact) LEAD_CONTACT_FIELDS.forEach((f) => { if (contact[f]) merged[f] = contact[f]; });
+    return merged;
+  });
+  return { ok: true, leads: leads.sort((a, b) => createdMillis(b) - createdMillis(a)).slice(0, max) };
+};
+
+/**
+ * Atomically claims a lead for a staff member using a Firestore transaction.
+ * Reads the document, rejects if assignedTo already exists and differs from staffName,
+ * then sets assignedTo and assignedAt: serverTimestamp().
+ * Note: Does NOT modify status to 'contacted' (الاستلام ≠ تواصل).
+ * Returns { ok: true, lead } or { ok: false, reason: 'already_claimed', claimedBy }.
+ */
+export const claimLeadAtomic = async (leadId, staffName, options = {}) => {
+  const targetDb = options.db || db;
+  if (!targetDb) return { ok: false, reason: 'no-db' };
+  if (!leadId || !staffName) return { ok: false, reason: 'invalid-argument' };
+
+  const leadRef = doc(targetDb, 'leads', String(leadId));
+  const contactRef = doc(targetDb, 'lead_contacts', String(leadId));
+
+  const TEAM_DESKS = [
+    'Sales Team A',
+    'Sales Team B',
+    'Sales Management',
+    'Sales Advisor Team',
+    'Dr. Mahmoud Elbaz',
+    'Unassigned',
+    UNASSIGNED_DESK
+  ];
+
+  try {
+    return await runTransaction(targetDb, async (txn) => {
+      // 1. ALL READS BEFORE WRITES (Strict Firestore Transaction Contract)
+      const [leadSnap, contactSnap] = await Promise.all([
+        txn.get(leadRef),
+        txn.get(contactRef)
+      ]);
+
+      if (!leadSnap.exists()) {
+        return { ok: false, reason: 'not-found' };
+      }
+
+      const data = leadSnap.data();
+      const currentOwner = data.ownerName || data.claimedBy;
+      const currentAssignee = data.assignedTo;
+
+      // A lead is claimed if it has an assigned individual owner,
+      // or if assignedTo was set to a specific employee name (not a general desk)
+      const isClaimed = Boolean(
+        currentOwner && currentOwner !== UNASSIGNED_DESK && currentOwner !== 'Unassigned'
+      ) || Boolean(
+        currentAssignee && !TEAM_DESKS.includes(currentAssignee)
+      );
+
+      const existingClaimant = currentOwner || currentAssignee;
+      if (isClaimed && existingClaimant !== staffName && !options.override) {
+        return {
+          ok: false,
+          reason: 'already_claimed',
+          claimedBy: existingClaimant
+        };
+      }
+
+      // 2. ALL WRITES AFTER READS
+      // Retain desk if already assigned to a team (so desk routing/rules are not broken)
+      const desk = (currentAssignee && currentAssignee !== 'Unassigned' && currentAssignee !== UNASSIGNED_DESK)
+        ? currentAssignee
+        : (options.desk || staffName);
+
+      const leadUpdates = {
+        ownerName: staffName,
+        claimedBy: staffName,
+        assignedTo: desk,
+        claimedAt: serverTimestamp(),
+        assignedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      if (options.staffUid) {
+        leadUpdates.ownerUid = options.staffUid;
+      }
+
+      // Atomic write to lead doc (status is strictly preserved: الاستلام ≠ تواصل)
+      txn.update(leadRef, leadUpdates);
+
+      // Keep contact mirror doc in sync if it exists
+      if (contactSnap.exists()) {
+        txn.update(contactRef, { assignedTo: desk });
+      }
+
+      return {
+        ok: true,
+        staffName,
+        claimedBy: staffName,
+        lead: {
+          ...data,
+          id: String(leadId),
+          ownerName: staffName,
+          claimedBy: staffName,
+          assignedTo: desk
+        }
+      };
+    });
+  } catch (error) {
+    console.error('Firebase claimLeadAtomic error:', error);
+    return { ok: false, reason: error?.code || error?.message || 'error' };
+  }
+};
+

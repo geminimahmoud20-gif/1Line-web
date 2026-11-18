@@ -2,21 +2,29 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, Scale, Award, Video, FileCheck, Check, Lock, EyeOff, Globe2, Sparkles, Compass, Radio } from 'lucide-react';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 
+const RADAR_BLIPS = [
+  { ar: 'مستثمر كاش • شارع الجمهورية', en: 'Cash buyer • El Gomhoria St.' },
+  { ar: 'مغترب • حدائق أكتوبر', en: 'Expat • Hadayek October' },
+  { ar: 'مشتري معتمد • سوهاج الجديدة', en: 'Vetted • New Sohag' },
+  { ar: 'عائلة • الكورنيش الشرقي', en: 'Family • East Corniche' },
+  { ar: 'مستثمر • الزهراء', en: 'Investor • El Zahraa' }
+];
+
 // Map icon names from CMS to Lucide React components
 const ICON_MAP = { ShieldCheck, Scale, Award, Video, FileCheck, Check, Lock, EyeOff, Globe2 };
 
 /** 01 — Modern Digital Legal Audit Widget */
 function CertificateArt({ isAr }) {
   const auditPoints = isAr ? [
-    { title: 'تسلسل الملكية', desc: 'خالٍ من النزاعات القضائية والرهونات', status: 'موثق 100%' },
-    { title: 'تراخيص البناء', desc: 'مطابق لاشتراطات الحي والارتفاعات', status: 'معتمد' },
-    { title: 'صحة التوكيلات', desc: 'محققة وسارية بالشهر العقاري', status: 'سارٍ' },
-    { title: 'المرافق والمخالفات', desc: 'براءة ذمة كاملة وخالٍ من المستحقات', status: 'سليم' },
+    { title: 'تسلسل الملكية', desc: 'مراجعة النزاعات القضائية والرهونات', status: 'تمت المراجعة' },
+    { title: 'تراخيص البناء', desc: 'مطابقة الترخيص مع الأدوار المبنية', status: 'تمت المراجعة' },
+    { title: 'صحة التوكيلات', desc: 'التحقق من سريانها بالشهر العقاري', status: 'تمت المراجعة' },
+    { title: 'المرافق والمخالفات', desc: 'مراجعة براءة الذمة والمستحقات', status: 'تمت المراجعة' },
   ] : [
-    { title: 'Chain of Title', desc: 'Free of judicial disputes & liens', status: 'Verified' },
-    { title: 'Building Permits', desc: 'Compliant with zoning & height codes', status: 'Approved' },
-    { title: 'Powers of Attorney', desc: 'Verified & active at public registry', status: 'Active' },
-    { title: 'Utilities & Dues', desc: 'Zero municipal arrears or citations', status: 'Cleared' },
+    { title: 'Chain of Title', desc: 'Disputes & liens reviewed', status: 'Reviewed' },
+    { title: 'Building Permits', desc: 'Permit checked against built floors', status: 'Reviewed' },
+    { title: 'Powers of Attorney', desc: 'Validity checked at public registry', status: 'Reviewed' },
+    { title: 'Utilities & Dues', desc: 'Dues & clearance reviewed', status: 'Reviewed' },
   ];
 
   return (
@@ -130,25 +138,19 @@ function OffMarketArt({ isAr }) {
           <Lock size={15} strokeWidth={2.4} />
         </div>
 
-        {/* Active qualified buyer blips */}
-        <div className="hx-radar-blip hx-blip--1">
-          <span className="hx-blip-dot" />
-          <span className="hx-blip-label">{isAr ? 'مستثمر كاش • سوهاج' : 'Cash Buyer • Sohag'}</span>
-        </div>
-        <div className="hx-radar-blip hx-blip--2">
-          <span className="hx-blip-dot" />
-          <span className="hx-blip-label">{isAr ? 'طبيب مغترب • جدة' : 'Expat • Jeddah'}</span>
-        </div>
-        <div className="hx-radar-blip hx-blip--3">
-          <span className="hx-blip-dot" />
-          <span className="hx-blip-label">{isAr ? 'مشتري معتمد • الكوثر' : 'Vetted • Kawthar'}</span>
-        </div>
+        {/* Active qualified buyer blips, one per area we cover */}
+        {RADAR_BLIPS.map((b, n) => (
+          <div key={b.en} className={`hx-radar-blip hx-blip--${n + 1}`}>
+            <span className="hx-blip-dot" />
+            <span className="hx-blip-label">{isAr ? b.ar : b.en}</span>
+          </div>
+        ))}
       </div>
 
       <div className="hx-radar-footer">
         <div className="hx-radar-live-count">
           <span className="hx-pulse-dot-radar" />
-          <span>{isAr ? '+48 مستثمر كاش معتمد' : '+48 Vetted Cash Buyers'}</span>
+          <span>{isAr ? 'مشترون كاش موثّقون' : 'Vetted cash buyers'}</span>
         </div>
         <span className="hx-radar-confidential-pill">
           {isAr ? 'بدون نشر علني • سرية تامة' : '100% Confidential Off-Market'}
@@ -158,7 +160,7 @@ function OffMarketArt({ isAr }) {
   );
 }
 
-/** 04 — Live WhatsApp / Drone Expat Remote Tour Widget */
+/** 04 — Live WhatsApp Expat Remote Tour Widget */
 function ExpatTourArt({ isAr }) {
   return (
     <div className="hx-expat-modern" aria-label={isAr ? 'معاينة الغربة الحية' : 'Live expat remote inspection'}>
@@ -167,9 +169,8 @@ function ExpatTourArt({ isAr }) {
         <div className="hx-expat-hud-top">
           <div className="hx-hud-live-tag">
             <span className="hx-hud-rec-dot" />
-            <span>{isAr ? 'بث حي ومباشر' : 'LIVE ON-SITE'}</span>
+            <span>{isAr ? 'مكالمة فيديو' : 'VIDEO CALL'}</span>
           </div>
-          <span className="hx-hud-quality">4K HDR • 60fps</span>
         </div>
 
         {/* Crosshair telemetry */}
@@ -201,6 +202,7 @@ function ExpatTourArt({ isAr }) {
 }
 
 const DEFAULT_ICONS = [ShieldCheck, Scale, Award, Video];
+
 
 export default function GoldStandardsSection({ lang = 'ar' }) {
   const isAr = lang === 'ar';

@@ -4,6 +4,8 @@ import { X, Trash2, Heart, Building, MapPin, MessageSquare, Eye, ArrowRight, Arr
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { getWhatsAppUrl } from '../../utils/founderCmsData.js';
 import { trackEvent } from '../../utils/visitorTracker.js';
+import { thumbUrl } from '../../utils/imageThumbs';
+import { siteLink } from '../../config/siteConfig';
 
 export default function FavoritesDrawer({
   isOpen,
@@ -47,8 +49,8 @@ export default function FavoritesDrawer({
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       msg += `\n🏠 *${idx + 1}. ${title}* (كود: #${p.id})\n`;
       msg += `📍 *الموقع:* ${loc}\n`;
-      msg += `💰 *السعر:* ${p.price?.toLocaleString()} ج.م\n`;
-      msg += `🔗 ${window.location.origin}/properties/${p.id}\n`;
+      msg += `💰 *السعر:* ${p.price?.toLocaleString('en-US')} ج.م\n`;
+      msg += `🔗 ${siteLink(`/properties/${p.id}`)}\n`;
     });
 
     msg += `\n----------------------------------------\n`;
@@ -128,7 +130,7 @@ export default function FavoritesDrawer({
                 const title = isAr ? p.title_ar : p.title_en;
                 const loc = isAr ? p.locationName_ar : p.locationName_en;
                 const priceObj = formatCurrencyPrice(p.price, currency, lang);
-                const thumb = p.images?.[0] || p.image || '/favicon.svg';
+                const thumb = thumbUrl(p.images?.[0] || p.image) || '/favicon.svg';
 
                 return (
                   <div key={p.id} className="fav-card-item">
@@ -163,7 +165,7 @@ export default function FavoritesDrawer({
                         <strong className="fav-price-val">{priceObj.primary} {priceObj.symbol}</strong>
                         {p.monthlyInstallment && (
                           <span className="fav-installment-pill">
-                            {p.monthlyInstallment.toLocaleString()} {isAr ? 'ج.م/ش' : 'EGP/mo'}
+                            {p.monthlyInstallment.toLocaleString('en-US')} {isAr ? 'ج.م/ش' : 'EGP/mo'}
                           </span>
                         )}
                       </div>

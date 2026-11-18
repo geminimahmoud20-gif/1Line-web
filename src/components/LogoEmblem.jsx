@@ -1,9 +1,9 @@
 
-import emblemImg from '../assets/logo-emblem-transparent.png';
+import emblemImg from '../assets/logo-emblem-160.webp';
 
 /**
  * 🏛️ 1LINE Official Brand Logo Emblem
- * Uses the authentic high-resolution emblem:
+ * 160px copy of public/logo-emblem.png (largest use is 80px, so 2× is enough):
  * - Royal blue pitched architectural roof
  * - Golden 3D infinity ribbon loop
  * - Signature center blue pillar extending downward

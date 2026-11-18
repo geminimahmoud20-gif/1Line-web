@@ -1,13 +1,20 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Calculator, Navigation, ArrowRight, ArrowLeft, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame, Maximize2, BedDouble, Bath } from 'lucide-react';
+import { keyFacts } from '../utils/keyFacts';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
+import usePropertyEngagement from '../hooks/usePropertyEngagement';
 import PropertyGallery from '../components/properties/PropertyGallery';
-import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
+import { listingBadges } from '../utils/listingBadges';
+import '../styles/listing-badges.css';
 import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
 import DepositModal from '../components/properties/DepositModal';
+import OfferCountdown from '../components/properties/OfferCountdown';
+import DayChips from '../components/common/DayChips';
+import { getActiveOffer } from '../utils/propertyOffers';
 import NotFoundPage from './NotFoundPage';
 import PriceBenchmarkIndicator from '../components/properties/PriceBenchmarkIndicator';
 import NearbyAmenities from '../components/properties/NearbyAmenities';
@@ -15,19 +22,27 @@ import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 
 import HistoricalPriceChart from '../components/properties/HistoricalPriceChart';
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
-import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
+import { updatePageSeo, buildPropertySchema, buildBreadcrumbSchema, injectJsonLdSchema } from '../utils/seoHelper';
+import { listingSeoTitle } from '../utils/seoShell';
 import { checkFormSpamProtection } from '../utils/securityShield';
-import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenchmark';
+import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding } from '../utils/currencyAndBenchmark';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
 import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
 import { useUIModal } from '../context/UIModalContext';
 
-import { getFamilyInfo, computeFinanceBreakdown } from '../utils/propertyInsights';
-import { PROPERTY_TYPES } from '../data/propertiesData';
+import { getFamilyInfo } from '../utils/propertyInsights';
 
 import '../styles/expat-suite.css';
+import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
+import { paymentTerms, hasInstallmentPlan, planSummary } from '../utils/paymentTerms';
+import { similarListings } from '../utils/similarListings';
+import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
+import { blockedByApproval } from '../utils/publishApproval';
+
+const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
 const todayIso = () => {
   const d = new Date();
@@ -45,13 +60,13 @@ const normalizeBookingPhone = (raw) => {
   return null;
 };
 
-// Office hours from siteConfig CONTACT: daily 10:00–22:00 Cairo time, closed Friday
+// Office hours from siteConfig OFFICE_HOURS (Cairo time)
 const isOfficeOpenNow = () => {
   try {
     const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', weekday: 'short', hour: 'numeric', hourCycle: 'h23' }).formatToParts(new Date());
     const day = parts.find((p) => p.type === 'weekday')?.value;
     const hour = Number(parts.find((p) => p.type === 'hour')?.value);
-    return day !== 'Fri' && hour >= 10 && hour < 22;
+    return !OFFICE_HOURS.closedDays.includes(day) && hour >= OFFICE_HOURS.open && hour < OFFICE_HOURS.close;
   } catch {
     return false;
   }
@@ -70,7 +85,7 @@ export default function PropertyDetailPage({
   const { id } = useParams();
   const { openRemoteInspection } = useUIModal();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [bookingConfirmationOpen, setBookingConfirmationOpen] = useState(false);
@@ -79,7 +94,7 @@ export default function PropertyDetailPage({
   const [, setViewsCount] = useState(() => (id ? getPropertyViews(id) || 0 : 0));
 
   // Deleted / hidden / draft listings are not public, even by direct link
-  const isPublicListing = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status);
+  const isPublicListing = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status) && !blockedByApproval(p);
 
   // Find Property
   const property = useMemo(() => {
@@ -87,15 +102,8 @@ export default function PropertyDetailPage({
     return isPublicListing(found) ? found : null;
   }, [properties, id]);
 
-  // Smart Similar Properties recommendation (Same district first, fallback to same property type)
-  const similarProperties = useMemo(() => {
-    if (!property) return [];
-    const pool = properties.filter((p) => p.id !== property.id && isPublicListing(p) && p.status !== 'sold');
-    const sameArea = pool.filter((p) => p.areaKey === property.areaKey);
-    if (sameArea.length >= 3) return sameArea.slice(0, 3);
-    const sameType = pool.filter((p) => p.type === property.type && !sameArea.some(sa => sa.id === p.id));
-    return [...sameArea, ...sameType].slice(0, 3);
-  }, [properties, property]);
+  // Same kind of unit at a comparable price, the same area first (src/utils/similarListings.js)
+  const similarProperties = useMemo(() => similarListings(property, properties), [properties, property]);
 
   const isAr = lang === 'ar';
 
@@ -105,9 +113,14 @@ export default function PropertyDetailPage({
       const propTitle = isAr ? property.title_ar : property.title_en;
       const propDesc = isAr ? property.description_ar : property.description_en;
       const schema = buildPropertySchema(property, lang);
+      const breadcrumbSchema = buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'العقارات' : 'Properties', url: '/properties' },
+        { name: propTitle || property.id, url: `/properties/${property.id}` }
+      ]);
 
       updatePageSeo({
-        title: propTitle,
+        title: isAr ? listingSeoTitle(property) : propTitle,
         description: propDesc,
         image: property.image || (property.images && property.images[0]),
         url: `/properties/${property.id}`,
@@ -116,6 +129,9 @@ export default function PropertyDetailPage({
         schemaId: 'property-jsonld-schema',
         schema: schema
       });
+      if (breadcrumbSchema) {
+        injectJsonLdSchema('breadcrumb-schema', breadcrumbSchema);
+      }
     }
   }, [property, lang, isAr]);
 
@@ -130,6 +146,9 @@ export default function PropertyDetailPage({
       }
     }
   }, [property?.id, property]);
+
+  // Reading time / scroll depth for the visitor analytics
+  usePropertyEngagement(property);
 
   const { clientUser, isClientAuthenticated } = useClientAuth();
 
@@ -148,6 +167,42 @@ export default function PropertyDetailPage({
   const [phoneError, setPhoneError] = useState('');
   // The viewing form opens on demand so the sidebar leads with two clear actions
   const [showBookingForm, setShowBookingForm] = useState(false);
+  // Wide screens: once the full price card scrolls away, a short one (price + two actions) is pinned
+  // beside the content until the sidebar ends, so the price is always in view but never twice.
+  // Pinned with JS: the site-wide overflow-x on html/body stops CSS sticky from working.
+  const sidePriceRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const miniRef = useRef(null);
+  const [miniPin, setMiniPin] = useState(null);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const price = sidePriceRef.current;
+      const col = sidebarRef.current;
+      if (!price || !col || window.innerWidth <= 1024) { setMiniPin(null); return; }
+      const top = 88;
+      const miniH = miniRef.current?.offsetHeight || 140;
+      const colBox = col.getBoundingClientRect();
+      // Until the two-column area ends (the similar listings and footer come after it)
+      const gridBottom = col.parentElement.getBoundingClientRect().bottom;
+      const show = price.getBoundingClientRect().bottom < top && gridBottom > top + miniH;
+      setMiniPin((prev) => {
+        if (!show) return null;
+        if (prev && prev.left === colBox.left && prev.width === colBox.width) return prev;
+        return { left: colBox.left, width: colBox.width };
+      });
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [property?.id]);
 
   // Prefill the booking form when the client signs in (adjusted during render, not in an effect)
   const [prefilledFor, setPrefilledFor] = useState(clientUser);
@@ -166,40 +221,57 @@ export default function PropertyDetailPage({
     return <NotFoundPage lang={lang} variant="property" />;
   }
 
+  const detailBadges = listingBadges(property, isAr);
+  const ReviewIcon = { verified: ShieldCheck, in_review: Clock3, not_reviewed: ShieldQuestion }[detailBadges.review?.key] || ShieldCheck;
+
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
-  const finishing = isAr ? property.finishing_ar : property.finishing_en;
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
+  // Running limited-time offer (CRM → العقارات → العرض); samples never carry one
+  const offer = property.isDemo ? null : getActiveOffer(property);
+  const offerPriceData = offer ? formatCurrencyPrice(offer.price, currency, lang) : null;
+  const offerEndDay = offer ? new Date(offer.endsAt).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  const offerTerms = offer ? (isAr ? offer.terms_ar : (offer.terms_en || offer.terms_ar)) : '';
+  const waText = offer
+    ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على كود العقار: ${property.id.toUpperCase()} (${title}) بسعر ${offer.price.toLocaleString('en-US')} ج.م`
+    : `مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`;
+  const facts = keyFacts(property, isAr);
   const familyInfo = getFamilyInfo(property);
   // Licence line only from the reviewed legal record (CRM → الموقف القانوني)
   const licenseText = property.legalStatus
     ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
     : '';
-  const deliveryText = property.deliveryYear
-    ? String(property.deliveryYear)
-    : property.completionStatus === 'ready'
-      ? (isAr ? 'فوري — جاهز للاستلام' : 'Ready now')
-      : (property.completionStatus === 'under_construction' || property.completionStatus === 'off_plan')
-        ? (isAr ? 'تحت الإنشاء' : 'Under construction')
-        : '';
   const officeOpen = isOfficeOpenNow();
-  const financePlan = computeFinanceBreakdown(property)?.plan || null;
   const util = property.utilities || {};
   const utilityItems = [
     { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
     { key: 'water', Icon: Droplets, label: isAr ? 'المياه' : 'Water', value: util.water_ar },
     { key: 'gas', Icon: Flame, label: isAr ? 'الغاز' : 'Gas', value: util.gas_ar },
-    { key: 'elevator', Icon: Building, label: isAr ? 'المصعد' : 'Elevator', value: util.elevator_ar },
-    { key: 'parking', Icon: MapPin, label: isAr ? 'الجراج / الركن' : 'Parking', value: util.parking_ar }
+    // Elevator and parking show with the building facts in the specs card
   ].filter((u) => String(u.value || '').trim() !== '');
   const benchmark = getPriceBenchmark(property, lang);
+  // The plan from CRM → طريقة السداد, shown under the price; cash listings show nothing extra
+  // A plan (installments / resale with installments left) leads with what is paid now, then the
+  // installments, then the total; a cash listing shows its price
+  const terms = paymentTerms(property);
+  const fmtMoney = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
+  const plan = planSummary(terms, fmtMoney, isAr);
+  const headPrice = plan
+    ? formatCurrencyPrice(plan.now ? plan.now.amount : terms.amount, currency, lang)
+    : priceData;
+  const payChip = !plan ? (isAr ? 'كاش' : 'Cash')
+    : plan.resale ? (isAr ? 'إعادة بيع بالتقسيط' : 'Resale, installments left')
+    : terms.cashPrice ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'تقسيط' : 'Installments');
 
   // Sector separation
-  const isLand = property.type === 'land' || (title && title.includes('أرض'));
-  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  const isMultiUnit = isMultiUnitOrBuilding(property);
+  const isAgri = !isMultiUnit && isAgricultural(property);
+  const isIndustry = !isMultiUnit && isIndustrial(property);
+  const isLand = !isMultiUnit && (isLandType(property.type) || (!isIndustry && title && title.includes('أرض')));
+  const isCommercial = !isMultiUnit && !isLand && !isIndustry && !isAgri && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isMultiUnit && !isLand && !isCommercial && !isIndustry && !isAgri && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -212,14 +284,17 @@ export default function PropertyDetailPage({
       return;
     }
 
-    if (!bookingForm.name || bookingForm.name.trim().length < 2) {
-      triggerToast(isAr ? 'الرجاء إدخال اسمك (إلزامي)' : 'Please enter your name', 'error');
+    const nameErr = nameProblem(bookingForm.name, isAr);
+    if (nameErr) {
+      triggerToast(nameErr, 'error');
       return;
     }
 
     const fullPhone = normalizeBookingPhone(bookingForm.phone);
-    if (!fullPhone) {
-      setPhoneError(isAr ? 'اكتب رقم واتساب صحيح: 01XXXXXXXXX أو رقم دولي يبدأ بـ +' : 'Enter a valid WhatsApp number: 01XXXXXXXXX or an international number starting with +');
+    // Egyptian and Gulf mobiles only, not placeholder numbers
+    const bookingPhoneErr = fullPhone ? phoneProblem(fullPhone, null, isAr) : phoneProblem(bookingForm.phone, null, isAr);
+    if (!fullPhone || bookingPhoneErr) {
+      setPhoneError(bookingPhoneErr || phoneProblem('', null, isAr));
       return;
     }
     setPhoneError('');
@@ -234,22 +309,23 @@ export default function PropertyDetailPage({
       // Time-based reference: readable, and unique enough to find the request in the CRM
       const serialCode = `1L-${Date.now().toString(36).toUpperCase()}`;
       const isVideo = bookingForm.tourType === 'video';
-      const slotAr = bookingForm.slot === 'morning' ? 'صباحاً (10 ص – 2 م)' : 'مساءً (5 م – 9 م)';
+      const slotAr = (VIEWING_SLOTS[bookingForm.slot] || VIEWING_SLOTS.evening).ar;
       const fullBookingRecord = {
         ...bookingForm,
         name: bookingForm.name.trim(),
         whatsapp: fullPhone,
         phone: fullPhone,
         propertyType: property.type || 'residential',
-        area: property.areaKey || 'new_sohag',
+        area: property.areaKey || '',
         serialCode,
         propertyId: property.id,
         propertyTitle: title,
         propertyPrice: property.price,
         type: 'viewing_request',
         tourType: isVideo ? 'video' : 'field',
-        source: 'طلب معاينة (صفحة العقار)',
-        notes: `طلب ${isVideo ? 'معاينة فيديو حية' : 'معاينة ميدانية'} للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${slotAr} | المرجع: ${serialCode}`,
+        source: offer ? 'طلب معاينة — عرض كاش لفترة محدودة' : 'طلب معاينة (صفحة العقار)',
+        ...(offer ? { offerType: offer.type, offerPrice: offer.price, offerUntil: property.offer.until } : {}),
+        notes: `طلب ${isVideo ? 'معاينة فيديو حية' : 'معاينة ميدانية'} للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${slotAr} | المرجع: ${serialCode}${offer ? ` | 🔥 عرض كاش: ${offer.price.toLocaleString('en-US')} ج.م بدلاً من ${offer.basePrice.toLocaleString('en-US')} حتى ${property.offer.until}` : ''}`,
         createdAt: new Date().toISOString()
       };
 
@@ -267,6 +343,104 @@ export default function PropertyDetailPage({
       setIsBookingSubmitting(false);
     }
   };
+
+  // Price, payment, offer and the two main actions: in the sidebar on wide screens, under the facts on phones
+  const priceBlock = (
+    <>
+    <div className="detail-price-box">
+      <div className="pd-price-head">
+        <span className="price-tag-sub">
+          {plan ? (plan.now ? plan.now.label : (isAr ? 'القسط' : 'Installment')) : (isAr ? 'السعر الإجمالي' : 'Total Price')}
+        </span>
+        <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>{payChip}</span>
+      </div>
+      <div className="price-num-row">
+        <h2>{headPrice.primary}</h2>
+        <span className="curr">{headPrice.symbol}</span>
+      </div>
+      {headPrice.isConverted && (
+        <span className="price-converted-sub">
+          ≈ {headPrice.originalEgp}
+        </span>
+      )}
+      {plan && (
+        <>
+          <span className="pd-plan-line">{plan.now ? `+ ${plan.then}` : plan.then}</span>
+          {plan.yearly && <span className="pd-plan-line">+ {plan.yearly}</span>}
+          <span className="pd-plan-total">
+            {isAr ? 'الإجمالي: ' : 'Total: '}<bdi>{fmtMoney(plan.total)}</bdi>
+            {terms.cashPrice > 0 && <>{isAr ? ' · أو كاش: ' : ' · or cash: '}<bdi>{fmtMoney(terms.cashPrice)}</bdi></>}
+          </span>
+        </>
+      )}
+      {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
+      {benchmark && benchmark.badgeType !== 'premium' && (
+        <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
+          {benchmark.badgeType === 'deal' ? (
+            <TrendingDown size={13} />
+          ) : benchmark.badgeType === 'premium' ? (
+            <Sparkles size={13} />
+          ) : benchmark.badgeType === 'building' ? (
+            <Building2 size={13} />
+          ) : (
+            <Scale size={13} />
+          )}
+          <span>{benchmark.badgeLabel}</span>
+        </div>
+      )}
+      {Number(property.size) > 0 && (
+        isMultiUnit ? (
+          <span className="price-per-m price-multi-unit" title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الأدوار والوحدات' : 'Multi-unit building')}>
+            <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
+            <span>{isAr ? 'عقار كامل (أرض + مباني)' : 'Full Building (Land + Units)'}</span>
+          </span>
+        ) : (
+          <span className="price-per-m">
+            <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
+          </span>
+        )
+      )}
+      <div className="pd-price-ctas">
+        <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+          <MessageSquare size={16} aria-hidden="true" />
+          <span>{isAr ? 'استفسر واتساب' : 'Ask on WhatsApp'}</span>
+        </a>
+        <a href={getPhoneCallUrl()} className="pd-cta-visit">
+          <Phone size={16} aria-hidden="true" />
+          <span>{isAr ? 'اتصل بنا' : 'Call us'}</span>
+        </a>
+      </div>
+    </div>
+
+    {/* A running cash offer sits with the price */}
+    {offer && (
+      <div className="pd-offer-box" role="note">
+        <div className="pd-offer-head">
+          <Flame size={16} aria-hidden="true" />
+          <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+          <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+        </div>
+        <div className="pd-offer-price">
+          <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
+          <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+        </div>
+        <p className="pd-offer-was">
+          {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+          {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+        </p>
+        <div className="pd-offer-meta">
+          <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+          <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+          {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+        </div>
+        {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+        <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
+          {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
+        </a>
+      </div>
+    )}
+    </>
+  );
 
   return (
     <div className={`property-detail-page-wrapper ${isAr ? 'rtl-dir' : 'ltr-dir'}`} dir={isAr ? 'rtl' : 'ltr'}>
@@ -289,14 +463,14 @@ export default function PropertyDetailPage({
               title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
             >
               {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+              <span>{isAr ? 'رجوع' : 'Back'}</span>
             </button>
             <div className="page-breadcrumb-sub">
               <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
               <span className="crumb-sep">/</span>
               <Link to="/properties">{isAr ? 'العقارات' : 'Properties'}</Link>
               <span className="crumb-sep">/</span>
-              <span className="crumb-current">{property.id.toUpperCase()}</span>
+              <span className="crumb-current" title={title}>{title || property.id.toUpperCase()}</span>
             </div>
           </div>
 
@@ -307,172 +481,147 @@ export default function PropertyDetailPage({
             </div>
           )}
 
-          {/* Main Title & Price Header Banner */}
-          <div className="detail-header-block">
-            <div className="detail-title-col">
-              <div className="detail-badges-row">
-                {/* Only listings with a legal record carry the badge */}
-                {property.legalStatus && (
-                  <span className="status-pill-badge">
-                    <CheckCircle2 size={13} style={{ flexShrink: 0 }} />
-                    <span>{isAr ? 'مستندات مراجَعة' : 'Documents reviewed'}</span>
-                  </span>
-                )}
-                <span className="type-pill-badge">
-                  <Building size={13} style={{ flexShrink: 0 }} />
-                  <span>
-                    {(() => {
-                      const t = PROPERTY_TYPES.find((x) => x.id === property.type);
-                      return t ? (isAr ? t.name_ar : t.name_en) : property.type;
-                    })()}
-                  </span>
-                </span>
-                {property.badge_ar && (
-                  <span className="gold-pill-badge">
-                    <Sparkles size={13} style={{ flexShrink: 0 }} />
-                    <span>{isAr ? property.badge_ar : property.badge_en}</span>
-                  </span>
-                )}
-                <button 
-                  type="button" 
-                  className="code-copy-pill-btn" 
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(property.id.toUpperCase());
-                      triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
-                    } catch {
-                      triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
-                    }
-                  }}
-                  title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
-                >
-                  <span className="code-id-txt">{property.id.toUpperCase()}</span>
-                  <span className="copy-icon-txt"><Copy size={12} /></span>
-                </button>
-              </div>
-              <h1 className="detail-main-title">{title}</h1>
-              <div className="detail-location-text">
-                <div className="detail-loc-label">
-                  <MapPin size={16} className="loc-icon-gold" />
-                  <span>{location}</span>
-                </div>
-                {property.coordinates?.lat && (
-                  <a
-                    href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="detail-maps-pill"
-                    title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
-                  >
-                    <Navigation size={13} />
-                    <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
-                  </a>
-                )}
-              </div>
-            </div>
-
-            <div className="detail-price-box">
-              <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
-              <div className="price-num-row">
-                <h2>{priceData.primary}</h2>
-                <span className="curr">{priceData.symbol}</span>
-              </div>
-              {priceData.isConverted && (
-                <span className="price-converted-sub">
-                  ≈ {priceData.originalEgp}
-                </span>
-              )}
-              {benchmark && (
-                <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
-                  {benchmark.badgeType === 'deal' ? <TrendingDown size={13} /> : benchmark.badgeType === 'premium' ? <Sparkles size={13} /> : <Scale size={13} />}
-                  <span>{benchmark.badgeLabel}</span>
-                </div>
-              )}
-              {Number(property.size) > 0 && (
-                // price ÷ size — same figure as the listing card and the valuation tab
-                <span className="price-per-m">
-                  <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
-                </span>
-              )}
-
-              {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
-              <div className="buyer-commission-badge">
-                <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
-                <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 📸 Gallery Component */}
+          {/* 📸 Photos first: they are what a buyer looks for before anything else */}
           <PropertyGallery
             images={property.images}
+            title={title}
             virtualTour={property.virtualTour}
             lang={lang}
             floorPlan={property.floorPlan || property.floorPlanImage}
           />
+
         </div>
       </section>
 
       {/* Main Page Lower Container */}
       <div className="detail-container">
 
-        {/* 📱 WhatsApp Automation, Instant PDF Brochure & Story Bar */}
-        <WhatsAppAutomationBar
-          property={property}
-          lang={lang}
-          currency={currency}
-          triggerToast={triggerToast}
-          onOpenStoryCard={() => setStoryModalOpen(true)}
-        />
 
-        {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
-        <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
-          {[
-            { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
-            { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
-            { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
-            { id: 'financing', Icon: Calculator, ar: 'حاسبة التمويل', en: 'Financing calculator' }
-          ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
-            <button
-              key={tabId}
-              type="button"
-              role="tab"
-              id={`pd-tab-${tabId}`}
-              aria-selected={activeTab === tabId}
-              aria-controls="pd-tabpanel"
-              tabIndex={activeTab === tabId ? 0 : -1}
-              className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => setActiveTab(tabId)}
-              onKeyDown={(e) => {
-                // Arrow keys move between tabs (reading direction aware)
-                const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
-                const back = isAr ? 'ArrowRight' : 'ArrowLeft';
-                if (e.key !== fwd && e.key !== back) return;
-                e.preventDefault();
-                const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
-                setActiveTab(next);
-                document.getElementById(`pd-tab-${next}`)?.focus();
-              }}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span>{isAr ? ar : en}</span>
-            </button>
-          ))}
-        </div>
 
         {/* 2-Column Content Grid */}
         <div className="detail-content-grid">
           {/* Left / Main Details Column */}
-          <div className="detail-main-col" role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
+          <div className="detail-main-col">
+            {/* Title, badges, address and key facts: wrapped in the hero class so its styles carry over */}
+            <header className="property-detail-hero-stage pd-stage-lite pd-head">
+                <div className="detail-badges-row">
+                  {/* Availability and review: each shown only if switched on for this listing in the CRM */}
+                  {detailBadges.availability && (
+                    <span className={`pd-badge pd-badge--avail is-${detailBadges.availability.tone}`} title={detailBadges.availability.hint}>
+                      <span className="pd-badge-dot" aria-hidden="true" />
+                      <span>{detailBadges.availability.label}</span>
+                    </span>
+                  )}
+                  {detailBadges.review && (
+                    <span className={`pd-badge pd-badge--${detailBadges.review.tone}`} title={detailBadges.review.hint}>
+                      <ReviewIcon size={13} style={{ flexShrink: 0 }} aria-hidden="true" />
+                      <span>{detailBadges.review.label}</span>
+                    </span>
+                  )}
+                  {property.badge_ar && (
+                    <span className="gold-pill-badge">
+                      <Sparkles size={13} style={{ flexShrink: 0 }} />
+                      <span>{isAr ? property.badge_ar : property.badge_en}</span>
+                    </span>
+                  )}
+                </div>
+                <h1 className="detail-main-title">{title}</h1>
+                <div className="detail-location-text">
+                  {String(location || '').trim() && (
+                    <div className="detail-loc-label">
+                      <MapPin size={16} className="loc-icon-gold" />
+                      <span>{location}</span>
+                    </div>
+                  )}
+                  {property.coordinates?.lat && (
+                    <a
+                      href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="detail-maps-pill"
+                      title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
+                    >
+                      <Navigation size={13} />
+                      <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
+                    </a>
+                  )}
+                  <button 
+                    type="button" 
+                    className="code-copy-pill-btn" 
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(property.id.toUpperCase());
+                        triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                      } catch {
+                        triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
+                      }
+                    }}
+                    title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
+                  >
+                    <span className="code-id-txt">{property.id.toUpperCase()}</span>
+                    <span className="copy-icon-txt"><Copy size={12} /></span>
+                  </button>
+                </div>
+
+                {/* The facts a buyer scans first, right under the title */}
+                {facts.length > 0 && (
+                  <ul className="pd-keyfacts">
+                    {facts.map((f) => {
+                      const Icon = FACT_ICONS[f.key];
+                      return (
+                        <li key={f.key}>
+                          <Icon size={18} aria-hidden="true" />
+                          <span><strong>{f.value}</strong><small>{f.label}</small></span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+
+            </header>
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-inline">{priceBlock}</div>
+            {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
+            <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
+              {[
+                { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
+                { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
+                { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
+              ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
+                <button
+                  key={tabId}
+                  type="button"
+                  role="tab"
+                  id={`pd-tab-${tabId}`}
+                  aria-selected={activeTab === tabId}
+                  aria-controls="pd-tabpanel"
+                  tabIndex={activeTab === tabId ? 0 : -1}
+                  className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tabId)}
+                  onKeyDown={(e) => {
+                    // Arrow keys move between tabs (reading direction aware)
+                    const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
+                    const back = isAr ? 'ArrowRight' : 'ArrowLeft';
+                    if (e.key !== fwd && e.key !== back) return;
+                    e.preventDefault();
+                    const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
+                    setActiveTab(next);
+                    document.getElementById(`pd-tab-${next}`)?.focus();
+                  }}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{isAr ? ar : en}</span>
+                </button>
+              ))}
+            </div>
+            <div role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
+
             {/* TAB 1: OVERVIEW & SPECS */}
             {activeTab === 'overview' && (
               <PropertyOverviewTab
                 currency={currency}
-                deliveryText={deliveryText}
                 description={description}
                 familyInfo={familyInfo}
                 features={features}
-                finishing={finishing}
                 isAr={isAr}
                 isCommercial={isCommercial}
                 isLand={isLand}
@@ -509,7 +658,6 @@ export default function PropertyDetailPage({
 
                   {/* 📈 Historical Price Trends & Capital Growth Chart */}
                   <HistoricalPriceChart
-                    areaKey={property.areaKey}
                     customPoints={property.historicalPrices}
                     lang={lang}
                   />
@@ -523,43 +671,12 @@ export default function PropertyDetailPage({
               </div>
             )}
 
-            {/* TAB 4: FINANCING & ROI CALCULATOR */}
-            {activeTab === 'financing' && (
-              <div className="tab-pane-content">
-                {/* Customized Mortgage Calculator for this property */}
-                <div className="detail-card-box">
-                  <h3>{isAr ? 'حاسبة القسط والتمويل لهذا العقار' : 'Payment & Financing Calculator'}</h3>
-                  {Number(property.monthlyInstallment) > 0 && (
-                    <p className="pd-calc-note">
-                      {financePlan?.incomplete
-                        ? (isAr
-                          ? `الحاسبة توزّع كل المبلغ المتبقي على أقساط شهرية متساوية بدون فوائد، لذلك يختلف القسط هنا عن القسط المسجل (${Number(property.monthlyInstallment).toLocaleString('en-US')} ج.م) الذي يصاحبه رصيد غير مجدول — راجع مصفوفة التكاليف.`
-                          : `The calculator spreads the whole remaining amount over equal interest-free months, so it differs from the listed installment (${Number(property.monthlyInstallment).toLocaleString('en-US')} EGP), which comes with an unscheduled balance — see the cost breakdown.`)
-                        : (isAr
-                          ? 'الحاسبة تبدأ بنظام السداد المسجل لهذا العقار (تقسيط مباشر بدون فوائد). غيّر النسبة لو هتمول من بنك.'
-                          : 'The calculator starts from this listing\'s own plan (direct, interest-free). Change the rate if you finance through a bank.')}
-                    </p>
-                  )}
-                  <MortgageRoiCalculator
-                    lang={lang}
-                    initialPrice={property.price}
-                    // exact share (not rounded) so the down payment matches the listing to the pound
-                    initialDownpaymentPercent={property.downPayment && property.price ? Math.round((property.downPayment / property.price) * 10000) / 100 : 20}
-                    initialYears={property.installmentYears || 5}
-                    // the listing's own plan is interest-free; a bank rate is the visitor's choice
-                    initialInterestRate={Number(property.monthlyInstallment) > 0 ? 0 : 12}
-                    initialMonthlyRent={Number(property.commercial?.rentPerSqm) > 0 && Number(property.size) > 0
-                      ? Math.round(Number(property.commercial.rentPerSqm) * Number(property.size))
-                      : 18000}
-                    rentIsEstimate={!(Number(property.commercial?.rentPerSqm) > 0)}
-                  />
-                </div>
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Right / Sticky Agent & Booking Sidebar */}
-          <div className="detail-sidebar-col">
+          <div className="detail-sidebar-col" ref={sidebarRef}>
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-side" ref={sidePriceRef}>{priceBlock}</div>
             <div className="sticky-booking-card">
               {/* 1. Agent Profile Header */}
               <div className="agent-profile-header">
@@ -570,36 +687,13 @@ export default function PropertyDetailPage({
                   <span className={`agent-status-badge ${officeOpen ? '' : 'is-off-hours'}`}>
                     <span className={officeOpen ? 'green-dot' : 'pd-off-dot'} />
                     {officeOpen
-                      ? (isAr ? 'متاحون الآن — يومياً 10 ص – 10 م' : 'Available now — daily 10:00–22:00')
-                      : (isAr ? 'خارج مواعيد العمل — نرد من 10 صباحاً (عدا الجمعة)' : 'Outside office hours — we reply from 10:00 (closed Friday)')}
+                      ? (isAr ? `متاحين دلوقتي — ${CONTACT.hours_ar}` : `Available now — ${CONTACT.hours_en}`)
+                      : (isAr ? 'خارج مواعيد العمل — بنرد من 1 الظهر (عدا الجمعة)' : 'Outside office hours — we reply from 1 pm (closed Friday)')}
                   </span>
                 </div>
               </div>
 
-              {/* 2. Direct Instant Contact Hub (Top Priority) */}
-              <div className="sidebar-instant-contact-row">
-                <a
-                  href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-whatsapp-half"
-                  title={isAr ? 'تواصل فوري عبر واتساب' : 'Direct WhatsApp'}
-                >
-                  <MessageSquare size={16} />
-                  <span>{isAr ? 'واتساب فوري' : 'WhatsApp'}</span>
-                </a>
-
-                <a 
-                  href={getPhoneCallUrl()} 
-                  className="btn btn-call-half"
-                  title={isAr ? 'اتصال هاتفي مباشر' : 'Direct Phone Call'}
-                >
-                  <Phone size={16} />
-                  <span>{isAr ? 'اتصال هاتفي' : 'Call Agent'}</span>
-                </a>
-              </div>
-
-              {/* 📹 معاينة الغربة — expat remote inspection (live video / street footage / drone) */}
+              {/* 📹 معاينة الغربة — expat remote inspection (live video / street footage) */}
               <button
                 type="button"
                 className="xs-remote-cta"
@@ -608,7 +702,7 @@ export default function PropertyDetailPage({
                 <span className="xs-remote-cta-icon"><Video size={18} aria-hidden="true" /></span>
                 <span className="xs-remote-cta-text">
                   <strong>{isAr ? 'طلب معاينة الغربة' : 'Book a remote inspection'}</strong>
-                  <small>{isAr ? 'فيديو حي / شارع وجيران / درون جوي' : 'Live video · street · drone'}</small>
+                  <small>{isAr ? 'فيديو حي / شارع وجيران' : 'Live video · street'}</small>
                 </span>
               </button>
 
@@ -708,15 +802,9 @@ export default function PropertyDetailPage({
                   </fieldset>
 
                   <div className="form-row-2col">
-                    <div className="form-group-item">
-                      <label htmlFor="pd-book-date">{isAr ? 'اليوم المفضل' : 'Preferred day'}</label>
-                      <input
-                        id="pd-book-date"
-                        type="date"
-                        min={todayIso()}
-                        value={bookingForm.date}
-                        onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
-                      />
+                    <div className="form-group-item pd-book-day">
+                      <span className="pd-book-day-label">{isAr ? 'اليوم المفضل' : 'Preferred day'}</span>
+                      <DayChips value={bookingForm.date} onChange={(d) => setBookingForm({ ...bookingForm, date: d })} isAr={isAr} label={isAr ? 'اليوم المفضل' : 'Preferred day'} />
                     </div>
                     <fieldset className="form-group-item pd-fieldset">
                       <legend>{isAr ? 'الفترة' : 'Time'}</legend>
@@ -727,10 +815,10 @@ export default function PropertyDetailPage({
                           aria-checked={bookingForm.slot === 'morning'}
                           className={`slot-pill ${bookingForm.slot === 'morning' ? 'active' : ''}`}
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'morning' })}
-                          title={isAr ? '10 ص – 2 م' : '10:00–14:00'}
+                          title={isAr ? VIEWING_SLOTS.morning.ar : VIEWING_SLOTS.morning.en}
                         >
                           <Sun size={13} aria-hidden="true" />
-                          <span>{isAr ? 'صباحاً' : 'Morning'}</span>
+                          <span>{isAr ? 'بعد الضهر' : 'Afternoon'}</span>
                         </button>
                         <button
                           type="button"
@@ -738,10 +826,10 @@ export default function PropertyDetailPage({
                           aria-checked={bookingForm.slot !== 'morning'}
                           className={`slot-pill ${bookingForm.slot !== 'morning' ? 'active' : ''}`}
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'evening' })}
-                          title={isAr ? '5 م – 9 م' : '17:00–21:00'}
+                          title={isAr ? VIEWING_SLOTS.evening.ar : VIEWING_SLOTS.evening.en}
                         >
                           <Moon size={13} aria-hidden="true" />
-                          <span>{isAr ? 'مساءً' : 'Evening'}</span>
+                          <span>{isAr ? 'بالليل' : 'Evening'}</span>
                         </button>
                       </div>
                     </fieldset>
@@ -771,6 +859,37 @@ export default function PropertyDetailPage({
               <div className="sidebar-legal-guarantee">
                 <ShieldCheck size={15} className="text-gold" />
                 <span>{isAr ? 'معاينة مجانية للموقع | الأتعاب مكتوبة قبل التعاقد' : 'Free on-site viewing | Fees in writing before contract'}</span>
+              </div>
+            </div>
+            {/* Share: brochure PDF, story card, WhatsApp — under the advisor card, out of the reading path */}
+            <WhatsAppAutomationBar
+              property={property}
+              lang={lang}
+              currency={currency}
+              triggerToast={triggerToast}
+              onOpenStoryCard={() => setStoryModalOpen(true)}
+            />
+            {/* Shown only after the full price card scrolls away, so the price never appears twice */}
+            <div
+              ref={miniRef}
+              className={`pd-side-mini ${miniPin ? 'is-pinned' : 'is-hidden'}`}
+              style={miniPin ? { left: miniPin.left, width: miniPin.width } : undefined}
+              aria-hidden={!miniPin}
+              aria-label={isAr ? 'السعر والتواصل' : 'Price and contact'}
+            >
+              <div className="pd-side-mini-price">
+                <small>{offer ? (isAr ? 'سعر العرض كاش' : 'Cash offer price') : (isAr ? 'السعر الإجمالي' : 'Total price')}</small>
+                <strong><bdi>{(offer ? offerPriceData : priceData).primary}</bdi> <span>{priceData.symbol}</span></strong>
+              </div>
+              <div className="pd-price-ctas">
+                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+                  <MessageSquare size={16} aria-hidden="true" />
+                  <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
+                </a>
+                <a href={getPhoneCallUrl()} className="pd-cta-visit">
+                  <Phone size={16} aria-hidden="true" />
+                  <span>{isAr ? 'اتصل بنا' : 'Call us'}</span>
+                </a>
               </div>
             </div>
           </div>
@@ -833,23 +952,26 @@ export default function PropertyDetailPage({
         {/* 📱 Sticky Mobile Quick Action Bar (Solves Scrolling on Phones) */}
         <div className="mobile-detail-sticky-bar">
           <div className="mobile-sticky-price">
-            <span className="mob-lbl">{isAr ? 'السعر' : 'Price'}</span>
-            <strong>{priceData.primary} {priceData.symbol}</strong>
+            <span className="mob-lbl">{offer ? (isAr ? `عرض كاش −${offer.pct}%` : `Cash offer −${offer.pct}%`) : (isAr ? 'السعر' : 'Price')}</span>
+            <strong>{(offerPriceData || priceData).primary} {(offerPriceData || priceData).symbol}</strong>
           </div>
 
           <div className="mobile-sticky-actions">
-            <button
-              type="button"
-              className="btn btn-deposit-mini"
-              onClick={() => setDepositModalOpen(true)}
-              title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
-            >
-              <ShieldCheck size={16} />
-              <span>{isAr ? 'حجز' : 'Reserve'}</span>
-            </button>
+            {/* A sold unit can't be reserved: call and WhatsApp stay for "something similar" */}
+            {property.status !== 'sold' && (
+              <button
+                type="button"
+                className="btn btn-deposit-mini"
+                onClick={() => setDepositModalOpen(true)}
+                title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
+              >
+                <ShieldCheck size={16} />
+                <span>{isAr ? 'حجز' : 'Reserve'}</span>
+              </button>
+            )}
 
             <a
-              href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود: ${property.id.toUpperCase()}`)}
+              href={getWhatsAppUrl(waText)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp-mini"

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { scrollToForm } from '../utils/scrollToForm';
+import ConsentNote from './common/ConsentNote';
 import { 
   Building, 
   Home, 
@@ -13,13 +15,17 @@ import {
   ArrowRight, 
   ArrowLeft, 
   Clock,
-  MessageCircle
+  MessageCircle,
+  Sprout,
+  Factory
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
+import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 export const BuyWizard = ({ 
   lang = 'ar', 
@@ -48,6 +54,12 @@ export const BuyWizard = ({
   const validateAndSubmit = async (e) => {
     e.preventDefault();
 
+    const nameErr = nameProblem(buyerAnswers.name, isAr);
+    if (nameErr) {
+      setPhoneError(nameErr);
+      return;
+    }
+
     const cleanPhone = (buyerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (buyerAnswers.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
@@ -65,12 +77,12 @@ export const BuyWizard = ({
     const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
-      setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setPhoneError(phoneProblem(cleanPhone, buyerCountry, isAr));
       return;
     }
     
     if (!isWhatsappValid) {
-      setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setWhatsappError(phoneProblem(cleanWhatsapp, whatsappCountry, isAr));
       return;
     }
 
@@ -80,8 +92,9 @@ export const BuyWizard = ({
     const updatedAnswers = {
       ...buyerAnswers,
       propertyType: buyerAnswers.propertyType || 'apartment',
-      area: buyerAnswers.area || buyerAnswers.district || 'east',
-      location: buyerAnswers.area || buyerAnswers.district || 'east',
+      // Untouched select = "كل المناطق" (it used to save 'east', an area no longer in the list)
+      area: buyerAnswers.area || buyerAnswers.district || 'all',
+      location: buyerAnswers.area || buyerAnswers.district || 'all',
       phone: `${buyerCountry}${normalizedPhone}`,
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
@@ -91,7 +104,7 @@ export const BuyWizard = ({
     try {
       const lead = await submitBuyerJourney(updatedAnswers);
       setSubmittedRef(lead?.id || `lead-${Date.now()}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToForm('.smart-valuation-wizard-box');
     } finally {
       setIsSubmitting(false);
     }
@@ -102,7 +115,9 @@ export const BuyWizard = ({
     { id: 'retail', label_ar: 'محل تجاري', label_en: 'Retail Shop', icon: Store, desc_ar: 'محلات ومساحات تجارية على شوارع رئيسية' },
     { id: 'villa', label_ar: 'فيلا / تاون هاوس', label_en: 'Villa', icon: Home, desc_ar: 'فيلات مستقلة وتاون هاوس في كمبوندات' },
     { id: 'office', label_ar: 'مكتب إداري / عيادة', label_en: 'Office / Clinic', icon: Briefcase, desc_ar: 'مقرات إدارية وعيادات طبية جاهزة' },
-    { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' }
+    { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' },
+    { id: 'agri_land', label_ar: 'أرض زراعية أو مزرعة', label_en: 'Farmland / Farm', icon: Sprout, desc_ar: 'أراضي زراعية ومزارع وحدائق فاكهة بالفدان' },
+    { id: 'factory', label_ar: 'مصنع أو مخزن', label_en: 'Factory / Warehouse', icon: Factory, desc_ar: 'مصانع وورش ومخازن وأراضي صناعية' }
   ];
 
   const [districts, setDistricts] = useState(() => getAreas());
@@ -153,7 +168,7 @@ export const BuyWizard = ({
           <div className="phase-circle">{currentPhase > 2 ? '✓' : '2'}</div>
           <div className="phase-text">
             <span className="phase-title">{isAr ? 'الميزانية وطريقة الدفع' : 'Budget & Financing'}</span>
-            <span className="phase-sub">{isAr ? 'كاش أو تقسيط' : 'Cash or Installments'}</span>
+            <span className="phase-sub">{isAr ? 'كاش أساساً' : 'Mostly cash'}</span>
           </div>
         </div>
 
@@ -204,7 +219,7 @@ export const BuyWizard = ({
                 gap: '6px',
                 padding: '7px 14px',
                 borderRadius: '8px',
-                background: '#25D366',
+                background: '#128C4A',
                 color: '#fff',
                 border: 'none',
                 fontSize: '0.84rem',
@@ -235,7 +250,7 @@ export const BuyWizard = ({
                 onClick={() => setBuyerAnswers({ ...buyerAnswers, purpose: 'investment' })}
               >
                 <TrendingUp size={16} className="text-success" />
-                <span>{isAr ? '📈 استثمار وتأجير بعائد شهري' : 'Rental Investment'}</span>
+                <span>{isAr ? '📈 استثمار وتأجير' : 'Rental Investment'}</span>
               </button>
               <button
                 type="button"
@@ -279,16 +294,11 @@ export const BuyWizard = ({
             <label className="block-label">{isAr ? 'المنطقة المفضلة' : 'Preferred area'}</label>
             <select
               className="form-select-styled"
-              value={buyerAnswers.area || 'east'}
+              value={buyerAnswers.area || 'all'}
               onChange={(e) => handleBuyerChoice('area', e.target.value)}
             >
-              <optgroup label={isAr ? 'محافظة سوهاج' : 'Sohag'}>
-                {districts.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
-                  </option>
-                ))}
-              </optgroup>
+              {/* Sohag: main areas with their sub-areas grouped (an optgroup can't hold optgroups) */}
+              <AreaOptions areas={districts} isAr={isAr} includeAll={districts.some((a) => a?.id === 'all')} />
               <optgroup label={isAr ? 'القاهرة الكبرى' : 'Greater Cairo'}>
                 <option value="cairo_new_cairo">{isAr ? 'القاهرة الجديدة والتجمع' : 'New Cairo'}</option>
                 <option value="cairo_zayed">{isAr ? 'الشيخ زايد' : 'Sheikh Zayed'}</option>
@@ -360,7 +370,7 @@ export const BuyWizard = ({
                 onClick={() => setBuyerAnswers({ ...buyerAnswers, paymentMethod: 'cash' })}
               >
                 <DollarSign size={16} className="text-success" />
-                <span>{isAr ? 'كاش فوري (للحصول على أعلى خصم)' : 'Cash Handover'}</span>
+                <span>{isAr ? 'كاش (معظم وحداتنا بتتباع كاش)' : 'Cash (how most of our units sell)'}</span>
               </button>
               <button
                 type="button"
@@ -368,7 +378,7 @@ export const BuyWizard = ({
                 onClick={() => setBuyerAnswers({ ...buyerAnswers, paymentMethod: 'installment' })}
               >
                 <CreditCard size={16} className="text-primary" />
-                <span>{isAr ? 'تقسيط مريح (مقدم وأقساط حتى 7 سنوات)' : 'Installments up to 7 Yrs'}</span>
+                <span>{isAr ? 'تقسيط (في المشروعات اللي متاح فيها)' : 'Installments (where a project offers them)'}</span>
               </button>
             </div>
           </div>
@@ -449,7 +459,7 @@ export const BuyWizard = ({
             <div className="cert-perks-row">
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'مراجعة قانونية للمستندات' : 'Legal document review'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'معاينة ميدانية مجانية بالسيارة' : 'Free Viewing Tour'}</span></div>
-              <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تسهيلات حصرية بدون فوائد' : '0% Interest Direct Deals'}</span></div>
+              <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تفاوض مباشر مع المالك' : 'Direct owner negotiation'}</span></div>
             </div>
           </div>
 
@@ -552,6 +562,7 @@ export const BuyWizard = ({
                 </span>
               </button>
             </div>
+            <ConsentNote isAr={isAr} />
           </form>
         </div>
       )}

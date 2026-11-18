@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
+import { getDynamicPhone, openWhatsAppSafely } from '../../utils/founderCmsData';
+import { BRAND } from '../../config/siteConfig';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 /**
  * ContractStudioModal Component
@@ -15,24 +18,40 @@ export default function ContractStudioModal({
   triggerToast = () => {}
 }) {
   const isAr = lang === 'ar';
+  useBodyScrollLock(isOpen);
+  const mouseDownOnBackdropRef = useRef(false);
 
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const [formData, setFormData] = useState(() => ({
-    buyerName: 'محمد أحمد علي',
-    buyerPhone: '+20 122 322 2956',
-    buyerNationalId: '29001012600000',
-    buyerAddress: 'سوهاج - شارع الجمهورية',
-    propertyTitle: 'شقة فاخرة ناصية بحرية',
-    propertyLocation: 'سوهاج الجديدة - الحي الأول',
-    propertySize: 165,
-    propertyPrice: 3500000,
-    depositAmount: 50000,
+    // Starts empty: a contract must never go out with a sample buyer or unit.
+    // Buyer phone comes from the lead, never the company hotline.
+    buyerName: '',
+    buyerPhone: '',
+    buyerNationalId: '',
+    buyerAddress: '',
+    propertyTitle: '',
+    propertyLocation: '',
+    propertySize: 0,
+    propertyPrice: 0,
+    // What was actually paid and the transfer's own reference: typed in, never made up
+    depositAmount: 0,
     paymentMethod: 'InstaPay (إنستاباي)',
-    transactionRef: `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`
+    transactionRef: ''
   }));
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isGeneratingPdf) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, isGeneratingPdf]);
 
   if (!isOpen) return null;
 
@@ -66,17 +85,26 @@ export default function ContractStudioModal({
         propertyTitle: isAr ? prop.title_ar : prop.title_en,
         propertyLocation: isAr ? prop.locationName_ar : prop.locationName_en,
         propertySize: prop.size || prev.propertySize,
-        propertyPrice: prop.price || prev.propertyPrice,
-        depositAmount: prop.downPayment ? Math.min(50000, Math.round(prop.downPayment * 0.1)) : 50000
+        propertyPrice: prop.price || prev.propertyPrice
       }));
     }
   };
 
   const handleGeneratePdf = async () => {
+    if (!formData.buyerName.trim() || !formData.propertyTitle.trim() || !formData.propertyPrice) {
+      triggerToast(isAr ? 'اختار العميل والوحدة (أو اكتب الاسم والوحدة والسعر) قبل إصدار العقد' : 'Pick the client and the unit (or fill name, unit and price) first', 'error');
+      return;
+    }
+    if (!(Number(formData.depositAmount) > 0)) {
+      triggerToast(isAr ? 'اكتب مبلغ جدية الحجز اللي اتدفع' : 'Enter the deposit that was paid', 'error');
+      return;
+    }
+    // Opened during the click so the popup blocker lets it through; the form is written into it
+    const printWindow = window.open('', '_blank');
     setIsGeneratingPdf(true);
     try {
       const { generateReservationContractPdf } = await import('../../utils/contractPdfGenerator');
-      generateReservationContractPdf({
+      await generateReservationContractPdf({
         buyerName: formData.buyerName,
         buyerPhone: formData.buyerPhone,
         buyerNationalId: formData.buyerNationalId,
@@ -88,39 +116,56 @@ export default function ContractStudioModal({
           locationName_ar: formData.propertyLocation,
           locationName_en: formData.propertyLocation,
           size: formData.propertySize,
-          price: formData.propertyPrice,
-          downPayment: Math.round(formData.propertyPrice * 0.2),
-          monthlyInstallment: Math.round((formData.propertyPrice * 0.8) / 60)
+          price: formData.propertyPrice
         },
         depositAmount: formData.depositAmount,
         paymentMethod: formData.paymentMethod,
-        transactionRef: formData.transactionRef
-      });
+        transactionRef: formData.transactionRef.trim()
+      }, printWindow);
 
-      triggerToast(isAr ? 'تم إنشاء وتحميل عقد الحجز المعتمد بنجاح! 📄' : 'Reservation agreement PDF generated!', 'success');
+      triggerToast(isAr ? 'اتعمل نموذج الحجز. راجعه قانونياً قبل التوقيع' : 'Reservation form generated. Have it reviewed before signing.', 'success');
       trackEvent('crm_contract_pdf_generated', { buyerName: formData.buyerName, price: formData.propertyPrice });
     } catch (err) {
       console.error(err);
-      triggerToast(isAr ? 'حدث خطأ أثناء إنشاء العقد' : 'Failed to generate agreement', 'error');
+      try { printWindow?.close(); } catch { /* already closed */ }
+      triggerToast(err?.message === 'popup-blocked'
+        ? (isAr ? 'المتصفح منع فتح الاستمارة. اسمح بالنوافذ المنبثقة للموقع وجرّب تاني.' : 'The browser blocked the form. Allow pop-ups and try again.')
+        : (isAr ? 'حدث خطأ أثناء إنشاء العقد' : 'Failed to generate agreement'), 'error');
     } finally {
       setIsGeneratingPdf(false);
     }
   };
 
-  const whatsappText = encodeURIComponent(
-    `🏢 شركة 1Line للاستثمار والتطوير العقاري - سوهاج\n` +
+  const getRawWhatsappMessage = () => (
+    `🏢 ${BRAND.name_ar}\n` +
     `مرحباً أستاذ / ${formData.buyerName}\n` +
     `تم إصدار استمارة وعقد حجز وحدتكم العقارية وسند الاستلام المبدئي:\n` +
     `• الوحدة: ${formData.propertyTitle}\n` +
     `• الموقع: ${formData.propertyLocation}\n` +
-    `• إجمالي الثمن: ${formData.propertyPrice.toLocaleString()} ج.م\n` +
-    `• مبلغ جدية الحجز المؤكد: ${formData.depositAmount.toLocaleString()} ج.م (${formData.paymentMethod})\n` +
-    `• الرقم المرجعي: ${formData.transactionRef}\n` +
-    `📞 للاستفسار والتواصل مع الإدارة القانونية: +20 122 322 2956`
+    `• إجمالي الثمن: ${(Number(formData.propertyPrice) || 0).toLocaleString('en-US')} ج.م\n` +
+    `• مبلغ جدية الحجز: ${(Number(formData.depositAmount) || 0).toLocaleString('en-US')} ج.م (${formData.paymentMethod})\n` +
+    (formData.transactionRef.trim() ? `• رقم العملية: ${formData.transactionRef.trim()}\n` : '') +
+    `📞 للاستفسار والتواصل مع الإدارة القانونية: ${getDynamicPhone()}`
   );
 
+  const handleSendWhatsApp = () => {
+    if (!formData.buyerName.trim() || !formData.propertyTitle.trim()) {
+      triggerToast(isAr ? 'يرجى إدخال اسم المشتري واسم الوحدة قبل إرسال العقد' : 'Please fill buyer name and property title', 'error');
+      return;
+    }
+    openWhatsAppSafely(getRawWhatsappMessage(), formData.buyerPhone);
+  };
+
   return (
-    <div className="track-modal-backdrop" onClick={onClose}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isGeneratingPdf) {
+          onClose();
+        }
+      }}
+    >
       <div 
         className="deposit-modal-card" 
         onClick={(e) => e.stopPropagation()}
@@ -136,8 +181,8 @@ export default function ContractStudioModal({
             <FileText size={24} style={{ color: 'var(--crm-ink)' }} />
           </div>
           <div>
-            <h3>{isAr ? 'استوديو إصدار عقود الحجز والاتفاقيات الرسمية' : 'Official Reservation Contract Studio'}</h3>
-            <p>{isAr ? 'توليد عقود حجز وسندات استلام مبدئية معتمدة بصيغة PDF فورياً' : 'Generate certified bilingual property reservation agreements'}</p>
+            <h3>{isAr ? 'نماذج الحجز المبدئي' : 'Preliminary reservation forms'}</h3>
+            <p>{isAr ? 'استمارة حجز مبدئي بالعربي تتطبع أو تتحفظ PDF للمراجعة والتوقيع. مش عقد نهائي، ويُفضَّل يراجعه محامي قبل التوقيع.' : 'A preliminary reservation form to review and sign. Not a final contract; have a lawyer review it.'}</p>
           </div>
         </div>
 
@@ -167,7 +212,7 @@ export default function ContractStudioModal({
               >
                 <option value="">{isAr ? '-- اختر عقار من الكتالوج --' : '-- Choose Property --'}</option>
                 {properties.map((p) => (
-                  <option key={p.id} value={p.id}>{isAr ? p.title_ar : p.title_en} ({p.price.toLocaleString()} ج.م)</option>
+                  <option key={p.id} value={p.id}>{isAr ? p.title_ar : p.title_en} ({p.price.toLocaleString('en-US')} ج.م)</option>
                 ))}
               </select>
             </div>
@@ -257,7 +302,9 @@ export default function ContractStudioModal({
                   <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'مبلغ جدية الحجز (ج.م)' : 'Deposit (EGP)'}</label>
                   <input
                     type="number"
-                    value={formData.depositAmount}
+                    inputMode="numeric"
+                    placeholder={isAr ? 'المبلغ اللي اتدفع' : 'Amount paid'}
+                    value={formData.depositAmount || ''}
                     onChange={(e) => setFormData({ ...formData, depositAmount: parseInt(e.target.value) || 0 })}
                     style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                   />
@@ -275,6 +322,17 @@ export default function ContractStudioModal({
                     <option value="تحويل بنكي رسمي">تحويل بنكي رسمي</option>
                     <option value="سداد نقدي بمقر الشركة">سداد نقدي بمقر الشركة</option>
                   </select>
+                </div>
+
+                <div>
+                  <label htmlFor="csm-txn-ref" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'رقم العملية (من إيصال التحويل، لو فيه)' : 'Transfer reference (if any)'}</label>
+                  <input
+                    id="csm-txn-ref"
+                    dir="ltr"
+                    value={formData.transactionRef}
+                    onChange={(e) => setFormData({ ...formData, transactionRef: e.target.value.slice(0, 60) })}
+                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
+                  />
                 </div>
               </div>
             </div>
@@ -297,21 +355,20 @@ export default function ContractStudioModal({
               ) : (
                 <>
                   <Download size={16} />
-                  <span>{isAr ? 'تحميل العقد المعتمد (PDF)' : 'Download Agreement (PDF)'}</span>
+                  <span>{isAr ? 'اطبع / احفظ استمارة الحجز' : 'Print / save reservation form'}</span>
                 </>
               )}
             </button>
 
-            <a
-              href={`https://wa.me/${formData.buyerPhone.replace(/[^0-9]/g, '')}?text=${whatsappText}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={handleSendWhatsApp}
               className="btn"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)' }}
             >
               <Send size={15} />
               <span>{isAr ? 'إرسال بيانات العقد واتساب' : 'Send on WhatsApp'}</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>

@@ -1,7 +1,10 @@
-import { useMemo, useState, useEffect } from 'react';
-import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3 } from 'lucide-react';
-import { getDistrictBenchmark, formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
-import { getAreaById } from '../../utils/areasData';
+import { useState, useEffect } from 'react';
+import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
+import { formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
+import { getAreaById, getAreas } from '../../utils/areasData';
+import { useProperties } from '../../context/PropertiesContext';
+import { areaReferencePrice } from '../../utils/areaPricing';
+import { assetClass } from '../../utils/marketStats';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
   const isAr = lang === 'ar';
@@ -14,18 +17,171 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
     return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
   }, []);
 
+  const isMultiUnit = isMultiUnitOrBuilding(property);
+  const unitBreakdown = isMultiUnit ? parseUnitBreakdown(property, isAr) : null;
   const areaKey = property?.areaKey || 'default';
   const areaData = getAreaById(areaKey);
-  const districtAvg = property?.customBenchmarkPrice || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
+  const { properties: allListings = [] } = useProperties();
+  // Only a real figure: a benchmark typed on the listing, the median of 3+ listings of the same kind
+  // in the area, or the area's price when the team set it by hand. No built-in or seeded numbers:
+  // without one there is no «below / above the market» verdict.
+  const reference = Number(property?.customBenchmarkPrice) > 0
+    ? { ppm: Number(property.customBenchmarkPrice), source: 'listing', sample: 0 }
+    : areaReferencePrice(areaData, allListings, getAreas(), assetClass(property));
+  const districtAvg = reference?.ppm || 0;
+  const referenceNote = !reference ? ''
+    : reference.source === 'listings'
+      ? (isAr ? `متوسط المنطقة = وسيط ${reference.sample} عروض مشابهة معروضة دلوقتي على 1Line، ويختلف حسب الدور والتشطيب والواجهة.` : `Area average = median of ${reference.sample} similar listings now on 1Line; floor, finishing and frontage change it.`)
+      : (isAr ? 'متوسط المنطقة تقدير فريق 1Line، ويختلف حسب الدور والتشطيب والواجهة.' : 'The area average is the 1Line team\'s estimate; floor, finishing and frontage change it.');
+  const currentDistrictName = (isAr ? areaData?.name_ar : areaData?.name_en) || (isAr ? 'سوهاج عام' : 'Sohag Average');
 
-  // Always price ÷ size, so this matches the listing card and header (a stored pricePerMeter can drift)
+  // Multi-unit mixed-use building view (e.g. 4 apartments + 3 shops, multi-floor house)
+  if (isMultiUnit) {
+    const totalPriceFormatted = formatCurrencyPrice(property?.price, currency, lang);
+    return (
+      <div className="price-benchmark-card multi-unit-valuation-card">
+        <div className="benchmark-header">
+          <div className="benchmark-title-wrap">
+            <Building2 size={19} className="text-gold" />
+            <h4>
+              {isAr
+                ? `تقييم الكيان ومكونات العقار (حي ${currentDistrictName})`
+                : `Multi-Unit Asset Valuation (${currentDistrictName})`}
+            </h4>
+          </div>
+          <span className="benchmark-pill pill-fair" style={{ background: 'rgba(11, 78, 162, 0.12)', color: '#0b4ea2', borderColor: 'rgba(11, 78, 162, 0.25)' }}>
+            <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
+            <span>{isAr ? 'عقار كامل (سكني + تجاري)' : 'Multi-Unit Building'}</span>
+          </span>
+        </div>
+
+        <div style={{
+          marginTop: '12px',
+          marginBottom: '14px',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          background: 'rgba(11, 78, 162, 0.05)',
+          border: '1px solid rgba(11, 78, 162, 0.12)',
+          fontSize: '0.82rem',
+          lineHeight: '1.55',
+          color: 'var(--text-secondary)'
+        }}>
+          <strong>{isAr ? '💡 خصوصية تقييم المنازل والعمارات:' : '💡 Valuation Framework:'} </strong>
+          {isAr
+            ? 'هذا العقار يتكون من عدة أدوار ويشمل شققاً سكنية ومحلات تجارية. السعر الإجمالي يشمل مسطح الأرض والمباني بالكامل، ولا يخضع لقسمة السعر على مساحة الأرض فقط لاختلاف تسعير التجاري عن السكني وتعدد الأدوار.'
+            : 'This is a multi-story building containing both residential and commercial units. The total lump-sum covers land and built-up area across all floors, so flat (price / footprint area) does not apply.'}
+        </div>
+
+        {/* Breakdown Metric Grid */}
+        <div className="benchmark-metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+          <div className="benchmark-metric-box">
+            <span className="metric-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Layers size={13} className="text-gold" />
+              <span>{isAr ? 'مسطح الأرض' : 'Plot Footprint'}</span>
+            </span>
+            <strong className="metric-val text-primary">
+              {Number(property?.size || 0).toLocaleString('en-US')} {isAr ? 'م²' : 'm²'}
+            </strong>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{isAr ? 'حصة الأرض الأساسية' : 'Full land title'}</span>
+          </div>
+
+          <div className="benchmark-metric-box">
+            <span className="metric-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Store size={13} className="text-gold" />
+              <span>{isAr ? 'الوحدات التجارية' : 'Commercial Shops'}</span>
+            </span>
+            <strong className="metric-val" style={{ color: '#d97706' }}>
+              {unitBreakdown?.commercialUnits ? `${unitBreakdown.commercialUnits} ${isAr ? 'محلات' : 'Shops'}` : (isAr ? 'محلات بالدور الأرضي' : 'Ground Retail')}
+            </strong>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{isAr ? 'مناسب للاستثمار والتأجير' : 'Suited to rental investment'}</span>
+          </div>
+
+          <div className="benchmark-metric-box">
+            <span className="metric-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Home size={13} className="text-gold" />
+              <span>{isAr ? 'الوحدات السكنية' : 'Residential Units'}</span>
+            </span>
+            <strong className="metric-val text-primary">
+              {unitBreakdown?.residentialUnits ? `${unitBreakdown.residentialUnits} ${isAr ? 'شقق' : 'Apts'}` : (isAr ? 'شقق بالأدوار العليا' : 'Upper Floors')}
+            </strong>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              {unitBreakdown?.floors ? `${unitBreakdown.floors} ${isAr ? 'طوابق' : 'Floors'}` : (isAr ? 'أدوار متكررة' : 'Multiple floors')}
+            </span>
+          </div>
+
+          <div className="benchmark-metric-box">
+            <span className="metric-lbl">{isAr ? 'إجمالي سعر العقار' : 'Total Package Price'}</span>
+            <strong className="metric-val text-primary" style={{ color: 'var(--brand-primary, #0b4ea2)' }}>
+              {totalPriceFormatted.primary} {totalPriceFormatted.symbol}
+            </strong>
+            {totalPriceFormatted.isConverted && (
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                ≈ {totalPriceFormatted.originalEgp}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: '12px',
+          padding: '8px 12px',
+          background: 'rgba(11, 78, 162, 0.04)',
+          border: '1px solid rgba(11, 78, 162, 0.1)',
+          borderRadius: '8px',
+          fontSize: '0.75rem',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          <ShieldCheck size={14} className="text-gold" style={{ flexShrink: 0 }} />
+          <span>
+            {isAr
+              ? 'توجيه استشاري: يتكون العائد الاستثماري لهذا الأصل من التدفق النقدي المستقل للمحلات التجارية مضافاً إليه القيمة الإيجارية أو الرأسمالية للشقق السكنية.'
+              : 'Advisory Note: Total investment return is calculated from standalone commercial shop cash flows plus residential apartment capital value.'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // The district average is a residential price per m². Shops, offices, clinics and land are priced
+  // by frontage, activity and zoning, so comparing them with it would flag fair prices as "overpriced".
+  const isResidential = isResidentialProperty(property);
+  const sizeM2 = Number(property?.size) || 0;
+  if (property && (!sizeM2 || !districtAvg || (!isResidential && !property.customBenchmarkPrice))) {
+    const perM = sizeM2 ? formatCurrencyPrice(Math.round((Number(property.price) || 0) / sizeM2), currency, lang) : null;
+    return (
+      <div className="price-benchmark-card">
+        <div className="benchmark-header">
+          <div className="benchmark-title-wrap">
+            <BarChart3 size={18} className="text-gold" />
+            <h4>{isAr ? `سعر المتر (حي ${currentDistrictName})` : `Price per m² (${currentDistrictName})`}</h4>
+          </div>
+        </div>
+        {perM && (
+          <p style={{ margin: '10px 0 6px', fontWeight: 700 }}>
+            {perM.primary} {perM.symbol} / {isAr ? 'م²' : 'm²'}
+          </p>
+        )}
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          {!sizeM2
+            ? (isAr ? 'المساحة مش مسجلة، فمفيش مقارنة لسعر المتر.' : 'No area recorded, so there is no price-per-m² comparison.')
+            : isResidential && !districtAvg
+              ? (isAr ? 'لسه مفيش عروض مشابهة كفاية في المنطقة نقارن بيها (محتاجين 3 على الأقل). اسأل مستشارنا عن أسعار صفقات قريبة.' : 'Not enough similar listings in the area to compare with yet (3 needed). Ask us about nearby deals.')
+            : (isAr
+              ? 'متوسط الحي محسوب للشقق والفيلات بس. المحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط والترخيص، فمش بنقارنها بيه. اسأل مستشارنا عن صفقات مشابهة في نفس الشارع.'
+              : 'The district average covers homes only. Shops, offices and land are priced by frontage, activity and zoning, so they are not compared with it. Ask us for comparable deals on the same street.')}
+        </p>
+      </div>
+    );
+  }
+
+  // Always price ÷ size for single-unit properties
   const propertyPricePerM = Math.round((Number(property?.price) || 0) / (Number(property?.size) || 1));
 
-  const diffPercent = useMemo(() => {
-    if (!property || !districtAvg) return 0;
-    const diff = ((propertyPricePerM - districtAvg) / districtAvg) * 100;
-    return Math.round(diff);
-  }, [property, propertyPricePerM, districtAvg]);
+  // Plain math (no hook): this runs after the multi-unit early return above
+  const diffPercent = property && districtAvg ? Math.round(((propertyPricePerM - districtAvg) / districtAvg) * 100) : 0;
 
   if (!property) return null;
 
@@ -38,8 +194,6 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
 
   const convertedPricePerM = formatCurrencyPrice(propertyPricePerM, currency, lang);
   const convertedAvgPricePerM = formatCurrencyPrice(districtAvg, currency, lang);
-
-  const currentDistrictName = (isAr ? areaData?.name_ar : areaData?.name_en) || (isAr ? 'سوهاج عام' : 'Sohag Average');
 
   return (
     <div className="price-benchmark-card">
@@ -160,9 +314,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
       }}>
         <ShieldCheck size={14} className="text-gold" style={{ flexShrink: 0 }} />
         <span>
-          {isAr
-            ? 'متوسط سعر المتر في المنطقة رقم استرشادي يحدّثه فريق 1Line من لوحة التحكم، ويختلف حسب الدور والتشطيب والواجهة.'
-            : 'The area average is an indicative figure maintained by the 1Line team; floor, finishing and frontage change it.'}
+          {referenceNote}
         </span>
       </div>
     </div>

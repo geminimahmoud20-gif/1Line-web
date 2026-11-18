@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { forSite } from './utils/siteReady';
+import { siteProjects } from './utils/projectFacts';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
@@ -13,13 +15,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { sanitizeObject } from './utils/securityShield';
 
 // SEO
-import { updatePageSeo } from './utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from './utils/seoHelper';
 import { ROUTE_SEO } from './config/routeSeo';
 
 // Analytics & CMS
 import { getOrCreateSession, trackEvent } from './utils/visitorTracker';
 import { initFounderCmsSync } from './utils/founderCmsData';
-import { initAreasSync } from './utils/areasData';
+import { initAreasSync, getAreas } from './utils/areasData';
+import { areaNameOf } from './utils/areaLookup';
+import { areaLabel as placeAreaLabel } from './utils/placeLabels';
 
 // Layout & Common Components
 import Header from './components/common/Header';
@@ -63,13 +67,25 @@ const AIPropertyAdvisorModal = lazy(OVERLAY_LOADERS.AIPropertyAdvisorModal);
 const QuickSearchModal = lazy(OVERLAY_LOADERS.QuickSearchModal);
 const ClientAuthModal = lazy(OVERLAY_LOADERS.ClientAuthModal);
 const RemoteInspectionModal = lazy(OVERLAY_LOADERS.RemoteInspectionModal);
-const prefetchOverlays = () => Object.values(OVERLAY_LOADERS).forEach((load) => load().catch(() => {}));
+// One overlay per idle moment: fetching and compiling all twelve at once blocked the page for a
+// few hundred milliseconds right when people start tapping on a phone
+const prefetchOverlays = () => {
+  const queue = Object.values(OVERLAY_LOADERS);
+  const idle = (fn) => ('requestIdleCallback' in window ? window.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 400));
+  const next = () => {
+    const load = queue.shift();
+    if (!load) return;
+    load().catch(() => {}).finally(() => idle(next));
+  };
+  next();
+};
 
 // Luxury Route Transition Fallback Spinner
+// Full screen height, so the footer stays below the fold while the page loads (no layout jump)
 function RouteLoadingSpinner({ lang = 'ar' }) {
   return (
     <div style={{
-      minHeight: '60vh',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -105,7 +121,11 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
 import './App.css';
 import './styles/luxury-system.css';
 import './styles/home-luxe.css';
+import './styles/mobile-polish.css';
+import './styles/properties-compact.css';
+import './styles/touch-performance.css';
 import AppRoutes from './AppRoutes';
+import { withoutContact } from './utils/sellerListing';
 
 /**
  * Main Application Shell & Route Controller
@@ -180,6 +200,9 @@ function AppContent() {
       toggleFavorite(propertyId);
     }, 'favorite', propTitle || '');
   }, [properties, lang, requireClientAuth, toggleFavorite]);
+  // Public overlays get the site list: no old stock photos, no incomplete listings (utils/siteReady)
+  const siteProperties = useMemo(() => forSite(properties), [properties]);
+  const publicProjects = useMemo(() => siteProjects(projects), [projects]);
 
   // 🛡️ Protected Client Compare Toggle (Requires Name, Email, WhatsApp verification)
   const handleProtectedToggleCompare = useCallback((property) => {
@@ -206,7 +229,9 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Jump, don't glide: html has smooth scrolling for in-page links, which made every new page
+    // open where the last one was and then slide up
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     getOrCreateSession();
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
@@ -216,11 +241,20 @@ function AppContent() {
     const seo = ROUTE_SEO[location.pathname];
     if (!seo) return;
     const isAr = lang === 'ar';
+    const pageTitle = isAr ? seo.title_ar : seo.title_en;
+    const isPublic = !seo.noindex;
+    const breadcrumbSchema = isPublic ? buildBreadcrumbSchema([
+      { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+      { name: pageTitle, url: location.pathname }
+    ]) : null;
+
     updatePageSeo({
-      title: isAr ? seo.title_ar : seo.title_en,
+      title: pageTitle,
       description: isAr ? seo.desc_ar : seo.desc_en,
       url: location.pathname,
-      noindex: !!seo.noindex
+      noindex: !!seo.noindex,
+      schemaId: breadcrumbSchema ? 'breadcrumb-schema' : undefined,
+      schema: breadcrumbSchema || undefined
     });
   }, [location.pathname, lang]);
 
@@ -253,7 +287,7 @@ function AppContent() {
       phone: formData.phone,
       whatsapp: formData.whatsapp || formData.phone,
       propertyType: formData.propertyType || 'apartment',
-      area: formData.area || 'new_sohag',
+      area: formData.area || '',
       type: 'callback_request',
       notes: `طلب استشارة ومعاودة اتصال (${formData.preferredTime || 'في أقرب وقت'}) | نوع العقار: ${formData.propertyType || 'سكني'} | المسار: ${formData.consultationTrack || 'عام'}`,
       details: formData
@@ -296,7 +330,7 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || 'apartment',
-      area: data.area || 'new_sohag',
+      area: data.area || '',
       type: 'buyer',
       landingPage: '/buy',
       notes: `طلب شراء ${data.propertyType} في منطقة ${data.area} بميزانية ${data.budget}`,
@@ -325,18 +359,64 @@ function AppContent() {
 
   const estimatedValue = 3200000;
 
+  const PROPERTY_TYPE_NAMES_AR = {
+    apartment: 'شقة سكنية',
+    retail: 'محل تجاري',
+    villa: 'منزل مستقل / فيلا',
+    office: 'مكتب إداري / عيادة',
+    land: 'قطعة أرض',
+    building: 'عقار كامل',
+    agri_land: 'أرض زراعية',
+    farm: 'مزرعة / حديقة فاكهة',
+    factory: 'مصنع / ورشة',
+    warehouse: 'مخزن',
+    industrial_land: 'أرض صناعية'
+  };
+
+  // Area names come from the CRM's live list (Greater Cairo choices keep their fixed names)
+
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
+    const isHouse = data.propertyType === 'villa';
+    const isRetail = data.propertyType === 'retail';
+    const isLand = data.propertyType === 'land';
+
+    let floorDesc = '';
+    if (isRetail) {
+      floorDesc = data.floor ? ` | موقع المحل: ${data.floor}` : '';
+    } else if (isLand) {
+      floorDesc = data.floor ? ` | تصنيف الأرض: ${data.floor}` : '';
+    } else if (isHouse) {
+      floorDesc = ` | المبنى: ${data.totalFloors || data.floor || 'طوابق متعددة'}`;
+    } else if (data.floor) {
+      floorDesc = ` | الدور: ${data.floor}`;
+    }
+
+    const finishingDesc = data.finishingLabelAr ? ` | التشطيب: ${data.finishingLabelAr}` : '';
+    const legalSummary = data.legalSummaryAr ? ` | المستندات: ${data.legalSummaryAr}` : '';
+    const priceDesc = data.askingPrice 
+      ? ` | السعر المطلوب: ${Number(data.askingPrice).toLocaleString('en-US')} ج.م` 
+      : (data.estimatedAvg ? ` | التقدير الآلي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م` : '');
+    const featuresDesc = Array.isArray(data.featuresAr) && data.featuresAr.length > 0 ? ` | المميزات: ${data.featuresAr.join('، ')}` : '';
+    const photosDesc = data.images && data.images.length > 0 ? ` | مرفق ${data.images.length} صور` : '';
+    // Farmland / industrial answers (الري، الأوراق، النشاط…) as "label: value"
+    const specsDesc = Array.isArray(data.specsAr) && data.specsAr.length > 0 ? ` | ${data.specsAr.join(' | ')}` : '';
+    const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
+    const areaLabel = areaNameOf(data.area, getAreas()) || (String(data.area || '').startsWith('cairo_') ? placeAreaLabel(data.area) : '') || 'سوهاج';
+
     return handleAddNewLead({
       name: data.name,
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || 'apartment',
-      area: data.area || 'new_sohag',
+      area: data.area || '',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م`,
-      details: data
+      // Filled in from a «سجّل وحدتك» link the team sent (utils/sellLink.js)
+      ...(data.sharedBy ? { source: 'رابط تسجيل وحدة', sharedBy: data.sharedBy } : {}),
+      notes: `${data.sellerRole === 'broker' ? 'وسيط عقاري | ' : data.sellerRole === 'owner' ? 'المالك | ' : ''}عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${specsDesc}${featuresDesc}${legalSummary}${photosDesc}${data.sharedBy ? ` | من رابط بعته: ${data.sharedBy}` : ''}`,
+      // The lead is visible to roles that may not see contact details: phone/name stay out of details
+      details: withoutContact(data)
     });
   };
 
@@ -344,13 +424,13 @@ function AppContent() {
   const [invAmount, setInvAmount] = useState(5000000);
   const [invPeriod, setInvPeriod] = useState(5);
   const [invPropType, setInvPropType] = useState('commercial');
-  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: 'new_sohag' });
+  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: '' });
   const [showInvResultForm, setShowInvResultForm] = useState(false);
 
   const roiRes = {
     annualYield: '14.5%',
-    totalProfit: ((invAmount * 0.145 * invPeriod) + (invAmount * 0.5)).toLocaleString() + ' EGP',
-    exitValue: Math.round(invAmount * 1.6).toLocaleString() + ' EGP'
+    totalProfit: ((invAmount * 0.145 * invPeriod) + (invAmount * 0.5)).toLocaleString('en-US') + ' EGP',
+    exitValue: Math.round(invAmount * 1.6).toLocaleString('en-US') + ' EGP'
   };
 
   const submitInvestorForm = async (overrideData) => {
@@ -360,12 +440,12 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || data.targetType || invPropType,
-      area: data.area || 'new_sohag',
+      area: data.area || '',
       email: data.email,
       type: 'investor',
       landingPage: '/investor',
-      notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString()} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
-      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || 'new_sohag', ...data }
+      notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString('en-US')} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
+      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || '', ...data }
     });
     triggerToast(lang === 'ar' ? 'تم إرسال طلب دراسة الجدوى الاستثمارية بنجاح!' : 'Investment study requested!', 'success');
   };
@@ -376,7 +456,7 @@ function AppContent() {
     phone: '',
     whatsapp: '',
     experience: '1_3',
-    areas: ['new_sohag'],
+    areas: [],
     categories: ['residential'],
     inventoryCount: '1_5'
   });
@@ -396,20 +476,17 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || (data.categories && data.categories[0]) || 'all_types',
-      area: data.area || (data.areas && data.areas[0]) || 'new_sohag',
+      area: data.area || (data.areas && data.areas[0]) || '',
       type: 'broker',
       landingPage: '/broker',
-      notes: `طلب انضمام وسيط عقاري (خبرة ${data.experience} سنوات) - المنطقة: ${data.area || 'سوهاج'}`,
+      notes: `طلب انضمام وسيط عقاري (خبرة ${data.experience} سنوات) - المنطقة: ${areaNameOf(data.area, getAreas()) || 'سوهاج'}`,
       details: data
     });
     triggerToast(lang === 'ar' ? 'تم تسجيل طلب انضمامك كشريك وسيط بنجاح!' : 'Broker application submitted!', 'success');
   };
 
   // Demands Match State
-  const [ownerSearch, setOwnerSearch] = useState('');
-  const [isScanningMap, setIsScanningMap] = useState(false);
   const [ownerMatchesFound, setOwnerMatchesFound] = useState([]);
-  const [scanningMessage, setScanningMessage] = useState('');
 
   return (
     <div 
@@ -422,8 +499,8 @@ function AppContent() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      {/* Privacy notice & analytics consent (loads Clarity only after acceptance) */}
-      <ConsentBanner lang={lang} />
+      {/* Privacy notice & analytics consent (starts measurement on public pages, no prompt) */}
+      <ConsentBanner />
 
       {/* Quick View Modal */}
       {quickViewProperty && (
@@ -556,16 +633,13 @@ function AppContent() {
             invPeriod={invPeriod}
             invPropType={invPropType}
             investorForm={investorForm}
-            isScanningMap={isScanningMap}
             lang={lang}
             leads={leads}
             navigate={navigate}
             ownerMatchesFound={ownerMatchesFound}
-            ownerSearch={ownerSearch}
             projects={projects}
             properties={properties}
             roiRes={roiRes}
-            scanningMessage={scanningMessage}
             sellerAnswers={sellerAnswers}
             sellerStep={sellerStep}
             setAddDemandModalOpen={setAddDemandModalOpen}
@@ -578,11 +652,8 @@ function AppContent() {
             setInvPeriod={setInvPeriod}
             setInvPropType={setInvPropType}
             setInvestorForm={setInvestorForm}
-            setIsScanningMap={setIsScanningMap}
             setLeads={setLeads}
             setOwnerMatchesFound={setOwnerMatchesFound}
-            setOwnerSearch={setOwnerSearch}
-            setScanningMessage={setScanningMessage}
             setSellerAnswers={setSellerAnswers}
             setSellerStep={setSellerStep}
             setShowInvResultForm={setShowInvResultForm}
@@ -639,7 +710,7 @@ function AppContent() {
             onRemoveFromCompare={removeCompare}
             onClearCompare={clearCompare}
             onAddToCompare={addToCompare}
-            availableProperties={properties}
+            availableProperties={siteProperties}
             currency={currency}
             lang={lang}
           />
@@ -653,7 +724,7 @@ function AppContent() {
             isOpen={favoritesDrawerOpen}
             onClose={() => setFavoritesDrawerOpen(false)}
             favorites={favorites}
-            properties={properties}
+            properties={siteProperties}
             onRemoveFavorite={toggleFavorite}
             onClearFavorites={clearFavorites}
             onQuickView={handleOpenQuickView}
@@ -678,6 +749,7 @@ function AppContent() {
             onClose={() => setAiModalOpen(false)}
             lang={lang}
             onOpenCallbackModal={() => setCallbackModalOpen(true)}
+            properties={siteProperties}
           />
         </Suspense>
       )}
@@ -688,7 +760,8 @@ function AppContent() {
           <QuickSearchModal
             isOpen={quickSearchOpen}
             onClose={() => setQuickSearchOpen(false)}
-            properties={properties}
+            properties={siteProperties}
+            projects={publicProjects}
             lang={lang}
             currency={currency}
             onOpenAddDemand={() => setAddDemandModalOpen(true)}
@@ -714,10 +787,10 @@ function AppContent() {
           type="button"
           className="floating-ai-advisor-trigger"
           onClick={() => setAiModalOpen(true)}
-          title={lang === 'ar' ? 'استشارة عقارية مباشرة مع مستشاري 1Line' : 'Live 1Line Real Estate Advisory'}
+          title={lang === 'ar' ? 'أسئلة شائعة وتواصل مع فريق 1Line' : 'FAQ and contact the 1Line team'}
         >
           <span className="ai-icon-pulse"><MessageSquare size={16} strokeWidth={1.8} /></span>
-          <span className="ai-trigger-text">{lang === 'ar' ? 'مستشارك العقاري المباشر' : 'Live Property Advisor'}</span>
+          <span className="ai-trigger-text">{lang === 'ar' ? 'عندك سؤال؟' : 'Questions?'}</span>
         </button>
       )}
 
@@ -733,7 +806,8 @@ function AppContent() {
       />
 
       {/* Mobile Floating Bottom Navigation */}
-      {!location.pathname.startsWith('/crm') && !location.pathname.startsWith('/property/') && (
+      {/* The listing page has its own sticky price/contact bar */}
+      {!location.pathname.startsWith('/crm') && !/^\/properties\/[^/]+/.test(location.pathname) && (
         <MobileBottomBar
           lang={lang}
           compareCount={compareList.length}

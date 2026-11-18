@@ -155,6 +155,57 @@
 .pcx-chip--verified svg { color: #D9B97E; }
 .pcx-chip--deal { background: linear-gradient(100deg, #EFD9A3, #C5A059); color: #0B1B32; border-color: transparent; }
 .pcx-chip--glass { background: rgba(255, 255, 255, 0.16); }
+/* Availability (متاح / قيد التفاوض / تم البيع): a coloured dot, same glass chip as the rest */
+.pcx-avail-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: #34D399; box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25); }
+.pcx-chip--avail.is-negotiating .pcx-avail-dot { background: #FBBF24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25); }
+.pcx-chip--avail.is-sold { background: rgba(127, 29, 29, 0.78); border-color: rgba(254, 202, 202, 0.4); }
+.pcx-chip--avail.is-sold .pcx-avail-dot { background: #FCA5A5; box-shadow: none; }
+/* Review: in review / not reviewed stay quiet, only "approved" gets the gold */
+.pcx-chip--in-review svg { color: #FCD34D; }
+.pcx-chip--not-reviewed { background: rgba(11, 27, 50, 0.45); color: #E2E8F0; }
+.pcx-chip--not-reviewed svg { color: #CBD5E1; }
+/* Sold: the photo steps back so available units lead the grid */
+.pcx--sold .pcx-media img { filter: grayscale(0.55) brightness(0.92); }
+/* Limited-time offer (CRM → العروض) */
+.pcx-chip--offer { background: #C2410C; color: #FFF7ED; border-color: rgba(255, 237, 213, 0.55); font-weight: 800; }
+.pcx--offer { box-shadow: 0 0 0 1.5px rgba(194, 65, 12, 0.55), var(--pcx-shadow, 0 8px 24px rgba(11, 27, 50, 0.08)); }
+.pcx-price-tag {
+  align-self: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFEDD5;
+}
+.pcx-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  margin-top: -4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #475569);
+}
+.pcx-offer-was del { color: inherit; opacity: 0.85; text-decoration-thickness: 1.5px; }
+.pcx-offer-save { color: #0B7A45; font-weight: 700; }
+.pcx-offer-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFF1E6;
+  white-space: nowrap;
+}
+.dark-theme .pcx-price-tag, :root[data-theme="dark"] .pcx-price-tag,
+.dark-theme .pcx-offer-timer, :root[data-theme="dark"] .pcx-offer-timer { color: #FDBA74; background: rgba(251, 146, 60, 0.14); }
+.dark-theme .pcx-offer-save, :root[data-theme="dark"] .pcx-offer-save { color: #4ADE80; }
+
 .pcx-chip--demo { background: rgba(91, 33, 182, 0.72); border: 1px dashed rgba(221, 214, 254, 0.8); color: #F5F3FF; }
 
 /* "معاينة الغربة" — the one interactive chip on the photo */
@@ -171,7 +222,12 @@
 }
 .pcx-chip--remote:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -8px rgba(197, 160, 89, 1); }
 .pcx-chip--remote svg { flex: none; }
-@media (max-width: 380px) { .pcx-chip--remote span { display: none; } .pcx-chip--remote { padding: 0 8px; } }
+/* Icon-only chips (video tour, panorama): the words live in title / aria-label */
+.pcx-chip--icon { width: 26px; height: 26px; padding: 0; justify-content: center; border-radius: 999px; }
+/* Small on the photo, but still a 44px tap target on phones (mobile-polish.css sets min-height) */
+html .pcx-chip--remote.pcx-chip--icon { position: relative; min-height: 26px; }
+html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; inset: -9px; }
+/* The label stays on small phones: without it the chip has no visible name and stretched into an oval */
 
 /* Actions: glass circles */
 .pcx-actions { display: flex; gap: 6px; }
@@ -306,7 +362,6 @@
   color: var(--pcx-gold-text);
   font-variant-numeric: tabular-nums;
 }
-.pcx-fin-fx { font-size: 0.66rem; font-weight: 600; color: var(--pcx-muted); font-variant-numeric: tabular-nums; }
 
 .pcx-insight {
   align-self: flex-start;
@@ -385,59 +440,29 @@
 .pcx-spec-val small { font-size: 0.7rem; font-weight: 600; color: var(--pcx-muted); }
 .pcx-spec-label { font-size: 0.68rem; color: var(--pcx-muted); line-height: 1.3; }
 
-/* Finance panel */
-.pcx-finance {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.pcx-fin-cell {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* values line up even when one label wraps */
-  gap: 4px;
-  padding: 9px 11px;
-  border-radius: 12px;
-  background: var(--pcx-soft);
-  min-width: 0;
-}
-.pcx-fin-cell--accent { background: var(--pcx-gold-soft); }
-.pcx-fin-label {
+/* Building features the unit has (أسانسير · جراج · حديقة · حصة أرض) */
+.pcx-feats {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--pcx-muted);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.pcx-fin-label em {
-  font-style: normal;
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 1px 6px;
+.pcx-feat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
   border-radius: 999px;
-  color: var(--pcx-gold-text);
-  background: rgba(197, 160, 89, 0.18);
+  border: 1px solid var(--pcx-line);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--pcx-ink);
   white-space: nowrap;
 }
-.pcx-fin-val { font-size: 0.95rem; font-weight: 800; color: var(--pcx-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.pcx-fin-cell--accent .pcx-fin-val { color: var(--pcx-gold-text); }
-.pcx-fin-val small { font-size: 0.68rem; font-weight: 600; color: var(--pcx-muted); }
-
-.pcx-finance--cash {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--pcx-muted);
-  background: var(--pcx-soft);
-}
-.pcx-finance--cash svg { color: var(--pcx-gold); flex: none; }
+.pcx-feat svg { flex: none; color: var(--pcx-gold); }
 
 /* CTA row pinned to the bottom so rows of cards line up */
 .pcx-cta {
@@ -539,3 +564,15 @@
   .pcx, .pcx *, .pcx *::before { transition: none !important; animation: none !important; }
   .property-card-modern.pcx:hover { transform: none; }
 }
+
+/* Phones: a shorter card (wider photo, no extras row; the unit page lists them) so a screen
+   shows more than one listing */
+@media (max-width: 640px) {
+  .pcx-media { aspect-ratio: 16 / 10; }
+  .pcx-feats { display: none; }
+}
+
+/* A plan's card: what is paid now, then the installment (utils/paymentTerms planSummary) */
+.pcx-price-tag--plan { color: #1E40AF; background: #EFF6FF; }
+.dark-theme .pcx-price-tag--plan, :root[data-theme="dark"] .pcx-price-tag--plan { color: #93C5FD; background: rgba(59, 130, 246, 0.14); }
+.pcx-plan { display: block; margin-top: -4px; font-size: 0.8rem; font-weight: 700; line-height: 1.6; color: var(--text-secondary, #475569); }

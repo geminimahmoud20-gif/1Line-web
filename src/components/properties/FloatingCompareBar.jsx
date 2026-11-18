@@ -1,4 +1,5 @@
 import { Scale, X, Trash2, ArrowUpRight } from 'lucide-react';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 export default function FloatingCompareBar({
   compareList = [],
@@ -35,7 +36,7 @@ export default function FloatingCompareBar({
         <div className="floating-compare-thumbs-strip">
           {compareList.map((prop) => {
             const title = isAr ? prop.title_ar : prop.title_en;
-            const thumb = prop.images && prop.images[0] ? prop.images[0] : '';
+            const thumb = prop.images && prop.images[0] ? thumbUrl(prop.images[0]) : '';
             return (
               <div key={prop.id} className="floating-compare-thumb-item" title={title}>
                 <img src={thumb} alt={title} className="thumb-img" />

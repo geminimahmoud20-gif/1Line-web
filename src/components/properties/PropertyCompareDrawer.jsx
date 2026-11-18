@@ -1,12 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { isAgricultural, isLandType, filledSpecs, sizeLabel } from '../../utils/propertyKinds';
 import { X, Trash2, ShieldCheck, Share2, Star, Download, Building2, Calendar, Maximize2, Minimize2, Calculator, Sparkles, Award, Plus, PhoneCall, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
+import useClientDownload from '../../hooks/useClientDownload';
 
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
+import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
+import { countLabel } from '../../utils/arabicCount';
+import { thumbUrl } from '../../utils/imageThumbs';
+import { siteLink } from '../../config/siteConfig';
+import { blockedByApproval } from '../../utils/publishApproval';
+import { paymentTerms, planSummary } from '../../utils/paymentTerms';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -20,6 +28,7 @@ export default function PropertyCompareDrawer({
   currency = 'EGP'
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const download = useClientDownload();
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'financial' | 'specs' | 'legal'
   const [customDownPercent, setCustomDownPercent] = useState(20); // 20% simulator
   const [showAddSelector, setShowAddSelector] = useState(false);
@@ -45,9 +54,10 @@ export default function PropertyCompareDrawer({
     let topLegalId = null;
 
     compareList.forEach((p) => {
-      // Best Price Per Meter
-      const ppm = p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : Infinity);
-      if (ppm < minPpm) {
+      // Best Price Per Meter: only for single units, skip multi-unit buildings where price is for entire multi-floor structure
+      const isMulti = isMultiUnitOrBuilding(p);
+      const ppm = !isMulti && (p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : Infinity));
+      if (ppm && ppm < minPpm) {
         minPpm = ppm;
         bestPpmId = p.id;
       }
@@ -84,7 +94,7 @@ export default function PropertyCompareDrawer({
     const currentIds = new Set(compareList.map(p => p.id));
     return availableProperties.filter(p => {
       if (currentIds.has(p.id)) return false;
-      if (p.isDeleted || p.status === 'trash' || p.status === 'hidden') return false;
+      if (p.isDeleted || p.status === 'trash' || p.status === 'hidden' || blockedByApproval(p)) return false;
       if (!selectorSearch.trim()) return true;
       const q = selectorSearch.toLowerCase();
       const titleAr = (p.title_ar || '').toLowerCase();
@@ -101,7 +111,9 @@ export default function PropertyCompareDrawer({
     const priceDiff = Math.abs(p1.price - p2.price);
     const ppm1 = p1.pricePerMeter || (p1.size ? Math.round(p1.price / p1.size) : 0);
     const ppm2 = p2.pricePerMeter || (p2.size ? Math.round(p2.price / p2.size) : 0);
-    const ppmDiff = Math.abs(ppm1 - ppm2);
+    // Price per m² only compares when both listings have an area; 0 is "unknown", not "cheapest"
+    const ppmComparable = ppm1 > 0 && ppm2 > 0;
+    const ppmDiff = ppmComparable ? Math.abs(ppm1 - ppm2) : 0;
     const sizeDiff = Math.abs((Number(p1.size) || 0) - (Number(p2.size) || 0));
     const monthlyDiff = Math.abs((Number(p1.monthlyInstallment) || 0) - (Number(p2.monthlyInstallment) || 0));
 
@@ -110,9 +122,9 @@ export default function PropertyCompareDrawer({
       ppmDiff,
       sizeDiff,
       monthlyDiff,
-      cheaperId: p1.price < p2.price ? p1.id : p2.id,
-      largerId: (Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id,
-      betterPpmId: ppm1 < ppm2 ? p1.id : p2.id,
+      cheaperId: p1.price !== p2.price ? (p1.price < p2.price ? p1.id : p2.id) : null,
+      largerId: (Number(p1.size) || 0) !== (Number(p2.size) || 0) ? ((Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id) : null,
+      betterPpmId: ppmComparable && ppm1 !== ppm2 ? (ppm1 < ppm2 ? p1.id : p2.id) : null,
       lowerMonthlyId: (Number(p1.monthlyInstallment) || Infinity) < (Number(p2.monthlyInstallment) || Infinity) ? p1.id : p2.id,
       p1,
       p2,
@@ -123,8 +135,10 @@ export default function PropertyCompareDrawer({
 
   const handleDownloadPdf = () => {
     if (compareList.length === 0) return;
-    generateComparePdf(compareList, lang);
-    trackEvent('compare_downloaded_pdf', { count: compareList.length });
+    download({ kind: 'compare_pdf', itemTitle: compareList.map((p) => p.title_ar || p.title_en || p.id).join(' / ') }, () => {
+      generateComparePdf(compareList, lang);
+      trackEvent('compare_downloaded_pdf', { count: compareList.length });
+    });
   };
 
   const handleShareWhatsApp = () => {
@@ -137,25 +151,33 @@ export default function PropertyCompareDrawer({
       const title = isAr ? p.title_ar : p.title_en;
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       msg += `📌 *الوحدة ${idx + 1}: ${title}*\n`;
-      const isLand = p.type === 'land';
+      const isLand = isLandType(p.type) || isAgricultural(p);
+      const kindSpecs = filledSpecs(p, isAr).map((x) => x.value).slice(0, 2).join('، ');
       const isCom = p.type === 'commercial' || p.category === 'commercial';
       const isOff = p.type === 'office' || p.category === 'administrative';
       let specsText;
-      if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
+      if (kindSpecs) specsText = kindSpecs;
+      else if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
       else if (isCom) specsText = p.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop');
       else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
-      else specsText = `${p.bedrooms || 0} ${isAr ? 'غرف' : 'Rooms'} / ${p.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`;
-      msg += `• المساحة: ${p.size} م² (${specsText})\n`;
-      msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString()} ج.م` : 'كاش'}\n`;
-      msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString()} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
+      else specsText = `${countLabel('room', p.bedrooms || 0, isAr)} / ${countLabel('bath', p.bathrooms || 0, isAr)}`;
+      msg += `• المساحة: ${sizeLabel(p, true) || `${p.size} م²`} (${specsText})\n`;
+      {
+        const s = planSummary(paymentTerms(p), (n) => `${Number(n).toLocaleString('en-US')} ج.م`, true);
+        msg += s ? `• ${s.now ? `${s.now.label} ${Number(s.now.amount).toLocaleString('en-US')} ج.م + ` : ''}${s.then}${s.yearly ? ` + ${s.yearly}` : ''}\n` : '• السداد: كاش\n';
+      }
       msg += `• الموقع: ${loc}\n`;
-      msg += `• الموقف القانوني: عقد مسجل وشهر عقاري معتمد 100%\n`;
-      msg += `• الرابط: ${window.location.origin}/properties/${p.id}\n\n`;
+      // Only what the listing's legal review actually recorded; never a blanket guarantee
+      const legalLine = p.legalStatus
+        ? [p.legalStatus.ownershipType_ar, p.legalStatus.licenseStatus_ar].filter(Boolean).join(' • ')
+        : '';
+      msg += `• الموقف القانوني: ${legalLine || 'نراجع معك المستندات قبل التعاقد'}\n`;
+      msg += `• الرابط: ${siteLink(`/properties/${p.id}`)}\n\n`;
     });
 
     msg += isAr 
-      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: +20 122 322 2956` 
-      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: +20 122 322 2956`;
+      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: ${getDynamicPhone()}` 
+      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: ${getDynamicPhone()}`;
 
     trackEvent('compare_shared_whatsapp', { count: compareList.length });
     const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -188,10 +210,38 @@ export default function PropertyCompareDrawer({
     trackEvent('compare_booked_dual_tour', { p1: p1.id, p2: p2.id });
   };
 
+  // Lock background scroll and listen for Escape key
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className={`compare-drawer-backdrop ${isFullscreen ? 'fullscreen-mode' : ''}`} onClick={onClose} dir={isAr ? 'rtl' : 'ltr'}>
+    <div 
+      className={`compare-drawer-backdrop ${isFullscreen ? 'fullscreen-mode' : ''}`} 
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }} 
+      dir={isAr ? 'rtl' : 'ltr'}
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
         className={`compare-drawer-panel luxury-compare-panel ${isFullscreen ? 'is-fullscreen' : ''}`} 
         onClick={(e) => e.stopPropagation()}
@@ -355,7 +405,7 @@ export default function PropertyCompareDrawer({
                 <div className="verdict-chip lowest-installment">
                   <Calendar size={12} />
                   <span>
-                    {isAr ? 'أسهل قسط شهري:' : 'Lowest Monthly:'} <strong>{compareList.find(p => p.id === verdicts.lowestMonthlyId)?.monthlyInstallment?.toLocaleString()} ج.م</strong>
+                    {isAr ? 'أسهل قسط شهري:' : 'Lowest Monthly:'} <strong>{compareList.find(p => p.id === verdicts.lowestMonthlyId)?.monthlyInstallment?.toLocaleString('en-US')} ج.م</strong>
                   </span>
                 </div>
               )}
@@ -536,11 +586,11 @@ export default function PropertyCompareDrawer({
                                     setSelectorSearch('');
                                   }}
                                 >
-                                  <img src={p.images && p.images[0] ? p.images[0] : ''} alt={t} className="sel-item-thumb" />
+                                  <img src={p.images && p.images[0] ? thumbUrl(p.images[0]) : ''} alt={t} className="sel-item-thumb" />
                                   <div className="sel-item-info">
                                     <h5 className="sel-item-title">{t}</h5>
                                     <span className="sel-item-price">
-                                      {p.price.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                                      {p.price.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
                                     </span>
                                     <span className="sel-item-loc">{loc}</span>
                                   </div>

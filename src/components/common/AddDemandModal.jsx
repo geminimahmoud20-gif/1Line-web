@@ -4,6 +4,8 @@ import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
+import AreaOptions from './AreaOptions';
+import { nameProblem } from '../../utils/contactValidation';
 
 const PROP_TYPE_OPTIONS = [
   { value: 'apartment', label_ar: 'شقة سكنية', label_en: 'Apartment' },
@@ -11,7 +13,12 @@ const PROP_TYPE_OPTIONS = [
   { value: 'land', label_ar: 'أرض استثمارية / بناء', label_en: 'Land / Plot' },
   { value: 'retail', label_ar: 'محل تجاري / فرنشايز', label_en: 'Commercial Retail Shop' },
   { value: 'office', label_ar: 'مكتب إداري / عيادة', label_en: 'Admin Office / Clinic' },
-  { value: 'building', label_ar: 'عمارة / برج سكني', label_en: 'Entire Building' }
+  { value: 'building', label_ar: 'عمارة / برج سكني', label_en: 'Entire Building' },
+  { value: 'agri_land', label_ar: 'أرض زراعية', label_en: 'Farmland' },
+  { value: 'farm', label_ar: 'مزرعة / حديقة فاكهة', label_en: 'Farm / Orchard' },
+  { value: 'factory', label_ar: 'مصنع / ورشة', label_en: 'Factory / Workshop' },
+  { value: 'warehouse', label_ar: 'مخزن / مستودع', label_en: 'Warehouse' },
+  { value: 'industrial_land', label_ar: 'أرض صناعية', label_en: 'Industrial Land' }
 ];
 
 const TIMEFRAME_OPTIONS = [
@@ -35,7 +42,7 @@ export default function AddDemandModal({
     phone: '',
     whatsapp: '',
     type: 'apartment',
-    area: 'east',
+    area: '', // the visitor picks it (a hidden 'east' default was saved under another area's name)
     budget: '',
     paymentMethod: 'cash',
     timeframe: 'immediate',
@@ -67,8 +74,9 @@ export default function AddDemandModal({
     }
 
     // Validation of mandatory fields: Name, WhatsApp, Property Type, Area
-    if (!formData.name.trim()) {
-      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم (إلزامي)' : 'Full Name is required', 'error');
+    const nameErr = nameProblem(formData.name, isAr);
+    if (nameErr) {
+      triggerToast?.(nameErr, 'error');
       return;
     }
 
@@ -116,14 +124,14 @@ export default function AddDemandModal({
     
     // Construct rich text for Arabic & English
     const allAreas = getAreas().filter(a => a.id !== 'all');
-    const areaObj = allAreas.find(a => a.id === formData.area) || allAreas[0] || { name_ar: formData.area, name_en: formData.area };
+    const areaObj = allAreas.find(a => a.id === formData.area) || { name_ar: formData.area, name_en: formData.area };
     // Map area field names to match expected label_ar/label_en
     const areaMapped = { label_ar: areaObj.label_ar || areaObj.name_ar, label_en: areaObj.label_en || areaObj.name_en };
     const typeObj = PROP_TYPE_OPTIONS.find(t => t.value === formData.type) || PROP_TYPE_OPTIONS[0];
     const budgetNum = parseInt(String(formData.budget).replace(/,/g, '')) || 2500000;
     
-    const textAr = `مطلوب ${typeObj.label_ar} في ${areaMapped.label_ar} بميزانية ${budgetNum.toLocaleString()} جنيه ${formData.paymentMethod === 'cash' ? 'كاش' : 'تسهيلات'}${formData.minSize ? ` بمساحة لا تقل عن ${formData.minSize} متر` : ''}. ${formData.notes ? `(${formData.notes})` : ''}`;
-    const textEn = `Wanted: ${typeObj.label_en} in ${areaMapped.label_en} with a budget of ${budgetNum.toLocaleString()} EGP (${formData.paymentMethod})${formData.minSize ? `, min size ${formData.minSize} sqm` : ''}. ${formData.notes || ''}`;
+    const textAr = `مطلوب ${typeObj.label_ar} في ${areaMapped.label_ar} بميزانية ${budgetNum.toLocaleString('en-US')} جنيه ${formData.paymentMethod === 'cash' ? 'كاش' : 'تسهيلات'}${formData.minSize ? ` بمساحة لا تقل عن ${formData.minSize} متر` : ''}. ${formData.notes ? `(${formData.notes})` : ''}`;
+    const textEn = `Wanted: ${typeObj.label_en} in ${areaMapped.label_en} with a budget of ${budgetNum.toLocaleString('en-US')} EGP (${formData.paymentMethod})${formData.minSize ? `, min size ${formData.minSize} sqm` : ''}. ${formData.notes || ''}`;
 
     const newDemandPayload = {
       id: `dem-pub-${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 8)}`,
@@ -142,7 +150,7 @@ export default function AddDemandModal({
       urgency: formData.timeframe === 'immediate' ? 'high' : formData.timeframe === 'within_1_month' ? 'high' : 'medium',
       minSize: formData.minSize,
       notes: formData.notes,
-      timestamp: isAr ? 'الآن' : 'Just now',
+      timestamp: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       status: 'pending',
       source: 'public_web_demand_form'
@@ -320,11 +328,8 @@ export default function AddDemandModal({
                     onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                     required
                   >
-                    {getAreas().filter(a => a.id !== 'all').map(opt => (
-                      <option key={opt.id} value={opt.id}>
-                        {isAr ? (opt.label_ar || opt.name_ar) : (opt.label_en || opt.name_en)}
-                      </option>
-                    ))}
+                    <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
+                    <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
                   </select>
                 </div>
               </div>

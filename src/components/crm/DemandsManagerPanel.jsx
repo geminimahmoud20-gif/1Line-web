@@ -1,11 +1,19 @@
 import { useState, useMemo, useEffect } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Zap, Plus, Check, Trash2, Edit3, Clock, MapPin, DollarSign, Phone, MessageSquare, Search, CheckCircle, EyeOff, Sparkles, Download } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
-import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../utils/rbacRules';
+import { auditDataExport } from '../../utils/contactAudit';
+import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { reconcilePublicDemands } from '../../firebaseLazy';
 import DemandFormModal from './demands/DemandFormModal';
 import DemandMatchModal from './demands/DemandMatchModal';
-import { AREA_OPTIONS, PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
+import { PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
+import { getAreas } from '../../utils/areasData';
+import { findArea, placeAreas, inArea } from '../../utils/areaLookup';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { recordTimeLabel } from '../../utils/relativeTime';
+import { useConfirm } from '../ui';
+import './demands-approval.css';
 
 
 
@@ -19,8 +27,14 @@ export default function DemandsManagerPanel({
   onUnpublishDemand,
   lang = 'ar',
   userRole = 'super_admin',
-  triggerToast
+  canPublish: canPublishProp,
+  triggerToast,
+  openRequest = null,
+  readOnly = false
 }) {
+  const confirm = useConfirm();
+  // Only the general manager, or a role with «ينشر», publishes a request (firestore.rules enforces it too)
+  const isManager = canPublishProp ?? userRole === 'super_admin';
   const isAr = lang === 'ar';
   const canViewPhone = canViewLeadPhone(userRole);
 
@@ -31,9 +45,9 @@ export default function DemandsManagerPanel({
   const [editingDemand, setEditingDemand] = useState(null);
   const [matchModalDemand, setMatchModalDemand] = useState(null);
 
-  // Once per session, an editor brings public_demands (the contact-free copies visitors read)
-  // in line with the published demands — covers demands published before the copies existed.
-  const canPublish = canEditProperties(userRole);
+  // Once per session, the general manager brings public_demands (the contact-free copies visitors
+  // read) in line with the published demands — covers demands published before the copies existed.
+  const canPublish = isManager;
   const hasDemands = demands.length > 0;
   useEffect(() => {
     if (!canPublish || !hasDemands) return;
@@ -51,7 +65,7 @@ export default function DemandsManagerPanel({
     const b = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
     return properties.filter(p => {
       const typeMatch = !demand.type || p.type === demand.type;
-      const areaMatch = !demand.area || p.areaKey === demand.area;
+      const areaMatch = !demand.area || inArea(p.areaKey, demand.area, getAreas());
       const priceMatch = p.price <= (b * 1.25);
       return typeMatch && (areaMatch || priceMatch);
     });
@@ -94,6 +108,7 @@ export default function DemandsManagerPanel({
       phone: canViewPhone ? (d.phone || '—') : maskPhoneNumber(d.phone, userRole)
     }));
     exportToCsv('OneLine_Buyer_Demands', exportedData, headers);
+    auditDataExport('OneLine_Buyer_Demands', 'csv', exportedData.length);
     triggerToast?.(isAr ? 'تم تصدير الطلبات بنجاح إلى ملف Excel!' : 'Demands exported to CSV!', 'success');
   };
 
@@ -102,9 +117,9 @@ export default function DemandsManagerPanel({
     id: '',
     text_ar: '',
     text_en: '',
-    area: 'east',
-    area_ar: 'شرق سوهاج',
-    area_en: 'East Sohag',
+    area: '',
+    area_ar: '',
+    area_en: '',
     type: 'apartment',
     budget: 3000000,
     urgency: 'high',
@@ -143,13 +158,14 @@ export default function DemandsManagerPanel({
       id: `dem-adm-${Date.now()}`,
       text_ar: '',
       text_en: '',
-      area: 'east',
-      area_ar: 'شرق سوهاج',
-      area_en: 'East Sohag',
+      area: '', // picked in the form: a preset 'east' was saved after East Sohag was deleted
+      area_ar: '',
+      area_en: '',
       type: 'apartment',
       budget: 3000000,
       urgency: 'high',
-      timestamp: isAr ? 'الآن' : 'Just now',
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       clientName: '',
       phone: '',
       whatsapp: '',
@@ -158,6 +174,8 @@ export default function DemandsManagerPanel({
     setEditingDemand(null);
     setShowAddModal(true);
   };
+
+  useOpenRequest(openRequest, ['add_demand'], () => { if (!readOnly) handleOpenAdd(); });
 
   const handleOpenEdit = (demand) => {
     setEditingDemand(demand);
@@ -176,12 +194,17 @@ export default function DemandsManagerPanel({
       return;
     }
 
-    const areaObj = AREA_OPTIONS.find(a => a.value === formData.area) || AREA_OPTIONS[0];
+    // The CRM's own area list; no silent fallback to another area
+    const areaObj = findArea(formData.area, placeAreas(getAreas()));
+    if (!areaObj) {
+      triggerToast?.(isAr ? 'اختار المنطقة من القائمة' : 'Choose an area from the list', 'error');
+      return;
+    }
 
     const demandPayload = {
       ...formData,
-      area_ar: areaObj.label_ar,
-      area_en: areaObj.label_en,
+      area_ar: areaObj.name_ar || areaObj.label_ar || '',
+      area_en: areaObj.name_en || areaObj.label_en || areaObj.name_ar || '',
       budget: parseInt(String(formData.budget).replace(/,/g, '')) || 2500000,
       updatedAt: new Date().toISOString()
     };
@@ -193,7 +216,9 @@ export default function DemandsManagerPanel({
     } else {
       const res = onAddDemand?.(demandPayload);
       if (res === false) return;
-      triggerToast?.(isAr ? 'تمت إضافة ونشر الطلب بنجاح' : 'New demand published successfully', 'success');
+      triggerToast?.(canPublish || demandPayload.status !== 'published'
+        ? (isAr ? 'اتضاف الطلب' : 'Request added')
+        : (isAr ? 'اتضاف الطلب، وهيتنشر بعد موافقة المدير العام' : 'Request added; it is published once the general manager approves it'), 'success');
     }
 
     setShowAddModal(false);
@@ -211,8 +236,8 @@ export default function DemandsManagerPanel({
     );
   };
 
-  const handleQuickReject = (demandId) => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من رفض وحذف هذا الطلب؟' : 'Are you sure you want to reject and delete this request?')) {
+  const handleQuickReject = async (demandId) => {
+    if (await confirm({ message: isAr ? 'هل أنت متأكد من رفض وحذف هذا الطلب؟' : 'Are you sure you want to reject and delete this request?', tone: 'danger' })) {
       const res = onDeleteDemand?.(demandId);
       if (res === false) return;
       triggerToast?.(isAr ? 'تم حذف الطلب' : 'Demand rejected/deleted', 'info');
@@ -221,230 +246,184 @@ export default function DemandsManagerPanel({
 
   return (
     <div className="demands-manager-container" style={{ animation: 'fadeIn 0.3s ease' }}>
-      {/* 1. Header & KPI Metrics */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '16px',
-        padding: '24px',
-        marginBottom: '24px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ padding: '8px', borderRadius: '10px', background: 'var(--crm-warn-soft)', color: 'var(--crm-accent-text)', border: '1px solid var(--crm-warn-line)' }}>
-                <Zap size={24} />
-              </div>
-              <div>
-                <h2 style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', margin: 0, fontWeight: 700 }}>
-                  {isAr ? 'إدارة طلبات المشترين واعتمادها' : 'Buyer Demands Management & Approval'}
-                </h2>
-                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', margin: '4px 0 0' }}>
-                  {isAr 
-                    ? 'راجع طلبات المشترين والمستثمرين الواردة من الموقع، ودقق مواصفاتها واعتمد نشرها مباشرة أمام البائعين.' 
-                    : 'Review, verify and approve active buyer requests submitted across the platform.'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <button 
-              type="button" 
-              className="btn btn-outline"
-              onClick={handleExportCsv}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 16px', borderRadius: '10px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}
-              title={isAr ? 'تصدير جدول الطلبات إلى ملف Excel' : 'Export Demands to CSV'}
-            >
-              <Download size={16} />
-              <span>{isAr ? 'تصدير Excel' : 'Export CSV'}</span>
-            </button>
-
-            <button 
-              type="button" 
-              className="btn btn-primary"
-              onClick={handleOpenAdd}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 20px', borderRadius: '10px', fontWeight: 'bold', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none' }}
-            >
-              <Plus size={18} />
-              <span>{isAr ? 'إضافة طلب مباشر من الإدارة' : 'Add Direct Demand'}</span>
-            </button>
+      {/* 1. Header Strip */}
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Zap size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'إدارة طلبات المشترين واعتمادها' : 'Buyer Demands Management'}</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr 
+                ? 'تدقيق واعتماد طلبات المشترين والمستثمرين ونشرها مباشرة أمام أصحاب العقارات' 
+                : 'Review, verify and approve active buyer requests across the platform'}
+            </span>
+            <span>•</span>
+            <span className="crm-header-count-pill">
+              {filteredDemands.length} {isAr ? 'طلب معروض' : 'demands'}
+            </span>
           </div>
         </div>
 
-        {/* Quick KPI Stat Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-          <div style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: 'var(--crm-ink)', marginTop: '4px' }}>
-              {totalDemandsCount}
-            </div>
-          </div>
+        <div className="crm-header-actions-group">
+          <button 
+            type="button" 
+            className="crm-btn-secondary-modern"
+            onClick={handleExportCsv}
+            title={isAr ? 'تصدير جدول الطلبات إلى ملف Excel' : 'Export Demands to CSV'}
+          >
+            <Download size={15} />
+            <span>{isAr ? 'تصدير Excel' : 'Export CSV'}</span>
+          </button>
 
-          <div style={{ 
-            background: pendingCount > 0 ? 'var(--crm-warn-soft)' : 'var(--crm-subtle)', 
-            border: pendingCount > 0 ? '1px solid var(--crm-warn-line)' : '1px solid var(--crm-line)', 
-            borderRadius: '12px', 
-            padding: '14px 18px' 
-          }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-faint)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Clock size={14} />
-              <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
-            </span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-ink)', marginTop: '4px' }}>
-              {pendingCount}
-            </div>
-          </div>
+          <button 
+            type="button" 
+            className="crm-btn-primary-gold"
+            disabled={readOnly}
+            onClick={handleOpenAdd}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة طلب مباشر' : 'Add Direct Demand'}</span>
+          </button>
+        </div>
+      </div>
 
-          <div style={{ background: 'var(--crm-positive-soft)', border: '1px solid var(--crm-positive-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-positive)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <CheckCircle size={14} />
-              <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
-            </span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: 'var(--crm-positive)', marginTop: '4px' }}>
-              {publishedCount}
-            </div>
+      {/* Quick KPI Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+        <div className="crm-metric-card-executive">
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-ink)', marginTop: '4px' }}>
+            {totalDemandsCount}
           </div>
+        </div>
 
-          <div style={{ background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-info)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <DollarSign size={14} />
-              <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
-            </span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: 'var(--crm-info)', marginTop: '4px' }}>
-              {(totalPurchasingPower / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}
-            </div>
+        <div className="crm-metric-card-executive" style={pendingCount > 0 ? { background: 'var(--crm-warn-soft)', borderColor: 'var(--crm-warn-line)' } : undefined}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-muted)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Clock size={14} />
+            <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
+          </span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-ink)', marginTop: '4px' }}>
+            {pendingCount}
+          </div>
+        </div>
+
+        <div className="crm-metric-card-executive" style={{ borderColor: 'var(--crm-positive-line)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CheckCircle size={14} />
+            <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
+          </span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-positive)', marginTop: '4px' }}>
+            {publishedCount}
+          </div>
+        </div>
+
+        <div className="crm-metric-card-executive" style={{ borderColor: 'var(--crm-info-line)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <DollarSign size={14} />
+            <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
+          </span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-info)', marginTop: '4px' }}>
+            {(totalPurchasingPower / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}
           </div>
         </div>
       </div>
 
-      {/* 2. Filter Bar & Search */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '12px',
-        padding: '14px 18px',
-        marginBottom: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '14px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-      }}>
-        {/* Status Tabs */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className={`btn btn-sm ${statusFilter === 'all' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setStatusFilter('all')}
-            style={{ 
-              borderRadius: '20px', 
-              fontSize: 'var(--crm-text-sm)', 
-              padding: '6px 14px',
-              background: statusFilter === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
-              color: statusFilter === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: '1px solid ' + (statusFilter === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-line-strong)')
-            }}
-          >
-            {isAr ? 'جميع الطلبات' : 'All'} ({totalDemandsCount})
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${statusFilter === 'pending' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setStatusFilter('pending')}
-            style={{ 
-              borderRadius: '20px', 
-              fontSize: 'var(--crm-text-sm)', 
-              padding: '6px 14px',
-              background: statusFilter === 'pending' ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
-              color: statusFilter === 'pending' ? 'var(--crm-on-dark)' : 'var(--crm-warn)',
-              border: '1px solid ' + (statusFilter === 'pending' ? 'var(--crm-warn)' : 'var(--crm-warn-line)'),
-              fontWeight: 'bold'
-            }}
-          >
-            {isAr ? 'قيد المراجعة' : 'Pending Review'} ({pendingCount})
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${statusFilter === 'published' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setStatusFilter('published')}
-            style={{ 
-              borderRadius: '20px', 
-              fontSize: 'var(--crm-text-sm)', 
-              padding: '6px 14px',
-              background: statusFilter === 'published' ? 'var(--crm-positive-solid)' : 'var(--crm-card)',
-              color: statusFilter === 'published' ? 'var(--crm-on-dark)' : 'var(--crm-positive)',
-              border: '1px solid ' + (statusFilter === 'published' ? 'var(--crm-positive)' : 'var(--crm-positive-line)')
-            }}
-          >
-            {isAr ? 'المنشورة لايف' : 'Published'} ({publishedCount})
-          </button>
-        </div>
+      {/* 2. Modern Triage & Filter Hub */}
+      <div className="crm-modern-triage-hub">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          {/* Status Tabs */}
+          <div className="crm-triage-scroll-strip" style={{ margin: 0, padding: 0 }}>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'all' ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter('all')}
+            >
+              <span>{isAr ? 'جميع الطلبات' : 'All'}</span>
+              <span className="crm-triage-counter">{totalDemandsCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'pending' ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter('pending')}
+            >
+              <Clock size={13} />
+              <span>{isAr ? 'قيد المراجعة' : 'Pending Review'}</span>
+              <span className="crm-triage-counter" style={{ background: 'var(--crm-warn)', color: 'var(--crm-on-dark)' }}>{pendingCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'published' ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter('published')}
+            >
+              <CheckCircle size={13} />
+              <span>{isAr ? 'المنشورة لايف' : 'Published'}</span>
+              <span className="crm-triage-counter">{publishedCount}</span>
+            </button>
+          </div>
 
-        {/* Type Filter & Search Box */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
-          <select
-            value={typeFilter}
-            aria-label={isAr ? 'تصفية حسب نوع العقار' : 'Filter by property type'}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: 'var(--crm-card)',
-              border: '1px solid var(--crm-line-strong)',
-              color: 'var(--crm-ink)',
-              fontSize: 'var(--crm-text-sm)'
-            }}
-          >
-            <option value="all">{isAr ? 'كل أنواع العقارات' : 'All Types'}</option>
-            {PROP_TYPE_OPTIONS.map(t => (
-              <option key={t.value} value={t.value}>{isAr ? t.label_ar : t.label_en}</option>
-            ))}
-          </select>
+          {/* Type Filter & Search Box */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <select
+              value={typeFilter}
+              aria-label={isAr ? 'تصفية حسب نوع العقار' : 'Filter by property type'}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="crm-select-custom-pill"
+            >
+              <option value="all">{isAr ? 'كل أنواع العقارات' : 'All Types'}</option>
+              {PROP_TYPE_OPTIONS.map(t => (
+                <option key={t.value} value={t.value}>{isAr ? t.label_ar : t.label_en}</option>
+              ))}
+            </select>
 
-          <div style={{ position: 'relative', minWidth: '220px' }}>
-            <Search size={15} style={{ position: 'absolute', top: '10px', [isAr ? 'right' : 'left']: '10px', color: 'var(--crm-faint)' }} />
-            <input
-              type="text"
-              placeholder={isAr ? 'بحث سريع في الطلبات...' : 'Search demands...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '7px 12px',
-                paddingInlineStart: '32px',
-                borderRadius: '8px',
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line-strong)',
-                color: 'var(--crm-ink)',
-                fontSize: 'var(--crm-text-sm)'
-              }}
-            />
+            <div className="crm-search-pill-wrapper" style={{ minWidth: '220px' }}>
+              <Search size={15} className="crm-search-pill-icon" />
+              <input
+                type="text"
+                placeholder={isAr ? 'بحث سريع في الطلبات...' : 'Search demands...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="crm-search-pill-input"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="crm-search-pill-clear"
+                  title={isAr ? 'مسح البحث' : 'Clear search'}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* 3. Demands Cards Grid */}
       {filteredDemands.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          background: 'var(--crm-card)',
-          border: '1px dashed var(--crm-line-strong)',
-          borderRadius: '16px'
-        }}>
-          <Zap size={40} style={{ color: 'var(--crm-faint)', margin: '0 auto 12px' }} />
+        <div className="crm-empty-state-card">
+          <div className="crm-empty-state-icon-glow">
+            <Zap size={26} style={{ color: 'var(--crm-accent-text)' }} />
+          </div>
           <h4 style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', marginBottom: '6px', fontWeight: '700' }}>
             {isAr ? 'لا توجد طلبات مطابقة للفلتر المحدد' : 'No demands match this filter'}
           </h4>
-          <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
+          <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', maxWidth: '420px', margin: '0 auto 16px' }}>
             {isAr ? 'يمكنك تغيير الفلاتر أو إضافة طلب جديد مباشرة.' : 'Try adjusting your filters or create a new demand.'}
           </p>
+          <button
+            type="button"
+            className="crm-btn-primary-gold"
+            onClick={handleOpenAdd}
+            disabled={readOnly}
+          >
+            <Plus size={15} />
+            <span>{isAr ? 'إضافة طلب جديد' : 'Add Demand'}</span>
+          </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', gap: '18px' }}>
           {filteredDemands.map((demand) => {
             const isPending = demand.status === 'pending';
             const urgencyColor = demand.urgency === 'high' ? 'var(--crm-danger)' : demand.urgency === 'medium' ? 'var(--crm-warn)' : 'var(--crm-info)';
@@ -517,7 +496,7 @@ export default function DemandsManagerPanel({
                     </div>
 
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      {demand.timestamp || (demand.createdAt ? new Date(demand.createdAt).toLocaleDateString('ar-EG') : '')}
+                      {recordTimeLabel(demand, isAr)}
                     </span>
                   </div>
 
@@ -552,7 +531,7 @@ export default function DemandsManagerPanel({
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
                       <DollarSign size={13} />
-                      <span>{budgetNum.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+                      <span>{budgetNum.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
                     </div>
 
                     {demand.paymentMethod && (
@@ -588,7 +567,7 @@ export default function DemandsManagerPanel({
                         {demand.phone && canViewPhone && (
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <a 
-                              href={`https://wa.me/${demand.whatsapp ? demand.whatsapp.replace(/[^0-9]/g, '') : demand.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`أهلاً بك أستاذ ${demand.clientName || ''}، بخصوص طلبك العقاري في منصة 1Line (${demand.text_ar || ''})`)}`}
+                              href={`https://wa.me/${formatWhatsAppPhone(demand.whatsapp || demand.phone || '')}?text=${encodeURIComponent(`أهلاً بك أستاذ ${demand.clientName || ''}، بخصوص طلبك العقاري في منصة 1Line (${demand.text_ar || ''})`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-sm"
@@ -627,9 +606,16 @@ export default function DemandsManagerPanel({
                 <div style={{ borderTop: '1px solid var(--crm-line)', paddingTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {isPending ? (
                     <>
+                      {!canPublish && (
+                        <span role="status" className="dmp-awaiting">
+                          {isAr ? 'بانتظار موافقة المدير العام' : 'Waiting for approval'}
+                        </span>
+                      )}
+                      {canPublish && (
                       <button
                         type="button"
                         className="btn btn-sm btn-primary"
+                        disabled={readOnly}
                         onClick={() => handleQuickApprove(demand)}
                         style={{ 
                           flex: 1, 
@@ -648,6 +634,7 @@ export default function DemandsManagerPanel({
                         <Check size={14} />
                         <span>{isAr ? 'موافقة ونشر في الموقع' : 'Approve & Publish Live'}</span>
                       </button>
+                      )}
 
                       {properties.length > 0 && (
                         <button
@@ -676,6 +663,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleOpenEdit(demand)}
                         style={{ 
                           padding: '6px 10px', 
@@ -695,6 +683,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleQuickReject(demand.id)}
                         style={{ 
                           background: 'var(--crm-danger-soft)', 
@@ -714,6 +703,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleOpenEdit(demand)}
                         style={{ 
                           flex: 1, 
@@ -761,6 +751,7 @@ export default function DemandsManagerPanel({
                         <button
                           type="button"
                           className="btn btn-sm"
+                          disabled={readOnly}
                           onClick={() => {
                             const res = onUnpublishDemand(demand.id);
                             if (res !== false) {
@@ -784,6 +775,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleQuickReject(demand.id)}
                         style={{ 
                           background: 'rgba(239, 68, 68, 0.15)', 

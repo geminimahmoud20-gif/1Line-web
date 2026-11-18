@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
 import { MapPin, Satellite, Map as MapIcon, Check, Crosshair, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 
@@ -178,7 +179,7 @@ export default function InteractiveMapPickerModal({
           mapInstanceRef.current.flyTo([coords.lat, coords.lng], 18, { duration: 1.2 });
           markerRef.current.setLatLng([coords.lat, coords.lng]);
         }
-        if (triggerToast) triggerToast(isAr ? 'تم تحديد موقعك الميداني الحالي بنجاح! 📍' : 'GPS location pinned!', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تم تحديد موقعك الميداني الحالي بنجاح!' : 'GPS location pinned!', 'success');
       },
       () => {
         if (triggerToast) triggerToast(isAr ? 'تعذر جلب موقع GPS، يرجى تفعيل صلاحية الموقع' : 'Could not retrieve GPS location', 'error');
@@ -205,7 +206,7 @@ export default function InteractiveMapPickerModal({
       onConfirmCoordinates(currentCoords);
     }
     if (triggerToast) {
-      triggerToast(isAr ? 'تم تثبيت الموقع الجغرافي الدقيق للعقار بنجاح! 📍' : 'Exact rooftop GPS pinned!', 'success');
+      triggerToast(isAr ? 'تم تثبيت الموقع الجغرافي الدقيق للعقار بنجاح!' : 'Exact rooftop GPS pinned!', 'success');
     }
     onClose();
   };
@@ -321,7 +322,7 @@ export default function InteractiveMapPickerModal({
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-gold)'}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)'}
               >
-                📍 {isAr ? spot.name_ar : spot.name_en}
+                {isAr ? spot.name_ar : spot.name_en}
               </button>
             ))}
           </div>

@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { lazy } from 'react';
+import { lazy, useMemo } from 'react';
+import { forSite } from './utils/siteReady';
+import { siteProjects } from './utils/projectFacts';
 import HomePage from './pages/HomePage';
 
 // Home is eager (first paint); every other page loads on navigation
@@ -14,6 +16,11 @@ const PortalsPage = lazy(() => import('./pages/PortalsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
+const DevelopersPage = lazy(() => import('./pages/DevelopersPage'));
+const MatchPage = lazy(() => import('./pages/MatchPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const GuidePage = lazy(() => import('./pages/GuidePage'));
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
 const TradeInPortal = lazy(() => import('./components/tradein/TradeInPortal'));
@@ -55,16 +62,13 @@ export default function AppRoutes({
   invPeriod,
   invPropType,
   investorForm,
-  isScanningMap,
   lang,
   leads,
   navigate,
   ownerMatchesFound,
-  ownerSearch,
   projects,
   properties,
   roiRes,
-  scanningMessage,
   sellerAnswers,
   sellerStep,
   setAddDemandModalOpen,
@@ -77,11 +81,8 @@ export default function AppRoutes({
   setInvPeriod,
   setInvPropType,
   setInvestorForm,
-  setIsScanningMap,
   setLeads,
   setOwnerMatchesFound,
-  setOwnerSearch,
-  setScanningMessage,
   setSellerAnswers,
   setSellerStep,
   setShowInvResultForm,
@@ -93,6 +94,10 @@ export default function AppRoutes({
   t,
   triggerToast
 }) {
+  // Visitors get the site list (no stock photos, no incomplete listings); the CRM keeps every record
+  const siteProperties = useMemo(() => forSite(properties), [properties]);
+  // Public pages skip projects hidden in the CRM; the CRM routes keep the full list
+  const publicProjects = useMemo(() => siteProjects(projects), [projects]);
   return (
     <Routes>
       {/* 1. Home Page */}
@@ -102,7 +107,7 @@ export default function AppRoutes({
           <HomePage
             lang={lang}
             currency={currency}
-            properties={properties}
+            properties={siteProperties}
             demands={demands}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
@@ -112,6 +117,7 @@ export default function AppRoutes({
             onOpenAddDemand={() => setAddDemandModalOpen(true)}
             onAddNewLead={handleAddNewLead}
             triggerToast={triggerToast}
+            projects={publicProjects}
           />
         }
       />
@@ -123,7 +129,7 @@ export default function AppRoutes({
           <PropertiesPage
             lang={lang}
             currency={currency}
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             compareList={compareList}
@@ -141,7 +147,7 @@ export default function AppRoutes({
             lang={lang}
             currency={currency}
             t={t}
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             onQuickView={handleOpenQuickView}
@@ -168,7 +174,7 @@ export default function AppRoutes({
       />
       <Route
         path="/off-market"
-        element={<PrivateOfficePage lang={lang} triggerToast={triggerToast} />}
+        element={<Navigate to="/private-office" replace />}
       />
 
       {/* 4. Financing & Mortgage Calculator Page */}
@@ -288,14 +294,28 @@ export default function AppRoutes({
             lang={lang}
             t={t}
             demands={demands}
-            ownerSearch={ownerSearch}
-            setOwnerSearch={setOwnerSearch}
-            isScanningMap={isScanningMap}
-            setIsScanningMap={setIsScanningMap}
             ownerMatchesFound={ownerMatchesFound}
             setOwnerMatchesFound={setOwnerMatchesFound}
-            scanningMessage={scanningMessage}
-            setScanningMessage={setScanningMessage}
+            navigateTo={(path) => navigate('/' + path)}
+            setSellerAnswers={setSellerAnswers}
+            triggerToast={triggerToast}
+            handleAddNewLead={handleAddNewLead}
+            onOpenAddDemand={() => setAddDemandModalOpen(true)}
+          />
+        }
+      />
+
+      {/* A shared request: the same page, scrolled to it (DemandsPortal); its link preview comes from api/page-shell */}
+      <Route
+        path="/demands/:demandId"
+        element={
+          <PortalsPage
+            portalType="demands"
+            lang={lang}
+            t={t}
+            demands={demands}
+            ownerMatchesFound={ownerMatchesFound}
+            setOwnerMatchesFound={setOwnerMatchesFound}
             navigateTo={(path) => navigate('/' + path)}
             setSellerAnswers={setSellerAnswers}
             triggerToast={triggerToast}
@@ -323,18 +343,7 @@ export default function AppRoutes({
         }
       />
 
-      <Route
-        path="/special"
-        element={
-          <PortalsPage
-            portalType="special"
-            lang={lang}
-            t={t}
-            triggerToast={triggerToast}
-            handleAddNewLead={handleAddNewLead}
-          />
-        }
-      />
+      <Route path="/special" element={<Navigate to="/special-requests" replace />} />
 
       <Route
         path="/special-requests"
@@ -356,11 +365,69 @@ export default function AppRoutes({
           <ProjectsPage
             lang={lang}
             currency={currency}
-            projects={projects}
+            projects={publicProjects}
             triggerToast={triggerToast}
           />
         }
       />
+
+      {/* One project: photos, plan, progress and its units */}
+      <Route
+        path="/projects/:id"
+        element={
+          <ProjectDetailPage
+            lang={lang}
+            currency={currency}
+            projects={publicProjects}
+            properties={siteProperties}
+            favorites={favorites}
+            onToggleFavorite={handleProtectedToggleFavorite}
+            onQuickView={handleOpenQuickView}
+          />
+        }
+      />
+
+      {/* «رشح لي عقاري»: buyer questions and homes ranked by fit */}
+      <Route path="/match" element={<MatchPage lang={lang} properties={siteProperties} />} />
+
+      {/* Developers: the list, and one company with its projects */}
+      {['/developers', '/developers/:slug'].map((p) => (
+        <Route
+          key={p}
+          path={p}
+          element={
+            <DevelopersPage
+              lang={lang}
+              currency={currency}
+              projects={publicProjects}
+              properties={siteProperties}
+            />
+          }
+        />
+      ))}
+
+      {/* Search landing pages: "شقق للبيع في سوهاج الجديدة" (utils/seoLanding) */}
+      {['/sohag/:kind', '/sohag/:kind/:area'].map((p) => (
+        <Route
+          key={p}
+          path={p}
+          element={
+            <LandingPage
+              lang={lang}
+              currency={currency}
+              properties={siteProperties}
+              favorites={favorites}
+              onToggleFavorite={handleProtectedToggleFavorite}
+              compareList={compareList}
+              onToggleCompare={handleProtectedToggleCompare}
+              onQuickView={handleOpenQuickView}
+            />
+          }
+        />
+      ))}
+
+      {/* Price guides: "سعر المتر في سوهاج الجديدة" (utils/seoGuides) */}
+      <Route path="/guides/:slug" element={<GuidePage properties={siteProperties} />} />
 
       {/* Sohag Real Estate Market Intelligence & Price Benchmark */}
       <Route
@@ -369,6 +436,8 @@ export default function AppRoutes({
           <MarketIntelligencePage
             lang={lang}
             currency={currency}
+            properties={siteProperties}
+            projects={publicProjects}
             triggerToast={triggerToast}
           />
         }
@@ -379,7 +448,7 @@ export default function AppRoutes({
         path="/my-account"
         element={
           <ClientAccountPage
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             compareList={compareList}
@@ -438,6 +507,38 @@ export default function AppRoutes({
           />
         }
       />
+      <Route
+        path="/crm/*"
+        element={
+          <CrmPage
+            lang={lang}
+            t={t}
+            leads={leads}
+            setLeads={setLeads}
+            properties={properties}
+            onAddProperty={handleAddProperty}
+            onUpdateProperty={handleUpdateProperty}
+            onDeleteProperty={handleDeleteProperty}
+            projects={projects}
+            onAddProject={handleAddProject}
+            onUpdateProject={handleUpdateProject}
+            onDeleteProject={handleDeleteProject}
+            demands={demands}
+            onAddDemand={handleAddAdminDemand}
+            onApproveDemand={handleApproveDemand}
+            onUpdateDemand={handleUpdateDemand}
+            onDeleteDemand={handleDeleteDemand}
+            onUnpublishDemand={handleUnpublishDemand}
+            crmAuthenticated={crmAuthenticated}
+            setCrmAuthenticated={setCrmAuthenticated}
+            onLogout={handleCrmLogout}
+            triggerToast={triggerToast}
+            onUpdateLead={handleUpdateLead}
+            onDeleteLead={handleDeleteLead}
+            onAddNewLead={handleAddNewLead}
+          />
+        }
+      />
 
       {/* Privacy policy & data handling */}
       {/* مركز الاستثمار الطبي والتجاري */}
@@ -447,7 +548,7 @@ export default function AppRoutes({
           <CommercialHubPage
             lang={lang}
             currency={currency}
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             compareList={compareList}
@@ -463,7 +564,7 @@ export default function AppRoutes({
         element={
           <TradeInPortal
             lang={lang}
-            properties={properties}
+            properties={siteProperties}
             onCreateLead={handleAddNewLead}
             triggerToast={triggerToast}
           />

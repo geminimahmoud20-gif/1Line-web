@@ -1,6 +1,7 @@
-import { Receipt, Wallet, CalendarClock, Wrench, Landmark, FileText, Info } from 'lucide-react';
+import { Receipt, Wallet, Wrench, Landmark, FileText, Info } from 'lucide-react';
 import { computeFinanceBreakdown } from '../../utils/propertyInsights';
 import { formatApprox } from '../../utils/fxRates';
+import { installmentsPhrase, everyLabel, yearlyPhrase } from '../../utils/paymentTerms';
 import '../../styles/expat-suite.css';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
@@ -40,28 +41,105 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
   const L = (ar, en) => (isAr ? ar : en);
   const m = { currency, lang };
 
-  const plan = fb.plan;
-  const parts = plan ? [
-    { key: 'down', label: L('المقدم', 'Down payment'), value: plan.down, cls: 'is-down' },
-    { key: 'inst', label: L('الأقساط', 'Installments'), value: plan.total - plan.down - plan.handover, cls: 'is-inst' },
-    { key: 'hand', label: L('دفعة الاستلام', 'Handover'), value: plan.handover, cls: 'is-hand' },
-    { key: 'rest', label: L('غير مجدول', 'Unscheduled'), value: plan.unscheduled, cls: 'is-rest' }
-  ].filter((p) => p.value > 0) : [];
-  const barTotal = parts.reduce((s, p) => s + p.value, 0) || 1;
-
+  // Resale units are sold cash: the breakdown only earns its space when there is a cost beyond the
+  // price (maintenance, over-price, transfer fees) or a cash discount to explain
   const hasExtras = fb.maintenance || fb.overPrice || fb.fees;
+  const plan = fb.plan;
+  // The total typed in the CRM, not the rounded-up monthly × months (a few pounds more)
+  const planTotal = plan ? (Number(property.installmentTotal) || (plan.incomplete ? fb.price : plan.total)) : 0;
+  const premiumPct = plan && fb.cashPrice ? ((planTotal - fb.cashPrice) / fb.cashPrice) * 100 : 0;
+  if (!hasExtras && !(fb.cashDiscountPct > 0) && !plan) return null;
+  const resale = property.paymentType === 'resale';
+  // The total split into what is paid now, the installments, yearly and handover payments (bar + legend)
+  const parts = plan ? [
+    { key: 'down', label: resale ? L('كاش للمالك', 'To seller') : L('المقدم', 'Down'), value: plan.down },
+    { key: 'inst', label: L('الأقساط', 'Installments'), value: plan.installment ? plan.installment.amount * plan.installment.count : plan.monthly * plan.months + plan.quarterly * Math.floor(plan.months / 3) },
+    { key: 'year', label: L('الدفعات السنوية', 'Yearly'), value: plan.yearly ? plan.yearly.amount * plan.yearly.count : 0 },
+    { key: 'hand', label: L('الاستلام', 'Handover'), value: plan.handover },
+    { key: 'rest', label: L('غير مجدول', 'Unscheduled'), value: plan.unscheduled }
+  ].filter((x) => x.value > 0).map((x, _, all) => ({ ...x, share: (x.value / all.reduce((t, y) => t + y.value, 0)) * 100 })) : [];
 
   return (
     <section className="xs-fin" aria-labelledby="xs-fin-title">
       <header className="xs-fin-head">
         <span className="xs-fin-icon"><Receipt size={20} aria-hidden="true" /></span>
         <div>
-          <h3 id="xs-fin-title">{L('مصفوفة الشفافية المالية', 'Transparent cost breakdown')}</h3>
-          <p>{L('كل جنيه هتدفعه، مقسّم بوضوح قبل ما تقرر.', 'Every pound you will pay, laid out before you decide.')}</p>
+          <h3 id="xs-fin-title">{L('التكلفة الكاملة للشراء', 'Full cost of buying')}</h3>
+          <p>{L('السعر وكل مصروف إضافي، قبل ما تقرر.', 'The price and every extra cost, before you decide.')}</p>
         </div>
       </header>
 
-      {/* 1. Cash */}
+      {/* 1. Cash — or 2. the installment plan set in CRM → طريقة السداد */}
+      {plan ? (
+        <>
+          <div className="xs-fin-block">
+            <h4><Wallet size={15} aria-hidden="true" /> {resale ? L('إعادة بيع: تدفع للمالك وتكمّل الأقساط', 'Resale: pay the seller, take over the installments') : L('خطة السداد', 'Payment plan')}</h4>
+            {/* How the total splits: what is paid now, the installments, yearly and handover payments */}
+            {parts.length > 1 && (
+              <>
+                <div className="xs-fin-bar" role="img" aria-label={parts.map((x) => `${x.label} ${pct(x.share)}`).join('، ')}>
+                  {parts.map((x) => <span key={x.key} className={`is-${x.key}`} style={{ flexGrow: x.value }} />)}
+                </div>
+                <div className="xs-fin-legend">
+                  {parts.map((x) => <span key={x.key}><i className={`is-${x.key}`} />{x.label} {pct(x.share)}</span>)}
+                </div>
+              </>
+            )}
+            <ol className="xs-fin-steps">
+              <li>
+                <span className="xs-fin-step-label">
+                  <b>{resale ? L('المطلوب كاش للمالك', 'Cash to the seller') : L('المقدم', 'Down payment')}</b>
+                  <small>{resale ? L('المدفوع + الأوفر، عند التعاقد', 'Paid + premium, at signing') : L('عند التعاقد', 'At signing')}</small>
+                </span>
+                {plan.down > 0 ? <Money value={plan.down} strong {...m} /> : <span className="xs-money">{L('بدون مقدم', 'None')}</span>}
+              </li>
+              {plan.installment && (
+                <li>
+                  <span className="xs-fin-step-label">
+                    <b>{L(`القسط ال${everyLabel(plan.installment.every)}`, `Installment (${everyLabel(plan.installment.every, false)})`)}</b>
+                    <small>{installmentsPhrase(plan.installment.count, plan.installment.every, isAr)}{L(` · المجموع ${fmt(plan.installment.amount * plan.installment.count)} ج.م`, ` · ${fmt(plan.installment.amount * plan.installment.count)} EGP in all`)}</small>
+                  </span>
+                  <Money value={plan.installment.amount} strong {...m} />
+                </li>
+              )}
+              {plan.yearly && (
+                <li>
+                  <span className="xs-fin-step-label">
+                    <b>{L('الدفعة السنوية', 'Yearly payment')}</b>
+                    <small>{yearlyPhrase(plan.yearly.count, isAr)}{L(` · المجموع ${fmt(plan.yearly.amount * plan.yearly.count)} ج.م`, ` · ${fmt(plan.yearly.amount * plan.yearly.count)} EGP in all`)}</small>
+                  </span>
+                  <Money value={plan.yearly.amount} {...m} />
+                </li>
+              )}
+              {plan.monthly > 0 && (
+                <li>
+                  <span className="xs-fin-step-label"><b>{L('القسط الشهري', 'Monthly installment')}</b><small>{L(`${plan.months} قسط`, `${plan.months} installments`)}</small></span>
+                  <Money value={plan.monthly} strong {...m} />
+                </li>
+              )}
+              {plan.quarterly > 0 && (
+                <li><span className="xs-fin-step-label"><b>{L('القسط ربع السنوي', 'Quarterly installment')}</b></span><Money value={plan.quarterly} {...m} /></li>
+              )}
+              {plan.handover > 0 && (
+                <li><span className="xs-fin-step-label"><b>{L('دفعة الاستلام', 'Handover payment')}</b><small>{L('عند استلام الوحدة', 'At handover')}</small></span><Money value={plan.handover} {...m} /></li>
+              )}
+              {plan.unscheduled > 0 && (
+                <li><span className="xs-fin-step-label"><b>{L('رصيد غير مجدول', 'Unscheduled balance')}</b><small>{L('نؤكده كتابياً قبل الحجز', 'Confirmed in writing before reservation')}</small></span><Money value={plan.unscheduled} muted {...m} /></li>
+              )}
+            </ol>
+          </div>
+          <div className="xs-fin-total">
+            <span>
+              {L('إجمالي ما تدفعه', 'Total you pay')}
+              {premiumPct >= 0.5 && <small>{L(`أعلى من الكاش بـ ${pct(premiumPct)}`, `${pct(premiumPct)} above cash`)}</small>}
+            </span>
+            <Money value={planTotal} strong {...m} />
+          </div>
+          {fb.cashPrice > 0 && fb.cashPrice < planTotal && Number(property.price) !== planTotal && (
+            <p className="xs-fin-note"><Info size={13} aria-hidden="true" />{L(`ولو كاش: ${fmt(fb.cashPrice)} ج.م (توفّر ${fmt(planTotal - fb.cashPrice)} ج.م)`, `Or cash: ${fmt(fb.cashPrice)} EGP (saves ${fmt(planTotal - fb.cashPrice)} EGP)`)}</p>
+          )}
+        </>
+      ) : (
       <div className="xs-fin-block">
         <h4><Wallet size={15} aria-hidden="true" /> {L('السداد كاش', 'Cash')}</h4>
         <Row label={L('سعر الكاش النهائي الصافي', 'Final net cash price')} hint={fb.cashDiscountPct > 0 ? L(`خصم ${pct(fb.cashDiscountPct)} على السعر المعلن`, `${pct(fb.cashDiscountPct)} off the listed price`) : null}>
@@ -69,57 +147,6 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
           <Money value={fb.cashPrice} strong {...m} />
         </Row>
       </div>
-
-      {/* 2. Installment plan */}
-      {plan && (
-        <div className="xs-fin-block">
-          <h4><CalendarClock size={15} aria-hidden="true" /> {L('نظام التقسيط التفصيلي', 'Installment plan')}</h4>
-          <Row label={L('المقدم', 'Down payment')} hint={pct(plan.downPct)}><Money value={plan.down} {...m} /></Row>
-          {plan.monthly > 0 && <Row label={L('القسط الشهري', 'Monthly installment')}><Money value={plan.monthly} {...m} /></Row>}
-          {plan.quarterly > 0 && <Row label={L('القسط الربع سنوي', 'Quarterly installment')}><Money value={plan.quarterly} {...m} /></Row>}
-          <Row label={L('فترة السداد', 'Term')}>
-            <span className="xs-money"><span className="xs-money-main"><bdi>{plan.months}</bdi> <small>{L('شهر', 'months')}</small></span> <em>({plan.years} {L('سنوات', 'years')})</em></span>
-          </Row>
-          {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}
-
-          {parts.length > 1 && (
-            <div className="xs-fin-bar" role="img" aria-label={parts.map((p) => `${p.label} ${pct((p.value / barTotal) * 100)}`).join('، ')}>
-              {parts.map((p) => (
-                <span key={p.key} className={p.cls} style={{ flexGrow: p.value }} title={`${p.label}: ${fmt(p.value)}`} />
-              ))}
-            </div>
-          )}
-          {parts.length > 1 && (
-            <div className="xs-fin-legend">
-              {parts.map((p) => (
-                <span key={p.key}><i className={p.cls} />{p.label} <bdi>{pct((p.value / barTotal) * 100)}</bdi></span>
-              ))}
-            </div>
-          )}
-
-          {plan.incomplete ? (
-            <>
-              <Row
-                label={L('رصيد غير مجدول', 'Unscheduled balance')}
-                hint={L('دفعات إضافية أو عند الاستلام حسب الجدول الرسمي', 'Extra or handover payments per the official schedule')}
-              >
-                <Money value={plan.unscheduled} {...m} />
-              </Row>
-              <Row label={L('إجمالي سعر التقسيط (على الأقل)', 'Total installment price (at least)')}><Money value={fb.price} strong {...m} /></Row>
-              <p className="xs-fin-note">
-                <Info size={13} aria-hidden="true" />
-                {L('نرسل لك الجدول الرسمي بمواعيد كل دفعة قبل الحجز.', 'We send the official schedule with every due date before reservation.')}
-              </p>
-            </>
-          ) : (
-            <Row label={L('إجمالي سعر التقسيط', 'Total installment price')}><Money value={plan.total} strong {...m} /></Row>
-          )}
-          {!plan.incomplete && plan.premiumOverCash > 0 && (
-            <Row label={L('الفرق عن الكاش', 'Difference vs cash')} hint={L(`+${pct(plan.premiumPct)}`, `+${pct(plan.premiumPct)}`)}>
-              <Money value={plan.premiumOverCash} muted {...m} />
-            </Row>
-          )}
-        </div>
       )}
 
       {/* 3. Maintenance */}
@@ -146,14 +173,14 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
       {/* 5. Indicative utilities & transfer */}
       {fb.fees && (
         <div className="xs-fin-block">
-          <h4><FileText size={15} aria-hidden="true" /> {L('المرافق ونقل الملكية (استرشادي)', 'Utilities & transfer (indicative)')}</h4>
+          <h4><FileText size={15} aria-hidden="true" /> {L('مراجعة سندات الملكية وتحرير العقود (استرشادي)', 'Title-deed review & contract drafting (indicative)')}</h4>
           {fb.fees.utilities > 0 && <Row label={L('المرافق والعدادات', 'Utilities & meters')}><Money value={fb.fees.utilities} {...m} /></Row>}
-          {fb.fees.transfer > 0 && <Row label={L('نقل الملكية والتسجيل', 'Transfer & registration')}><Money value={fb.fees.transfer} {...m} /></Row>}
+          {fb.fees.transfer > 0 && <Row label={L('مراجعة سندات الملكية وتحرير العقود', 'Title-deed review & contract drafting')}><Money value={fb.fees.transfer} {...m} /></Row>}
           {fb.fees.note_ar && <p className="xs-fin-note">{fb.fees.note_ar}</p>}
         </div>
       )}
 
-      {hasExtras && (
+      {hasExtras && !plan && (
         <div className="xs-fin-total">
           <span>{L('إجمالي ما تجهّزه للشراء كاش', 'All-in budget (cash route)')}</span>
           <Money value={fb.cashAllIn} strong {...m} />

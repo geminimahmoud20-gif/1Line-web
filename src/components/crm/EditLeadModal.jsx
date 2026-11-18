@@ -1,15 +1,41 @@
+import { nameNote } from '../../utils/contactValidation';
+import { useEffect, useRef } from 'react';
 import { Save, X } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
+import { isKnownArea } from '../../utils/areaLookup';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import AreaOptions from '../common/AreaOptions';
+import DeskOptions from './DeskOptions';
 
 export default function EditLeadModal({
+  people = [],
   handleSaveLeadEdits,
   isAr,
   leadFormData,
   setEditingLead,
-  setLeadFormData
+  setLeadFormData,
+  userRole = 'super_admin'
 }) {
+  useBodyScrollLock(true);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setEditingLead(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setEditingLead]);
+
   return (
-    <div className="track-modal-backdrop" onClick={() => setEditingLead(null)}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current) setEditingLead(null);
+      }}
+    >
       <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
         <div className="modal-form-header">
           <h3>{isAr ? 'تعديل وتصحيح بيانات العميل' : 'Edit Lead Details'}</h3>
@@ -28,6 +54,7 @@ export default function EditLeadModal({
                 onChange={(e) => setLeadFormData({ ...leadFormData, name: e.target.value })}
                 required
               />
+              {nameNote(leadFormData.name, isAr) && <small role="note" style={{ color: 'var(--ui-warning)' }}>{nameNote(leadFormData.name, isAr)}</small>}
             </div>
 
             <div className="form-group-item">
@@ -68,14 +95,14 @@ export default function EditLeadModal({
             <div className="form-group-item">
               <label>{isAr ? 'الموقع / المنطقة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
               <select
-                value={leadFormData.area}
+                value={isKnownArea(leadFormData.area, getAreas()) ? leadFormData.area : ''}
                 aria-label={isAr ? 'المنطقة' : 'Area'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, area: e.target.value })}
                 required
               >
-                {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
-                ))}
+                {/* A saved area that was deleted from the CRM shows as such instead of the first area */}
+                <option value="" disabled>{leadFormData.area && !isKnownArea(leadFormData.area, getAreas()) ? (isAr ? 'المنطقة المحفوظة اتمسحت، اختار منطقة' : 'Saved area was deleted, choose one') : (isAr ? 'اختار المنطقة' : 'Choose an area')}</option>
+                <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
               </select>
             </div>
 
@@ -110,12 +137,13 @@ export default function EditLeadModal({
                 aria-label={isAr ? 'الحالة' : 'Status'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, status: e.target.value })}
               >
-                <option value="new">{isAr ? 'جديد' : 'New'}</option>
-                <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site visit'}</option>
-                <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed won'}</option>
+                <option value="new">{isAr ? 'عميل محتمل' : 'Lead'}</option>
+                <option value="contacted">{isAr ? 'مؤهل' : 'Qualified'}</option>
+                <option value="site_visit">{isAr ? 'اجتماع / معاينة' : 'Meeting / viewing'}</option>
+                <option value="negotiating">{isAr ? 'تفاوض' : 'Negotiation'}</option>
+                <option value="closing">{isAr ? 'إغلاق (توقيع وحجز)' : 'Closing'}</option>
+                <option value="closed">{isAr ? 'إغلاق' : 'Closed'}</option>
+                <option value="inactive">{isAr ? 'غير متفاعل' : 'Unresponsive'}</option>
               </select>
             </div>
 
@@ -147,9 +175,10 @@ export default function EditLeadModal({
                 aria-label={isAr ? 'درجة الاهتمام' : 'Temperature'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
               >
-                <option value="hot">🔥 {isAr ? 'ساخن' : 'Hot'}</option>
-                <option value="warm">⚡ {isAr ? 'متوسط' : 'Warm'}</option>
-                <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
+                <option value="">{isAr ? 'غير محدد' : 'Not set'}</option>
+                <option value="hot">{isAr ? 'ساخن' : 'Hot'}</option>
+                <option value="warm">{isAr ? 'متوسط' : 'Warm'}</option>
+                <option value="cold">{isAr ? 'بارد' : 'Cold'}</option>
               </select>
             </div>
 
@@ -170,10 +199,8 @@ export default function EditLeadModal({
                 aria-label={isAr ? 'المسؤول' : 'Owner'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, assignedTo: e.target.value })}
               >
-                <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                <option value="Sales Team A">Sales Team A</option>
-                <option value="Sales Team B">Sales Team B</option>
-                <option value="Unassigned">Unassigned</option>
+                {/* The CRM's real teams (إدارة المنظومة → الفرق), not a fixed English list */}
+                <DeskOptions role={userRole} current={leadFormData.assignedTo || 'Unassigned'} lang={isAr ? 'ar' : 'en'} people={people} />
               </select>
             </div>
           </div>

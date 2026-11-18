@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import useTeamMembers from '../../hooks/useTeamMembers';
+import { assignmentUpdates } from '../../utils/assignees';
 import { UserPlus, Save } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { isValidPhoneNumber } from '../../utils/securityShield';
 import DeskOptions from './DeskOptions';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import AreaOptions from '../common/AreaOptions';
+import { nameProblem, nameNote, phoneProblem } from '../../utils/contactValidation';
 
 export default function AddLeadModal({
   isOpen,
@@ -14,7 +19,23 @@ export default function AddLeadModal({
   triggerToast,
   userRole = 'super_admin'
 }) {
+  // People on the team, for «المستشار المسؤول» by name
+  const teamMembers = useTeamMembers();
   const isAr = lang === 'ar';
+  useBodyScrollLock(isOpen);
+  const isSubmittingRef = useRef(false);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isSubmittingRef.current) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Lazy initialiser: the default follow-up date is computed once, not on every render
   const [formData, setFormData] = useState(() => ({
@@ -26,9 +47,8 @@ export default function AddLeadModal({
     type: 'buyer',
     status: 'new',
     temperature: 'hot',
-    score: 85,
     budget: '',
-    area: 'east',
+    area: '', // nothing preselected: 'east' was saved even after the area was deleted
     propertyType: 'apartment',
     financing: 'cash',
     assignedTo: DESK_BY_ROLE[userRole] || 'Sales Advisor Team',
@@ -36,17 +56,17 @@ export default function AddLeadModal({
     nextActionNote: 'مكالمة هاتفية لتأكيد المواصفات والميزانية',
     nextFollowUpAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
     notes: '',
-    tags: ['💎 VIP كاش', '🔥 مستعجل للشراء']
+    tags: ['VIP كاش', 'مستعجل للشراء']
   }));
 
   if (!isOpen) return null;
 
   const AVAILABLE_TAGS = [
-    { id: 'vip', name_ar: '💎 VIP كاش', name_en: 'VIP Cash' },
-    { id: 'expat', name_ar: '✈️ مغترب بالخليج', name_en: 'Gulf Expat' },
-    { id: 'investor', name_ar: '📈 مستثمر تجاري', name_en: 'Commercial Investor' },
-    { id: 'urgent', name_ar: '🔥 مستعجل للشراء', name_en: 'Urgent Buyer' },
-    { id: 'installment', name_ar: '🏦 يفضل التقسيط', name_en: 'Installments Preferred' }
+    { id: 'vip', name_ar: 'VIP كاش', name_en: 'VIP Cash' },
+    { id: 'expat', name_ar: 'مغترب بالخليج', name_en: 'Gulf Expat' },
+    { id: 'investor', name_ar: 'مستثمر تجاري', name_en: 'Commercial Investor' },
+    { id: 'urgent', name_ar: 'مستعجل للشراء', name_en: 'Urgent Buyer' },
+    { id: 'installment', name_ar: 'يفضل التقسيط', name_en: 'Installments Preferred' }
   ];
 
   const handleToggleTag = (tagText) => {
@@ -60,11 +80,15 @@ export default function AddLeadModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+
     const nameTrimmed = formData.name.trim();
     const whatsappTrimmed = (formData.whatsapp || formData.phone || '').trim();
 
-    if (!nameTrimmed) {
-      if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال اسم العميل بالكامل (إلزامي)!' : 'Full Name is required!', 'error');
+    // Same rule as the site's forms: first and family name, letters only
+    const nameErr = nameProblem(nameTrimmed, isAr);
+    if (nameErr) {
+      if (triggerToast) triggerToast(nameErr, 'error');
       return;
     }
 
@@ -79,7 +103,7 @@ export default function AddLeadModal({
       [formData.altPhone, isAr ? 'الرقم البديل' : 'Alternate phone']
     ].find(([value]) => value && value.trim() && !isValidPhoneNumber(value));
     if (badPhone) {
-      if (triggerToast) triggerToast(isAr ? `${badPhone[1]} غير صحيح — اكتب موبايل مصري (01xxxxxxxxx) أو رقماً دولياً يبدأ بـ +` : `${badPhone[1]} is invalid`, 'error');
+      if (triggerToast) triggerToast(`${badPhone[1]}: ${phoneProblem(badPhone[0], null, isAr)}`, 'error');
       return;
     }
 
@@ -93,46 +117,59 @@ export default function AddLeadModal({
       return;
     }
 
-    const leadPayload = {
-      name: nameTrimmed,
-      phone: formData.phone.trim() || whatsappTrimmed,
-      whatsapp: whatsappTrimmed,
-      altPhone: formData.altPhone,
-      cityOrExpat: formData.cityOrExpat,
-      type: formData.type,
-      status: 'new',
-      temperature: formData.temperature,
-      score: parseInt(formData.score) || 85,
-      assignedTo: formData.assignedTo,
-      financing: formData.financing,
-      tags: formData.tags,
-      notes: formData.notes,
-      source: formData.source || 'اتصال مباشر / هاتف',
-      nextActionNote: formData.nextActionNote || 'مكالمة متابعة أولية',
-      nextFollowUpAt: formData.nextFollowUpAt,
-      followUp: formData.nextActionNote || 'مكالمة متابعة أولية',
-      timestamp: new Date().toISOString(),
-      details: {
-        budget: formData.budget,
-        expectedPrice: formData.budget,
-        area: formData.area,
-        propertyType: formData.propertyType
+    try {
+      isSubmittingRef.current = true;
+      const leadPayload = {
+        name: nameTrimmed,
+        phone: formData.phone.trim() || whatsappTrimmed,
+        whatsapp: whatsappTrimmed,
+        altPhone: formData.altPhone,
+        cityOrExpat: formData.cityOrExpat,
+        type: formData.type,
+        status: 'new',
+        temperature: formData.temperature,
+        // A desk, or a person by name with their desk (utils/assignees)
+        ...assignmentUpdates({}, formData.assignedTo, teamMembers),
+        financing: formData.financing,
+        tags: formData.tags,
+        notes: formData.notes,
+        source: formData.source || 'اتصال مباشر / هاتف',
+        nextActionNote: formData.nextActionNote || 'مكالمة متابعة أولية',
+        nextFollowUpAt: formData.nextFollowUpAt,
+        followUp: formData.nextActionNote || 'مكالمة متابعة أولية',
+        timestamp: new Date().toISOString(),
+        details: {
+          budget: formData.budget,
+          expectedPrice: formData.budget,
+          area: formData.area,
+          propertyType: formData.propertyType
+        }
+      };
+
+      if (onAddLead) {
+        onAddLead(leadPayload);
       }
-    };
 
-    if (onAddLead) {
-      onAddLead(leadPayload);
+      if (triggerToast) {
+        triggerToast(isAr ? `تم تسجيل العميل الجديد (${nameTrimmed}) بنجاح! 👤` : 'Lead added successfully!', 'success');
+      }
+
+      onClose();
+    } finally {
+      isSubmittingRef.current = false;
     }
-
-    if (triggerToast) {
-      triggerToast(isAr ? `تم تسجيل العميل الجديد (${nameTrimmed}) بنجاح! 👤` : 'Lead added successfully!', 'success');
-    }
-
-    onClose();
   };
 
   return (
-    <div className="track-modal-backdrop" onClick={onClose}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isSubmittingRef.current) {
+          onClose();
+        }
+      }}
+    >
       <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px', width: '95%' }}>
         <div className="modal-form-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -161,6 +198,7 @@ export default function AddLeadModal({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
+              {nameNote(formData.name, isAr) && <small role="note" style={{ color: 'var(--ui-warning)' }}>{nameNote(formData.name, isAr)}</small>}
             </div>
 
             {/* Primary Phone */}
@@ -213,11 +251,11 @@ export default function AddLeadModal({
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
-                <option value="buyer">👤 مشتري (Buyer)</option>
-                <option value="seller">🏡 بائع / مالك (Seller)</option>
-                <option value="investor">📈 مستثمر (Investor)</option>
-                <option value="broker">🤝 وسيط عقاري (Broker)</option>
-                <option value="request">⚡ طلب خاص (Special)</option>
+                <option value="buyer">{isAr ? 'مشتري' : 'Buyer'}</option>
+                <option value="seller">{isAr ? 'بائع / مالك' : 'Seller / owner'}</option>
+                <option value="investor">{isAr ? 'مستثمر' : 'Investor'}</option>
+                <option value="broker">{isAr ? 'وسيط عقاري' : 'Broker'}</option>
+                <option value="request">{isAr ? 'طلب خاص' : 'Special request'}</option>
               </select>
             </div>
 
@@ -229,9 +267,8 @@ export default function AddLeadModal({
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
-                {getAreas().filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                ))}
+                <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
+                <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
               </select>
             </div>
 
@@ -267,9 +304,9 @@ export default function AddLeadModal({
                 value={formData.temperature}
                 onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
               >
-                <option value="hot">🔥 ساخن جداً (Hot)</option>
-                <option value="warm">⚡ دافئ (Warm)</option>
-                <option value="cold">❄️ بارد (Cold)</option>
+                <option value="hot">{isAr ? 'ساخن جداً' : 'Hot'}</option>
+                <option value="warm">{isAr ? 'دافئ' : 'Warm'}</option>
+                <option value="cold">{isAr ? 'بارد' : 'Cold'}</option>
               </select>
             </div>
 
@@ -280,28 +317,28 @@ export default function AddLeadModal({
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
               >
-                <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} />
+                <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} people={teamMembers} />
               </select>
             </div>
 
             {/* Lead Source */}
             <div className="form-group-item">
-              <label>{isAr ? 'مصدر العميل (Source):' : 'Lead Source:'}</label>
+              <label>{isAr ? 'مصدر العميل:' : 'Lead Source:'}</label>
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
               >
-                <option value="اتصال مباشر / هاتف">{isAr ? '📞 اتصال مباشر / هاتف' : 'Direct Call'}</option>
-                <option value="واتساب مباشر">{isAr ? '💬 واتساب مباشر' : 'Direct WhatsApp'}</option>
-                <option value="إعلان فيسبوك / انستغرام">{isAr ? '📱 إعلان فيسبوك / انستغرام' : 'Social Media Ad'}</option>
-                <option value="زيارة مقر الشركة">{isAr ? '🏢 زيارة مقر الشركة' : 'Office Walk-in'}</option>
-                <option value="ترشيح عميل سابق">{isAr ? '🤝 ترشيح عميل سابق' : 'Referral'}</option>
-                <option value="الموقع الإلكتروني">{isAr ? '🌐 استمارة الموقع' : 'Website Form'}</option>
+                <option value="اتصال مباشر / هاتف">{isAr ? 'اتصال مباشر / هاتف' : 'Direct Call'}</option>
+                <option value="واتساب مباشر">{isAr ? 'واتساب مباشر' : 'Direct WhatsApp'}</option>
+                <option value="إعلان فيسبوك / انستغرام">{isAr ? 'إعلان فيسبوك / انستغرام' : 'Social Media Ad'}</option>
+                <option value="زيارة مقر الشركة">{isAr ? 'زيارة مقر الشركة' : 'Office Walk-in'}</option>
+                <option value="ترشيح عميل سابق">{isAr ? 'ترشيح عميل سابق' : 'Referral'}</option>
+                <option value="الموقع الإلكتروني">{isAr ? 'استمارة الموقع' : 'Website Form'}</option>
               </select>
             </div>
 
             {/* Next Action Note */}
-            <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
               <label>{isAr ? 'الإجراء القادم المباشر (Next Action) *:' : 'Next Action *:'}</label>
               <input
                 type="text"
@@ -317,6 +354,7 @@ export default function AddLeadModal({
               <label>{isAr ? 'تاريخ المتابعة القادمة:' : 'Follow-up Date:'}</label>
               <input
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 value={formData.nextFollowUpAt}
                 onChange={(e) => setFormData({ ...formData, nextFollowUpAt: e.target.value })}
               />
@@ -326,7 +364,7 @@ export default function AddLeadModal({
           {/* Tags */}
           <div style={{ marginTop: '14px' }}>
             <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
-              🏷️ {isAr ? 'الوسوم وتصنيف العميل:' : 'Tags:'}
+              {isAr ? 'الوسوم وتصنيف العميل:' : 'Tags:'}
             </label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {AVAILABLE_TAGS.map(tagObj => {

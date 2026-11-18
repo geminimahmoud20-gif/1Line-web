@@ -5,8 +5,9 @@ import PropertyCard from '../components/properties/PropertyCard';
 import RentalYieldCalculator from '../components/commercial/RentalYieldCalculator';
 import { getCommercialInsights, isCommercialAsset, computeRentalYield } from '../utils/propertyInsights';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
-import { updatePageSeo } from '../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import '../styles/expat-suite.css';
+import { blockedByApproval } from '../utils/publishApproval';
 
 const isMedical = (p) => {
   const ins = getCommercialInsights(p);
@@ -38,12 +39,17 @@ export default function CommercialHubPage({ lang = 'ar', currency = 'EGP', prope
         'Commercial and medical property in Sohag with decision indicators: foot traffic, access from nearby towns, parking, and a rent yield calculator.'
       ),
       url: '/commercial-hub',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'المركز التجاري والطبي' : 'Commercial Hub', url: '/commercial-hub' }
+      ])
     });
   }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pool = useMemo(
-    () => properties.filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status) && isCommercialAsset(p)),
+    () => properties.filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status) && !blockedByApproval(p) && isCommercialAsset(p)),
     [properties]
   );
 
@@ -64,6 +70,11 @@ export default function CommercialHubPage({ lang = 'ar', currency = 'EGP', prope
   return (
     <div className="xs-hub" dir={isAr ? 'rtl' : 'ltr'}>
       <header className="xs-hub-hero">
+        <nav className="page-breadcrumb-sub" aria-label="Breadcrumb" style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+          <Link to="/" style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'none' }}>{isAr ? 'الرئيسية' : 'Home'}</Link>
+          <span style={{ color: 'rgba(255,255,255,0.4)' }}>/</span>
+          <span style={{ color: '#D4AF37' }}>{isAr ? 'المركز التجاري والطبي' : 'Commercial Hub'}</span>
+        </nav>
         <p className="xs-kicker">{L('مركز الاستثمار الطبي والتجاري بالصعيد', 'Upper Egypt medical & commercial hub')}</p>
         <h1>{L(<>مكانك الصح <em>بيجيب الزبون</em> قبل ما تفتح</>, <>The right spot <em>brings the customers</em> before you open</>)}</h1>
         <p>{L('عيادات ومكاتب ومحلات بمؤشرات حقيقية: مين بيعدي في الشارع، المرضى والزبائن جايين منين، والركن سهل ولا صعب — وحاسبة تقولك امتى هترجّع فلوسك.', 'Clinics, offices and shops with real indicators: who walks by, where customers come from, how easy parking is — and when you get your money back.')}</p>
@@ -129,7 +140,7 @@ export default function CommercialHubPage({ lang = 'ar', currency = 'EGP', prope
 
         <section className="xs-hub-calc" aria-labelledby="xs-hub-calc-title">
           <h2 id="xs-hub-calc-title"><Calculator size={20} aria-hidden="true" /> {L('احسب عائد أي محل أو عيادة', 'Work out the yield of any shop or clinic')}</h2>
-          <p>{L('حط سعر الشراء والمساحة والإيجار المتوقع للمتر، وشوف معدل الرسملة وفترة الاسترداد فوراً.', 'Enter the price, area and expected rent per m² to see cap rate and payback instantly.')}</p>
+          <p>{L('حط سعر الشراء والمساحة والإيجار الشهري المتوقع، وشوف صافي العائد وفترة الاسترداد فوراً.', 'Enter the price, area and expected monthly rent to see net yield and payback instantly.')}</p>
           <RentalYieldCalculator lang={lang} currency={currency} />
           <p className="xs-hub-more">
             <Link to="/properties?type=commercial">{L('كل المحلات التجارية ←', 'All retail units →')}</Link>

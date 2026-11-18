@@ -96,7 +96,7 @@ export default function AccountCompareTab({
                     <td className="row-label">{isAr ? 'السعر الإجمالي' : 'Total Price'}</td>
                     {compareList.map(prop => (
                       <td key={prop.id} className="row-val price-highlight">
-                        <strong>{Number(prop.price).toLocaleString()}</strong> {isAr ? 'ج.م' : 'EGP'}
+                        <strong>{Number(prop.price).toLocaleString('en-US')}</strong> {isAr ? 'ج.م' : 'EGP'}
                       </td>
                     ))}
                   </tr>
@@ -112,7 +112,7 @@ export default function AccountCompareTab({
                     <td className="row-label">{isAr ? 'سعر المتر' : 'Price / Sqm'}</td>
                     {compareList.map(prop => (
                       <td key={prop.id} className="row-val">
-                        {prop.pricePerMeter ? `${Number(prop.pricePerMeter).toLocaleString()} ج.م/م²` : '—'}
+                        {prop.pricePerMeter ? `${Number(prop.pricePerMeter).toLocaleString('en-US')} ج.م/م²` : '—'}
                       </td>
                     ))}
                   </tr>
@@ -120,7 +120,7 @@ export default function AccountCompareTab({
                     <td className="row-label">{isAr ? 'المقدم' : 'Down Payment'}</td>
                     {compareList.map(prop => (
                       <td key={prop.id} className="row-val">
-                        {prop.downPayment > 0 ? `${Number(prop.downPayment).toLocaleString()} ج.م` : (isAr ? 'كاش كامل' : 'Full Cash')}
+                        {prop.downPayment > 0 ? `${Number(prop.downPayment).toLocaleString('en-US')} ج.م` : (isAr ? 'كاش كامل' : 'Full Cash')}
                       </td>
                     ))}
                   </tr>
@@ -128,7 +128,7 @@ export default function AccountCompareTab({
                     <td className="row-label">{isAr ? 'القسط الشهري' : 'Monthly Installment'}</td>
                     {compareList.map(prop => (
                       <td key={prop.id} className="row-val">
-                        {prop.monthlyInstallment > 0 ? `${Number(prop.monthlyInstallment).toLocaleString()} ج.م` : '—'}
+                        {prop.monthlyInstallment > 0 ? `${Number(prop.monthlyInstallment).toLocaleString('en-US')} ج.م` : '—'}
                       </td>
                     ))}
                   </tr>

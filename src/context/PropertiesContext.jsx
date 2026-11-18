@@ -1,36 +1,55 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { MEGA_PROJECTS } from '../data/projectsData';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { LOST_REASONS } from '../utils/crmLeadViews';
+import { persistDemands } from '../utils/demandStorage';
+import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
 import { INITIAL_LEADS } from '../data/mockData';
 import { DEMO_PROPERTIES, DEMO_DEMANDS, tagDemoProperty, tagDemoDemand, isRealItem } from '../data/demoData';
 
 const CATALOG_LIVE_KEY = 'oneline_catalog_live';
+const SYNC_ISSUES_KEY = 'oneline_property_sync_issues';
 const readCatalogLive = () => {
   try { return localStorage.getItem(CATALOG_LIVE_KEY) === '1'; } catch { return false; }
 };
 import {
   saveLead,
   subscribeToLeads,
+  searchLeads,
   subscribeToDemands,
   isFirebaseActive,
-  saveNotification,
   updateLeadField,
-  deleteLead,
+  deleteLeads,
   saveDemand,
   updateDemandStatus,
   deleteDemandDoc,
   subscribeToCatalog,
   upsertCatalogItem,
+  upsertCatalogItems,
+  currentApprover,
+  currentLeadManager,
+  importLeads,
   deleteCatalogItem,
-  syncPendingLeads
+  syncPendingLeads,
+  subscribeToSettings,
+  logAuditEvent
 } from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
-import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '../utils/visitorTracker';
+import { withoutContactFields } from '../utils/leadContactFields';
+import { identifyVisitor, getCurrentSessionJourney, getAttributionData, getFirstTouch } from '../utils/visitorTracker';
 import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
+import { statusStamp } from '../utils/propertyStatus';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
+import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
+import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
+import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
+import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
+import { demandEditStamp } from '../utils/publishApproval';
+import { stageHistoryAfter, initialStageHistory } from '../utils/stageHistory';
+import { checkStageChange } from '../utils/stageGate';
+import { assignmentEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
@@ -59,19 +78,24 @@ const readLeadCache = () => {
   } catch { return []; }
   return readStoredJson('oneline_crm_leads', [], isRecordArray);
 };
-const DEMAND_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'clientName', 'name'];
-const persistDemands = (list) => {
-  try {
-    const safe = list.map((d) => {
-      const copy = { ...d };
-      DEMAND_CONTACT_FIELDS.forEach((k) => delete copy[k]);
-      return copy;
-    });
-    persistDemands(safe);
-  } catch { /* storage full or blocked */ }
+const LEAD_STAGE_AR = { new: 'عميل محتمل', contacted: 'مؤهل', site_visit: 'اجتماع / معاينة', negotiating: 'تفاوض', closing: 'إغلاق (توقيع وحجز)', closed: 'إغلاق', lost: 'خسارة', inactive: 'غير متفاعل' };
+const LEAD_FIELD_AR = { assignedTo: 'المسؤول', temperature: 'درجة الحرارة', score: 'الجدية', notes: 'الملاحظات', nextFollowUpAt: 'موعد المتابعة', isArchived: 'الأرشفة', tags: 'الوسوم', lastContactedAt: 'تواصل' };
+/** One readable line for the lead's activity log */
+const describeLeadChange = (f = {}) => {
+  if (f.status) {
+    const base = `تغيير المرحلة إلى: ${LEAD_STAGE_AR[f.status] || f.status}`;
+    const reason = f.status === 'lost' && LOST_REASONS.find((r) => r.id === f.lostReason);
+    return reason ? `${base} (${reason.ar}${f.lostNote ? ` — ${f.lostNote}` : ''})` : base;
+  }
+  if ('assignedTo' in f) return `تعيين المسؤول: ${f.assignedTo || '—'}`;
+  if (f.lastContactedAt && Object.keys(f).length <= 2) return 'تواصل مع العميل';
+  const names = Object.keys(f).map((k) => LEAD_FIELD_AR[k]).filter(Boolean);
+  return `تحديث بيانات${names.length ? `: ${[...new Set(names)].join('، ')}` : ''}`;
 };
 
 const PropertiesContext = createContext(null);
+
+const LEADS_PAGE = 150;
 
 export function PropertiesProvider({ children }) {
   const { lang, soundEnabled } = usePreferences();
@@ -96,10 +120,53 @@ export function PropertiesProvider({ children }) {
     return DEMO_PROPERTIES;
   });
 
+  // Listings saved here but not in the database: { [id]: reason }. Shown on the CRM row with a
+  // retry, so a refused write isn't only a toast that disappears.
+  const [syncIssues, setSyncIssues] = useState(() => {
+    const v = readStoredJson(SYNC_ISSUES_KEY, {}, (x) => x && typeof x === 'object' && !Array.isArray(x));
+    return v && typeof v === 'object' ? v : {};
+  });
+  const markSync = useCallback((id, reason) => {
+    if (id === undefined || id === null) return;
+    setSyncIssues((prev) => {
+      const key = String(id);
+      if (!reason && !(key in prev)) return prev;
+      if (reason && prev[key] === reason) return prev;
+      const next = { ...prev };
+      if (reason) next[key] = reason; else delete next[key];
+      try { localStorage.setItem(SYNC_ISSUES_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+      return next;
+    });
+  }, []);
+
+  // The approval stamp the cloud save added (src/utils/publishApproval.js), copied onto this
+  // device's copy so the CRM shows «بانتظار موافقة المدير العام» right away
+  const applyApproval = useCallback((collectionName, saved) => {
+    if (!saved?.id) return;
+    const keys = ['approval', 'submittedAt', 'approvedAt', 'rejectedAt'];
+    const fields = Object.fromEntries(keys.filter((k) => k in saved).map((k) => [k, saved[k]]));
+    const mapOne = (p) => (String(p.id) === String(saved.id) ? { ...p, ...fields } : p);
+    if (collectionName !== 'properties') return; // projects: see withProjectApproval
+    setProperties((prev) => {
+      const updated = prev.map(mapOne);
+      try { localStorage.setItem('oneline_properties', JSON.stringify(updated)); } catch { /* quota / private mode */ }
+      return updated;
+    });
+  }, []);
+
   // Cloud write results → one honest toast. Local state is already updated, so the UI never waits.
-  const reportCatalogSync = useCallback((promise) => {
+  const reportCatalogSync = useCallback((promise, id, collectionName = 'properties') => {
     Promise.resolve(promise).then((res) => {
-      if (res?.ok) return;
+      if (collectionName === 'properties') markSync(id, res?.ok ? null : (res?.reason || 'error'));
+      if (res?.ok) {
+        if (res.item) applyApproval(collectionName, res.item);
+        if (res.item?.approval === 'pending') {
+          triggerToast(lang === 'ar'
+            ? 'اتحفظ، وهيظهر على الموقع بعد موافقة المدير العام'
+            : 'Saved. It goes on the site once the general manager approves it', 'info');
+        }
+        return;
+      }
       const isAr = lang === 'ar';
       const msg = res?.reason === 'too-large'
         ? (isAr ? 'لم يُنشر على الموقع: حجم البيانات/الصور المضمّنة أكبر من الحد المسموح (1MB). ارفع الصور كروابط بدلاً من تضمينها.' : 'Not published: item exceeds 1MB — use image URLs.')
@@ -108,7 +175,7 @@ export function PropertiesProvider({ children }) {
           : (isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّر النشر السحابي، أعد المحاولة عند توفر الاتصال.' : 'Saved on this device only — cloud sync failed.');
       triggerToast(msg, 'error');
     }).catch(() => {});
-  }, [lang, triggerToast]);
+  }, [lang, triggerToast, markSync, applyApproval]);
 
   // Synced after each render; handlers also set it immediately so back-to-back updates see each other
   const propertiesRef = useRef(properties);
@@ -123,33 +190,71 @@ export function PropertiesProvider({ children }) {
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
-    reportCatalogSync(upsertCatalogItem('properties', newProp));
+    reportCatalogSync(upsertCatalogItem('properties', newProp), newProp.id);
   }, [reportCatalogSync]);
 
   const handleUpdateProperty = useCallback((id, updatedData) => {
     const current = propertiesRef.current.find((p) => p.id === id);
     if (!current) return;
-    const merged = { ...current, ...updatedData };
+    const merged = { ...current, ...updatedData, ...statusStamp(current, updatedData) };
     const updated = propertiesRef.current.map((p) => (p.id === id ? merged : p));
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
-    reportCatalogSync(upsertCatalogItem('properties', merged));
+    reportCatalogSync(upsertCatalogItem('properties', merged), id);
   }, [reportCatalogSync]);
+
+  /** Sends this device's copy of a listing again (after a refused or offline save) */
+  const retryPropertySync = useCallback((id) => {
+    const item = propertiesRef.current.find((p) => String(p.id) === String(id));
+    if (item) reportCatalogSync(upsertCatalogItem('properties', item), item.id);
+  }, [reportCatalogSync]);
+
+  /** Drops a listing that only ever existed on this device (the database is not touched) */
+  const discardLocalProperty = useCallback((id) => {
+    const updated = propertiesRef.current.filter((p) => String(p.id) !== String(id));
+    propertiesRef.current = updated;
+    setProperties(updated);
+    persistProperties(updated);
+    markSync(id, null);
+  }, [markSync]);
+
+  /**
+   * File import: new and updated properties in one go (one batched cloud write, one result).
+   * items: full property objects; an id that exists is replaced by the merged version.
+   * Resolves to the cloud result so the import screen can report it.
+   */
+  const handleImportProperties = useCallback(async (items = []) => {
+    const byId = new Map(propertiesRef.current.map((p) => [String(p.id), p]));
+    const merged = items.map((item) => ({ ...(byId.get(String(item.id)) || {}), ...item, isDemo: false }));
+    const changed = new Set(merged.map((p) => String(p.id)));
+    const updated = [...merged.filter((p) => !byId.has(String(p.id))), ...propertiesRef.current.map((p) => (changed.has(String(p.id)) ? merged.find((m) => String(m.id) === String(p.id)) : p))];
+    propertiesRef.current = updated;
+    setProperties(updated);
+    persistProperties(updated);
+    return upsertCatalogItems('properties', merged);
+  }, []);
 
   const handleDeleteProperty = useCallback((id) => {
     const updated = propertiesRef.current.filter((p) => p.id !== id);
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
-    reportCatalogSync(deleteCatalogItem('properties', id));
+    // Only bundled samples need a tombstone to stay gone; everything else is deleted outright
+    const isSample = DEMO_PROPERTIES.some((p) => String(p.id) === String(id));
+    reportCatalogSync(deleteCatalogItem('properties', id, { keepTombstone: isSample }));
   }, [reportCatalogSync]);
 
   // Mega Projects State
   const [projects, setProjects] = useState(() => {
     const stored = readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
     if (Array.isArray(stored) && stored.length > 0) {
-      const validStored = stored.filter(p => p && typeof p === 'object' && p.id);
+      // Untouched sample copies saved earlier are refreshed to the current sample text; a sample
+      // saved to the cloud from the CRM comes back as a real project (isDemo: false)
+      const freshSample = new Map(MEGA_PROJECTS.map((p) => [String(p.id), p]));
+      const validStored = stored
+        .filter(p => p && typeof p === 'object' && p.id)
+        .map((p) => (tagDemoProject(p).isDemo ? freshSample.get(String(p.id)) || p : p));
       const existingIds = new Set(validStored.map(p => p.id));
       const missing = MEGA_PROJECTS.filter(p => p && !existingIds.has(p.id));
       if (missing.length > 0) {
@@ -168,15 +273,29 @@ export function PropertiesProvider({ children }) {
   const persistProjects = (list) => {
     try { localStorage.setItem('oneline_mega_projects', JSON.stringify(list)); } catch { /* quota / private mode */ }
   };
+  // Same as applyApproval, for projects (declared after their state)
+  const withProjectApproval = useCallback((promise) => Promise.resolve(promise).then((res) => {
+    const saved = res?.item;
+    if (saved?.id) {
+      setProjects((prev) => {
+        const updated = prev.map((p) => (String(p.id) === String(saved.id)
+          ? { ...p, approval: saved.approval, submittedAt: saved.submittedAt, approvedAt: saved.approvedAt, rejectedAt: saved.rejectedAt }
+          : p));
+        try { localStorage.setItem('oneline_mega_projects', JSON.stringify(updated)); } catch { /* quota / private mode */ }
+        return updated;
+      });
+    }
+    return res;
+  }), []);
 
   const handleAddProject = useCallback((newProj) => {
     const updated = [newProj, ...projectsRef.current];
     projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
-    reportCatalogSync(upsertCatalogItem('projects', newProj));
+    reportCatalogSync(withProjectApproval(upsertCatalogItem('projects', newProj)), newProj.id, 'projects');
     triggerToast(lang === 'ar' ? 'تم إضافة المشروع' : 'Project added', 'success');
-  }, [lang, triggerToast, reportCatalogSync]);
+  }, [lang, triggerToast, reportCatalogSync, withProjectApproval]);
 
   const handleUpdateProject = useCallback((id, updatedData) => {
     const current = projectsRef.current.find((p) => p.id === id);
@@ -186,26 +305,34 @@ export function PropertiesProvider({ children }) {
     projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
-    reportCatalogSync(upsertCatalogItem('projects', merged));
+    reportCatalogSync(withProjectApproval(upsertCatalogItem('projects', merged)), id, 'projects');
     triggerToast(lang === 'ar' ? 'تم تحديث بيانات المشروع' : 'Project updated', 'success');
-  }, [lang, triggerToast, reportCatalogSync]);
+  }, [lang, triggerToast, reportCatalogSync, withProjectApproval]);
 
   const handleDeleteProject = useCallback((id) => {
     const updated = projectsRef.current.filter((p) => p.id !== id);
     projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
-    reportCatalogSync(deleteCatalogItem('projects', id));
+    const isSample = MEGA_PROJECTS.some((p) => String(p.id) === String(id));
+    reportCatalogSync(deleteCatalogItem('projects', id, { keepTombstone: isSample }));
     triggerToast(lang === 'ar' ? 'تم حذف المشروع' : 'Project deleted', 'info');
   }, [lang, triggerToast, reportCatalogSync]);
 
-  // Live catalog from Firestore for every visitor: cloud docs override the bundled seed
-  // by id, tombstones remove items, cloud-only items (added in the CRM) go first.
+  // Cloud catalog: cloud docs override the bundled seed by id, tombstones remove items,
+  // cloud-only items (added in the CRM) go first. Visitors read the shared CDN copy
+  // (/api/catalog, no Firestore reads per visit); the CRM asks for the live listener.
+  const [liveCatalog, setLiveCatalog] = useState(false);
+  // Listing ids the live listener says the database holds (null until it has answered)
+  const [cloudPropertyIds, setCloudPropertyIds] = useState(null);
+  const requestLiveCatalog = useCallback(() => setLiveCatalog(true), []);
   useEffect(() => {
-    const applyCloud = (setter, storageKey, pruneDemos = false) => (cloudDocs) => {
+    // pruneDemos: once the database holds real items of this kind, the bundled samples go away.
+    // markLive: remember it for the next visit (listings only: the first paint reads it).
+    const applyCloud = (setter, storageKey, pruneDemos = false, markLive = pruneDemos) => (cloudDocs) => {
       if (!Array.isArray(cloudDocs) || cloudDocs.length === 0) return;
       const liveDocs = cloudDocs.filter((d) => !d.deleted);
-      if (pruneDemos && liveDocs.length > 0) {
+      if (markLive && liveDocs.length > 0) {
         try { localStorage.setItem(CATALOG_LIVE_KEY, '1'); } catch { /* storage unavailable */ }
       }
       setter((prev) => {
@@ -229,10 +356,42 @@ export function PropertiesProvider({ children }) {
         return next;
       });
     };
-    const unsubProps = subscribeToCatalog('properties', applyCloud(setProperties, 'oneline_properties', true));
-    const unsubProjects = subscribeToCatalog('projects', applyCloud(setProjects, 'oneline_mega_projects'));
-    return () => { unsubProps(); unsubProjects(); };
-  }, []);
+    const applyProperties = applyCloud(setProperties, 'oneline_properties', true);
+    // Sample projects used to stay next to real ones until each was deleted by hand
+    const applyProjects = applyCloud(setProjects, 'oneline_mega_projects', true, false);
+    let unsubs = [];
+    // siteOnly: a visitor whose /api/catalog failed reads the listings on the site straight from
+    // the database (all a visitor may read); the CRM's live listener reads everything
+    const goLive = (siteOnly = false) => {
+      unsubs = [
+        subscribeToCatalog('properties', (docs) => {
+          applyProperties(docs);
+          if (Array.isArray(docs)) setCloudPropertyIds(new Set(docs.filter((d) => !d.deleted).map((d) => String(d.id))));
+        }, { siteOnly }),
+        subscribeToCatalog('projects', applyProjects),
+        // The site settings travel with the cached catalog; without it (CRM, local dev) read them directly
+        subscribeToSettings(SITE_SETTINGS_KEY, applySiteSettings)
+      ];
+    };
+    if (liveCatalog) {
+      goLive();
+      return () => unsubs.forEach((u) => u?.());
+    }
+    let cancelled = false;
+    const load = () => fetchPublicCatalog().then((res) => {
+      if (cancelled || unsubs.length) return;
+      if (!res) { goLive(true); return; }
+      applyProperties(res.properties);
+      applyProjects(res.projects);
+      applySiteSettings(res.site);
+      if (res.developers) applyDevelopers(res.developers);
+    });
+    load();
+    const timer = setInterval(() => {
+      if (!unsubs.length && document.visibilityState === 'visible') load();
+    }, PUBLIC_CATALOG_REFRESH_MS);
+    return () => { cancelled = true; clearInterval(timer); unsubs.forEach((u) => u?.()); };
+  }, [liveCatalog]);
 
   // Favorites State
   const [favorites, setFavorites] = useState(() => {
@@ -241,6 +400,9 @@ export function PropertiesProvider({ children }) {
   });
 
   const toggleFavorite = useCallback((propertyId) => {
+    if (!favorites.includes(propertyId)) {
+      track('favorite_added', propertyFacts(properties.find((p) => p.id === propertyId) || { id: propertyId }));
+    }
     setFavorites((prev) => {
       const exists = prev.includes(propertyId);
       const updated = exists ? prev.filter((id) => id !== propertyId) : [...prev, propertyId];
@@ -253,7 +415,7 @@ export function PropertiesProvider({ children }) {
       );
       return updated;
     });
-  }, [lang, triggerToast]);
+  }, [lang, triggerToast, favorites, properties]);
 
   const clearFavorites = useCallback((silent = false) => {
     setFavorites([]);
@@ -290,9 +452,11 @@ export function PropertiesProvider({ children }) {
       triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
       return [...prev, property];
     });
-  }, [lang, triggerToast]);
+    if (!compareList.some((p) => p.id === property.id) && compareList.length < 4) track('compare_added', propertyFacts(property));
+  }, [lang, triggerToast, compareList]);
 
   const addToCompare = useCallback((property) => {
+    if (!compareList.some((p) => p.id === property.id) && compareList.length < 4) track('compare_added', propertyFacts(property));
     setCompareList((prev) => {
       if (prev.some((p) => p.id === property.id)) return prev;
       if (prev.length >= 4) {
@@ -302,7 +466,7 @@ export function PropertiesProvider({ children }) {
       triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
       return [...prev, property];
     });
-  }, [lang, triggerToast]);
+  }, [lang, triggerToast, compareList]);
 
   const removeCompare = useCallback((propertyId) => {
     setCompareList((prev) => prev.filter((p) => p.id !== propertyId));
@@ -330,6 +494,8 @@ export function PropertiesProvider({ children }) {
     const valid = Array.isArray(stored) ? stored.filter(d => d && typeof d === 'object').map(tagDemoDemand) : DEMO_DEMANDS;
     return valid.length > 0 ? valid : DEMO_DEMANDS;
   });
+  const demandsRef = useRef(demands);
+  useEffect(() => { demandsRef.current = demands; }, [demands]);
 
   // Add New Lead Handler
   const handleAddNewLead = useCallback(async (leadData, extraData, sourceLabel) => {
@@ -347,7 +513,8 @@ export function PropertiesProvider({ children }) {
     const rawPhone = cleanData.phone || cleanData.whatsapp || '';
     const rawWhatsapp = cleanData.whatsapp || cleanData.phone || '';
     const normalizedPropertyType = cleanData.propertyType || cleanData.details?.propertyType || cleanData.targetType || cleanData.type || 'residential';
-    const rawArea = cleanData.area || cleanData.details?.area || cleanData.location || 'new_sohag';
+    // No area picked stays empty: defaulting to New Sohag counted unknown leads there
+    const rawArea = cleanData.area || cleanData.details?.area || cleanData.location || '';
     const normalizedArea = normalizeAreaKey(rawArea);
 
     const standardizedData = {
@@ -357,8 +524,10 @@ export function PropertiesProvider({ children }) {
       whatsapp: rawWhatsapp,
       propertyType: normalizedPropertyType,
       area: normalizedArea,
+      // Phones live in lead_contacts only; a form that copies its whole state into details must
+      // not put them back on the lead, which read-only roles can see.
       details: {
-        ...(cleanData.details || {}),
+        ...withoutContactFields(cleanData.details),
         propertyType: normalizedPropertyType,
         area: normalizedArea
       }
@@ -376,102 +545,68 @@ export function PropertiesProvider({ children }) {
     // which previously left finalLead null and skipped the cloud save).
     const buildNextLeads = (prev) => {
       let finalLead;
-      const existingIndex = prev.findIndex(
-        (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
-      );
-
-      if (existingIndex !== -1 && incomingPhone) {
-        const existing = prev[existingIndex];
-        const newLog = {
-          timestamp: new Date().toISOString(),
-          action: `تسجيل اهتمام إضافي: طلب ${standardizedData.propertyType || standardizedData.type || 'جديد'}`
-        };
-
-        const nowIso = new Date().toISOString();
-        const mergedLead = {
-          ...existing,
-          name: existing.name || standardizedData.name,
-          whatsapp: standardizedData.whatsapp || existing.whatsapp,
-          phone: standardizedData.phone || existing.phone,
-          email: standardizedData.email || existing.email || '',
-          source: existing.source || standardizedData.source || 'website',
-          type: standardizedData.type || existing.type || 'buyer',
-          budget: standardizedData.budget || existing.budget || existing.details?.budget || '',
-          propertyType: standardizedData.propertyType || existing.propertyType,
-          area: standardizedData.area || existing.area,
-          score: Math.min(100, (existing.score || 80) + 10),
-          temperature: existing.temperature || 'hot',
-          status: existing.status || 'new',
-          assignedTo: existing.assignedTo || 'Sales Advisor Team',
-          nextFollowUpAt: standardizedData.nextFollowUpAt || existing.nextFollowUpAt || null,
-          createdAt: existing.createdAt || existing.timestamp || nowIso,
-          updatedAt: nowIso,
-          createdBy: existing.createdBy || 'online_visitor',
-          lastActivityAt: nowIso,
+      // Every request is its own lead, so a viewing request stays a viewing request and a broker
+      // sign-up lands under brokers even when the phone is already known. A known phone only
+      // flags the new lead as a returning client and links the earlier one; the CRM's duplicate
+      // view is where staff merge people.
+      const previous = incomingPhone
+        ? prev.find((l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone)
+        : null;
+      const nowIso = new Date().toISOString();
+      const attribution = getAttributionData();
+      const rawNewLead = {
+        id: 'lead-' + Date.now(),
+        timestamp: new Date().toISOString(),
+        status: 'new',
+        version: 1,
+        name: standardizedData.name,
+        phone: standardizedData.phone,
+        whatsapp: standardizedData.whatsapp,
+        email: standardizedData.email || '',
+        source: standardizedData.source || 'website',
+        type: standardizedData.type || 'buyer',
+        budget: standardizedData.budget || standardizedData.details?.budget || '',
+        area: standardizedData.area || '',
+        propertyType: standardizedData.propertyType || 'apartment',
+        notes: standardizedData.notes || '',
+        // Unset until someone on the team judges it; defaulting to 'hot' inflated the hot count
+        temperature: standardizedData.temperature || '',
+        assignedTo: standardizedData.assignedTo || 'Unassigned',
+        nextFollowUpAt: standardizedData.nextFollowUpAt || null,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        createdBy: standardizedData.createdBy || 'online_visitor',
+        lastActivityAt: nowIso,
+        followUp: 'Pending Contact',
+        stageHistory: initialStageHistory(nowIso),
+        activityLogs: [{
           timestamp: nowIso,
-          // Keep the new request's own note (e.g. remote inspection / trade-in summary) instead of a generic line
-          notes: `${existing.notes ? existing.notes + ' | ' : ''}${standardizedData.notes ? `طلب إضافي: ${standardizedData.notes}` : `طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`}`,
-          details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
-          activityLogs: [newLog, ...(existing.activityLogs || [])],
-          digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || existing.dwellTimeFormatted || '1د 15ث',
-          isLiveTracked: true
-        };
+          action: 'تسجيل العميل لأول مرة عبر المنصة'
+        }],
+        digitalJourney: sessionJourney.events || [],
+        dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '',
+        dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 0,
+        // Ties the request to this visitor's browsing profile (only when they accepted analytics)
+        analyticsVisitorId: analyticsVisitorId(),
+        isLiveTracked: true,
+        // This visit's source, and the visitor's very first one (when they differ the profile shows both)
+        marketingAttribution: { ...attribution, ...(getFirstTouch() ? { firstTouch: getFirstTouch() } : {}) },
+        utmSource: attribution?.source || 'مباشر',
+        utmCampaign: attribution?.campaign || 'direct',
+        ...standardizedData,
+        ...(previous ? { returningClient: true, previousLeadId: String(previous.id), previousRequest: String(previous.type || '') } : {})
+      };
 
-        finalLead = mergedLead;
-        const updated = [...prev];
-        updated[existingIndex] = mergedLead;
-        return { updated, finalLead };
-      } else {
-        const nowIso = new Date().toISOString();
-        const attribution = getAttributionData();
-        const rawNewLead = {
-          id: 'lead-' + Date.now(),
-          timestamp: new Date().toISOString(),
-          status: 'new',
-          name: standardizedData.name,
-          phone: standardizedData.phone,
-          whatsapp: standardizedData.whatsapp,
-          email: standardizedData.email || '',
-          source: standardizedData.source || 'website',
-          type: standardizedData.type || 'buyer',
-          budget: standardizedData.budget || standardizedData.details?.budget || '',
-          area: standardizedData.area || 'new_sohag',
-          propertyType: standardizedData.propertyType || 'apartment',
-          notes: standardizedData.notes || '',
-          temperature: standardizedData.temperature || 'hot',
-          score: typeof standardizedData.score === 'number' ? standardizedData.score : 85,
-          assignedTo: standardizedData.assignedTo || 'Unassigned',
-          nextFollowUpAt: standardizedData.nextFollowUpAt || null,
-          createdAt: nowIso,
-          updatedAt: nowIso,
-          createdBy: standardizedData.createdBy || 'online_visitor',
-          lastActivityAt: nowIso,
-          followUp: 'Pending Contact',
-          activityLogs: [{
-            timestamp: nowIso,
-            action: 'تسجيل العميل لأول مرة عبر المنصة'
-          }],
-          digitalJourney: sessionJourney.events || [],
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '45 ثانية',
-          dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 45,
-          isLiveTracked: true,
-          marketingAttribution: attribution,
-          utmSource: attribution?.source || 'مباشر',
-          utmCampaign: attribution?.campaign || 'direct',
-          ...standardizedData
-        };
+      // 🤖 Automated Lead Routing & Round-Robin Load Balance
+      const newLead = routeLeadAutomatically(rawNewLead, prev);
 
-        // 🤖 Automated Lead Routing & Round-Robin Load Balance
-        const newLead = routeLeadAutomatically(rawNewLead, prev);
-
-        finalLead = newLead;
-        const updated = [newLead, ...prev];
-        return { updated, finalLead };
-      }
+      finalLead = newLead;
+      const updated = [newLead, ...prev];
+      return { updated, finalLead };
     };
 
     const { updated: nextLeads, finalLead } = buildNextLeads(leadsRef.current);
+    if (finalLead) track('lead_submitted', { form: String(sourceLabel || finalLead.source || 'website').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40) || 'website', leadId: finalLead.id });
     leadsRef.current = nextLeads;
     setLeads(nextLeads);
     persistLeads(nextLeads);
@@ -484,10 +619,6 @@ export function PropertiesProvider({ children }) {
         // Save in the background: Firestore's addDoc waits for a server ack, which can hang on a
         // weak connection, so the visitor's confirmation must not depend on it.
         saveLead(finalLead)
-          .then(() => {
-            // Notifications are admin-only in Firestore rules; a failure here must never re-queue the lead.
-            saveNotification(`Lead update: ${finalLead.name || 'Client'}`).catch(() => {});
-          })
           .catch((err) => {
             // e.g. the Firebase chunk itself failed to download — keep the lead for the next visit
             console.error('Firebase save lead error:', err);
@@ -548,8 +679,20 @@ export function PropertiesProvider({ children }) {
     }
   }, [handleAddNewLead]);
 
-  const handleAddAdminDemand = useCallback((demandPayload) => {
-    const sanitizedPayload = sanitizeObject(demandPayload);
+  // Only the general manager publishes a buyer request (src/utils/publishApproval.js; the rules
+  // enforce it too): a staff member's «نشر» or edit to a published text waits for approval.
+  const demandStampFor = useCallback(async (current, updates) => {
+    let isManager = false;
+    try { isManager = Boolean((await currentApprover())?.isManager); } catch { /* offline: treat as staff */ }
+    const next = demandEditStamp(current, updates, { isManager });
+    if (!isManager && updates?.status === 'published' && next.status !== 'published') {
+      triggerToast(lang === 'ar' ? 'اتحفظ، وهيتنشر على الموقع بعد موافقة المدير العام' : 'Saved. It is published once the general manager approves it', 'info');
+    }
+    return next;
+  }, [lang, triggerToast]);
+
+  const handleAddAdminDemand = useCallback(async (demandPayload) => {
+    const sanitizedPayload = sanitizeObject(await demandStampFor(null, demandPayload));
     setDemands((prev) => {
       const updated = [sanitizedPayload, ...prev];
       persistDemands(updated);
@@ -558,9 +701,11 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       saveDemand(sanitizedPayload);
     }
-  }, []);
+  }, [demandStampFor]);
 
-  const handleApproveDemand = useCallback((demandId) => {
+  const handleApproveDemand = useCallback(async (demandId) => {
+    const current = demandsRef.current.find((d) => d.id === demandId);
+    if ((await demandStampFor(current, { status: 'published' })).status !== 'published') return;
     setDemands((prev) => {
       const updated = prev.map(d => d.id === demandId ? { 
         ...d, 
@@ -579,9 +724,10 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       updateDemandStatus(demandId, { status: 'published', approvedAt: new Date().toISOString() });
     }
-  }, []);
+  }, [demandStampFor]);
 
-  const handleUpdateDemand = useCallback((demandId, updatedData) => {
+  const handleUpdateDemand = useCallback(async (demandId, rawUpdates) => {
+    const updatedData = await demandStampFor(demandsRef.current.find((d) => d.id === demandId), rawUpdates);
     setDemands((prev) => {
       const updated = prev.map(d => d.id === demandId ? { ...d, ...updatedData } : d);
       persistDemands(updated);
@@ -590,7 +736,7 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       updateDemandStatus(demandId, updatedData);
     }
-  }, []);
+  }, [demandStampFor]);
 
   const handleDeleteDemand = useCallback((demandId) => {
     setDemands((prev) => {
@@ -617,28 +763,6 @@ export function PropertiesProvider({ children }) {
   // Firebase Real-time subscriptions
   useEffect(() => {
     if (isFirebaseActive()) {
-      const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
-        if (meta?.signedOut) {
-          // Signed out: drop every CRM lead from memory, keep only this device's own requests
-          setLeads((prev) => prev.filter((l) => !isCloudLead(l)));
-          return;
-        }
-        // A server snapshot is the full list for this role — empty included (an agent's empty queue)
-        if (cloudLeads && (cloudLeads.length > 0 || !meta?.fromCache)) {
-          const valid = cloudLeads.filter(l => l && typeof l === 'object').map((l) => ({ ...l, _cloud: true }));
-          if (meta?.fromCache) {
-            // Cache-only snapshot (offline / first paint): merge, never shrink the list to it
-            setLeads((prev) => {
-              const byId = new Map(prev.map((l) => [String(l.id), l]));
-              valid.forEach((l) => byId.set(String(l.id), { ...byId.get(String(l.id)), ...l }));
-              const fresh = valid.filter((l) => !prev.some((p) => String(p.id) === String(l.id)));
-              return [...fresh, ...prev.map((p) => byId.get(String(p.id)))];
-            });
-          } else {
-            setLeads(valid);
-          }
-        }
-      });
       const unsubDemands = subscribeToDemands((cloudDemands, meta) => {
         // No published demands yet → show the labelled samples (also clears a signed-out staff list)
         if (meta?.isPublic && !meta.fromCache && cloudDemands?.length === 0) {
@@ -663,18 +787,111 @@ export function PropertiesProvider({ children }) {
           setDemands(sorted);
         }
       });
-      return () => { 
-        if (unsubLeads) unsubLeads(); 
+      return () => {
         if (unsubDemands) unsubDemands();
       };
     }
   }, []);
 
+  // CRM leads: the newest `leadsWindow` live (a bigger window on "load more"); any older client is
+  // reached through searchAllLeads. Leads found by a search stay in the list (flag _searched)
+  // when the live window refreshes.
+  const [leadsWindow, setLeadsWindow] = useState(LEADS_PAGE);
+  const [leadsHasMore, setLeadsHasMore] = useState(false);
+  useEffect(() => {
+    if (!isFirebaseActive()) return undefined;
+      const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
+        if (meta?.signedOut) {
+          // Signed out: drop every CRM lead from memory, keep only this device's own requests
+          setLeads((prev) => prev.filter((l) => !isCloudLead(l)));
+          return;
+        }
+        // A server snapshot is the full list for this role — empty included (an agent's empty queue)
+        if (cloudLeads && (cloudLeads.length > 0 || !meta?.fromCache)) {
+          const valid = cloudLeads.filter(l => l && typeof l === 'object').map((l) => ({ ...l, _cloud: true }));
+          if (meta?.fromCache) {
+            // Cache-only snapshot (offline / first paint): merge, never shrink the list to it
+            setLeads((prev) => {
+              const byId = new Map(prev.map((l) => [String(l.id), l]));
+              valid.forEach((l) => byId.set(String(l.id), { ...byId.get(String(l.id)), ...l }));
+              const fresh = valid.filter((l) => !prev.some((p) => String(p.id) === String(l.id)));
+              return [...fresh, ...prev.map((p) => byId.get(String(p.id)))];
+            });
+          } else {
+            setLeadsHasMore(valid.length >= leadsWindow);
+            setLeads((prev) => {
+              const ids = new Set(valid.map((l) => String(l.id)));
+              return [...valid, ...prev.filter((l) => l._searched && !ids.has(String(l.id)))];
+            });
+          }
+        }
+      }, leadsWindow);
+    return () => { if (unsubLeads) unsubLeads(); };
+  }, [leadsWindow]);
+
+  const loadMoreLeads = useCallback(() => setLeadsWindow((w) => w + LEADS_PAGE), []);
+
+  /** Finds clients outside the loaded list (phone in any format, or the start of the name) */
+  const searchAllLeads = useCallback(async (term) => {
+    const res = await searchLeads(term);
+    if (res?.ok && res.leads.length) {
+      setLeads((prev) => {
+        const byId = new Map(prev.map((l) => [String(l.id), l]));
+        const added = res.leads.filter((l) => !byId.has(String(l.id))).map((l) => ({ ...l, _cloud: true, _searched: true }));
+        return [...prev, ...added];
+      });
+    }
+    return res || { ok: false, error: 'error' };
+  }, []);
+
   // CRM Leads Handlers
-  const handleUpdateLead = useCallback(async (id, updatedFields) => {
+  const handleUpdateLead = useCallback(async (id, requestedFields) => {
+    // `_undo` marks the Undo button's change; it is never saved
+    const { _undo: isUndo, ...updatedFields } = requestedFields || {};
     const nowIso = new Date().toISOString();
+    const current = leadsRef.current.find((l) => l.id === id);
+
+    // The stage lock: every stage change in the CRM comes through here. It needs a logged activity outcome, a
+    // reason for a negative one, and a manager to go back (utils/stageGate)
+    if (current && updatedFields.status && updatedFields.status !== (current.status || 'new') && !isUndo) {
+      let isManager = false;
+      try { isManager = Boolean(await currentLeadManager()); } catch { /* offline: treat as staff */ }
+      const gate = checkStageChange(current, updatedFields, { isManager });
+      if (!gate.ok) {
+        triggerToast(gate.message, 'error');
+        return false;
+      }
+    }
+
+    // First reply time: set once, the first time the lead leaves 'new' or someone contacts it
+    const extra = {};
+    if (current && !current.firstContactedAt) {
+      const s = updatedFields.status;
+      if ((s && s !== 'new') || updatedFields.lastContactedAt) {
+        extra.firstContactedAt = updatedFields.lastContactedAt || nowIso;
+      }
+    }
+    // Who held the client and who has it now, for the audit log
+    const reassigned = assignmentEvent(current, updatedFields);
+    if (reassigned) logAuditEvent(reassigned).catch(() => {});
+    // When the lead entered each stage (the lead itself keeps only its current one)
+    if (current && updatedFields.status) {
+      const history = stageHistoryAfter(current, updatedFields.status, nowIso);
+      if (history) extra.stageHistory = history;
+    }
+    // When a deal is won, for this month's commission figures
+    if (updatedFields.status === 'closed' && current?.status !== 'closed' && !updatedFields.closedAt) {
+      extra.closedAt = nowIso;
+    }
+    // The activity log is saved with the lead (it used to live only in this browser).
+    // Callers that build their own log entry pass activityLogs themselves.
+    const activityLogs = updatedFields.activityLogs
+      || [{ timestamp: nowIso, action: describeLeadChange(updatedFields) }, ...(current?.activityLogs || [])].slice(0, 100);
+
     const enrichedFields = {
       ...updatedFields,
+      ...extra,
+      activityLogs,
       updatedAt: nowIso,
       lastActivityAt: nowIso
     };
@@ -684,7 +901,6 @@ export function PropertiesProvider({ children }) {
     // "await first" version left the kanban card unmoved while the caller had already
     // shown "moved successfully". On a real failure only the changed fields roll back.
     const previousValues = {};
-    const current = leadsRef.current.find((l) => l.id === id);
     if (current) Object.keys(enrichedFields).forEach((k) => { previousValues[k] = current[k]; });
 
     const applyToLeads = (mutate) => setLeads((prev) => {
@@ -694,11 +910,7 @@ export function PropertiesProvider({ children }) {
       return updated;
     });
 
-    applyToLeads((l) => ({
-      ...l,
-      ...enrichedFields,
-      activityLogs: [{ timestamp: nowIso, action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}` }, ...(l.activityLogs || [])]
-    }));
+    applyToLeads((l) => ({ ...l, ...enrichedFields }));
 
     if (isFirebaseActive()) {
       updateLeadField(id, enrichedFields).then((saved) => {
@@ -716,25 +928,75 @@ export function PropertiesProvider({ children }) {
     return true;
   }, [lang, triggerToast]);
 
-  const handleDeleteLead = useCallback(async (id) => {
-    setLeads((prev) => {
-      const updated = prev.filter((l) => l.id !== id);
-      persistLeads(updated);
-      return updated;
-    });
+  const handleDeleteLead = useCallback(async (idOrIds) => {
+    const ids = Array.isArray(idOrIds) ? idOrIds.map(String) : [String(idOrIds)];
+    if (ids.length === 0) return true;
+
+    const previousLeads = leadsRef.current;
+    const idsSet = new Set(ids);
+    const updated = previousLeads.filter((l) => !idsSet.has(String(l.id)));
+
+    // Optimistic update
+    setLeads(updated);
+    leadsRef.current = updated;
+    persistLeads(updated);
 
     if (isFirebaseActive()) {
       try {
-        await deleteLead(id);
+        const ok = await deleteLeads(ids);
+        if (!ok) {
+          throw new Error('Delete operation rejected by cloud');
+        }
       } catch (err) {
-        console.error('Firebase delete lead error:', err);
+        console.error('Firebase delete lead error, rolling back:', err);
+        // Rollback state and persistence
+        setLeads(previousLeads);
+        leadsRef.current = previousLeads;
+        persistLeads(previousLeads);
+        triggerToast?.(
+          lang === 'ar'
+            ? 'تعذر حذف العميل من الخادم السحابي، تم التراجع عن العملية.'
+            : 'Could not delete lead from server. Action rolled back.',
+          'error'
+        );
+        return false;
       }
     }
-  }, []);
+    return true;
+  }, [lang, triggerToast]);
+
+  // File import of clients: saved straight to the cloud (contacts in lead_contacts); the leads
+  // listener brings them into the list. No sound / staff alert per row.
+  const handleImportLeads = useCallback((list = []) => importLeads(list), []);
+
+  // { [id]: reason } for every real listing the database doesn't have as saved here
+  const unsyncedProperties = useMemo(() => {
+    const out = { ...syncIssues };
+    if (cloudPropertyIds) {
+      for (const p of properties) {
+        const key = String(p.id);
+        if (!p.isDemo && !cloudPropertyIds.has(key) && !out[key]) out[key] = 'local-only';
+      }
+      for (const key of Object.keys(out)) {
+        if (out[key] === 'local-only' && cloudPropertyIds.has(key)) delete out[key];
+      }
+    }
+    for (const key of Object.keys(out)) {
+      if (!properties.some((p) => String(p.id) === key)) delete out[key];
+    }
+    return out;
+  }, [syncIssues, cloudPropertyIds, properties]);
 
   const value = {
     properties,
+    unsyncedProperties,
+    cloudPropertyIds,
+    retryPropertySync,
+    discardLocalProperty,
+    requestLiveCatalog,
     handleAddProperty,
+    handleImportProperties,
+    handleImportLeads,
     handleUpdateProperty,
     handleDeleteProperty,
     projects,
@@ -752,6 +1014,9 @@ export function PropertiesProvider({ children }) {
     clearCompare,
     leads,
     setLeads,
+    leadsHasMore,
+    loadMoreLeads,
+    searchAllLeads,
     handleAddNewLead,
     handleUpdateLead,
     handleDeleteLead,

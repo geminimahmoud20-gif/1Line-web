@@ -11,8 +11,14 @@ export default function SubmissionSuccess({
   title_ar,
   title_en,
   reference,
+  intro_ar,
+  intro_en,
   steps = [],
+  stepsTitle_ar,
+  stepsTitle_en,
   whatsappText,
+  whatsappLabel_ar,
+  whatsappLabel_en,
   secondaryLink,
 }) {
   const isAr = lang === 'ar';
@@ -27,6 +33,8 @@ export default function SubmissionSuccess({
           {isAr ? 'رقم الطلب المرجعي' : 'Reference'}: <bdi>{ref}</bdi>
         </p>
       )}
+      {(isAr ? intro_ar : intro_en) && <p className="lx-success-intro">{isAr ? intro_ar : intro_en}</p>}
+      {steps.length > 0 && (isAr ? stepsTitle_ar : stepsTitle_en) && <p className="lx-success-steps-title">{isAr ? stepsTitle_ar : stepsTitle_en}</p>}
       {steps.length > 0 && (
         <ol className="lx-success-steps">
           {steps.map((s, i) => (
@@ -43,7 +51,7 @@ export default function SubmissionSuccess({
             rel="noopener noreferrer"
           >
             <MessageCircle size={18} aria-hidden="true" />
-            {isAr ? 'تابع طلبك مع مستشارك عبر واتساب' : 'Follow up on WhatsApp'}
+            {isAr ? (whatsappLabel_ar || 'تابع طلبك مع مستشارك عبر واتساب') : (whatsappLabel_en || 'Follow up on WhatsApp')}
           </a>
         )}
         {secondaryLink && (

@@ -1,0 +1,12 @@
+.hm-testimonials { max-width: 1200px; margin: 0 auto; padding: 56px 20px; }
+.hm-testimonials h2 { margin: 0 0 24px; text-align: center; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; color: var(--text-primary, #0B1C36); }
+.hm-testimonials__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.hm-testimonials__card {
+  display: flex; flex-direction: column; gap: 12px; padding: 22px;
+  background: var(--bg-card, #FFFFFF); border: 1px solid var(--border-light, #E1E6EC); border-radius: 14px;
+}
+.hm-testimonials__icon { color: #B38A45; }
+.hm-testimonials__text { margin: 0; flex: 1; font-size: 0.98rem; line-height: 1.8; color: var(--text-secondary, #334155); }
+.hm-testimonials__who { margin: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.9rem; }
+.hm-testimonials__who strong { color: var(--text-primary, #0B1C36); }
+.hm-testimonials__who span { color: var(--text-muted, #5B6676); font-size: 0.82rem; }

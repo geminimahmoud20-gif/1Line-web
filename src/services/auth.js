@@ -1,7 +1,7 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 // ===================== UTILITY =====================
 
@@ -36,6 +36,17 @@ export const getUserClaims = async (user) => {
 
 const isAdminClaims = (claims) => claims.admin === true || claims.role === 'admin' || claims.role === 'super_admin';
 
+/** The general manager, or an account whose role has «ينشر» (inv.publish): their saves go live */
+export const canPublishInventoryUser = async (user) => {
+  if (!user) return false;
+  try {
+    const claims = await getUserClaims(user);
+    return isAdminClaims(claims) || canPublishInventory(accessFromClaims(claims).perms);
+  } catch {
+    return false;
+  }
+};
+
 export const checkIsAdmin = async (user) => {
   if (!user) return false;
   try {
@@ -44,6 +55,9 @@ export const checkIsAdmin = async (user) => {
     return false;
   }
 };
+
+import { accessFromClaims, canPublishInventory } from '../utils/accessModel.js';
+import { nameFromEmail } from '../utils/assignees.js';
 
 // Staff roles are Firebase custom claims ({ role: 'sales_agent' }), set server-side with
 // scripts/set-crm-role.mjs — a user cannot change their own claims. Must match firestore.rules.
@@ -57,10 +71,24 @@ export const getCrmRole = async (user) => {
   try {
     const claims = await getUserClaims(user);
     if (isAdminClaims(claims)) return 'super_admin';
+    if (claims.staff === true && claims.role) return claims.role;
     if (CRM_STAFF_ROLES.includes(claims.role)) return claims.role;
     return null;
   } catch {
     return null; // fail closed
+  }
+};
+
+/**
+ * Resolves full structured CRM access (role, desk, perms, flags)
+ */
+export const getCrmAccess = async (user) => {
+  if (!user) return { role: null, desk: '', perms: [], isAdmin: false, isStaff: false };
+  try {
+    const claims = await getUserClaims(user);
+    return accessFromClaims(claims);
+  } catch {
+    return { role: null, desk: '', perms: [], isAdmin: false, isStaff: false };
   }
 };
 
@@ -160,6 +188,22 @@ export const loginUser = async (email, password) => {
 };
 
 /**
+ * Email a password-reset link (Firebase's own page sets the new password).
+ * Resolves the same way whether or not the address has an account, so the login screen never
+ * tells a stranger which emails exist. Only a malformed address or rate limiting rejects.
+ */
+export const requestPasswordReset = async (email, lang = 'ar') => {
+  if (!isFirebaseAuthAvailable()) throw new Error('Firebase Auth is not configured');
+  auth.languageCode = lang === 'ar' ? 'ar' : 'en';
+  try {
+    await sendPasswordResetEmail(auth, String(email || '').trim());
+  } catch (error) {
+    if (error?.code === 'auth/user-not-found') return;
+    throw error;
+  }
+};
+
+/**
  * Sign out the current user.
  */
 export const logoutUser = async () => {
@@ -185,7 +229,10 @@ export const monitorAuthState = (callback) => {
     return () => {};
   }
 
-  return onAuthStateChanged(auth, async (user) => {
+  let stopRevocationWatch = () => {};
+  const unsubAuth = onAuthStateChanged(auth, async (user) => {
+    stopRevocationWatch();
+    stopRevocationWatch = () => {};
     if (!user) {
       callback(false, null);
       return;
@@ -196,11 +243,46 @@ export const monitorAuthState = (callback) => {
       callback(false, null);
       return;
     }
+    // Team and fine-grained permissions come from the same token as the role
+    const access = await getCrmAccess(user);
     callback(true, {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
-      role
+      displayName: user.displayName || nameFromEmail(user.email) || 'Admin',
+      role,
+      perms: access.role ? access.perms : [],
+      desk: access.desk || ''
     });
+    stopRevocationWatch = watchForcedSignOut(user);
   });
+  return () => {
+    stopRevocationWatch();
+    unsubAuth();
+  };
 };
+
+export const FORCED_SIGNOUT_KEY = 'oneline_forced_signout';
+
+/**
+ * The super admin can sign a member out (or change their role / team, which does the same):
+ * /api/team stamps session_revocations/{uid}.at. A session that signed in before that moment
+ * ends now, so the member signs in again and picks up their new access.
+ */
+function watchForcedSignOut(user) {
+  if (!db) return () => {};
+  let signedInAt = 0;
+  user.getIdTokenResult().then((r) => { signedInAt = Date.parse(r.authTime) || 0; }).catch(() => {});
+  return onSnapshot(doc(db, 'session_revocations', user.uid), async (snap) => {
+    const at = snap.exists() ? snap.data()?.at?.toMillis?.() || 0 : 0;
+    if (!at) return;
+    if (!signedInAt) {
+      try { signedInAt = Date.parse((await user.getIdTokenResult()).authTime) || 0; } catch { return; }
+    }
+    // 2s slack: the stamp and a sign-in a moment later come from different clocks
+    if (at > signedInAt + 2000) {
+      try { sessionStorage.setItem(FORCED_SIGNOUT_KEY, '1'); } catch { /* storage unavailable */ }
+      try { sessionStorage.removeItem('crm_auth'); } catch { /* storage unavailable */ }
+      await signOut(auth).catch(() => {});
+    }
+  }, () => { /* no doc yet or offline: nothing to do */ });
+}

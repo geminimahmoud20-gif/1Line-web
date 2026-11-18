@@ -1,0 +1,359 @@
+/* Clients list (CRM redesign phase 3): header, views, filters and bulk bar from the UI kit, plus a calmer table.
+   Selectors start at .crm-layout .crm-leads so they win over the older table rules in crm-luxury / crm-density. */
+.crm-leads { font-family: var(--ui-font); }
+.crm-layout .crm-table-container.crm-leads { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.crm-leads .ui-page-head { margin-bottom: var(--ui-s-4); }
+
+.crm-leads__views { display: flex; align-items: center; gap: var(--ui-s-2); overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; margin-bottom: var(--ui-s-3); }
+.crm-leads__views::-webkit-scrollbar { display: none; }
+.crm-leads__views .ui-chip { flex-shrink: 0; }
+.crm-leads__views .ui-chip.is-alert:not([aria-pressed='true']) .ui-count { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-leads__more { flex-shrink: 0; min-width: 150px; }
+.crm-leads__more .ui-select { height: 32px; border-radius: var(--ui-r-full); font-size: var(--ui-fs-2); }
+
+.crm-leads__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); margin-bottom: var(--ui-s-3); }
+.crm-leads__search {
+  flex: 1 1 240px; display: flex; align-items: center; gap: var(--ui-s-2);
+  height: var(--ui-control-h); padding: 0 var(--ui-s-3);
+  background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); color: var(--ui-text-3);
+}
+.crm-leads__search:focus-within { border-color: var(--ui-info); box-shadow: var(--ui-sh-focus); }
+.crm-leads__search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: var(--ui-fw-regular) var(--ui-field-fs) / 1 var(--ui-font); color: var(--ui-text); }
+/* One tidy row: search, sort, columns, filters. The less-used filters open as a panel under it. */
+.crm-leads__sort { flex: 0 0 auto; min-width: 170px; }
+.crm-leads__filters {
+  display: none; flex-basis: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--ui-s-2);
+  padding: var(--ui-s-3); background: var(--ui-surface-2); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg);
+}
+.crm-leads__filters.is-open { display: grid; }
+.crm-leads__filters .ui-field { min-width: 0; }
+.crm-leads__cols-keys { margin: var(--ui-s-2) 0 0; padding: var(--ui-s-2) var(--ui-s-2) 0; border-top: 1px solid var(--ui-line); font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-leads__cols { position: relative; }
+.crm-leads__cols-menu {
+  position: absolute; top: calc(100% + 6px); inset-inline-end: 0; z-index: 30; width: 260px;
+  display: flex; flex-direction: column; gap: 2px; padding: var(--ui-s-2);
+  background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-2);
+}
+.crm-leads__cols-item { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-2); border-radius: var(--ui-r-sm); font-size: var(--ui-fs-3); color: var(--ui-text); cursor: pointer; }
+.crm-leads__cols-item:hover { background: var(--ui-surface-2); }
+.crm-leads__cols-item input { accent-color: var(--ui-primary); width: 16px; height: 16px; }
+.crm-leads__cols-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); padding: var(--ui-s-2) var(--ui-s-2) 0; border-top: 1px solid var(--ui-line); font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+
+.crm-leads__bulk {
+  position: sticky; top: 72px; z-index: 25; display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2);
+  padding: var(--ui-s-2) var(--ui-s-3); margin-bottom: var(--ui-s-3);
+  background: var(--ui-primary-tint); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-1);
+}
+.crm-leads__bulk-count { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-primary-text); margin-inline-end: var(--ui-s-2); }
+.crm-leads__bulk .ui-select { height: var(--ui-control-h-sm); font-size: var(--ui-fs-2); }
+.crm-leads__more-rows { display: flex; justify-content: center; padding: var(--ui-s-4); }
+.crm-layout .crm-leads .crm-leads__empty-cell { padding: 0; }
+
+/* Table */
+.crm-layout .crm-leads .crm-table-scroll-wrapper { background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: none; }
+.crm-layout .crm-leads .crm-table th {
+  font: var(--ui-fw-semibold) var(--ui-fs-1) / 1.3 var(--ui-font); color: var(--ui-text-3); letter-spacing: 0; text-transform: none;
+  background: var(--ui-surface-2); border-bottom: 1px solid var(--ui-line); padding: var(--ui-s-2) var(--ui-s-3);
+}
+.crm-layout .crm-leads .crm-table td { padding: var(--ui-s-3) var(--ui-s-4); border-bottom: 1px solid var(--ui-line); font-size: var(--ui-fs-2); color: var(--ui-text-2); vertical-align: middle; }
+.crm-layout .crm-leads .crm-table tbody tr:hover td { background: var(--ui-surface-hover); }
+.crm-layout .crm-leads .crm-table tbody tr[data-selected] td { background: var(--ui-primary-tint); }
+.crm-layout .crm-leads .crm-table input[type='checkbox'] { accent-color: var(--ui-primary); width: 16px; height: 16px; cursor: pointer; }
+
+.crm-layout .crm-leads .crm-client-identity-wrap { display: flex; align-items: flex-start; gap: var(--ui-s-3); }
+.crm-layout .crm-leads .crm-client-name-link {
+  padding: 0; border: 0; background: none; box-shadow: none; min-height: 0; height: auto;
+  font: var(--ui-fw-bold) var(--ui-fs-3) / 1.3 var(--ui-font); color: var(--ui-text); cursor: pointer; text-align: start;
+}
+.crm-layout .crm-leads .crm-client-name-link:hover { color: var(--ui-primary-text); text-decoration: underline; }
+.crm-layout .crm-leads .crm-client-name-link:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); border-radius: var(--ui-r-sm); }
+.crm-layout .crm-leads .crm-phone-mono-pill { padding: 0; border: 0; background: none; font-size: var(--ui-fs-2); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+.crm-layout .crm-leads .crm-phone-copy-btn { display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--ui-r-sm); background: none; color: var(--ui-text-3); cursor: pointer; }
+.crm-layout .crm-leads .crm-phone-copy-btn:hover { background: var(--ui-surface-2); color: var(--ui-text); }
+.crm-layout .crm-leads .crm-lead-meta { display: flex; flex-wrap: wrap; gap: var(--ui-s-1); margin-top: var(--ui-s-1); }
+.crm-layout .crm-leads .crm-lead-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px var(--ui-s-2); border: 0; border-radius: var(--ui-r-full);
+  background: var(--ui-surface-2); color: var(--ui-text-3); font: var(--ui-fw-medium) var(--ui-fs-1) / 1.6 var(--ui-font);
+}
+.crm-layout .crm-leads .crm-lead-chip.is-waiting { background: var(--ui-warning-tint); color: var(--ui-warning); }
+.crm-layout .crm-leads .crm-lead-chip.is-late { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-layout .crm-leads .crm-lead-chip.is-dupe { background: var(--ui-info-tint); color: var(--ui-info); cursor: pointer; }
+.crm-layout .crm-leads .crm-lead-chip.is-tag { background: var(--ui-primary-tint); color: var(--ui-primary-text); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-layout .crm-leads .crm-lead-chip.is-lost { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-layout .crm-leads .crm-lead-budget-val { color: var(--ui-text); font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+.crm-layout .crm-leads .crm-lead-spec-sub { color: var(--ui-text-3); font-size: var(--ui-fs-1); }
+
+.crm-leads__score { display: flex; align-items: center; gap: var(--ui-s-2); flex-wrap: wrap; }
+.crm-layout .crm-leads .crm-leads__temp {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 var(--ui-s-2);
+  border: 1px solid var(--ui-line); border-radius: var(--ui-r-full); background: var(--ui-surface);
+  font: var(--ui-fw-medium) var(--ui-fs-1) / 1 var(--ui-font); color: var(--ui-text-2); cursor: pointer; white-space: nowrap;
+}
+.crm-layout .crm-leads .crm-leads__temp:hover:not(:disabled) { border-color: var(--ui-text-3); }
+.crm-layout .crm-leads .crm-leads__temp:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.crm-leads__temp-dot { width: 8px; height: 8px; border-radius: var(--ui-r-full); background: var(--ui-line-strong); }
+.crm-leads__temp.is-hot .crm-leads__temp-dot { background: var(--ui-danger); }
+.crm-leads__temp.is-warm .crm-leads__temp-dot { background: var(--ui-warning); }
+.crm-leads__temp.is-cold .crm-leads__temp-dot { background: var(--ui-info); }
+
+.crm-layout .crm-leads .crm-table .crm-agent-select {
+  height: 32px; min-height: 32px; padding-block: 0; border: 0; background-color: transparent; box-shadow: none;
+  font: var(--ui-fw-medium) var(--ui-fs-2) / 1 var(--ui-font); color: var(--ui-text-2);
+}
+.crm-layout .crm-leads .crm-agent-select-wrap { background: none; border: 0; box-shadow: none; gap: var(--ui-s-2); }
+.crm-btn-quick {
+  display: inline-flex; align-items: center; gap: var(--ui-s-1); height: 32px; padding: 0 var(--ui-s-3);
+  border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); box-shadow: none;
+  font: var(--ui-fw-semibold) var(--ui-fs-2) / 1 var(--ui-font); color: var(--ui-text);
+}
+.crm-btn-quick:hover { background: var(--ui-surface-2); }
+.crm-btn-quick:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.crm-layout .crm-leads .crm-action-group .crm-icon-btn { width: 32px; height: 32px; border-radius: var(--ui-r-md); }
+.crm-layout .crm-leads .crm-next-action-empty { color: var(--ui-text-3); font-size: var(--ui-fs-1); display: inline-flex; align-items: center; gap: 4px; border: 1px dashed var(--ui-line-strong); border-radius: var(--ui-r-md); padding: 4px var(--ui-s-2); background: none; }
+.crm-layout .crm-leads .crm-next-action-pill { background: var(--ui-surface-2); border: 0; color: var(--ui-text-2); border-radius: var(--ui-r-md); }
+.crm-layout .crm-leads .crm-agent-avatar-sm { background: var(--ui-primary-tint); color: var(--ui-primary-text); }
+.crm-layout .crm-leads .crm-kbd-hint { font-size: var(--ui-fs-1); color: var(--ui-text-3); margin: 0 0 var(--ui-s-2); }
+
+@media (max-width: 768px) {
+  /* Phones: each client is a card, the name line first and the rest indented under it */
+  .crm-layout .crm-leads .crm-table { min-width: 0; width: 100%; }
+  .crm-layout .crm-leads .crm-table thead { display: none; }
+  .crm-layout .crm-leads .crm-table-scroll-wrapper { background: transparent; border: 0; box-shadow: none; }
+  .crm-layout .crm-leads .crm-table tbody tr {
+    display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--ui-s-2) var(--ui-s-2);
+    padding: var(--ui-s-3); margin-bottom: var(--ui-s-2);
+    background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-1);
+  }
+  .crm-layout .crm-leads .crm-table tbody tr[data-selected] { border-color: var(--ui-primary); }
+  .crm-layout .crm-leads .crm-table tbody tr td,
+  [dir='rtl'] .crm-layout .crm-leads .crm-table tbody tr td {
+    grid-column: 2; padding: 0; margin: 0; min-height: 0; border: 0; background: none; text-align: start;
+  }
+  .crm-layout .crm-leads .crm-table tbody tr td:first-child { grid-column: 1; grid-row: 1; padding-top: 2px; }
+  .crm-layout .crm-leads .crm-table tbody tr td::before { content: none; display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr:hover,
+  .crm-layout .crm-leads .crm-table tbody tr:hover td { background: var(--ui-surface); }
+  .crm-layout .crm-leads .crm-table tbody tr td { background: var(--ui-surface); }
+  .crm-layout .crm-leads .crm-table tbody tr td[data-label='الإجراءات'],
+  .crm-layout .crm-leads .crm-table tbody tr td[data-label='Actions'] { padding-top: var(--ui-s-2); border-top: 1px solid var(--ui-line); }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-kbd-active td { background: none !important; }
+  /* The empty message is a row's first cell too: it must span the card, not sit in the 28px checkbox column */
+  .crm-layout .crm-leads .crm-empty-state-card,
+  .crm-layout .crm-leads .crm-table tbody tr td.crm-leads__empty-cell { grid-column: 1 / -1; grid-row: auto; }
+}
+
+@media (max-width: 767px) {
+  .crm-leads__search { flex-basis: 100%; }
+  .crm-leads__sort { flex: 1 1 0; min-width: 0; }
+  .crm-leads__filters.is-open { grid-template-columns: 1fr 1fr; }
+  .crm-leads__bulk { top: 64px; }
+  .crm-layout .crm-leads .crm-kbd-hint { display: none; }
+}
+
+/* Calmer cells: the budget on its own line with its currency, single-line follow-up and owner */
+.crm-layout .crm-leads .crm-lead-budget-val { display: block; white-space: nowrap; }
+.crm-layout .crm-leads .crm-next-action-empty { white-space: nowrap; }
+.crm-layout .crm-leads .crm-table td:is([data-label='المسؤول'], [data-label='Agent']) { min-width: 150px; }
+
+@media (max-width: 768px) {
+  /* Phone card: name, then budget, then one row of score · status · follow-up · owner, then actions,
+     instead of one line per field */
+  .crm-layout .crm-leads .crm-table tbody tr { display: flex; flex-wrap: wrap; align-items: center; }
+  .crm-layout .crm-leads .crm-table tbody tr td,
+  [dir='rtl'] .crm-layout .crm-leads .crm-table tbody tr td { flex: 1 1 100%; min-width: 0; }
+  .crm-layout .crm-leads .crm-table tbody tr td:first-child { flex: 0 0 28px; align-self: flex-start; }
+  .crm-layout .crm-leads .crm-table tbody tr td:nth-child(2) { flex: 1 1 calc(100% - 40px); }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الجدية والحرارة'], [data-label='Score & Temp'],
+    [data-label='الحالة'], [data-label='Status'], [data-label='المتابعة القادمة'], [data-label='Next Action']) { flex: 0 0 auto; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المسؤول'], [data-label='Agent']) { flex: 1 1 140px; }
+  .crm-layout .crm-leads .crm-table tbody tr td.crm-leads__empty-cell { flex: 1 1 100%; }
+}
+
+/* Today's urgent work: late first replies and follow-ups due, one tap to the list */
+.crm-leads__urgent { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--ui-s-3); }
+.crm-leads__urgent-btn { min-height: 40px; padding: 0 14px; border-radius: var(--ui-r-md); border: 1px solid var(--ui-line-strong); background: var(--ui-surface-2); color: var(--ui-text); font: inherit; font-weight: 700; cursor: pointer; }
+.crm-leads__urgent-btn.is-late { border-color: var(--ui-danger); }
+
+/* Inbox on a phone: the first screen is clients, not tools. Header buttons on one row, the two urgent
+   buttons side by side, and each card leads with call / WhatsApp / open before the details. */
+.crm-layout .crm-leads .crm-leads__score-label { display: none; }
+.crm-layout .crm-leads .crm-icon-btn.is-call { color: var(--ui-primary-text); }
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .ui-page-head { margin-bottom: var(--ui-s-3); gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .ui-page-head__actions { flex: 1 1 100%; flex-wrap: nowrap; }
+  .crm-layout .crm-leads .ui-page-head__actions > * { flex: 1 1 0; min-width: 0; }
+  .crm-layout .crm-leads .ui-page-head__actions .ui-btn { width: 100%; justify-content: center; padding-inline: var(--ui-s-2); }
+  .crm-leads__urgent { flex-wrap: nowrap; gap: var(--ui-s-2); }
+  .crm-leads__urgent-btn { flex: 1 1 0; min-width: 0; min-height: 36px; padding: 0 var(--ui-s-2); font-size: var(--ui-fs-2); line-height: 1.3; }
+  .crm-layout .crm-leads .crm-leads__score-label { display: inline; }
+  /* Card order: checkbox + name/phone, then the contact buttons, then budget, score, status, follow-up, owner */
+  .crm-layout .crm-leads .crm-table tbody tr td,
+  [dir='rtl'] .crm-layout .crm-leads .crm-table tbody tr td { order: 2; }
+  .crm-layout .crm-leads .crm-table tbody tr td:first-child,
+  .crm-layout .crm-leads .crm-table tbody tr td:nth-child(2) { order: 0; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الإجراءات'], [data-label='Actions']) {
+    order: 1; padding-top: 0; border-top: 0; padding-bottom: var(--ui-s-2); border-bottom: 1px solid var(--ui-line);
+  }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الإجراءات'], [data-label='Actions']) .crm-action-group { flex-wrap: nowrap; }
+  .crm-layout .crm-leads .crm-icon-btn.is-call,
+  .crm-layout .crm-leads .crm-action-group .crm-icon-btn { width: 40px; height: 40px; }
+  .crm-layout .crm-leads .crm-action-group .crm-btn-quick { height: 40px; flex: 1 1 auto; justify-content: center; }
+}
+.crm-layout .crm-leads .crm-lead-chip.is-escalated { box-shadow: inset 0 0 0 1px var(--ui-danger); font-weight: var(--ui-fw-bold); }
+
+/* ===== Clients on a phone, redesigned =====
+   The page title is already in the top bar, so the header is one slim row (new client, and import /
+   export as icons). The urgent strip repeats two of the view chips, so it goes. Column choice means
+   nothing on cards. Each client is a compact card:
+     name
+     phone · source · wait
+     [call] [open] [WhatsApp] [more]
+     budget · type · area
+     status · temperature · score
+     next step
+     owner                                                                                         */
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .ui-page-head { margin-bottom: var(--ui-s-2); }
+  .crm-layout .crm-leads .ui-page-head__titles { display: none; }
+  .crm-layout .crm-leads .ui-page-head__actions { flex: 1 1 100%; gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .ui-page-head__actions > :first-child { flex: 1 1 auto; }
+  .crm-layout .crm-leads .crm-leads__import,
+  .crm-layout .crm-leads .dx-menu { flex: 0 0 44px; }
+  .crm-layout .crm-leads .crm-leads__import { width: 44px; padding: 0; justify-content: center; }
+  .crm-layout .crm-leads .crm-leads__lbl,
+  .crm-layout .crm-leads .dx-menu__label,
+  .crm-layout .crm-leads .dx-menu .ui-btn > svg:last-child { display: none; }
+  .crm-layout .crm-leads .dx-menu .ui-btn { width: 44px; padding: 0; justify-content: center; }
+  .crm-leads__urgent { display: none; }
+  .crm-layout .crm-leads .crm-leads__cols { display: none; }
+  .crm-layout .crm-leads .crm-leads__toolbar { gap: var(--ui-s-2); }
+
+  /* Card */
+  .crm-layout .crm-leads .crm-table tbody tr { padding: var(--ui-s-3); gap: var(--ui-s-2) var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-table .crm-client-identity-wrap .ui-avatar,
+  .crm-layout .crm-leads .crm-table .crm-client-identity-wrap [class*='avatar'] { display: none; }
+  .crm-layout .crm-leads .crm-client-identity-meta { display: flex; flex-direction: row; flex: 1 1 0; min-width: 0; flex-wrap: wrap; align-items: center; gap: 2px var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-client-identity-meta > .crm-client-identity-row:first-child { flex: 1 1 100%; }
+  .crm-layout .crm-leads .crm-client-name-link { font-size: var(--ui-fs-4); font-weight: var(--ui-fw-bold); text-align: start; }
+  .crm-layout .crm-leads .crm-lead-meta { display: flex; flex-wrap: nowrap; gap: var(--ui-s-1); overflow: hidden; }
+  .crm-layout .crm-leads .crm-lead-meta .crm-lead-chip.is-tag { display: none; }
+  /* Budget, type and area on one line */
+  .crm-layout .crm-leads .crm-lead-req-cell { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-lead-budget-val { font-size: var(--ui-fs-4); }
+  .crm-layout .crm-leads .crm-lead-spec-sub { font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+  /* Status, temperature and score share one line, as plain chips rather than three bordered controls */
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الجدية والحرارة'], [data-label='Score & Temp'],
+    [data-label='الحالة'], [data-label='Status']) { flex: 0 0 auto; }
+  .crm-layout .crm-leads .crm-status-select-wrap { padding: 0 var(--ui-s-2); min-height: 32px; border-radius: var(--ui-r-full); }
+  .crm-layout .crm-leads .crm-status-select-wrap .crm-status-select,
+  .crm-layout .crm-leads .crm-table .crm-status-select { border: 0; background-color: transparent; box-shadow: none; min-height: 30px; height: 30px; padding-inline: var(--ui-s-1); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+  .crm-layout .crm-leads .crm-leads__score { gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-leads__temp { min-height: 32px; border: 0; background: var(--ui-surface-2); padding-inline: var(--ui-s-2); font-size: var(--ui-fs-2); }
+  /* Follow-up and owner: one quiet line each */
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المتابعة القادمة'], [data-label='Next Action'], [data-label='المسؤول'], [data-label='Agent']) { flex: 1 1 100%; }
+  .crm-layout .crm-leads .crm-next-action-pill { max-width: 100%; }
+  .crm-layout .crm-leads .crm-next-action-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crm-layout .crm-leads .crm-agent-select-wrap { padding: 0; min-height: 28px; }
+}
+
+/* The card, tighter still: no copy button (the number is tap-to-call), no empty follow-up
+   placeholder, follow-up and owner side by side, smaller buttons */
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .crm-phone-copy-btn { display: none; }
+  .crm-layout .crm-leads .crm-next-action-empty { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المتابعة القادمة'], [data-label='Next Action']):has(.crm-next-action-empty) { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المتابعة القادمة'], [data-label='Next Action'], [data-label='المسؤول'], [data-label='Agent']) { flex: 1 1 calc(50% - var(--ui-s-3)); min-width: 0; }
+  .crm-layout .crm-leads .crm-table tbody tr { padding: var(--ui-s-2) var(--ui-s-3) var(--ui-s-3); gap: var(--ui-s-1) var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-phone-mono-pill { padding: 0; background: none; border: 0; font-size: var(--ui-fs-3); }
+  .crm-layout .crm-leads .crm-lead-chip { min-height: 22px; font-size: var(--ui-fs-1); }
+  .crm-layout .crm-leads .crm-lead-req-cell { gap: 0 var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-agent-select { max-width: 100%; text-overflow: ellipsis; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الإجراءات'], [data-label='Actions']) { padding-bottom: var(--ui-s-1); }
+  .crm-layout .crm-leads .crm-icon-btn.is-call,
+  .crm-layout .crm-leads .crm-action-group .crm-icon-btn { width: 36px; height: 36px; }
+  .crm-layout .crm-leads .crm-action-group .crm-btn-quick { height: 36px; }
+}
+
+/* Source chips: an icon each; ads stand out (they are the clients with the 15-minute reply target) */
+.crm-layout .crm-leads .crm-lead-chip.is-source { display: inline-flex; align-items: center; gap: 4px; }
+.crm-layout .crm-leads .crm-lead-chip.is-source-ads { background: var(--ui-primary-tint); color: var(--ui-primary-text); font-weight: var(--ui-fw-semibold); }
+
+/* ── Clients list: tidier header, row accents, a readable follow-up column ── */
+.crm-leads__stats { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-1) var(--ui-s-3); font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.crm-leads__stats > span { display: inline-flex; align-items: baseline; gap: 4px; }
+.crm-leads__stats b { color: var(--ui-text); font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+.crm-leads__stats > span + span::before { content: ''; width: 3px; height: 3px; margin-inline-end: var(--ui-s-3); border-radius: 50%; background: var(--ui-line-strong); align-self: center; }
+
+.crm-leads__urgent { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); margin-bottom: var(--ui-s-3); }
+.crm-layout .crm-leads__urgent-btn {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-full); background: var(--ui-warning-tint); color: var(--ui-warning); box-shadow: none;
+  font: var(--ui-fw-semibold) var(--ui-fs-2) / 1 var(--ui-font); cursor: pointer;
+}
+.crm-layout .crm-leads__urgent-btn.is-late { background: var(--ui-danger-tint); color: var(--ui-danger); }
+
+/* A coloured edge on the row: hot clients and late follow-ups stand out while scrolling */
+.crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:first-child { border-inline-start: 3px solid transparent; }
+.crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-hot > td:first-child { border-inline-start-color: var(--ui-warning); }
+.crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-overdue > td:first-child { border-inline-start-color: var(--ui-danger); }
+
+.crm-layout .crm-leads .crm-lead-age { font-size: var(--ui-fs-1); color: var(--ui-text-3); align-self: center; }
+
+/* Follow-up: when (coloured), then the note on up to two lines */
+.crm-layout .crm-leads .crm-next { display: flex; flex-direction: column; gap: 2px; min-width: 120px; max-width: 190px; cursor: pointer; }
+.crm-layout .crm-leads .crm-next__when { display: inline-flex; align-items: center; gap: 4px; font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); }
+.crm-layout .crm-leads .crm-next.is-today .crm-next__when { color: var(--ui-warning); }
+.crm-layout .crm-leads .crm-next.is-overdue .crm-next__when { color: var(--ui-danger); }
+.crm-layout .crm-leads .crm-next__note { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--ui-fs-1); line-height: 1.5; color: var(--ui-text-3); }
+
+/* Fit the table: tighter cells, the score and temperature stacked, a narrower owner picker */
+.crm-layout .crm-leads .crm-table { min-width: 0; }
+.crm-layout .crm-leads .crm-table td { padding: var(--ui-s-3); }
+.crm-layout .crm-leads .crm-table th { padding-inline: var(--ui-s-3); white-space: nowrap; }
+.crm-layout .crm-leads .crm-leads__score { flex-direction: column; align-items: flex-start; gap: var(--ui-s-1); }
+.crm-layout .crm-leads .crm-table .crm-agent-select { max-width: 120px; }
+.crm-layout .crm-leads .crm-status-select-wrap { min-width: 112px; }
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .crm-next { max-width: none; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-leads__score { flex-direction: row; align-items: center; }
+}
+
+.crm-leads__dupebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); padding: var(--ui-s-3) var(--ui-s-4); margin-bottom: var(--ui-s-3); background: var(--ui-info-tint); border-radius: var(--ui-r-md); font-size: var(--ui-fs-2); color: var(--ui-text); }
+
+.crm-outcome { display: flex; flex-direction: column; gap: 2px; }
+.crm-outcome strong { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.crm-outcome small { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+
+.crm-layout .crm-leads .crm-lead-source { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: var(--ui-s-1); min-width: 0; }
+.crm-lead-campaign { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+
+/* Desktop: the new columns keep their room (the follow-up header and its «حدد متابعة» button were cut) and the
+   stage select no longer takes the width the others need */
+@media (min-width: 769px) {
+  .crm-layout .crm-leads .crm-table th.crm-th--next { min-width: 190px; }
+  .crm-layout .crm-leads .crm-table th.crm-th--outcome { min-width: 130px; }
+  .crm-layout .crm-leads .crm-table th.crm-th--status { min-width: 130px; width: 150px; }
+  .crm-layout .crm-leads .crm-table .crm-status-select-wrap { max-width: 160px; }
+  .crm-layout .crm-leads .crm-table .crm-next { min-width: 0; }
+  .crm-layout .crm-leads .crm-table .crm-next__note { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* ── Phones, the final word ──
+   Several phone rules above lost to a base rule written further down the file (same specificity, later wins):
+   the two urgent buttons stayed on screen although the view chips already show the same counts. The rules
+   here come last and carry the full selector. A card also drops what has nothing to say: the checkbox
+   (bulk work is a desktop job) and an empty «last outcome» line. */
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .crm-leads__urgent { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:first-child { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='آخر نتيجة'], [data-label='Last outcome']):has(> .crm-empty-value) { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:nth-child(2) { flex-basis: 100%; }
+}
+@media (max-width: 768px) {
+  /* Stage, temperature and score read as one row of chips: the stage picker is as wide as its words */
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الحالة'], [data-label='Status']) .crm-status-select-wrap { width: auto; min-width: 0; max-width: 100%; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الحالة'], [data-label='Status']) .crm-status-select { width: auto; max-width: 150px; }
+}
+/* Arabic and English in one line (a campaign name next to an ad's code) keep the order they were written in */
+.crm-lead-campaign { unicode-bidi: plaintext; }

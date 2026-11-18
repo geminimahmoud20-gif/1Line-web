@@ -1,0 +1,78 @@
+/* «تقرير الحملات»: cards that stack on phones */
+.crm-layout .cr-panel { background: transparent; border: 0; box-shadow: none; padding: 0; font-family: var(--ui-font); }
+.cr-head h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1.2rem; }
+.cr-head p { margin: 0 0 12px; color: var(--ui-text-3); line-height: 1.7; }
+.cr-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.cr-seg { display: inline-flex; border: 1px solid var(--ui-line-strong); border-radius: 10px; overflow: hidden; background: var(--ui-surface); }
+.cr-seg button { min-height: 40px; padding: 0 14px; border: 0; background: transparent; font: inherit; cursor: pointer; color: inherit; }
+.cr-seg button.is-on { background: var(--ui-primary); color: white; }
+.cr-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.cr-totals > div { background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.cr-totals b { font-size: 1.4rem; }
+.cr-totals span { color: var(--ui-text-3); font-size: 0.85rem; }
+.cr-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cr-row { background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: 12px; padding: 14px; display: grid; gap: 12px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) minmax(0, 1.6fr); align-items: center; }
+.cr-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.cr-name small { color: var(--ui-text-3); }
+.cr-nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 0; text-align: center; }
+.cr-nums dt { font-size: 0.78rem; color: var(--ui-text-3); }
+.cr-nums dd { margin: 0; font-weight: 800; }
+.cr-nums small { font-weight: 400; color: var(--ui-text-3); }
+.cr-money { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.cr-money b { display: block; min-height: 38px; line-height: 38px; }
+.cr-money span { display: block; font-size: 0.78rem; color: var(--ui-text-3); }
+.cr-money input { width: 100%; min-height: 38px; padding: 0 8px; border: 1px solid var(--ui-line-strong); border-radius: 8px; font: inherit; background: transparent; color: inherit; }
+.cr-note { margin: 12px 0 0; color: var(--ui-text-3); font-size: 0.85rem; line-height: 1.7; }
+@media (max-width: 820px) {
+  .cr-row { grid-template-columns: 1fr; }
+  .cr-money { grid-template-columns: 1fr 1fr; }
+  .cr-money label { grid-column: 1 / -1; }
+  .cr-totals > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .cr-seg { flex: 1 1 100%; }
+  .cr-seg button { flex: 1; padding: 0 8px; }
+}
+.cr-name .cr-lost { color: var(--ui-danger); }
+
+/* The ad link builder */
+.cr-builder { margin-bottom: 14px; border: 1px solid var(--ui-line-strong); border-radius: 12px; background: var(--ui-surface); }
+.cr-builder > summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; cursor: pointer; font-weight: 700; }
+.cr-builder__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; padding: 0 14px 10px; }
+.cr-builder__grid label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--ui-text-3); }
+.cr-builder__grid select, .cr-builder__grid input, .cr-builder__out input { min-height: 40px; padding: 0 10px; border: 1px solid var(--ui-line-strong); border-radius: 8px; background: var(--ui-surface); color: var(--ui-text); font: inherit; width: 100%; min-width: 0; }
+.cr-builder__warn, .cr-builder__hint { margin: 0 14px 10px; font-size: 0.85rem; line-height: 1.7; }
+.cr-builder__warn { color: var(--ui-danger); }
+.cr-builder__hint { color: var(--ui-text-3); }
+.cr-builder__out { display: flex; gap: 8px; padding: 0 14px 14px; }
+.cr-pull { display: grid; gap: var(--ui-s-2); }
+.cr-pull__msg { margin: 0; font-size: var(--ui-fs-3); }
+.cr-pull__msg.is-ok { color: var(--ui-success); }
+.cr-pull__msg.is-bad { color: var(--ui-danger); }
+.cr-pull__more { border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); padding: 0 var(--ui-s-3); }
+.cr-pull__more summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.cr-pull__more ul { margin: 0 0 var(--ui-s-3); padding-inline-start: var(--ui-s-4); }
+
+/* Pairing a Meta campaign with a CRM campaign */
+.cr-pull__more .cr-pair { list-style: none; padding-inline-start: 0; display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.cr-pair li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-2) var(--ui-s-3); }
+.cr-pair li > span { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.cr-pair small { color: var(--ui-text-3); }
+.cr-pair select { flex: 0 1 220px; min-width: 160px; min-height: 40px; }
+
+/* The report by kind of ad */
+.cr-kinds { margin-bottom: var(--ui-s-3); }
+.cr-kinds h3 { margin: 0 0 var(--ui-s-2); font-size: var(--ui-fs-3); }
+.cr-kinds__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--ui-s-2); }
+.cr-kind { padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.cr-kind strong { display: block; margin-bottom: var(--ui-s-2); font-size: var(--ui-fs-2); }
+.cr-kind dl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ui-s-1) var(--ui-s-3); margin: 0; }
+.cr-kind dl > div { display: flex; justify-content: space-between; gap: var(--ui-s-2); font-size: var(--ui-fs-1); }
+.cr-kind dt { color: var(--ui-text-3); }
+.cr-kind dd { margin: 0; font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+
+.cr-nums { grid-template-columns: repeat(6, 1fr); }
+@media (max-width: 820px) { .cr-nums { grid-template-columns: repeat(3, 1fr); } }
+
+.cr-namebtn { align-self: start; background: none; border: 0; padding: 0; color: var(--ui-accent); font-size: 12px; cursor: pointer; text-decoration: underline; min-height: 24px; }
+.cr-nameform { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cr-nameform input { flex: 1; min-width: 140px; min-height: 36px; padding: 0 8px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface); color: inherit; }
+.cr-nameform button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--ui-accent); color: var(--ui-on-accent); cursor: pointer; }

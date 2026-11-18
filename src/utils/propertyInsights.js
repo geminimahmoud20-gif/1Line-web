@@ -1,3 +1,4 @@
+import { paymentTerms, hasInstallmentPlan } from './paymentTerms.js';
 // =============================================================
 //  1LINE — Property insight helpers (finance breakdown, family hub, commercial hub)
 //  Everything here reads optional fields the team fills in the CRM property editor.
@@ -99,6 +100,18 @@ export function computeRentalYield({ price, size, rentPerSqm, occupancyPct = 90,
   };
 }
 
+/**
+ * Is a yield believable? Shops and offices in Egypt rent for roughly 6–15% of their price a
+ * year, so a result far outside that almost always means the rent was typed for the wrong unit
+ * (the whole shop entered as per-m², or the reverse). 'high' | 'low' | null.
+ */
+export function yieldSanity(r) {
+  if (!r) return null;
+  if (r.grossYieldPct > 30) return 'high';
+  if (r.grossYieldPct < 2) return 'low';
+  return null;
+}
+
 // ── Transparent financial breakdown ────────────────────────────
 /**
  * Everything the buyer pays, from the listing's own numbers.
@@ -114,17 +127,23 @@ export function computeFinanceBreakdown(p) {
   const cashPrice = num(f.cashPrice) && num(f.cashPrice) <= price ? num(f.cashPrice) : price;
   const cashDiscountPct = cashPrice < price ? ((price - cashPrice) / price) * 100 : 0;
 
-  const down = num(p.downPayment);
-  const monthly = num(p.monthlyInstallment);
-  const quarterly = num(f.quarterlyInstallment);
-  const years = num(p.installmentYears);
-  const months = years * 12;
-  const handover = num(f.handoverPayment);
-  const hasPlan = Boolean((monthly || quarterly) && months);
+  // A listing marked cash (CRM → طريقة السداد) has no plan, whatever older fields still hold
+  const isCash = p.paymentType === 'cash';
+  const down = isCash ? 0 : num(p.downPayment);
+  const monthly = isCash ? 0 : num(p.monthlyInstallment);
+  const quarterly = isCash ? 0 : num(f.quarterlyInstallment);
+  const months = isCash ? 0 : (Math.round(num(p.installmentMonths)) || num(p.installmentYears) * 12);
+  const years = months / 12;
+  const handover = isCash ? 0 : num(f.handoverPayment);
+  // Plans entered as an installment + how often + count (CRM → طريقة السداد): read them as they
+  // were typed (e.g. 9 quarterly installments), never as a monthly equivalent
+  const terms = paymentTerms(p);
+  const typed = !isCash && num(p.installmentAmount) > 0 && hasInstallmentPlan(terms);
+  const hasPlan = typed || Boolean((monthly || quarterly) && months);
 
-  const installmentTotal = hasPlan
-    ? down + monthly * months + quarterly * Math.floor(months / 3) + handover
-    : 0;
+  const installmentTotal = !hasPlan ? 0
+    : typed ? terms.total + handover
+      : down + monthly * months + quarterly * Math.floor(months / 3) + handover;
 
   const maintenance = num(f.maintenanceDeposit) || (num(f.maintenancePct) ? price * num(f.maintenancePct) / 100 : 0);
   const maintenancePct = maintenance ? (maintenance / price) * 100 : 0;
@@ -141,8 +160,11 @@ export function computeFinanceBreakdown(p) {
     plan: hasPlan ? {
       down,
       downPct: (down / price) * 100,
-      monthly,
-      quarterly,
+      monthly: typed ? 0 : monthly,
+      quarterly: typed ? 0 : quarterly,
+      // The typed plan: the installment, how often, how many, and yearly payments
+      installment: typed ? { amount: terms.amount, every: terms.every, count: terms.periods } : null,
+      yearly: typed && terms.yearlyAmount ? { amount: terms.yearlyAmount, count: terms.yearlyCount } : null,
       months,
       years,
       handover,

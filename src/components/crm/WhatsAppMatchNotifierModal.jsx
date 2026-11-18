@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { SITE_URL } from '../../config/siteConfig';
 import { 
   MessageSquare, 
   Send, 
@@ -51,8 +52,8 @@ export default function WhatsAppMatchNotifierModal({
   const metaCloudApiPayload = useMemo(() => {
     if (!property || matchedClients.length === 0) return null;
     const propertyTitle = property.title_ar || property.title || 'وحدة عقارية مميزة';
-    const propertyPrice = (property.price || 0).toLocaleString('ar-EG');
-    const propertyUrl = typeof window !== 'undefined' ? `${window.location.origin}/property/${property.id}` : `https://1line-sohag.com/property/${property.id}`;
+    const propertyPrice = (property.price || 0).toLocaleString('ar-EG-u-nu-latn');
+    const propertyUrl = `${SITE_URL}/properties/${property.id}`;
 
     return {
       dispatcher: '1Line Real Estate Meta WhatsApp Cloud API',
@@ -250,7 +251,7 @@ export default function WhatsAppMatchNotifierModal({
             <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-on-dark)' }}>{property.title_ar || property.title_en}</strong>
             <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-on-dark-muted)' }}>
               <span>📍 {property.locationName_ar || 'سوهاج'}</span>
-              <span>💰 {(property.price || 0).toLocaleString()} ج.م</span>
+              <span>💰 {(property.price || 0).toLocaleString('en-US')} ج.م</span>
               <span>📐 {property.size} م²</span>
             </div>
           </div>
@@ -411,7 +412,7 @@ export default function WhatsAppMatchNotifierModal({
                 borderRadius: '8px',
                 maxHeight: '160px',
                 overflowY: 'auto',
-                fontFamily: 'monospace'
+                fontFamily: 'inherit'
               }}>
                 {JSON.stringify(metaCloudApiPayload, null, 2)}
               </pre>
@@ -479,7 +480,7 @@ export default function WhatsAppMatchNotifierModal({
                       <div style={{ display: 'flex', gap: '12px', marginTop: '3px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>
                         <span>📱 {client.phone}</span>
                         <span>🏷️ {client.source}</span>
-                        {client.leadBudget > 0 && <span>💰 ميزانية: {client.leadBudget.toLocaleString()} ج.م</span>}
+                        {client.leadBudget > 0 && <span>💰 ميزانية: {client.leadBudget.toLocaleString('en-US')} ج.م</span>}
                       </div>
 
                       {/* Snippet */}

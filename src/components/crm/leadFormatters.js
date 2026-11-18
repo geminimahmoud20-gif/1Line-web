@@ -1,7 +1,9 @@
 // Lead labels and CSV export rows for the CRM leads table (Arabic / English).
-import { PROPERTY_TYPES, SOHAG_AREAS } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { areaLabel } from '../../utils/placeLabels';
 import { getAreas } from '../../utils/areasData';
 import { formatLeadType } from '../../utils/crmLabels';
+import { leadScore } from '../../utils/crmLeadViews';
 
 // Leads keep area/budget/propertyType under `details`; exporting the raw objects left those columns empty.
 export const LEAD_EXPORT_HEADERS = {
@@ -27,7 +29,7 @@ export const LEAD_EXPORT_HEADERS = {
 /** Formatters bound to the current language; `t` is the CRM translation table. */
 export function makeLeadFormatters(isAr, t = {}) {
   const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'N/A';
+    if (!typeKey || typeKey === 'undefined' || typeKey === 'null') return isAr ? 'عقار غير محدد' : 'N/A';
     const found = PROPERTY_TYPES.find(t => t.id === typeKey);
     if (found) return isAr ? found.name_ar : found.name_en;
     const fallbackMap = {
@@ -42,22 +44,28 @@ export function makeLeadFormatters(isAr, t = {}) {
   };
 
   const getLocalizedArea = (areaKey) => {
-    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
-    // getAreas() includes Cairo and CMS-added districts; SOHAG_AREAS is the static fallback
-    const found = getAreas().find(a => a.id === areaKey) || SOHAG_AREAS.find(a => a.id === areaKey);
-    if (found) return isAr ? found.name_ar : found.name_en;
-    return areaKey;
+    if (!areaKey || areaKey === 'undefined' || areaKey === 'null') return isAr ? 'سوهاج' : 'Sohag';
+    if (areaKey === 'all') return isAr ? 'كل المناطق' : 'Any area';
+    // The live list only. An old id (east, kawthar…) keeps its old name, marked as removed
+    const found = getAreas().find(a => a.id === areaKey);
+    if (found) return isAr ? found.name_ar : (found.name_en || found.name_ar);
+    const legacy = areaLabel(areaKey, isAr);
+    if (String(areaKey).startsWith('cairo_')) return legacy; // Greater Cairo choices in the buy wizard
+    if (/[\u0600-\u06FF]/.test(areaKey)) return areaKey;     // typed text, already a place name
+    if (legacy && legacy !== areaKey) return isAr ? `${legacy} (منطقة محذوفة)` : `${legacy} (removed area)`;
+    return isAr ? 'منطقة محذوفة' : 'Removed area';
   };
 
   const formatLeadStatus = (status) => {
     const map = {
-      new: ['جديد', 'New'],
-      contacted: ['تم التواصل', 'Contacted'],
-      site_visit: ['معاينة مجدولة', 'Site visit'],
-      negotiating: ['قيد التفاوض', 'Negotiating'],
-      closing: ['توقيع وحجز', 'Closing'],
-      closed: ['صفقة ناجحة', 'Closed won'],
-      lost: ['مفقود', 'Lost']
+      new: ['عميل محتمل', 'Lead'],
+      contacted: ['مؤهل', 'Qualified'],
+      site_visit: ['اجتماع / معاينة', 'Meeting / viewing'],
+      negotiating: ['تفاوض', 'Negotiation'],
+      closing: ['إغلاق (توقيع وحجز)', 'Closing'],
+      closed: ['إغلاق', 'Closed'],
+      lost: ['خسارة', 'Lost'],
+      inactive: ['غير متفاعل', 'Unresponsive']
     };
     const hit = map[status] || map.new;
     return isAr ? hit[0] : hit[1];
@@ -97,7 +105,7 @@ export function makeLeadFormatters(isAr, t = {}) {
       budget: l.budget || d.budget || d.expectedPrice || '',
       status: formatLeadStatus(l.status),
       temperature: { hot: 'ساخن', warm: 'دافئ', cold: 'بارد' }[l.temperature] || '',
-      score: l.score ?? '',
+      score: leadScore(l).score,
       assignedTo: l.assignedTo || '',
       source: l.source || '',
       nextFollowUpAt: l.nextFollowUpAt || '',

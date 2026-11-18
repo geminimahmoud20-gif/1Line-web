@@ -11,25 +11,52 @@ export const loadFirebaseService = () => {
   return servicePromise;
 };
 
-// Warm the SDK once the browser is idle so the first form submit doesn't wait on the download.
-if (typeof window !== 'undefined') {
-  const warm = () => loadFirebaseService().catch(() => {});
-  if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 4000 });
-  else setTimeout(warm, 2500);
+// Warm the SDK: Immediate on /crm, /my-account, /demands.
+// On visitor routes: once the page has loaded and the phone is idle (or after 6 seconds). It used
+// to start on the first touch or scroll, so compiling 550KB landed on the visitor's first gesture
+// and that first scroll or tap stuttered.
+// Background subscriptions (site settings, FX rates, auth state) wait for the same signal, so they
+// don't pull the SDK onto a slow phone while the first page is still painting.
+let warmed = false;
+let releaseWarm = () => {};
+const warmSignal = new Promise((resolve) => { releaseWarm = resolve; });
+const warm = () => {
+  if (warmed) return;
+  warmed = true;
+  releaseWarm();
+  loadFirebaseService().catch(() => {});
+};
+if (typeof window === 'undefined') {
+  warmed = true;
+  releaseWarm();
+} else if (/^\/(crm|my-account|demands)($|\/)/.test(window.location.pathname)) {
+  warm();
+} else {
+  const timer = setTimeout(warm, 6000);
+  const whenIdle = () => {
+    const go = () => { clearTimeout(timer); warm(); };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 3000 });
+    else setTimeout(go, 1500);
+  };
+  if (document.readyState === 'complete') whenIdle();
+  else window.addEventListener('load', whenIdle, { once: true });
 }
 
+// A direct call is something the visitor asked for (send a request, sign in): load right away.
 const lazyCall = (name) => async (...args) => {
+  warm();
   const svc = await loadFirebaseService();
   return svc[name](...args);
 };
 
 // Subscriptions must hand back an unsubscribe synchronously; it is honored even if the SDK is still loading.
-const lazySubscribe = (name) => (...args) => {
+const lazySubscribe = (name, { eager = false } = {}) => (...args) => {
   let unsub = null;
   let cancelled = false;
-  loadFirebaseService()
+  (eager ? Promise.resolve() : warmSignal)
+    .then(() => (cancelled ? null : loadFirebaseService()))
     .then((svc) => {
-      if (cancelled) return;
+      if (!svc || cancelled) return;
       const u = svc[name](...args);
       if (typeof u === 'function') unsub = u;
     })
@@ -45,9 +72,39 @@ export const isFirebaseActive = () => true;
 
 export const saveLead = lazyCall('saveLead');
 export const syncPendingLeads = lazyCall('syncPendingLeads');
-export const saveNotification = lazyCall('saveNotification');
+export const loadNotifyStatus = lazyCall('loadNotifyStatus');
+export const sendTestAlert = lazyCall('sendTestAlert');
+export const loadAlertsSeenAt = lazyCall('loadAlertsSeenAt');
+export const saveAlertsSeenAt = lazyCall('saveAlertsSeenAt');
+export const runDailyReport = lazyCall('runDailyReport');
+export const loadAuditEvents = lazyCall('loadAuditEvents');
+export const logAuditEvent = lazyCall('logAuditEvent');
+export const pushReminderState = lazyCall('pushReminderState');
+export const enablePushReminders = lazyCall('enablePushReminders');
+export const disablePushReminders = lazyCall('disablePushReminders');
+export const loadCampaignSpend = lazyCall('loadCampaignSpend');
+export const saveCampaignSpend = lazyCall('saveCampaignSpend');
+export const loadCampaignLinks = lazyCall('loadCampaignLinks');
+export const saveCampaignLinks = lazyCall('saveCampaignLinks');
+export const subscribeToTasks = lazySubscribe('subscribeToTasks', { eager: true });
+export const addTask = lazyCall('addTask');
+export const addTaskWithId = lazyCall('addTaskWithId');
+export const updateTask = lazyCall('updateTask');
+export const removeTask = lazyCall('removeTask');
+export const registerSelf = lazyCall('registerSelf');
+export const subscribeToPeople = lazySubscribe('subscribeToPeople', { eager: true });
+export const subscribeToNotes = lazySubscribe('subscribeToNotes', { eager: true });
+export const sendNote = lazyCall('sendNote');
+export const removeNote = lazyCall('removeNote');
+export const subscribeToMentions = lazySubscribe('subscribeToMentions', { eager: true });
+export const markMentionsRead = lazyCall('markMentionsRead');
+export const pullMetaSpend = lazyCall('pullMetaSpend');
+export const pullMetaPerformance = lazyCall('pullMetaPerformance');
+export const loadGoals = lazyCall('loadGoals');
+export const saveGoals = lazyCall('saveGoals');
 export const updateLeadField = lazyCall('updateLeadField');
 export const deleteLead = lazyCall('deleteLead');
+export const deleteLeads = lazyCall('deleteLeads');
 export const saveDemand = lazyCall('saveDemand');
 export const updateDemandStatus = lazyCall('updateDemandStatus');
 export const deleteDemandDoc = lazyCall('deleteDemandDoc');
@@ -55,21 +112,46 @@ export const reconcilePublicDemands = lazyCall('reconcilePublicDemands');
 export const logoutUser = lazyCall('logoutUser');
 export const saveSettings = lazyCall('saveSettings');
 export const loadSettings = lazyCall('loadSettings');
+export const settingsExist = lazyCall('settingsExist');
 export const upsertCatalogItem = lazyCall('upsertCatalogItem');
+export const upsertCatalogItems = lazyCall('upsertCatalogItems');
+export const currentApprover = lazyCall('currentApprover');
+export const currentLeadManager = lazyCall('currentLeadManager');
+export const stripStaffIdentity = lazyCall('stripStaffIdentity');
+export const importLeads = lazyCall('importLeads');
+export const restoreLeads = lazyCall('restoreLeads');
+export const mergeLeads = lazyCall('mergeLeads');
+export const mergeDuplicateGroups = lazyCall('mergeDuplicateGroups');
+export const loadAllLeadsForStats = lazyCall('loadAllLeadsForStats');
+export const loadLeadChangesSince = lazyCall('loadLeadChangesSince');
+export const loadAnalyticsDays = lazyCall('loadAnalyticsDays');
+export const loadTopAnalyticsProperties = lazyCall('loadTopAnalyticsProperties');
+export const loadHotVisitors = lazyCall('loadHotVisitors');
+export const loadRecentSessions = lazyCall('loadRecentSessions');
+export const loadVisitorJourney = lazyCall('loadVisitorJourney');
+export const moveLeadsToArea = lazyCall('moveLeadsToArea');
+export const moveDemandsToArea = lazyCall('moveDemandsToArea');
+export const searchLeads = lazyCall('searchLeads');
+export const recordClientDownload = lazyCall('recordClientDownload');
 export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 export const incrementAdStat = lazyCall('incrementAdStat');
 export const reportClientError = lazyCall('reportClientError');
 export const deleteClientErrors = lazyCall('deleteClientErrors');
+export const resolveContactIntent = lazyCall('resolveContactIntent');
 export const uploadCmsMedia = lazyCall('uploadCmsMedia');
+export const issueReceipt = lazyCall('issueReceipt');
 export const getCmsStorageStatus = lazyCall('getCmsStorageStatus');
 export const submitIntakeRecord = lazyCall('submitIntakeRecord');
 export const updateIntakeRecord = lazyCall('updateIntakeRecord');
 
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
+export const subscribeToClientDownloads = lazySubscribe('subscribeToClientDownloads');
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');
 export const monitorAuthState = lazySubscribe('monitorAuthState');
 export const subscribeToSettings = lazySubscribe('subscribeToSettings');
-export const subscribeToCatalog = lazySubscribe('subscribeToCatalog');
+// Only used when the CDN catalog is unavailable (or in the CRM): the listings themselves, so no wait
+export const subscribeToCatalog = lazySubscribe('subscribeToCatalog', { eager: true });
 export const subscribeToAdStats = lazySubscribe('subscribeToAdStats');
 export const subscribeToClientErrors = lazySubscribe('subscribeToClientErrors');
+export const subscribeToContactIntents = lazySubscribe('subscribeToContactIntents');
 export const subscribeToIntake = lazySubscribe('subscribeToIntake');

@@ -4,8 +4,12 @@
 //
 //  The browser only says "I just created <kind>/<id>". The server reads that record itself, so a
 //  caller can't make it send arbitrary text, and alerts each record once, only while it is fresh.
-//  The alert never carries the customer's phone or email: those stay in the CRM behind its rules.
+//  It doubles as the company's receipt that the customer sent the request: reference, time received
+//  (server clock) and a summary. Of the phone it shows only the last 3 digits, enough to match a
+//  caller; the full number and the email stay in the CRM behind its rules.
 // =============================================================
+
+import { areaLabel, propertyTypeLabel } from '../src/utils/placeLabels.js';
 
 export const KINDS = {
   leads: 'عميل جديد',
@@ -20,7 +24,8 @@ export const FRESH_MS = 15 * 60 * 1000;
 const TYPE_LABELS = {
   buyer: 'شراء', seller: 'بيع', investor: 'استثمار', broker: 'وسيط', callback_request: 'اتصال سريع',
   deposit: 'جدية حجز', special_request: 'طلب خاص', bespoke_request: 'طلب خاص VIP', financing: 'تمويل',
-  valuation: 'تقييم'
+  valuation: 'تقييم', buyer_demand: 'طلب شراء (مطلوب)', request: 'طلب شراء', viewing_request: 'طلب معاينة', visit: 'معاينة ميدانية', viewing: 'طلب معاينة',
+  account: 'حساب جديد', client_registration: 'تسجيل حساب'
 };
 
 const clean = (v, max = 80) => String(v ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -33,24 +38,81 @@ export function parseRequest(body) {
   return { kind, id };
 }
 
-/** Alert text from the stored record (contact fields deliberately never read) */
-export function buildMessage(kind, id, rec, siteUrl) {
+/** "••••678": enough to match a caller, useless to anyone reading the company phone. */
+export function maskPhone(value) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  return digits.length >= 7 ? `••••${digits.slice(-3)}` : '';
+}
+
+// Free text a customer typed may hold a phone number: runs of 10+ digits (phones, not prices) are hidden
+export const scrubDigits = (text) => String(text ?? '').replace(/[+\d٠-٩](?:[\s-]?[\d٠-٩]){9,}/g, '•••');
+
+export function formatReceived(ms) {
+  if (!ms) return '';
+  try {
+    return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
+      timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true
+    }).format(new Date(ms));
+  } catch {
+    return new Date(ms).toISOString();
+  }
+}
+
+/** Where the alert's link lands: the lead itself, or the section that lists the request */
+export const crmPath = (kind, id) => (kind === 'leads'
+  ? `/crm?lead=${encodeURIComponent(id)}`
+  : `/crm?tab=${{ demands: 'demands', remote_inspections: 'expat', trade_ins: 'trade_ins' }[kind] || 'dashboard'}`);
+
+/**
+ * Alert text from the stored record. extra: { phone, receivedMs } — phone is read from the
+ * contact record only to show its last 3 digits.
+ */
+export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
   const d = rec.details && typeof rec.details === 'object' ? rec.details : {};
+  let headline = `🔔 ${KINDS[kind]} — 1Line`;
+
+  if (rec.type === 'visit' || rec.type === 'viewing_request' || rec.type === 'viewing' || d.visitDate || d.propertyId || rec.propertyId || rec.date) {
+    const code = clean(rec.propertyId || d.propertyCode || d.propertyId || 'عقار', 25);
+    const when = (d.visitDate || rec.date) ? ` ${clean(d.visitDate || rec.date, 15)}` : '';
+    const slot = (d.visitSlot || rec.slot) ? ` ${clean(d.visitSlot || rec.slot, 15)}` : '';
+    headline = `👁 طلب معاينة: كود ${code}${when}${slot} — 1Line`;
+  } else if (rec.type === 'seller' || rec.type === 'valuation') {
+    const area = clean(areaLabel(rec.area || d.area), 40);
+    const kind = clean(propertyTypeLabel(d.propertyType || rec.propertyType), 30) || 'عقار';
+    headline = `🏠 عرض بيع: ${area ? `${kind} في ${area}` : `${kind} جديد`} — 1Line`;
+  } else if (rec.type === 'buyer' || rec.type === 'buyer_demand') {
+    headline = `🎯 طلب شراء جديد — 1Line`;
+  } else if (rec.type === 'broker') {
+    headline = `🤝 انضمام وسيط عقاري معتمد — 1Line`;
+  } else if (rec.type === 'account' || rec.type === 'client_registration') {
+    headline = `👤 حساب جديد على المنصة — 1Line`;
+  }
+
   const lines = [
-    `🔔 ${KINDS[kind]} — 1Line`,
-    `الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`
+    headline,
+    `رقم الطلب: ${id}`
   ];
-  const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || rec.propertyType, 40);
+  const received = formatReceived(extra.receivedMs);
+  if (received) lines.push(`وقت الاستلام: ${received}`);
+  lines.push(`الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`);
+  const tail = maskPhone(extra.phone);
+  if (tail) lines.push(`الموبايل: ${tail}`);
+  const type = TYPE_LABELS[rec.type] || clean(rec.purpose || (rec.type ? propertyTypeLabel(rec.type) : '') || propertyTypeLabel(rec.propertyType), 40);
   if (type) lines.push(`النوع: ${type}`);
-  const area = clean(d.area || rec.area || rec.location || rec.district, 60);
+  const what = clean(propertyTypeLabel(d.propertyType), 30);
+  if (what && what !== type) lines.push(`العقار: ${what}`);
+  const area = clean(areaLabel(d.area || rec.area || rec.location || rec.district), 60);
   if (area) lines.push(`المنطقة: ${area}`);
   const budget = clean(d.budget || rec.budget || d.expectedPrice || rec.expectedPrice, 40);
   if (budget) lines.push(`الميزانية: ${budget}`);
   if (kind === 'leads') lines.push(`الفريق: ${clean(rec.assignedTo || 'Unassigned', 40)}`);
   const source = clean(rec.source, 40);
   if (source) lines.push(`المصدر: ${source}`);
-  lines.push(`افتح الـ CRM: ${siteUrl}/crm`);
-  lines.push(`(${kind}/${id})`);
+  const summary = clean(scrubDigits(rec.notes || rec.message || rec.text_ar || rec.description), 400);
+  if (summary) lines.push(`الملخص: ${summary}`);
+  const photos = Array.isArray(d.images) ? d.images.length : 0;
+  if (photos) lines.push(`الصور: ${photos}`);
+  lines.push(`افتح الطلب: ${siteUrl}${crmPath(kind, id)}`);
   return lines.join('\n');
 }
 
@@ -59,15 +121,76 @@ export function buildMessage(kind, id, rec, siteUrl) {
  *   claimOnce(kind,id) → true if this call is the first, sendAll(text) → number sent, now() }
  * Returns { status, body } for the HTTP response.
  */
-export async function handleNotify(body, deps, siteUrl) {
+// A burst of fake requests must not become a burst of WhatsApp messages: per address, and overall
+export const ALERT_LIMITS = {
+  perIp: { max: 6, windowMs: 10 * 60 * 1000 },
+  overall: { max: 40, windowMs: 10 * 60 * 1000 }
+};
+
+export const FLOOD_MESSAGE = (siteUrl) => [
+  '⚠️ 1Line: طلبات كتير جداً في وقت قصير',
+  'وقفنا تنبيهات الواتساب لمدة 10 دقايق عشان التليفون ما يتغرقش. الطلبات نفسها محفوظة في الـ CRM.',
+  'لو مش متوقعين الحجم ده، ممكن يكون حد بيبعت طلبات وهمية.',
+  `افتح الـ CRM: ${siteUrl}/crm`
+].join('\n');
+
+/**
+ * deps.limitIp(ip) / deps.limitOverall() → true when over the limit (optional).
+ * Over the overall limit only the first refused alert of the window sends FLOOD_MESSAGE.
+ */
+export async function handleNotify(body, deps, siteUrl, ip = 'unknown') {
   const req = parseRequest(body);
   if (!req) return { status: 400, body: { error: 'bad-request' } };
+  if (deps.limitIp?.(ip)) return { status: 429, body: { error: 'too-many' } };
   const rec = await deps.readRecord(req.kind, req.id);
   if (!rec) return { status: 404, body: { error: 'not-found' } };
   if (!rec.createdAtMs || deps.now() - rec.createdAtMs > FRESH_MS) return { status: 200, body: { skipped: 'stale' } };
   if (!(await deps.claimOnce(req.kind, req.id))) return { status: 200, body: { skipped: 'already-sent' } };
-  const sent = await deps.sendAll(buildMessage(req.kind, req.id, rec.data, siteUrl));
-  return { status: 200, body: { sent } };
+  const flood = deps.limitOverall?.();
+  if (flood) {
+    if (flood === 'first') await deps.sendAll(FLOOD_MESSAGE(siteUrl));
+    return { status: 200, body: { skipped: 'flood' } };
+  }
+  let phone = '';
+  try {
+    const contact = deps.readContact ? await deps.readContact(req.kind, req.id) : null;
+    phone = contact?.phone || contact?.whatsapp || rec.data.phone || rec.data.whatsapp || '';
+  } catch { /* the receipt still goes out without the last digits */ }
+  const text = buildMessage(req.kind, req.id, rec.data, siteUrl, { phone, receivedMs: rec.createdAtMs });
+  const sent = await sendWithRetry(deps, text);
+  const ref = `${req.kind}/${req.id}`;
+  if (sent > 0) {
+    await safely(() => deps.recordStatus?.({ ok: true, ref }));
+    return { status: 200, body: { sent } };
+  }
+  // Nothing went out: give the record back so the next call (the browser retries once) can
+  // alert it, and leave a trace the CRM shows under «تنبيهات الواتساب»
+  await safely(() => deps.releaseClaim?.(req.kind, req.id));
+  await safely(() => deps.recordStatus?.({ ok: false, ref }));
+  return { status: 502, body: { sent: 0, error: 'send-failed' } };
+}
+
+const safely = async (fn) => { try { await fn(); } catch { /* bookkeeping never blocks the alert */ } };
+
+/** One more try after a short pause when no number received the message */
+export async function sendWithRetry(deps, text, pauseMs = 1500) {
+  const first = await deps.sendAll(text);
+  if (first > 0) return first;
+  await (deps.sleep ? deps.sleep(pauseMs) : new Promise((r) => setTimeout(r, pauseMs)));
+  return deps.sendAll(text);
+}
+
+/** The «ابعت رسالة تجربة» button in the CRM: same senders, a fixed text, the result recorded */
+export const TEST_MESSAGE = (siteUrl) => [
+  '✅ 1Line: رسالة تجربة لتنبيهات الواتساب',
+  'لو الرسالة دي وصلتك، تنبيهات الطلبات الجديدة شغالة على الرقم ده.',
+  `افتح الـ CRM: ${siteUrl}/crm`
+].join('\n');
+
+export async function handleTest(deps, siteUrl, channels) {
+  const sent = await deps.sendAll(TEST_MESSAGE(siteUrl));
+  await safely(() => deps.recordStatus?.({ ok: sent > 0, ref: 'test' }));
+  return { status: sent > 0 ? 200 : 502, body: { sent, channels } };
 }
 
 // ── WhatsApp senders ──────────────────────────────────────────────────────────
@@ -75,6 +198,8 @@ export async function handleNotify(body, deps, siteUrl) {
 // Meta WhatsApp Cloud API (official): WHATSAPP_CLOUD_TOKEN, WHATSAPP_CLOUD_PHONE_ID, WHATSAPP_CLOUD_TO
 //   (comma-separated numbers) and WHATSAPP_CLOUD_TEMPLATE — an approved template whose body is a
 //   single {{1}} parameter (language WHATSAPP_CLOUD_LANG, default "ar").
+
+export const CALLMEBOT_ERROR = /api\s*key\s+is\s+invalid|invalid\s+(?:phone|apikey)|not\s+(?:yet\s+)?activated|you\s+need\s+to\s+(?:get|activate)/i;
 
 export function parseCallMeBot(value) {
   return String(value || '').split(',').map((s) => s.trim()).filter(Boolean).map((pair) => {
@@ -89,7 +214,10 @@ export function makeSenders(env, fetchImpl = fetch) {
     senders.push(async (text) => {
       const url = `https://api.callmebot.com/whatsapp.php?phone=${r.phone}&apikey=${encodeURIComponent(r.apikey)}&text=${encodeURIComponent(text)}`;
       const res = await fetchImpl(url);
-      return res.ok;
+      if (!res.ok) return false;
+      // CallMeBot can answer 200 with an error page (a wrong or not-yet-activated key)
+      const body = typeof res.text === 'function' ? await res.text().catch(() => '') : '';
+      return !CALLMEBOT_ERROR.test(body);
     });
   }
   const to = String(env.WHATSAPP_CLOUD_TO || '').split(',').map((s) => s.trim().replace(/^\+/, '')).filter((s) => /^\d{8,15}$/.test(s));

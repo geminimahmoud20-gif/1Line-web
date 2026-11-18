@@ -1,0 +1,379 @@
+/* =============================================================
+   Mobile & dark-mode polish — from a page-by-page audit at 360px (light and dark).
+   Loaded after the other stylesheets; selectors start with `html` so components whose CSS is
+   lazy-loaded later (property card, expat suite…) can't win on order alone.
+   Grouped by problem: readable text in dark mode, low-contrast text, touch targets, small text,
+   things wider than the screen.
+   ============================================================= */
+
+/* ── 1. Text that was navy on navy in dark mode ─────────────────────────────
+   These use var(--primary) or a fixed navy for text, and both stay dark in dark mode. */
+html.dark-theme .detail-card-box h3,
+html.dark-theme .financing-header-bar h1,
+html.dark-theme .financing-ribbon-pill strong,
+html.dark-theme .calc-program-card .prog-name,
+html.dark-theme .cell-price,
+html.dark-theme .crm-secure-badge span { color: #F1F5F9; }
+html.dark-theme .calc-program-card .prog-desc { color: #94A3B8; }
+html.dark-theme .financing-pill-tag span { color: #E9D29A; }
+html.dark-theme .calc-breakdown-glass-row .text-sky { color: #7DD3FC !important; }
+/* Special requests: section headings are inline-styled with var(--primary) */
+html.dark-theme .wizard-container h4,
+html.dark-theme form h4[style] { color: #93C5FD !important; }
+
+/* ── 2. Low-contrast text in light mode ───────────────────────────────────── */
+/* Market page: the advisor card is dark but its title inherited the dark heading colour */
+html .advisor-title-wrap h4 { color: #FFFFFF; }
+/* Outline buttons placed on dark panels kept navy text: invisible */
+html .calc-card-footer .btn-outline,
+html .action-dock-btns .btn-outline-gold,
+html .cta-consult-card .btn,
+html .insight-card .btn-whatsapp {
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+/* Investor calculator: "glass" rows were designed for a dark panel but sit on a light card */
+html:not(.dark-theme) .live-valuation-certificate-card .calc-breakdown-glass-row {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+html:not(.dark-theme) .live-valuation-certificate-card .glass-row-lbl { color: #334155; }
+html:not(.dark-theme) .live-valuation-certificate-card .text-sky { color: #0369A1 !important; }
+html:not(.dark-theme) .live-valuation-certificate-card .text-gold { color: #7C5E30; }
+/* Market page summary: yellow figures on white */
+html:not(.dark-theme) .summary-stat-box .stat-num { color: #B45309; }
+html:not(.dark-theme) .summary-stat-box .stat-num.text-primary { color: #0D48A1; }
+/* About page standards cards */
+html:not(.dark-theme) .about-standard-card .standard-num-badge { color: #8A6A2F; }
+html:not(.dark-theme) .about-standard-card .standard-pill-badge { color: #047857; }
+/* Hero search: inactive intent tabs (WCAG AA compliant contrast 5.7:1) */
+html:not(.dark-theme) .hx-intent:not(.is-active) { color: #334155; }
+/* Footer small print on the dark footer */
+html .site-footer .footer-desc { color: #CBD5E1; }
+html .site-footer .footer-brand-sub,
+html .site-footer .footer-copyright,
+html .site-footer .footer-legal-link,
+html .site-footer .footer-slogan { color: #94A3B8; }
+/* CRM login "back to site" link, client-account badge */
+html .crm-login-card a[href="/"] { color: #475569 !important; }
+html.dark-theme .crm-login-card a[href="/"] { color: #CBD5E1 !important; }
+html .unauth-badge-pill { color: #B45309; }
+/* Listing page sticky bar label */
+html .mobile-sticky-price .mob-lbl { color: #64748B; }
+/* WhatsApp-green buttons: white on #25D366 is ~2:1. A deeper WhatsApp green keeps the brand cue. */
+html .btn-whatsapp-half,
+html .lx-concierge-btn,
+html .btn-founder-whatsapp { background: #128C4A; }
+html .btn-whatsapp-half:hover,
+html .lx-concierge-btn:hover,
+html .btn-founder-whatsapp:hover { background: #0E7A40; }
+html .lx-concierge-btn .lx-concierge-phone-num { color: #FFFFFF; }
+
+/* ── 3. Touch targets (aim: 44px) ────────────────────────────────────────────
+   Header and card icons can't grow without crowding a 360px row, so their tap area is widened
+   with an invisible layer instead. */
+html .header-client-account-btn,
+html .mobile-quick-search-btn,
+html .mobile-hamburger-btn,
+html .mobile-header-back-btn,
+html .utility-sub-btn,
+html .pcx-icon-btn,
+html .toggle-pwd-btn,
+html .footer-crm-lock { position: relative; }
+html .header-client-account-btn::after,
+html .mobile-quick-search-btn::after,
+html .mobile-hamburger-btn::after,
+html .mobile-header-back-btn::after,
+html .utility-sub-btn::after,
+html .pcx-icon-btn::after,
+html .toggle-pwd-btn::after,
+html .footer-crm-lock::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+@media (max-width: 768px) {
+  /* Chips and pills: 44px minimum hit area per mobile accessibility guidelines */
+  html .calc-chip-btn,
+  html .lx-faq-pill,
+  html .mat-btn,
+  html .location-chip,
+  html .code-copy-pill-btn,
+  html .btn-back-compact,
+  html .pcx-chip--remote,
+  html .media-tab-btn,
+  html .detail-maps-pill { 
+    min-height: 44px; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+  }
+  /* Footer and inline text links: 44px minimum touch height with breathing room */
+  html .site-footer a,
+  html .site-footer .footer-btn-link,
+  html .contact-link,
+  html .breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+/* ── 4. Text readable on phones (minimum >= 12.5px) ──────────────────── */
+@media (max-width: 768px) {
+  html .pcx-spec-label,
+  html .spec-lbl,
+  html .metric-lbl,
+  html .prog-desc,
+  html .legend-item { font-size: 0.80rem; }
+  html .pcx-ppm small,
+  html .pcx-spec-val small { font-size: 0.78rem; }
+  html .mobile-sticky-price .mob-lbl { font-size: 0.80rem; }
+  html .xs-demo-tag { font-size: 0.78rem; }
+}
+
+/* ── 5. Wider than the screen ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Long button labels ("استعراض كل العقارات المتاحة (16 عقار)") wrap instead of overflowing */
+  html .btn { max-width: 100%; white-space: normal; text-align: center; }
+  /* Hero search intents: all three fit on a 360px phone */
+  html .hx-intents { gap: 2px; padding-inline: 2px; }
+  html .hx-intent { flex: 1 1 0; min-width: 0; justify-content: center; padding: 8px 4px; gap: 4px; font-size: 0.8rem; white-space: nowrap; }
+}
+
+/* Market page on phones: summary boxes stack their icon, the table gets tighter cells and
+   prices stay on one line, insight cards stop overflowing the grid */
+@media (max-width: 480px) {
+  html .market-summary-stats-grid { gap: 10px; }
+  html .market-summary-stats-grid > *,
+  html .market-insights-grid > * { min-width: 0; }
+  html .summary-stat-box { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; }
+  html .market-data-table th,
+  html .market-data-table td { padding: 10px 6px; font-size: 0.8rem; }
+  html .market-data-table .cell-price { white-space: nowrap; font-size: 0.85rem; }
+  html .insight-card { padding: 18px 16px; }
+}
+
+/* Financing results panel is dark in both themes: its gold figures need the light gold */
+html .calc-results-column .calc-breakdown-glass-row .text-gold { color: #E9D29A !important; }
+html .calc-results-column .total-highlight-row .glass-row-val { color: #6EE7B7 !important; }
+
+/* ── 6. One typeface everywhere ─────────────────────────────────────────────
+   Only Cairo is loaded (index.html). Rules naming other fonts (Outfit, Playfair, Montserrat,
+   monospace) fell back to whatever the phone has, so the logo, prices, codes and phone
+   numbers each looked different. They all use the site font now, with even-width digits where
+   numbers line up. Weights above 700 don't exist in the font: no faux-bold smearing. */
+html {
+  --font-ar: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --font-en: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --font-number: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --font-display: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  font-synthesis-weight: none;
+}
+html body,
+html :where(button, input, select, textarea, optgroup) { font-family: var(--font-ar); }
+html .brand-title,
+html .brand-subtitle,
+html .footer-brand-name,
+html .luxury-serif-title,
+html .serial-code-text,
+html .token-text,
+html .wa-phone-v,
+html .hx-cert-sub-id,
+html .zoom-level-tag,
+html .lx-concierge-phone-num,
+html .standard-num-badge { font-family: var(--font-ar) !important; }
+html :where(.serial-code-text, .token-text, .wa-phone-v, .lx-concierge-phone-num, .hx-cert-sub-id, .metric-val, .crm-stat-value, .pcx-price, .calc-val, input[type="number"], input[inputmode="numeric"]) {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ── 7. Second phone pass ───────────────────────────────────────────────── */
+/* Footer had its own "back to top" next to the floating one: keep the floating button only */
+html .footer-scroll-top-btn { display: none; }
+
+/* Property cards in narrow columns: the spec icons pushed "60 م²" into "60…" */
+@media (max-width: 480px) {
+  html .pcx-spec { grid-template-columns: 1fr; padding-inline: 6px; }
+  html .pcx-spec svg { display: none; }
+}
+/* Card titles are links: some page styles painted them gold. Same ink everywhere. */
+html .pcx-title a:not(:hover) { color: var(--pcx-ink); }
+
+/* Calculators: label and value were touching ("رأس المال المستثمر5,000,000") */
+html .form-group-flex .flex-between { gap: 10px; flex-wrap: wrap; }
+/* Slider end labels never wrap into each other */
+html .calc-range-limits-ltr { gap: 8px; }
+/* Each label keeps its own reading order: "500 ألف", not "ألف 500", inside the left-to-right row */
+html .calc-range-limits-ltr > span { white-space: nowrap; unicode-bidi: isolate; }
+html[dir="rtl"] .calc-range-limits-ltr > span,
+html [dir="rtl"] .calc-range-limits-ltr > span { direction: rtl; }
+/* "ج.م / شهر" under the big monthly figure is a unit, not a second figure */
+html .result-primary-number .curr { font-size: 0.42em; font-weight: 600; opacity: 0.85; }
+
+/* Demands portal: the add-request button that replaced the second hero */
+html .demands-add-cta { display: flex; justify-content: center; margin: 4px 0 24px; }
+html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 12px; font-weight: 800; }
+
+@media (max-width: 480px) {
+  /* Demand card buttons: full width, one per row, label never cut */
+  html .demand-action-buttons { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  html .demand-action-buttons > button { width: 100%; justify-content: center; white-space: normal; min-height: 44px; }
+  /* Account activation button: long Arabic label wraps instead of spilling out of a fixed 48px */
+  html .btn-activate-account-cta { height: auto; min-height: 48px; padding: 12px 18px; width: 100%; justify-content: center; text-align: center; white-space: normal; line-height: 1.5; }
+  /* Trade-in banner: text takes the row beside the icon, the link goes under it */
+  html .xs-trade-banner-text { flex: 1 1 calc(100% - 70px); min-width: 0; }
+  html .xs-trade-banner-cta { flex-basis: 100%; text-align: end; }
+  /* Form selects fill their column */
+  html .portal-content-wrapper select,
+  html .wizard-container select { width: 100%; max-width: 100%; }
+  /* …except the phone field's country code: it sits beside the number, which needs the room */
+  html .phone-input-control-box select { width: auto; max-width: 50%; }
+}
+
+/* ── Readable minimum on phones: labels that sat at 0.68rem (≈10.9px) go to 12px ── */
+@media (max-width: 768px) {
+  html .spec-lbl,
+  html .detail-card-box .specs-detail-grid .spec-lbl,
+  html .hx-eyebrow span,
+  html .hx-cert-sub-id,
+  html .hx-point-tag,
+  html .hx-comps-badge-fair,
+  html .hx-bar-lbl,
+  html .hx-blip-label,
+  html .hx-radar-confidential-pill,
+  html .hx-hud-live-tag span,
+  html .hx-hud-quality,
+  html .hx-hud-location-tag span,
+  html .hx-hud-latency,
+  html .hx-expat-badge-handover,
+  html .about-portrait-seal span,
+  html .watermark-brand-name { font-size: 0.80rem !important; }
+  /* Breadcrumb links: taller tap area without moving the text */
+  html .page-breadcrumb-sub a { display: inline-block; padding-block: 10px; margin-block: -10px; }
+}
+
+/* ── Public UX pass (phone 375px + desktop 1366px sweep) ─────────────────────── */
+@media (max-width: 768px) {
+  /* Consent bar: one compact row (text · two buttons) instead of a card over a quarter of the screen */
+  html .lx-consent { flex-wrap: nowrap; align-items: center; gap: 10px; padding: 10px 12px; }
+  html .lx-consent p { flex: 1 1 auto; min-width: 0; font-size: 0.8rem; line-height: 1.45; }
+  html .lx-consent-actions { flex: 0 0 auto; gap: 6px; }
+  html .lx-consent-actions > * { flex: 0 0 auto; }
+  html .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; font-size: 0.8rem; white-space: nowrap; }
+  /* The bottom navigation has Home, and phones have their own way back up: the floating arrow sat on card prices */
+  html .floating-back-to-top-btn { display: none !important; }
+}
+@media (max-width: 1140px) {
+  /* The header already has a back arrow at this width: the in-page "رجوع خطوة للخلف" repeated it */
+  html .btn-back-step { display: none !important; }
+}
+@media (max-width: 480px) {
+  /* Theme and language live in the menu drawer; dropping them from the bar leaves room for 40px buttons */
+  html .site-header .header-utility-pill-group { display: none !important; }
+  html .site-header .header-client-account-btn,
+  html .site-header .mobile-quick-search-btn,
+  html .site-header .mobile-hamburger-btn,
+  html .site-header .mobile-header-back-btn { width: 40px !important; height: 40px !important; min-width: 40px !important; }
+}
+@media (max-width: 768px) {
+  /* Properties page: the first unit was below the first screen. Shorter title block, one-row trust strip. */
+  html .compact-page-header .page-header-titles { padding: 12px 16px !important; }
+  html .compact-page-header .page-header-subtitle { display: none; }
+  html .compact-page-header .page-header-title { font-size: 1.2rem !important; }
+  html .compact-page-header .results-count-badge { white-space: nowrap; flex: none; }
+  html .properties-certified-explainer-strip { padding: 6px 12px !important; }
+  html .certified-explainer-inner { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 8px; scrollbar-width: none; }
+  html .certified-explainer-inner::-webkit-scrollbar { display: none; }
+  html .certified-points-row { flex-wrap: nowrap; }
+  html .certified-badge-pill, html .cert-point { flex: none; }
+}
+
+/* Unit page with no photos yet: a short note instead of an empty black frame (the gallery sits on the dark hero) */
+.gallery-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 28px 20px;
+  border: 1px dashed rgba(197, 160, 89, 0.45);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #CBD5E1;
+  text-align: center;
+}
+.gallery-empty-state svg { color: #D9B97E; }
+.gallery-empty-state strong { color: #F8FAFC; font-size: 1rem; }
+.gallery-empty-state span { font-size: 0.88rem; line-height: 1.6; }
+
+/* Desktop 1141–1440px: the nav ran under "حسابي". The account button shows its icon only at this width. */
+@media (max-width: 1440px) and (min-width: 1141px) {
+  html .header-client-account-btn .account-text { display: none !important; }
+}
+
+/* Financing calculator on phones: typed fields a finger can hit, an even grid of preset chips,
+   and amounts that keep "ج.م" on their own line instead of breaking under the number */
+@media (max-width: 640px) {
+  html .calc-direct-input-wrap { min-height: 42px; padding: 4px 10px; }
+  html .direct-num-input { min-height: 32px; font-size: 1rem; }
+  html .calc-range { height: 8px; margin-block: 10px; }
+  html .calc-range::-webkit-slider-thumb { width: 26px; height: 26px; }
+  html .calc-range::-moz-range-thumb { width: 26px; height: 26px; }
+  html .calc-quick-chips-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+  html .calc-chip-btn { width: 100%; padding: 4px 6px; font-size: 0.8rem; line-height: 1.35; white-space: normal; text-align: center; }
+  html .calc-breakdown-glass-row { gap: 10px; }
+  html .calc-breakdown-glass-row .glass-row-lbl { flex: 1 1 auto; min-width: 0; }
+  html .calc-breakdown-glass-row .glass-row-val { flex: none; white-space: nowrap; }
+}
+
+/* Phones: the smallest recurring labels (card chips and features, price per m², photo count,
+   bottom-bar tabs, slider ends, search field labels) were 11–11.5px, too small for Arabic */
+@media (max-width: 640px) {
+  html .pcx-chip, html .pcx-feat, html .pcx-feat span, html .pcx-ppm, html .pcx-ppm bdi { font-size: 0.8rem; }
+  html .pcx-count, html .pcx-count bdi { font-size: 0.75rem; }
+  html .mob-tab-btn span { font-size: 0.75rem; }
+  html .calc-range-limits-ltr span, html .hx-field-label, html .footer-brand-sub, html .prop-type-info p { font-size: 0.78rem; }
+  html .pj-facts dt { font-size: 0.78rem; }
+}
+
+/* About page on phones: the hero had no side gutter (badge and stat cards touched the screen
+   edge) and the four stats took a screen and a half, one per row */
+@media (max-width: 640px) {
+  html .about-hero-content { padding-inline: 16px; box-sizing: border-box; }
+  html .about-hero-badge { max-width: 100%; box-sizing: border-box; padding: 7px 14px; font-size: 0.8rem; line-height: 1.6; }
+  html .about-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  html .about-stat-card { padding: 16px 10px; }
+  html .about-stat-icon-box { width: 38px; height: 38px; margin-bottom: 8px; }
+  html .about-stat-number { font-size: 1.6rem; }
+  html .about-stat-sub { font-size: 0.76rem; }
+}
+
+/* Phones: the footer already leaves room for the bottom nav bar (art-direction.css, 84px + safe
+   area), so the body's own 70px under it only showed a strip of page background below the dark
+   footer. Pages without the footer keep the body padding. */
+@media (max-width: 768px) {
+  html body:has(.site-footer) { padding-bottom: 0; }
+}
+
+/* Portal pages (sell, valuation, buy, special…) on phones: the hero took more than a screen (breadcrumb,
+   badge, a two-line title, a three-line paragraph and 70px of padding), so the form, the thing the visitor
+   came for, started below the fold. The hero is tighter here and the breadcrumb goes (the header and the back
+   arrow already say where you are), so the first step shows without scrolling. */
+@media (max-width: 640px) {
+  html .portal-hero-section { padding: 14px 16px 44px; }
+  html .portal-breadcrumbs { display: none; }
+  html .portal-hero-badge { padding: 4px 12px; margin-bottom: 8px; font-size: 0.78rem; }
+  html .portal-hero-title { font-size: 1.55rem; line-height: 1.3; margin-bottom: 6px; }
+  html .portal-hero-subtitle { font-size: 0.86rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  html .portal-content-wrapper { margin-top: -28px; padding: 0 8px; }
+}
+
+/* Desktop portal pages: the form starts higher, one badge instead of badge + breadcrumb */
+@media (min-width: 721px) {
+  html .portal-hero-section { padding: 22px 24px 50px; }
+  html .portal-breadcrumbs { display: none; }
+  html .portal-hero-badge { margin-bottom: 10px; }
+  html .portal-hero-title { font-size: 1.85rem; margin-bottom: 6px; }
+  html .portal-hero-subtitle { font-size: 0.9rem; line-height: 1.55; }
+  html .portal-content-wrapper { margin-top: -30px; }
+}

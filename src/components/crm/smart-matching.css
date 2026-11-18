@@ -1,0 +1,36 @@
+/* المطابقات الذكية: a card per buyer with the few listings that fit them */
+.smh { display: grid; gap: var(--ui-s-4); }
+.smh__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.smh__title { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-6); color: var(--ui-text); }
+.smh__title svg { color: var(--ui-accent); }
+.smh__sub { margin: var(--ui-s-1) 0 0; color: var(--ui-text-3); font-size: var(--ui-fs-3); }
+.smh__tabs { display: inline-flex; border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); overflow: hidden; }
+.smh__tabs button { min-height: 40px; padding: 0 var(--ui-s-4); border: 0; background: var(--ui-surface); color: var(--ui-text-2); font: inherit; font-weight: var(--ui-fw-semibold); cursor: pointer; }
+.smh__tabs button.is-on { background: var(--ui-primary); color: var(--ui-on-primary, var(--ui-surface)); }
+.smh__empty { display: grid; justify-items: center; gap: var(--ui-s-2); padding: var(--ui-s-7, 32px) var(--ui-s-4); text-align: center; border: 2px dashed var(--ui-line-strong); border-radius: var(--ui-r-lg); color: var(--ui-text-3); }
+.smh__empty h3 { margin: 0; color: var(--ui-text); }
+.smh__empty p { margin: 0; max-width: 46ch; line-height: 1.8; }
+.smh__list, .smh__units { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-s-3); }
+.smh__list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); align-items: start; }
+.smh__buyer { padding: var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); display: grid; gap: var(--ui-s-3); }
+.smh__buyer-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.smh__who { display: grid; gap: 2px; min-width: 0; }
+.smh__name { padding: 0; border: 0; background: none; font: inherit; font-size: var(--ui-fs-4); font-weight: var(--ui-fw-bold); color: var(--ui-text); text-align: start; cursor: pointer; }
+.smh__name:disabled { cursor: default; }
+.smh__phone { color: var(--ui-text-3); font-size: var(--ui-fs-2); font-variant-numeric: tabular-nums; }
+.smh__budget { color: var(--ui-text-2); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+.smh__unit { display: grid; gap: var(--ui-s-1); padding: var(--ui-s-3); border-radius: var(--ui-r-md); background: var(--ui-surface-2); }
+.smh__unit-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ui-s-2); }
+.smh__unit-title { min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.smh__score { flex: none; padding: 2px var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-warning-tint); color: var(--ui-warning); font-weight: var(--ui-fw-bold); font-size: var(--ui-fs-2); font-variant-numeric: tabular-nums; }
+.smh__score.is-ideal { background: var(--ui-success-tint); color: var(--ui-success); }
+.smh__unit-meta, .smh__reasons, .smh__more { margin: 0; color: var(--ui-text-3); font-size: var(--ui-fs-2); line-height: 1.6; }
+.smh__reasons { color: var(--ui-text-2); }
+.smh__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); margin-top: var(--ui-s-1); }
+.smh__sent { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-success); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); }
+@media (max-width: 480px) {
+  .smh__buyer { padding: var(--ui-s-3); }
+  .smh__actions .ui-btn { flex: 1 1 auto; justify-content: center; }
+  .smh__tabs { width: 100%; }
+  .smh__tabs button { flex: 1; padding: 0 var(--ui-s-2); }
+}

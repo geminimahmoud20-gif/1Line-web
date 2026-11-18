@@ -1,29 +1,69 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 import CrmAdminPanel from '../components/CrmAdminPanel';
-import { CRM_ROLES } from '../components/crm/crmRoles';
+import { CRM_ROLES, getMergedCrmRoles } from '../components/crm/crmRoles';
+import { subscribeToAccessConfig, getActiveAccessConfig } from '../services/accessConfig';
 import PropertyManagerPanel from '../components/crm/PropertyManagerPanel';
 import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel';
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
-import ClientErrorsPanel from '../components/crm/ClientErrorsPanel';
-import { announceNewLeads } from '../utils/newLeadAlerts';
+import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
+import { announceNewLeads, announceDownloads, announceIntake } from '../utils/newLeadAlerts';
+import { unlockChimeOnFirstTouch } from '../utils/notificationHub';
+import { getDynamicPhone } from '../utils/founderCmsData';
+import { subscribeToClientDownloads, subscribeToIntake, logoutUser, stripStaffIdentity, updateTask, addTaskWithId, loadSettings } from '../firebaseLazy';
+import { hasStaffIdentity } from '../utils/publishApproval';
+import useIdleLock from '../components/crm/useIdleLock';
+import { setManifestFor } from '../utils/appManifest';
+import { markCrmActive, LOCKED_FLAG } from '../utils/idleLock';
+import { pushLocalSettingsMissingFromCloud } from '../utils/settingsCloudSync';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
+import { useTeamDirectorySync } from '../hooks/useTeamDirectory';
+import { useMentionsSync } from '../hooks/useMentions';
+import { requestOpenLead } from '../utils/openLead';
+import { playNotificationChime } from '../utils/notificationHub';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
+import PushReminderPrompt from '../components/crm/PushReminderPrompt';
+import TaskReminders from '../components/crm/TaskReminders';
+import { useCampaignNames } from '../utils/campaignNames';
+import AlertHealthBanner from '../components/crm/AlertHealthBanner';
+import NewVersionNotice from '../components/crm/NewVersionNotice';
+import { BRAND } from '../config/siteConfig';
 import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
 import '../components/crm/crm-density.css';
-import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
+import '../styles/crm-bridge.css';
+import '../components/crm/crm-mobile-modals.css';
+import '../components/crm/crm-type.css';
+import { MotionRoot, ConfirmProvider } from '../components/ui';
+import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
-import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
+import { useTasks, useTasksSync } from '../hooks/useTasks';
+import { taskCounts, tasksOfEndedLeads, autoCompletion } from '../utils/tasks';
+import { cadenceTasks, leadsNeedingCadence } from '../utils/followUpCadence';
+import CallOutcomePrompt from '../components/crm/CallOutcomePrompt';
+import { useProperties } from '../context/PropertiesContext';
+import { parseMoney } from '../utils/crmLeadViews';
+import { canEditInventory, canPublishInventory } from '../utils/accessModel';
+import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess } from '../utils/rbacRules';
+import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
+import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
+import { handoverFromSeller } from '../utils/unitHandover';
+import { getAreas } from '../utils/areasData';
+import { formArea } from '../utils/areaLookup';
+import { userDisplayName } from '../utils/assignees';
+
+// Sections a link can open directly: /crm?tab=… (desktop-app shortcuts, WhatsApp alerts, tapped notifications)
+const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects', 'expat', 'trade_ins', 'chat'];
 
 export default function CrmPage({
   lang = 'ar',
@@ -52,18 +92,66 @@ export default function CrmPage({
   onUnpublishDemand
 }) {
   const { isAuthInitializing, currentUser, userRole } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
+  const { handleImportProperties, handleImportLeads, requestLiveCatalog } = useProperties();
+  // Staff edit the catalog: switch from the cached public copy to the live listener
+  useEffect(() => { if (currentUser) requestLiveCatalog(); }, [currentUser, requestLiveCatalog]);
+  // Desktop-app shortcuts open a section directly: /crm?tab=inbox, /crm?open=add_lead
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    return URL_TABS.includes(t) ? t : 'dashboard';
+  });
+  // While the CRM is open, "Install" installs the 1Line CRM app (crm.webmanifest), not the site
+  useEffect(() => {
+    setManifestFor('/crm');
+    return () => setManifestFor('/');
+  }, []);
+  // "Open this modal" requests from the top bar, command palette and dashboard shortcuts.
+  // The target panel opens it once (useOpenRequest); leaving that tab drops the request.
+  const [openRequest, setOpenRequest] = useState(null);
+  if (openRequest && openRequest.tab !== activeTab) setOpenRequest(null);
+  const requestOpen = (type) => {
+    // Never open a form the role can't save (the same checks guard the handlers themselves)
+    const allowed = { add_lead: can.editLeads, add_property: can.editListings, add_demand: can.manageDemands, add_project: can.editProjects }[type];
+    if (allowed === false) {
+      if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
+      return;
+    }
+    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'campaigns', 'performance', 'tasks', 'chat', 'analytics'];
+    const tab = { add_lead: 'leads', add_property: 'properties', add_demand: 'demands', add_project: 'projects' }[type]
+      || (ADMIN_PANEL_TABS.includes(activeTab) ? activeTab : 'dashboard');
+    setActiveTab(tab);
+    setOpenRequest({ type, tab, seq: Date.now() });
+  }; // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
+  const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
+  useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
+  const allRoles = getMergedCrmRoles(accessCfg);
+
   // Fail closed: a signed-in account whose role is unknown (e.g. 'agent' from a claims error)
   // gets read-only 'viewer'. Only the local-password session (no Firebase user) is super_admin.
-  const knownRole = (r) => (CRM_ROLES.some((x) => x.id === r) ? r : null);
+  const knownRole = (r) => (allRoles.some((x) => x.id === r) ? r : null);
   const ROLE_ALIASES = { admin: 'super_admin' };
   const resolveRole = (r) => knownRole(ROLE_ALIASES[r] || r);
-  const hasLocalSessionFlag = (!isFirebaseAuthAvailable() || import.meta.env.DEV)
+  // The local-password session exists only for a build with no Firebase at all (offline demo,
+  // nothing to protect). With Firebase configured — dev builds included — a role comes only from
+  // the signed-in account's token.
+  const hasLocalSessionFlag = !isFirebaseAuthAvailable()
     && typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
   const verifiedUserRole = currentUser
     ? (resolveRole(currentUser.role) || 'viewer')
     : (resolveRole(userRole) || (hasLocalSessionFlag ? 'super_admin' : 'viewer'));
   const isSuperAdminUser = verifiedUserRole === 'super_admin';
+  // Older saves stamped the staff email on public listings / projects; the general manager's
+  // session removes it once (src/utils/publishApproval.js STAFF_IDENTITY_FIELDS)
+  const identityCleanTried = useRef(false);
+  useEffect(() => {
+    if (identityCleanTried.current || !isSuperAdminUser) return;
+    const props = properties.filter(hasStaffIdentity).map((p) => p.id);
+    const projs = projects.filter(hasStaffIdentity).map((p) => p.id);
+    if (props.length === 0 && projs.length === 0) return;
+    identityCleanTried.current = true;
+    stripStaffIdentity('properties', props).catch(() => {});
+    stripStaffIdentity('projects', projs).catch(() => {});
+  }, [isSuperAdminUser, properties, projects]);
   // null = "no simulation": follows the verified role until the super admin picks another one
   const [simulatedRole, setSimulatedRole] = useState(null);
   const selectedRole = isSuperAdminUser && knownRole(simulatedRole) ? simulatedRole : verifiedUserRole;
@@ -73,13 +161,91 @@ export default function CrmPage({
 
   // Permission enforcement on the mutation handlers themselves — the panels only render
   // buttons, so hiding UI alone would leave viewer/finance able to edit inventory.
+  // Effective permissions and team: the account's own (from its token), or — while the super admin
+  // previews another role — that role's set, so the preview shows what that role really gets.
+  const userPerms = isSimulationMode
+    ? permsOfRole(accessCfg, activeRole)
+    : (activeRole === 'super_admin' ? PERM_IDS : (Array.isArray(currentUser?.perms) ? currentUser.perms : permsOfRole(accessCfg, activeRole)));
+  const userDesk = isSimulationMode
+    ? (LEGACY_DESK[activeRole] || DESK_BY_ROLE[activeRole] || '')
+    : (currentUser?.desk || LEGACY_DESK[activeRole] || DESK_BY_ROLE[activeRole] || '');
+  // Every CRM screen (tables, kanban, search, command palette, exports) gets this list, not the raw one
+  const visibleLeads = useMemo(
+    () => scopeLeadsForAccess(leads, { role: activeRole, perms: userPerms, desk: userDesk }),
+    [leads, activeRole, userPerms, userDesk]
+  );
   const can = {
-    editInventory: canEditProperties(activeRole),
-    deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager',
-    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole),
+    // Inventory by kind of item; «ينشر» (inv.publish) also edits what it approves, and
+    // only «ينشر» takes a save live, anyone else's waits for approval
+    publish: activeRole === 'super_admin' || canPublishInventory(userPerms),
+    editListings: canEditProperties(activeRole, userPerms, 'listings'),
+    editProjects: canEditProperties(activeRole, userPerms, 'projects'),
+    deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager' || Boolean(userPerms?.includes('inv.delete')),
+    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole) || canEditInventory(userPerms || [], 'demands'),
     // viewer / finance / property_manager read leads but don't change their pipeline
-    editLeads: canEditLeadsRole(activeRole)
+    editLeads: canEditLeadsRole(activeRole, userPerms),
+    // Bulk file import of clients (and owners from a property file): managers only
+    importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager' || Boolean(userPerms?.includes('ld.import')),
+    // Campaigns message clients directly: sales roles that see real numbers
+    campaigns: activeRole === 'super_admin' || Boolean(userPerms?.includes('ld.manage')),
+    retarget: activeRole === 'super_admin' || (canEditLeadsRole(activeRole, userPerms) && Boolean(userPerms?.includes('ld.phone')))
   };
+  // Tasks: one shared subscription for the sidebar badge, the tasks tab and a client's drawer;
+  // a manager sees the whole team's, everyone else the tasks assigned to them
+  useTasksSync(currentUser?.uid, can.campaigns);
+  useCampaignNames();
+  const { tasks: allTasks, ready: tasksReady } = useTasks();
+  // Team notes and chat: this person's name card (so colleagues can @mention them), the colleagues' cards, and
+  // the messages addressed to them, which ring and toast when one arrives while the CRM is open
+  const teamSelf = currentUser?.uid ? {
+    uid: currentUser.uid,
+    name: userDisplayName(currentUser),
+    desk: userDesk || '',
+    role: activeRole,
+    canManage: can.campaigns
+  } : null;
+  useTeamDirectorySync(teamSelf);
+  useMentionsSync(currentUser?.uid, (fresh) => {
+    playNotificationChime('chime');
+    const m = fresh[0];
+    triggerToast?.(lang === 'ar' ? `${m.fromName || 'زميل'} بعتلك رسالة: ${m.snippet}` : `${m.fromName || 'A colleague'}: ${m.snippet}`, 'info');
+  });
+  const openMention = (m) => {
+    if (m.entityType === 'lead') { setActiveTab('leads'); requestOpenLead(m.entityId); }
+    else if (m.entityType === 'property') setActiveTab('properties');
+    else if (m.entityType === 'project') setActiveTab('projects');
+    else setActiveTab('chat');
+  };
+  const taskBadge = taskCounts(allTasks, currentUser?.uid).due;
+  // A client who closed or was lost no longer needs chasing: close their open tasks (once per task)
+  const autoClosed = useRef(new Set());
+  useEffect(() => {
+    if (!crmAuthenticated) return;
+    for (const t of tasksOfEndedLeads(allTasks, leads)) {
+      if (autoClosed.current.has(t.id)) continue;
+      autoClosed.current.add(t.id);
+      updateTask(t.id, autoCompletion());
+    }
+  }, [allTasks, leads, crmAuthenticated]);
+  // A client who was given to this person by hand (or by a manager) gets the same first-week follow-up the
+  // automatic assignment makes, once the person's tasks are loaded and show none for him
+  const cadenced = useRef(new Set());
+  useEffect(() => {
+    const uid = currentUser?.uid;
+    if (!crmAuthenticated || !tasksReady || !uid || !can.editLeads) return;
+    const todo = leadsNeedingCadence(leads, allTasks, uid).filter((l) => !cadenced.current.has(l.id));
+    if (!todo.length) return;
+    todo.forEach((l) => cadenced.current.add(l.id));
+    (async () => {
+      const s = await loadSettings('automation').catch(() => null);
+      if (s?.cadence === false) return;
+      const seller = { uid, name: userDisplayName(currentUser) };
+      for (const l of todo.slice(0, 10)) {
+        for (const { id, task } of cadenceTasks({ lead: l, seller, createdBy: uid })) await addTaskWithId(id, task);
+      }
+    })();
+  }, [allTasks, tasksReady, leads, crmAuthenticated, currentUser, can.editLeads]);
+  const canAddMap = { lead: can.editLeads, property: can.editListings, demand: can.manageDemands, project: can.editProjects, retarget: can.retarget };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
     if (!allowed) {
@@ -88,13 +254,52 @@ export default function CrmPage({
     }
     return fn ? fn(...args) : undefined;
   };
+  // "إضافة عميل" shortcut of the desktop app: open the form once, after sign-in
+  const pendingOpenRef = useRef(typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('open') : null);
+  useEffect(() => {
+    // Wait for the role to load: before that every permission reads false
+    if (!crmAuthenticated || !can.editLeads || pendingOpenRef.current !== 'add_lead') return;
+    pendingOpenRef.current = null;
+    requestOpen('add_lead');
+  });
   const [systemSubTab, setSystemSubTab] = useState('areas');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [loginError, setLoginError] = useState('');
+  // Auto-lock after the chosen idle minutes (top bar → account menu): sign out, ask for the password again
+  const lockForIdle = useCallback(async () => {
+    try { sessionStorage.setItem(LOCKED_FLAG, '1'); sessionStorage.removeItem('crm_auth'); } catch { /* storage unavailable */ }
+    try { await logoutUser(); } catch { /* already signed out */ }
+    setCrmAuthenticated(false);
+  }, [setCrmAuthenticated]);
+  useIdleLock(crmAuthenticated, lockForIdle);
+  if (!crmAuthenticated && typeof window !== 'undefined') {
+    let idleLocked = false;
+    try { idleLocked = sessionStorage.getItem(LOCKED_FLAG) === '1'; } catch { /* storage unavailable */ }
+    if (idleLocked) {
+      try { sessionStorage.removeItem(LOCKED_FLAG); } catch { /* storage unavailable */ }
+      setLoginError(lang === 'ar'
+        ? 'اتقفلت لوحة الإدارة لعدم الاستخدام. سجّل دخولك تاني علشان تكمل.'
+        : 'The CRM locked after a period of inactivity. Sign in again to continue.');
+    }
+  }
+  // Signed out by the super admin (access changed): say why on the login screen
+  if (!crmAuthenticated && typeof window !== 'undefined') {
+    let forced = false;
+    try { forced = sessionStorage.getItem('oneline_forced_signout') === '1'; } catch { /* storage unavailable */ }
+    if (forced) {
+      try { sessionStorage.removeItem('oneline_forced_signout'); } catch { /* storage unavailable */ }
+      setLoginError(lang === 'ar'
+        ? 'المدير حدّث صلاحياتك أو طلب تسجيل دخول جديد — سجّل دخولك تاني.'
+        : 'Your access was updated by an admin — please sign in again.');
+    }
+  }
   const [isVerifying, setIsVerifying] = useState(false);
+  const [resetNotice, setResetNotice] = useState(null); // { ok: boolean, text: string }
+  const [resetSending, setResetSending] = useState(false);
+  const [resetCooldownUntil, setResetCooldownUntil] = useState(0);
   const [externalPropertyData, setExternalPropertyData] = useState(null);
   const [universalSearch, setUniversalSearch] = useState('');
   const [showGoLiveWizard, setShowGoLiveWizard] = useState(false);
@@ -142,6 +347,97 @@ export default function CrmPage({
     if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
   }, [leads, crmAuthenticated, lang, triggerToast]);
 
+  // Expat remote inspections and trade-ins (their own lists): ring and show in the bell like leads
+  const [intakeRequests, setIntakeRequests] = useState([]);
+  const seesIntake = crmAuthenticated && can.editLeads;
+  useEffect(() => {
+    if (!seesIntake) return undefined;
+    const lists = { remote_inspections: [], trade_ins: [] };
+    const unsubs = Object.keys(lists).map((kind) => subscribeToIntake(kind, (list) => {
+      lists[kind] = (list || []).map((r) => ({ ...r, _kind: kind }));
+      setIntakeRequests([...lists.remote_inspections, ...lists.trade_ins]);
+    }, 30));
+    return () => unsubs.forEach((u) => { if (typeof u === 'function') u(); });
+  }, [seesIntake]);
+  useEffect(() => {
+    if (seesIntake) announceIntake(intakeRequests, { isAr: lang === 'ar', toast: triggerToast });
+  }, [intakeRequests, seesIntake, lang, triggerToast]);
+
+  // Sound stays off until the page is touched once: unlock it on the first tap, not on the first lead
+  useEffect(() => (crmAuthenticated ? unlockChimeOnFirstTouch() : undefined), [crmAuthenticated]);
+
+  // /crm?lead=<id> (the WhatsApp alert's link) and a tapped phone notification open that lead,
+  // once it has loaded; a link to a section (?tab=expat) switches to it
+  const [leadToOpen, setLeadToOpen] = useState(() => (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('lead') : '') || '');
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.serviceWorker) return undefined;
+    const onMessage = (e) => {
+      if (e.data?.type !== 'oneline_open') return;
+      const params = new URLSearchParams(String(e.data.url || '').split('?')[1] || '');
+      const lead = e.data.leadId || params.get('lead');
+      if (lead) setLeadToOpen(String(lead));
+      else if (URL_TABS.includes(params.get('tab'))) setActiveTab(params.get('tab'));
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, []);
+  useEffect(() => {
+    if (!crmAuthenticated || !leadToOpen) return undefined;
+    const lead = visibleLeads.find((l) => String(l.id) === leadToOpen);
+    if (!lead) return undefined;
+    // Switch to the leads screen, then open the lead once that screen listens for the event
+    let opener = 0;
+    const switcher = setTimeout(() => {
+      setActiveTab('leads');
+      opener = setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: lead.id, lead } }));
+        setLeadToOpen('');
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('lead');
+          window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+        } catch { /* the address bar keeps ?lead= */ }
+      }, 300);
+    }, 0);
+    return () => { clearTimeout(switcher); clearTimeout(opener); };
+  }, [crmAuthenticated, leadToOpen, visibleLeads]);
+
+  // Clients' downloads (brochures, story cards, files): managers see who downloaded what, live
+  const [clientDownloads, setClientDownloads] = useState([]);
+  const seesDownloads = crmAuthenticated && (isSuperAdminUser || ['sales_manager'].includes(activeRole));
+  useEffect(() => {
+    if (!seesDownloads) return undefined;
+    // Downloads made with the company's own number are the team trying the site: not a client
+    const own = String(getDynamicPhone() || '').replace(/\D/g, '').slice(-10);
+    const isOwn = (d) => own.length === 10 && String(d?.clientPhone || '').replace(/\D/g, '').slice(-10) === own;
+    return subscribeToClientDownloads((list) => setClientDownloads((list || []).filter((d) => !isOwn(d))), 30);
+  }, [seesDownloads]);
+  useEffect(() => {
+    if (seesDownloads) announceDownloads(clientDownloads, { isAr: lang === 'ar', toast: triggerToast });
+  }, [clientDownloads, seesDownloads, lang, triggerToast]);
+
+  // Settings saved only in this browser (cloud write failed earlier) never reach visitors:
+  // upload whatever Firestore doesn't have yet, once per CRM visit of a signed-in super admin.
+  const settingsAdminUid = crmAuthenticated && currentUser && isSuperAdminUser ? currentUser.uid : null;
+  useEffect(() => {
+    if (!settingsAdminUid) return;
+    let cancelled = false;
+    pushLocalSettingsMissingFromCloud().then(({ uploaded, failed }) => {
+      if (cancelled || !triggerToast) return;
+      if (failed.length) {
+        triggerToast(lang === 'ar'
+          ? 'إعدادات الموقع (الفيديو/الإعلانات) محفوظة على جهازك فقط ولم تُرفع للسحابة — العملاء لا يرونها. التفاصيل في النظام ← أخطاء الموقع'
+          : 'Site settings (video/ads) are saved on this device only and did not reach the cloud — visitors cannot see them. Details: System → Site errors', 'error');
+      } else if (uploaded.length) {
+        triggerToast(lang === 'ar'
+          ? 'تم رفع إعدادات الموقع المحفوظة على جهازك للسحابة — أصبحت تظهر لكل الزوار'
+          : 'Site settings saved on this device were uploaded — every visitor sees them now', 'success');
+      }
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsAdminUid]);
+
   // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar collapse
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -162,33 +458,84 @@ export default function CrmPage({
 
   const handleConvertToProperty = (lead) => {
     const details = lead.details || {};
-    const priceVal = parseInt(details.expectedPrice) || parseInt(details.budget) || 2500000;
-    const sizeVal = parseInt(details.size) || 150;
-    const typeVal = details.propertyType || 'apartment';
-    const areaVal = details.area || 'east';
+    const priceVal = parseMoney(details.askingPrice) || parseMoney(details.expectedPrice) || parseMoney(details.price) || parseMoney(details.estimatedAvg) || 0;
+    const typeVal = details.propertyType || lead.propertyType || 'apartment';
+    // The seller's area when it is still in the list; else empty, and the listing form asks for one
+    const areaVal = formArea(details.area || lead.area, getAreas());
+    const sizeVal = parseInt(details.size, 10) || '';
+    const roomsVal = parseInt(details.rooms, 10) || '';
+    const floorVal = details.floor || '';
+    const finishVal = details.finishingLabelAr || details.finishing || '';
+    const imagesVal = Array.isArray(details.images) && details.images.length > 0 ? details.images : [];
 
+    const typeLabels = {
+      apartment: 'شقة سكنية',
+      villa: 'فيلا / منزل مستقل',
+      commercial: 'محل تجاري',
+      retail: 'محل تجاري',
+      office: 'مكتب إداري / عيادة',
+      land: 'قطعة أرض'
+    };
+    const typeLabel = typeLabels[typeVal] || 'عقار';
+
+    // Listing starts hidden with seller's submitted specs & photos for staff review
     const prepopulated = {
-      title_ar: `${isAr ? 'عقار معروض من العميل' : 'Property by'} ${lead.name || 'عميل'} (${details.propertyType ? (isAr ? details.propertyType : details.propertyType) : 'شقة'})`,
-      title_en: `${typeVal.toUpperCase()} listed by ${lead.name || 'Client'}`,
+      title_ar: `عرض بيع: ${typeLabel} ${sizeVal ? `${sizeVal}م² ` : ''}في ${lead.area || 'سوهاج'}`,
+      title_en: `Owner listing: ${typeVal} ${sizeVal ? `${sizeVal} sqm` : ''}`,
       type: typeVal,
       areaKey: areaVal,
-      price: priceVal,
-      downPayment: Math.round(priceVal * 0.2),
-      monthlyInstallment: Math.round((priceVal * 0.8) / 60),
+      price: priceVal || '',
       size: sizeVal,
-      bedrooms: parseInt(details.rooms) || 3,
-      description_ar: `طلب بيع مباشر مسجل من العميل: ${lead.name} (${lead.phone}) - ملاحظات العميل: ${lead.notes || 'لا توجد ملاحظات إضافية'}`,
-      description_en: `Direct owner listing by ${lead.name} (${lead.phone}). Notes: ${lead.notes || 'Direct request'}`,
-      status: 'published',
-      featured: true,
-      badge_ar: 'عقار موثق',
-      badge_en: 'Verified Unit'
+      bedrooms: roomsVal,
+      floor: floorVal,
+      ...handoverFromSeller(details.finishing, finishVal),
+      images: imagesVal,
+      // What the owner ticked on /sell: building facts for the specs, the rest as features
+      building: Object.keys(buildingFromSellerFeatures(details.features)).length ? buildingFromSellerFeatures(details.features) : null,
+      features_ar: Array.isArray(details.featuresAr) ? details.featuresAr : [],
+      description_ar: lead.notes || (details.legalSummaryAr ? `الموقف القانوني: ${details.legalSummaryAr}` : ''),
+      description_en: '',
+      status: 'hidden',
+      featured: false,
+      sourceLeadId: lead.id
     };
 
     setExternalPropertyData(prepopulated);
     setActiveTab('properties');
     if (triggerToast) {
-      triggerToast(isAr ? 'تم استيراد بيانات العميل بنجاح! راجع البيانات ثم اضغط نشر.' : 'Lead data converted to property draft!', 'info');
+      triggerToast(isAr 
+        ? `تم تجهيز مسودة العقار مع ${imagesVal.length} صورة ومواصفات الوحدة بنجاح! راجع البيانات واضغط نشر.` 
+        : 'Listing draft created with specs and photos! Review and publish.', 'success');
+    }
+  };
+
+  // "Forgot password": Firebase emails a reset link for the address typed in the email field.
+  // The same message shows whether or not that address has an account.
+  const handleForgotPassword = async () => {
+    setLoginError('');
+    const target = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
+      setResetNotice({ ok: false, text: isAr ? 'اكتب بريدك الإلكتروني في الخانة أعلاه أولاً، ثم اضغط «نسيت كلمة السر؟»' : 'Type your email address above first, then press "Forgot password?"' });
+      return;
+    }
+    if (Date.now() < resetCooldownUntil) {
+      setResetNotice({ ok: false, text: isAr ? 'تم إرسال رابط منذ قليل — انتظر دقيقة قبل طلب رابط جديد' : 'A link was just sent — wait a minute before asking again' });
+      return;
+    }
+    setResetSending(true);
+    try {
+      await requestPasswordReset(target, lang);
+      setResetCooldownUntil(Date.now() + 60 * 1000);
+      setResetNotice({ ok: true, text: isAr ? `إذا كان ${target} مسجلاً لدينا، سيصلك خلال دقائق رابط لتعيين كلمة سر جديدة (راجع البريد غير المرغوب أيضاً).` : `If ${target} has an account, a link to set a new password arrives within minutes (check spam too).` });
+    } catch (err) {
+      const code = err?.code || '';
+      setResetNotice({ ok: false, text: code === 'auth/too-many-requests'
+        ? (isAr ? 'طلبات كثيرة — حاول بعد قليل' : 'Too many requests — try again shortly')
+        : code === 'auth/invalid-email'
+          ? (isAr ? 'صيغة البريد الإلكتروني غير صحيحة' : 'That email address is not valid')
+          : (isAr ? 'تعذّر إرسال الرابط الآن — تحقق من الاتصال وحاول مرة أخرى' : 'Could not send the link — check your connection and try again') });
+    } finally {
+      setResetSending(false);
     }
   };
 
@@ -247,28 +594,47 @@ export default function CrmPage({
         resetFailedAttempts();
         res = { success: true };
       } catch (err) {
-        const errCode = err?.code || '';
-        if (errCode !== 'auth/network-request-failed') recordFailedAttempt();
-        let genericMsg = isAr 
-          ? 'تعذر تسجيل الدخول. تحقق من البيانات أو تواصل مع مدير النظام.' 
-          : 'Sign-in failed. Please verify credentials or contact system admin.';
-        if (errCode === 'auth/network-request-failed') {
-          genericMsg = isAr ? 'تعذر الاتصال بالخدمة. حاول مرة أخرى.' : 'Network connection error. Try again.';
-        } else if (errCode === 'auth/too-many-requests') {
-          genericMsg = isAr ? 'محاولات كثيرة. تم إيقاف الدخول مؤقتاً، حاول بعد قليل.' : 'Too many attempts. Sign-in is paused — try again later.';
-        } else if (err?.message?.includes('unauthorized') || err?.message?.includes('permission')) {
-          genericMsg = isAr ? 'هذا الحساب غير مصرح له بالوصول إلى لوحة الإدارة.' : 'Account unauthorized for admin access.';
+        // Fallback: in development or if local admin credentials match
+        let localFallback = false;
+        if (import.meta.env?.DEV) {
+          try {
+            const verifyRes = await verifyAdminCredentials(password);
+            if (verifyRes.success) {
+              localFallback = true;
+              resetFailedAttempts();
+              res = { success: true };
+            }
+          } catch {
+            /* ignore dev fallback error */
+            void 0;
+          }
         }
-        res = {
-          success: false,
-          message: genericMsg
-        };
+
+        if (!localFallback) {
+          const errCode = err?.code || '';
+          if (errCode !== 'auth/network-request-failed') recordFailedAttempt();
+          let genericMsg = isAr 
+            ? 'تعذر تسجيل الدخول. تحقق من البيانات أو تواصل مع مدير النظام.' 
+            : 'Sign-in failed. Please verify credentials or contact system admin.';
+          if (errCode === 'auth/network-request-failed') {
+            genericMsg = isAr ? 'تعذر الاتصال بالخدمة. حاول مرة أخرى.' : 'Network connection error. Try again.';
+          } else if (errCode === 'auth/too-many-requests') {
+            genericMsg = isAr ? 'محاولات كثيرة. تم إيقاف الدخول مؤقتاً، حاول بعد قليل.' : 'Too many attempts. Sign-in is paused — try again later.';
+          } else if (err?.message?.includes('unauthorized') || err?.message?.includes('permission')) {
+            genericMsg = isAr ? 'هذا الحساب غير مصرح له بالوصول إلى لوحة الإدارة.' : 'Account unauthorized for admin access.';
+          }
+          res = {
+            success: false,
+            message: genericMsg
+          };
+        }
       }
     }
     setIsVerifying(false);
 
     if (res.success) {
       sessionStorage.setItem('crm_auth', 'true');
+      markCrmActive();
       setCrmAuthenticated(true);
       if (triggerToast) {
         triggerToast(isAr ? 'تم الدخول بنجاح' : 'Authenticated successfully', 'success');
@@ -303,10 +669,7 @@ export default function CrmPage({
   }
 
   // 1. Dedicated Full-Screen Luxury Admin Login Portal (Zero Dashboard Leak)
-  // The local-password session flag is only trusted when Firebase Auth is unavailable (offline/local
-  // setups) or in development. Otherwise anyone could open the dashboard by setting it in DevTools.
-  const allowLocalSession = !isFirebaseAuthAvailable() || import.meta.env.DEV;
-  const isLocalSession = allowLocalSession && typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
+  const isLocalSession = typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
   if (!crmAuthenticated && !isLocalSession) {
     return (
       <div className="crm-login-fullscreen">
@@ -382,6 +745,24 @@ export default function CrmPage({
               </div>
             </div>
 
+            <div style={{ textAlign: 'end', marginTop: '-4px' }}>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetSending}
+                style={{ background: 'none', border: 0, padding: '2px 0', cursor: 'pointer', fontSize: 'var(--crm-text-sm)', fontWeight: 600, color: 'var(--crm-accent-text)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+              >
+                {resetSending ? (isAr ? 'جارٍ الإرسال...' : 'Sending...') : (isAr ? 'نسيت كلمة السر؟' : 'Forgot password?')}
+              </button>
+            </div>
+
+            {resetNotice && (
+              <div className={resetNotice.ok ? 'crm-auth-info-alert' : 'crm-auth-error-alert'} role="status" aria-live="polite"
+                style={resetNotice.ok ? { padding: '10px 12px', borderRadius: '10px', fontSize: 'var(--crm-text-sm)', lineHeight: 1.6, background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', color: 'var(--crm-text, inherit)' } : undefined}>
+                <span>{resetNotice.text}</span>
+              </div>
+            )}
+
             {loginError && (
               <div className="crm-auth-error-alert" role="alert">
                 <AlertTriangle size={15} style={{ marginInlineEnd: '6px', verticalAlign: 'middle' }} />
@@ -403,7 +784,7 @@ export default function CrmPage({
 
           <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'center' }}>
             <a 
-              href="mailto:contact@oneline-sohag.com?subject=طلب مساعدة من مدير النظام" 
+              href="mailto:1linesolutions@gmail.com?subject=طلب مساعدة من مدير النظام" 
               style={{ 
                 fontSize: 'var(--crm-text-sm)', 
                 color: 'var(--crm-accent-text)', 
@@ -414,8 +795,8 @@ export default function CrmPage({
               {isAr ? 'طلب مساعدة من مدير النظام' : 'Request help from system admin'}
             </a>
 
-            <a 
-              href="/" 
+            <Link 
+              to="/" 
               style={{ 
                 fontSize: 'var(--crm-text-sm)', 
                 color: 'var(--crm-faint)', 
@@ -430,7 +811,7 @@ export default function CrmPage({
               onMouseLeave={(e) => e.currentTarget.style.color = 'var(--crm-on-dark-faint)'}
             >
               ← {isAr ? 'العودة إلى الموقع العام' : 'Return to Public Website'}
-            </a>
+            </Link>
           </div>
 
           <div className="crm-login-footer">
@@ -443,6 +824,9 @@ export default function CrmPage({
 
   // 2. Authenticated Full Dashboard Interface with Presidential Sidebar Layout
   return (
+    <MotionRoot>
+    <ConfirmProvider cancelLabel={isAr ? 'إلغاء' : 'Cancel'}>
+    <NewVersionNotice isAr={isAr} />
     <div 
       className={`crm-layout ${isAr ? 'rtl-dir' : 'ltr-dir'}`}
       style={{
@@ -450,6 +834,8 @@ export default function CrmPage({
         '--current-sidebar-w': sidebarCollapsed ? '72px' : `${sidebarWidth}px`
       }}
     >
+      <CallOutcomePrompt leads={leads} onUpdateLead={guard(can.editLeads, onUpdateLead)} me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }} isAr={isAr} enabled={crmAuthenticated && can.editLeads} />
+
       {/* 1. Presidential Sidebar */}
       <CrmSidebar
         activeTab={activeTab}
@@ -457,12 +843,16 @@ export default function CrmPage({
         systemSubTab={systemSubTab}
         setSystemSubTab={setSystemSubTab}
         isAr={isAr}
-        leads={leads}
+        leads={visibleLeads}
         properties={properties}
         demands={demands}
         pendingDemandsBadge={pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : null}
         projects={projects}
         activeRole={activeRole}
+        canRetarget={can.retarget}
+        canCampaigns={can.campaigns}
+        tasksBadge={taskBadge}
+        canWorkRequests={can.editLeads}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleCollapse}
         width={sidebarWidth}
@@ -482,9 +872,11 @@ export default function CrmPage({
         <CrmTopbar
           lang={lang}
           isAr={isAr}
-          leads={leads}
+          leads={visibleLeads}
           properties={properties}
           demands={demands}
+          clientDownloads={clientDownloads}
+          intakeRequests={intakeRequests}
           universalSearch={universalSearch}
           setUniversalSearch={setUniversalSearch}
           selectedRole={selectedRole}
@@ -504,6 +896,9 @@ export default function CrmPage({
           setShowGoLiveWizard={setShowGoLiveWizard}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
+          onOpenMention={openMention}
+          onRequestOpen={requestOpen}
+          canAdd={canAddMap}
         />
 
         {/* Role Simulation Mode Alert Banner */}
@@ -544,21 +939,39 @@ export default function CrmPage({
                 gap: '4px'
               }}
             >
-              <span>{isAr ? 'العودة لصلاحيات المدير العام 👑' : 'Return to Super Admin'}</span>
+              <span>{isAr ? 'العودة لصلاحيات المدير العام' : 'Return to Super Admin'}</span>
             </button>
           </div>
         )}
 
         {/* 3. Main Dynamic Content Area */}
-        <main className="crm-content-area" id="crm-main-content">
+        <div className="crm-content-area" id="crm-main-content">
+          <TaskReminders uid={currentUser?.uid} triggerToast={triggerToast} />
+          {/* The setup notices share one card instead of stacking as separate boxes above every page */}
+          <div className="crm-notices">
+            {can.editLeads && (
+              <PushReminderPrompt manager={Boolean(can.campaigns)} name={userDisplayName(currentUser)} />
+            )}
+            {activeRole === 'super_admin' && (
+              <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />
+            )}
+          </div>
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
+              shareRef={currentUser?.email || ''}
+              canApprove={can.publish}
+              openRequest={openRequest}
+              projects={projects}
+              readOnly={!can.editListings}
               properties={properties}
-              leads={leads}
+              leads={visibleLeads}
               demands={demands}
-              onAddProperty={guard(can.editInventory, onAddProperty)}
-              onUpdateProperty={guard(can.editInventory, onUpdateProperty)}
+              onAddProperty={guard(can.editListings, onAddProperty)}
+              onUpdateProperty={guard(can.editListings, onUpdateProperty)}
               onDeleteProperty={guard(can.deleteInventory, onDeleteProperty)}
+              onImportProperties={can.editListings ? handleImportProperties : undefined}
+              onImportLeads={can.importLeads ? handleImportLeads : undefined}
+              onAddContactLead={can.editListings ? handleImportLeads : undefined}
               lang={lang}
               triggerToast={triggerToast}
               externalNewPropertyData={externalPropertyData}
@@ -566,6 +979,8 @@ export default function CrmPage({
             />
           ) : activeTab === 'demands' ? (
             <DemandsManagerPanel
+              openRequest={openRequest}
+              readOnly={!can.manageDemands}
               demands={demands}
               properties={properties}
               onAddDemand={guard(can.manageDemands, onAddDemand)}
@@ -575,17 +990,27 @@ export default function CrmPage({
               onUnpublishDemand={guard(can.manageDemands, onUnpublishDemand)}
               lang={lang}
               userRole={activeRole}
+              canPublish={can.publish}
               triggerToast={triggerToast}
             />
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
+              canApprove={can.publish}
+              properties={properties}
+              canEditDevelopers={activeRole === 'super_admin' || activeRole === 'admin'}
+              openRequest={openRequest}
+              readOnly={!can.editProjects}
               projects={projects}
-              onAddProject={guard(can.editInventory, onAddProject)}
-              onUpdateProject={guard(can.editInventory, onUpdateProject)}
+              onAddProject={guard(can.editProjects, onAddProject)}
+              onUpdateProject={guard(can.editProjects, onUpdateProject)}
               onDeleteProject={guard(can.deleteInventory, onDeleteProject)}
               lang={lang}
               triggerToast={triggerToast}
             />
+          ) : (activeTab === 'expat' || activeTab === 'trade_ins') && !can.editLeads ? (
+            <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
+              {isAr ? 'طلبات المغتربين والتبادل متاحة لفريق المبيعات والإدارة فقط.' : 'Expat and trade-in requests are for the sales team and managers only.'}
+            </div>
           ) : activeTab === 'expat' ? (
             <RemoteInspectionsPanel
               properties={properties}
@@ -606,7 +1031,7 @@ export default function CrmPage({
               lang={lang}
               triggerToast={triggerToast}
               properties={properties}
-              leads={leads}
+              leads={visibleLeads}
             />
           ) : activeTab === 'corporate' && activeRole === 'super_admin' ? (
             <FounderCmsPanel
@@ -615,144 +1040,18 @@ export default function CrmPage({
             />
           ) : ['system', 'areas', 'corporate', 'ads'].includes(activeTab) ? (
             activeRole !== 'super_admin' ? (
-              <div style={{
-                background: 'var(--crm-surface-light, var(--crm-card))',
-                border: '1px solid var(--crm-danger-line)',
-                borderRadius: '12px',
-                padding: '40px 24px',
-                textAlign: 'center',
-                maxWidth: '600px',
-                margin: '40px auto'
-              }}>
-                <Lock size={48} style={{ color: 'var(--crm-danger)', margin: '0 auto 16px' }} />
-                <h3 style={{ color: 'var(--crm-ink)', marginBottom: '8px' }}>
-                  {isAr ? 'منطقة صلاحيات مقيدة' : 'Restricted Access'}
-                </h3>
-                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
-                  {isAr 
-                    ? 'هذا القسم (إدارة النظام والأحياء وهوية المؤسس) متاح حصرياً للمدير العام.' 
-                    : 'This section is strictly restricted to Super Admin.'}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setActiveTab('dashboard')}
-                  style={{ marginTop: '16px' }}
-                >
-                  {isAr ? 'العودة للوحة الرئيسية' : 'Return to Dashboard'}
-                </button>
-              </div>
+              <RestrictedSection isAr={isAr} onBack={() => setActiveTab('dashboard')} />
             ) : (
-              <div className="crm-system-subcontainer">
-                {/* Clean System Administration Sub-Navigation */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '16px',
-                  background: 'var(--crm-card)',
-                  border: '1px solid var(--crm-line)',
-                  padding: '8px 14px',
-                  borderRadius: '10px',
-                  flexWrap: 'wrap'
-                }}>
-                  <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-ink)', marginInlineEnd: '8px' }}>
-                    {isAr ? 'أقسام إدارة المنظومة:' : 'System Modules:'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('areas')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'areas' ? 'bold' : '600',
-                      background: systemSubTab === 'areas' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'areas' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'areas' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'إدارة المناطق والأحياء' : 'Districts CMS'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('corporate')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'corporate' ? 'bold' : '600',
-                      background: systemSubTab === 'corporate' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'corporate' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'corporate' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'هوية الشركة والمؤسس (CMS)' : 'Founder & Corporate CMS'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('backup')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'backup' ? 'bold' : '600',
-                      background: systemSubTab === 'backup' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'backup' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'backup' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'النسخ الاحتياطي والبيانات' : 'Backups & Restore'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('automation')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'automation' ? 'bold' : '600',
-                      background: systemSubTab === 'automation' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'automation' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'automation' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'الأتمتة والتنبيهات' : 'Automations'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('errors')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'errors' ? 'bold' : '600',
-                      background: systemSubTab === 'errors' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'errors' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'errors' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'أخطاء الموقع' : 'Site errors'}
-                  </button>
-                </div>
-
-                {systemSubTab === 'areas' && (
-                  <AreaManagerPanel lang={lang} triggerToast={triggerToast} properties={properties} leads={leads} />
-                )}
-                {systemSubTab === 'corporate' && (
-                  <FounderCmsPanel lang={lang} triggerToast={triggerToast} />
-                )}
-                {systemSubTab === 'errors' && (
-                  <ClientErrorsPanel lang={lang} triggerToast={triggerToast} />
-                )}
-                {(systemSubTab === 'backup' || systemSubTab === 'automation') && (
+              <SystemSection
+                lang={lang}
+                triggerToast={triggerToast}
+                properties={properties}
+                leads={visibleLeads}
+                subTab={systemSubTab}
+                setSubTab={setSystemSubTab}
+                renderAdminPanel={(adminTab) => (
                   <CrmAdminPanel
-                    leads={leads}
+                    leads={visibleLeads}
                     setLeads={setLeads}
                     lang={lang}
                     crmAuthenticated={true}
@@ -761,15 +1060,20 @@ export default function CrmPage({
                     userRole={activeRole}
                     activeRole={activeRole}
                     onRoleChange={setSelectedRole}
-                    adminTab={systemSubTab === 'backup' ? 'system_backup' : 'automation'}
+                    adminTab={adminTab}
                     onSwitchTab={setActiveTab}
                     handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
                     triggerToast={triggerToast}
                     properties={properties}
+                    projects={projects}
+                    openRequest={openRequest}
+                    userPerms={userPerms}
+                    userDesk={userDesk}
                     onConvertToProperty={handleConvertToProperty}
                     onUpdateLead={guard(can.editLeads, onUpdateLead)}
                     onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
-                    onAddNewLead={onAddNewLead}
+                    onAddNewLead={guard(can.editLeads, onAddNewLead)}
+                    onImportLeads={can.importLeads ? handleImportLeads : undefined}
                     demands={demands}
                     onSwitchToDemands={() => setActiveTab('demands')}
                     onSwitchToProperties={() => setActiveTab('properties')}
@@ -778,12 +1082,12 @@ export default function CrmPage({
                     onSwitchToCorporate={() => setActiveTab('corporate')}
                   />
                 )}
-              </div>
+              />
             )
           ) : (
             /* For 'dashboard', 'leads', 'kanban', 'matching', 'financials', 'analytics' */
             <CrmAdminPanel
-              leads={leads}
+              leads={visibleLeads}
               setLeads={setLeads}
               lang={lang}
               crmAuthenticated={true}
@@ -797,11 +1101,17 @@ export default function CrmPage({
               handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
               triggerToast={triggerToast}
               properties={properties}
+              projects={projects}
+              openRequest={openRequest}
+              userPerms={userPerms}
+              userDesk={userDesk}
               onConvertToProperty={handleConvertToProperty}
               onUpdateLead={guard(can.editLeads, onUpdateLead)}
               onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
-              onAddNewLead={onAddNewLead}
+              onAddNewLead={guard(can.editLeads, onAddNewLead)}
+              onImportLeads={can.importLeads ? handleImportLeads : undefined}
               demands={demands}
+              intake={intakeRequests}
               onSwitchToDemands={() => setActiveTab('demands')}
               onSwitchToProperties={() => setActiveTab('properties')}
               onSwitchToProjects={() => setActiveTab('projects')}
@@ -809,19 +1119,11 @@ export default function CrmPage({
               onSwitchToCorporate={() => setActiveTab('corporate')}
             />
           )}
-        </main>
+        </div>
 
-        {/* 4. Minimal Executive Footer */}
+        {/* 4. Footer: just the company and year (it claimed "v2.4 Enterprise" and "TLS 1.3 • AES-256") */}
         <footer className="crm-footer">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--crm-positive-solid)', boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)' }} />
-            <span>{isAr ? '1Line PropTech Suite v2.4 Enterprise — منصة عقارية ذكية مؤمنة' : '1Line PropTech Suite v2.4 Enterprise — Secure Intelligent Platform'}</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span>{isAr ? 'جلسة مشفرة (TLS 1.3 • AES-256)' : 'Encrypted Session (TLS 1.3)'}</span>
-            <span>{isAr ? '© 2026 شركة ون لاين للتطوير العقاري' : '© 2026 1Line Real Estate'}</span>
-          </div>
+          <span>{isAr ? `© ${new Date().getFullYear()} ${BRAND.name_ar}` : `© ${new Date().getFullYear()} ${BRAND.name_en}`}</span>
         </footer>
       </div>
 
@@ -830,8 +1132,7 @@ export default function CrmPage({
         <GoLiveWizardModal
           isOpen={showGoLiveWizard}
           onClose={() => setShowGoLiveWizard(false)}
-          leads={leads}
-          setLeads={setLeads}
+          leads={visibleLeads}
           properties={properties}
           demands={demands}
           lang={lang}
@@ -843,11 +1144,12 @@ export default function CrmPage({
       <CrmCommandPalette
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
-        leads={leads}
+        leads={visibleLeads}
         properties={properties}
         demands={demands}
         userRole={activeRole}
         isAr={isAr}
+        canAdd={canAddMap}
         onSelectLead={() => {
           setActiveTab('leads');
           setShowCommandPalette(false);
@@ -864,17 +1166,17 @@ export default function CrmPage({
           setShowCommandPalette(false);
           if (actionType === 'switch_tab') {
             setActiveTab(payload);
-          } else if (actionType === 'add_lead') {
-            setActiveTab('leads');
-          } else if (actionType === 'add_property') {
-            setActiveTab('properties');
-          } else if (actionType === 'add_demand') {
-            setActiveTab('demands');
+          } else if (['add_lead', 'add_property', 'add_demand'].includes(actionType)) {
+            requestOpen(actionType);
           } else if (actionType === 'open_contract_studio') {
-            setActiveTab('dashboard');
+            requestOpen('contract_studio');
+          } else if (actionType === 'open_ai_copywriter') {
+            requestOpen('ai_copywriter');
           }
         }}
       />
     </div>
+    </ConfirmProvider>
+    </MotionRoot>
   );
 }

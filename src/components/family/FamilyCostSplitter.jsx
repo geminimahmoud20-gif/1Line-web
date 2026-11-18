@@ -33,11 +33,13 @@ export default function FamilyCostSplitter({ property = null, lang = 'ar', curre
   // Plan: the listing's own plan when present, otherwise a simple interest-free estimate
   const plan = useMemo(() => {
     if (fb?.plan) return { down: fb.plan.down, monthly: fb.plan.monthly + fb.plan.quarterly / 3, months: fb.plan.months, source: 'listing' };
+    // A listing sold cash has no installments to share: each member's part of the cash price
+    if (property) return { down: 0, monthly: 0, months: 0, source: 'cash' };
     const P = Number(price) || 0;
     const down = P * clamp(downPct, 0, 100) / 100;
     const months = clamp(years, 1, 15) * 12;
     return { down, monthly: (P - down) / months, months, source: 'estimate' };
-  }, [fb, price, downPct, years]);
+  }, [fb, price, downPct, years, property]);
 
   const effectiveShares = mode === 'equal' ? Array.from({ length: members }, () => 100 / members) : shares.slice(0, members);
   const split = splitFamilyCost({ down: plan.down, monthly: plan.monthly, cashPrice: fb?.cashPrice || Number(price) || 0 }, effectiveShares);
@@ -114,8 +116,14 @@ export default function FamilyCostSplitter({ property = null, lang = 'ar', curre
             </div>
             <div className="xs-fam-bar"><span /></div>
             <div className="xs-fam-nums">
-              <span>{L('المقدم', 'Down')} <b><bdi>{fmt(s.down)}</bdi></b>{fx(s.down) && <em><bdi>{fx(s.down)}</bdi></em>}</span>
-              <span>{L('شهرياً', 'Monthly')} <b><bdi>{fmt(s.monthly)}</bdi></b>{fx(s.monthly) && <em><bdi>{fx(s.monthly)}</bdi></em>}</span>
+              {plan.source === 'cash' ? (
+                <span>{L('نصيبه كاش', 'Cash share')} <b><bdi>{fmt(s.cash)}</bdi></b>{fx(s.cash) && <em><bdi>{fx(s.cash)}</bdi></em>}</span>
+              ) : (
+                <>
+                  <span>{L('المقدم', 'Down')} <b><bdi>{fmt(s.down)}</bdi></b>{fx(s.down) && <em><bdi>{fx(s.down)}</bdi></em>}</span>
+                  <span>{L('شهرياً', 'Monthly')} <b><bdi>{fmt(s.monthly)}</bdi></b>{fx(s.monthly) && <em><bdi>{fx(s.monthly)}</bdi></em>}</span>
+                </>
+              )}
             </div>
           </li>
         ))}
@@ -144,7 +152,7 @@ export default function FamilyCostSplitter({ property = null, lang = 'ar', curre
         ) : (
           <div className="xs-fam-kpis">
             <div><span>{L('دخل الإيجار الشهري', 'Monthly rent income')}</span><strong><bdi>{fmt(monthlyRent)}</bdi> {L('ج.م', 'EGP')}</strong></div>
-            <div><span>{L('يغطي من القسط الشهري', 'Covers of the installment')}</span><strong><bdi>{Math.round(coverPct)}%</bdi></strong></div>
+            {plan.monthly > 0 && <div><span>{L('يغطي من القسط الشهري', 'Covers of the installment')}</span><strong><bdi>{Math.round(coverPct)}%</bdi></strong></div>}
             <div><span>{L('العائد السنوي على السعر', 'Gross annual yield')}</span><strong><TrendingUp size={14} aria-hidden="true" /> <bdi>{(Math.round(grossYield * 10) / 10).toLocaleString('en-US')}%</bdi></strong></div>
           </div>
         )}
@@ -152,7 +160,9 @@ export default function FamilyCostSplitter({ property = null, lang = 'ar', curre
 
       <p className="xs-fin-foot">
         <Info size={13} aria-hidden="true" />
-        {plan.source === 'listing'
+        {plan.source === 'cash'
+          ? L('الوحدة معروضة كاش: الأرقام نصيب كل فرد من سعر الكاش. التوزيع اتفاق عائلي، والتعاقد يكون باسم من تختارونه.', 'This unit is sold cash: each member\'s part of the cash price. The split is a family arrangement.')
+          : plan.source === 'listing'
           ? L('الأرقام من نظام السداد المسجل لهذا العقار. التوزيع بين الأفراد اتفاق عائلي، والتعاقد يكون باسم من تختارونه.', 'Figures use this listing\'s payment plan. The split is a family arrangement; the contract is in the names you choose.')
           : L('تقدير تقسيط مباشر بدون فوائد للتوضيح فقط — نظام السداد الفعلي يختلف حسب العقار.', 'Interest-free estimate for illustration — actual plans vary by property.')}
       </p>

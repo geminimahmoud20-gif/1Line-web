@@ -36,6 +36,8 @@ ERP/
 
 # Generated test output — reproduce locally, don't commit
 audit-results.json
+journey-results.json
+scripts/crm-audit/*.json
 build_output.txt
 cypress/videos/
 cypress/screenshots/

@@ -65,7 +65,7 @@ export default function AccountInquiriesTab({
                       )}
                       <div className="visit-detail-item">
                         <MapPin size={14} className="text-muted" />
-                        <span>{getAreaDisplayName(lead.area || targetProp?.area || 'new_sohag', lang)}</span>
+                        <span>{getAreaDisplayName(lead.area || targetProp?.areaKey || targetProp?.area || '', lang)}</span>
                       </div>
                     </div>
 
@@ -124,7 +124,7 @@ export default function AccountInquiriesTab({
               {clientLeads.map((lead) => {
                 const stage = STAGE_CONFIG[lead.status] || STAGE_CONFIG.new;
                 const typeLabel = LEAD_TYPE_NAMES[lead.type] || lead.type || (isAr ? 'استشارة' : 'Inquiry');
-                const areaName = getAreaDisplayName(lead.area || 'new_sohag', lang);
+                const areaName = getAreaDisplayName(lead.area || '', lang);
                 const propTypeLabel = PROPERTY_TYPE_NAMES[lead.propertyType] || lead.propertyType || '';
 
                 return (
@@ -166,7 +166,7 @@ export default function AccountInquiriesTab({
                         <span className="lead-info-label">{isAr ? 'تاريخ التسجيل:' : 'Date:'}</span>
                         <span className="lead-info-val text-muted">
                           {lead.createdAt || lead.timestamp 
-                            ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US') 
+                            ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US') 
                             : (isAr ? 'مؤخراً' : 'Recent')}
                         </span>
                       </div>
@@ -241,7 +241,7 @@ export default function AccountInquiriesTab({
                   </div>
                   {(demand.budgetMax || demand.budget) && (
                     <div className="demand-detail-item">
-                      <span className="text-gold font-bold">{Number(demand.budgetMax || demand.budget).toLocaleString()} {isAr ? 'ج.م كحد أقصى' : 'EGP max'}</span>
+                      <span className="text-gold font-bold">{Number(demand.budgetMax || demand.budget).toLocaleString('en-US')} {isAr ? 'ج.م كحد أقصى' : 'EGP max'}</span>
                     </div>
                   )}
                 </div>

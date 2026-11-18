@@ -1,0 +1,313 @@
+import { useState } from 'react';
+import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send, CloudOff, Check, X, Hourglass, Megaphone } from 'lucide-react';
+import { offerState, getActiveOffer } from '../../utils/propertyOffers';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
+import { featuredBlocker } from '../../utils/featuredSlots';
+import { ISSUES, pricePerM2, photoCount } from '../../utils/listingReview';
+import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
+import { Badge, IconButton, Button, Select } from '../ui';
+import RowMenu from './RowMenu';
+import { propertyTypeLabel } from '../../utils/placeLabels';
+import { sizeLabel, isLandType, isAgriculturalType, isIndustrialType } from '../../utils/propertyKinds';
+import { thumbUrl } from '../../utils/imageThumbs';
+import { typeConflict } from '../../utils/marketStats';
+import { approvalLabel, blockedByApproval, approveUpdate, rejectUpdate } from '../../utils/publishApproval';
+
+const STATUS_OPTIONS = [
+  { value: 'published', ar: 'معروض', en: 'Live' },
+  { value: 'hidden', ar: 'مخفي / مراجعة', en: 'Hidden / review' },
+  { value: 'under_negotiation', ar: 'تحت التفاوض', en: 'Negotiating' },
+  { value: 'sold', ar: 'اتباع', en: 'Sold' }
+];
+
+const money = (n) => Number(n).toLocaleString('en-US');
+
+// Short time left on an offer: "6 أيام" / "5 ساعات"
+const shortLeft = (ms, isAr) => {
+  const d = Math.floor(ms / 86400000);
+  if (d >= 1) return isAr ? (d === 1 ? 'يوم' : d === 2 ? 'يومين' : `${d} ${d <= 10 ? 'أيام' : 'يوم'}`) : `${d}d`;
+  const h = Math.max(1, Math.floor(ms / 3600000));
+  return isAr ? (h === 1 ? 'ساعة' : h === 2 ? 'ساعتين' : `${h} ${h <= 10 ? 'ساعات' : 'ساعة'}`) : `${h}h`;
+};
+
+const specsLine = (prop, isAr) => {
+  const size = sizeLabel(prop, isAr);
+  const extra = isLandType(prop.type) || isAgriculturalType(prop.type) ? ''
+    : isIndustrialType(prop.type) ? (prop.indBuiltArea || prop.indPower || '')
+    : prop.type === 'commercial' ? (prop.frontage || '')
+      : prop.type === 'office' ? (prop.divisionCount ? `${prop.divisionCount} ${isAr ? 'مكاتب' : 'rooms'}` : '')
+        : (Number(prop.bedrooms) > 0 ? `${prop.bedrooms} ${isAr ? 'غرف' : 'bd'}` : '');
+  return [size, extra].filter(Boolean).join(' · ') || '—';
+};
+
+/** true when the brochure was built; the caller says so when it wasn't */
+async function downloadBrochure(prop) {
+  try {
+    const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+    await generatePropertyPdf(prop);
+    return true;
+  } catch (err) {
+    console.error('Brochure error:', err);
+    return false;
+  }
+}
+
+/** One row of CRM → العقارات: what the listing is, what it still lacks, its status and actions. */
+// Why a listing is on this device only, in words the team can act on
+function syncReasonText(reason, isAr) {
+  if (reason === 'too-large') return isAr ? 'الوحدة أكبر من 1MB لأن صورها اتحفظت جواها. دوس «ارفع الصور واحفظ» وهتتبعت للسيرفر.' : 'Over 1 MB: its photos are stored inside it. Press "Upload photos & save" to send it.';
+  if (reason === 'permission-denied') return isAr ? 'حسابك مش مسموحله يحفظ العقارات على السيرفر. اطلب صلاحية «إضافة وتعديل العقارات» واخرج وادخل تاني.' : 'Your account may not save listings. Ask for the listing permission, then sign out and in.';
+  if (reason === 'local-only') return isAr ? 'مش موجودة على السيرفر، ومحدش غيرك شايفها.' : 'Not in the database; nobody else sees it.';
+  return isAr ? 'ماوصلتش للسيرفر. اتأكد من النت وابعتها تاني.' : 'Did not reach the server. Check the connection and send again.';
+}
+
+export default function PropertyTableRow({
+  readOnly = false,
+  prop,
+  issues = [],
+  selected = false,
+  onSelect,
+  isAr,
+  areas,
+  handleStatusChange,
+  handleToggleVisibility,
+  handleOpenEdit,
+  handleSoftDelete,
+  handleRestore,
+  handlePermanentDelete,
+  onUpdateProperty,
+  onFacebookPost,
+  onNotes,
+  triggerToast,
+  setSlotEditing,
+  setOfferEditing,
+  setNotifierProperty,
+  setNotifierEventType,
+  syncIssue = null,
+  onRetrySync,
+  onDiscardLocal,
+  onUploadInline,
+  inlineProgress = null,
+  canApprove = false
+}) {
+  const [busy, setBusy] = useState(false);
+  const [brochureError, setBrochureError] = useState(false);
+  const status = getNormalizedPropertyStatus(prop);
+  const isTrash = status === 'trash';
+  // Waiting for (or refused by) the general manager: not on the site, whatever its status says
+  const heldBack = !isTrash && blockedByApproval(prop);
+  const isOnSite = !isTrash && status !== 'hidden' && !heldBack;
+  const ready = issues.length === 0;
+  // Photos kept inside the listing after a refused upload (data: URLs)
+  const inlinePhotos = (prop.images || []).filter((u) => String(u).startsWith('data:image/')).length;
+  // Marked as on sale but kept off the site until complete (utils/siteReady)
+  const offSite = ['published', 'under_negotiation', 'sold'].includes(status) && issues.some((k) => k !== 'legacy' && k !== 'areaGone');
+  const title = (isAr ? prop.title_ar : prop.title_en) || prop.title_ar || (isAr ? 'من غير عنوان' : 'Untitled');
+  const typeName = (() => { const t = PROPERTY_TYPES.find((x) => x.id === prop.type); return t ? (isAr ? t.name_ar : t.name_en) : propertyTypeLabel(prop.type, isAr); })();
+  const areaName = (() => { const a = areas.find((x) => x.id === prop.areaKey); return a ? (isAr ? a.name_ar : a.name_en) : ''; })();
+  const m2 = pricePerM2(prop);
+  const photos = photoCount(prop);
+  const offer = offerState(prop);
+  const liveOffer = getActiveOffer(prop);
+
+  const toggleFeatured = () => {
+    if (prop.featured) {
+      if (onUpdateProperty(prop.id, { featured: false }) !== false) {
+        triggerToast(isAr ? 'اتشال من الصفحة الرئيسية' : 'Removed from homepage', 'success');
+      }
+    } else {
+      setSlotEditing(prop);
+    }
+  };
+
+  const toggleHomeExcluded = () => {
+    if (onUpdateProperty(prop.id, { homeExcluded: !prop.homeExcluded }) !== false) {
+      triggerToast(prop.homeExcluded
+        ? (isAr ? 'ممكن تظهر في الصفحة الرئيسية تاني' : 'Can appear on the homepage again')
+        : (isAr ? 'مش هتظهر في الصفحة الرئيسية، لكنها لسه معروضة في صفحة العقارات' : 'Kept off the homepage; still listed on the properties page'), 'success');
+    }
+  };
+
+  return (
+    <tr className={`crm-prow ${selected ? 'is-selected' : ''} ${isTrash ? 'is-trash' : ''}`}>
+      <td className="crm-prow__check">
+        <input
+          type="checkbox"
+          checked={selected}
+          disabled={readOnly}
+          onChange={(e) => onSelect?.(prop.id, e.target.checked)}
+          aria-label={isAr ? `اختيار ${title}` : `Select ${title}`}
+        />
+      </td>
+
+      <td className="crm-prow__cell-main">
+        <div className="crm-prow__main">
+        <div className="crm-prow__thumb">
+          {photos > 0
+            ? <img src={thumbUrl(prop.images[0])} alt="" loading="lazy" />
+            : <span className="crm-prow__nophoto"><Camera size={18} aria-hidden="true" /></span>}
+          {photos > 1 && <span className="crm-prow__count">{photos}</span>}
+        </div>
+        <div className="crm-prow__info">
+          <button type="button" className="crm-prow__title" onClick={() => handleOpenEdit(prop)} disabled={readOnly || isTrash} title={title}>
+            {title}
+          </button>
+          <span className="crm-prow__meta">
+            <bdi className="crm-prow__code">{String(prop.id).toUpperCase()}</bdi>
+            <span>{typeName}{areaName ? ` · ${areaName}` : ''}</span>
+          </span>
+          <span className="crm-prow__tags">
+            {!isTrash && (ready
+              ? (status === 'hidden' && <Badge tone="success" dot>{isAr ? 'جاهز للنشر' : 'Ready to publish'}</Badge>)
+              : <Badge tone="warning" title={isAr ? 'الموقع مش بيعرض أي وحدة ناقصها صور أو سعر أو مساحة أو منطقة' : 'The site hides listings missing photos, price, size or area'}>{offSite ? (isAr ? 'مش ظاهرة على الموقع · ناقص: ' : 'Not on the site · missing: ') : (isAr ? 'ناقص: ' : 'Missing: ')}{issues.map((k) => (isAr ? ISSUES[k].ar : ISSUES[k].en)).join('، ')}</Badge>)}
+            {prop.featured && (featuredBlocker(prop)
+              ? <Badge tone="warning" icon={<Star size={11} aria-hidden="true" />} title={isAr ? 'متثبّتة في الرئيسية بس مش ظاهرة لأنها مش معروضة على الموقع' : 'Pinned, but not shown because it is not live'}>{isAr ? 'متثبّتة ومش ظاهرة' : 'Pinned, not shown'}</Badge>
+              : <Badge tone="accent" icon={<Star size={11} fill="currentColor" aria-hidden="true" />}>{isAr ? 'مميز' : 'Featured'} <FeaturedPeriodLabel property={prop} isAr={isAr} /></Badge>)}
+            {prop.homeExcluded && !prop.featured && <Badge icon={<EyeOff size={11} aria-hidden="true" />}>{isAr ? 'مش في الرئيسية' : 'Off homepage'}</Badge>}
+            {liveOffer && <Badge tone="warning" icon={<Flame size={11} aria-hidden="true" />}>−{liveOffer.pct}% · {shortLeft(liveOffer.msLeft, isAr)}</Badge>}
+            {offer === 'invalid' && <Badge tone="danger">{isAr ? 'راجع العرض' : 'Fix offer'}</Badge>}
+            {!isTrash && typeConflict(prop) && (
+              <Badge tone="danger" title={isAr ? 'العنوان أو الوصف بيقول نوع تاني غير النوع المتسجل. لحد ما يتصلح، سعرها مش داخل في متوسطات أسعار المناطق.' : 'The title or description says another type than the saved one; left out of area price figures until fixed.'}>
+                {isAr
+                  ? `راجع النوع: متسجلة ${typeName} والوصف ${({ commercial: 'تجاري', administrative: 'إداري', residential: 'سكني' })[typeConflict(prop)]}`
+                  : 'Check the type'}
+              </Badge>
+            )}
+            {prop.badge_ar && <Badge>{isAr ? prop.badge_ar : prop.badge_en}</Badge>}
+          </span>
+          {!isTrash && blockedByApproval(prop) && (
+            <span className="crm-prow__approval" role="status">
+              <Badge tone={prop.approval === 'rejected' ? 'danger' : 'warning'} icon={prop.approval === 'rejected' ? <X size={11} aria-hidden="true" /> : <Hourglass size={11} aria-hidden="true" />}>
+                {approvalLabel(prop, isAr)}
+              </Badge>
+              {canApprove && (
+                <>
+                  <Button size="sm" onClick={() => { if (onUpdateProperty(prop.id, approveUpdate()) !== false) triggerToast(isAr ? 'اتوافق عليها وهتظهر على الموقع' : 'Approved; it is now on the site', 'success'); }}>
+                    <Check size={14} aria-hidden="true" /> {isAr ? 'موافقة ونشر' : 'Approve'}
+                  </Button>
+                  {prop.approval === 'pending' && (
+                    <Button size="sm" variant="ghost" onClick={() => { if (onUpdateProperty(prop.id, rejectUpdate()) !== false) triggerToast(isAr ? 'اترفضت ومش هتظهر على الموقع' : 'Rejected; kept off the site', 'info'); }}>
+                      {isAr ? 'رفض' : 'Reject'}
+                    </Button>
+                  )}
+                </>
+              )}
+            </span>
+          )}
+          {syncIssue && (
+            <span className="crm-prow__sync" role="status">
+              <Badge tone="danger" icon={<CloudOff size={11} aria-hidden="true" />} title={syncReasonText(syncIssue, isAr)}>
+                {isAr ? 'على الجهاز ده بس' : 'This device only'}
+              </Badge>
+              <small>{syncReasonText(syncIssue, isAr)}</small>
+              {onUploadInline && inlinePhotos > 0 && (
+                <Button size="sm" onClick={() => onUploadInline(prop)} disabled={Boolean(inlineProgress)}>
+                  {inlineProgress
+                    ? (isAr ? `بنرفع الصور… ${inlineProgress.done} من ${inlineProgress.total}` : `Uploading… ${inlineProgress.done}/${inlineProgress.total}`)
+                    : (isAr ? `ارفع الصور (${inlinePhotos}) واحفظ` : `Upload ${inlinePhotos} photos & save`)}
+                </Button>
+              )}
+              {onRetrySync && syncIssue !== 'too-large' && (
+                <Button size="sm" variant="secondary" onClick={() => onRetrySync(prop.id)}>{isAr ? 'إعادة الإرسال' : 'Send again'}</Button>
+              )}
+              {onDiscardLocal && (
+                <Button size="sm" variant="ghost" onClick={() => onDiscardLocal(prop.id)}>{isAr ? 'امسح النسخة دي' : 'Remove this copy'}</Button>
+              )}
+            </span>
+          )}
+        </div>
+        </div>
+      </td>
+
+      <td className="crm-prow__price">
+        {Number(prop.price) > 0 ? (
+          <>
+            <strong><bdi>{money(prop.price)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></strong>
+            {m2 > 0 && <span>{money(m2)} {isAr ? 'ج.م / م²' : 'EGP/m²'}</span>}
+            {Number(prop.downPayment) > 0 && <span>{isAr ? 'مقدم' : 'Down'} {money(prop.downPayment)}</span>}
+          </>
+        ) : <span className="crm-prow__missing">{isAr ? 'من غير سعر' : 'No price'}</span>}
+      </td>
+
+      <td className="crm-prow__specs">{specsLine(prop, isAr)}</td>
+
+      <td className={`crm-prow__status ${heldBack ? 'is-held' : ''}`}>
+        {isTrash ? (
+          <Badge tone="danger">{isAr ? 'في المهملات' : 'In trash'}</Badge>
+        ) : heldBack ? (
+          /* Not on the site whatever its saved status says: show that instead of a green «معروض» */
+          <Badge tone={prop.approval === 'rejected' ? 'danger' : 'warning'} icon={prop.approval === 'rejected' ? <X size={11} aria-hidden="true" /> : <Hourglass size={11} aria-hidden="true" />}>
+            {prop.approval === 'rejected' ? (isAr ? 'مرفوضة' : 'Rejected') : (isAr ? 'مستنية موافقة' : 'Awaiting approval')}
+          </Badge>
+        ) : (
+          <Select
+            hideLabel
+            label={isAr ? `حالة ${title}` : `Status of ${title}`}
+            className={`crm-prow__select is-${status}`}
+            value={status}
+            disabled={readOnly}
+            onChange={(e) => handleStatusChange(prop.id, e.target.value)}
+            options={STATUS_OPTIONS.map((o) => ({ value: o.value, label: isAr ? o.ar : o.en }))}
+          />
+        )}
+      </td>
+
+      <td className="crm-prow__cell-actions">
+        <div className={`crm-prow__actions ${isTrash ? 'is-trash' : ''}`}>
+        {isTrash ? (
+          <>
+            <Button size="sm" variant="secondary" icon={<RotateCcw size={14} aria-hidden="true" />} disabled={readOnly} onClick={() => handleRestore(prop.id)}>
+              {isAr ? 'استرجاع' : 'Restore'}
+            </Button>
+            <IconButton size="sm" label={isAr ? 'حذف نهائي' : 'Delete permanently'} icon={<Trash2 size={15} />} disabled={readOnly} onClick={() => handlePermanentDelete(prop.id)} className="crm-prow__danger" />
+          </>
+        ) : (
+          <>
+            {heldBack ? (
+              <IconButton
+                size="sm"
+                label={prop.approval === 'rejected' ? (isAr ? 'مش على الموقع: المدير العام رفضها' : 'Not on the site: rejected') : (isAr ? 'مش على الموقع: مستنية موافقة المدير العام' : 'Not on the site: waiting for approval')}
+                icon={<Hourglass size={16} aria-hidden="true" />}
+                disabled
+              />
+            ) : status === 'hidden' && ready ? (
+              <Button size="sm" icon={<Send size={14} aria-hidden="true" />} disabled={readOnly} onClick={() => handleToggleVisibility(prop)}>
+                {isAr ? 'انشر' : 'Publish'}
+              </Button>
+            ) : (
+              <IconButton
+                size="sm"
+                label={isOnSite ? (isAr ? 'إخفاء من الموقع' : 'Hide from site') : (isAr ? 'إظهار على الموقع' : 'Show on site')}
+                icon={isOnSite ? <Eye size={16} /> : <EyeOff size={16} />}
+                aria-pressed={isOnSite}
+                disabled={readOnly}
+                onClick={() => handleToggleVisibility(prop)}
+                className={isOnSite ? 'crm-prow__live' : undefined}
+              />
+            )}
+            <IconButton size="sm" label={isAr ? 'تعديل' : 'Edit'} icon={<Edit3 size={15} />} disabled={readOnly} onClick={() => handleOpenEdit(prop)} />
+            <RowMenu
+              isAr={isAr}
+              label={isAr ? `إجراءات ${title}` : `Actions for ${title}`}
+              items={[
+                !readOnly && { id: 'feature', icon: <Star size={13} />, label: prop.featured ? (isAr ? 'شيله من الصفحة الرئيسية' : 'Remove from homepage') : (isAr ? 'ميّزه في الصفحة الرئيسية' : 'Feature on homepage'), onSelect: toggleFeatured },
+                !readOnly && !prop.featured && { id: 'home-exclude', icon: <EyeOff size={13} />, label: prop.homeExcluded ? (isAr ? 'رجّعها للصفحة الرئيسية' : 'Allow on homepage') : (isAr ? 'متظهرش في الصفحة الرئيسية' : 'Keep off homepage'), onSelect: toggleHomeExcluded },
+                !readOnly && setOfferEditing && { id: 'offer', icon: <Flame size={13} />, label: offer === 'none' ? (isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time offer') : (isAr ? 'تعديل العرض' : 'Edit offer'), onSelect: () => setOfferEditing(prop) },
+                onFacebookPost && { id: 'facebook', icon: <Megaphone size={13} />, label: isAr ? 'منشور فيسبوك (صورة + كلام)' : 'Facebook post', onSelect: () => onFacebookPost(prop) },
+                { id: 'brochure', icon: <FileDown size={13} />, label: busy ? (isAr ? 'بنجهّز البروشور…' : 'Preparing…') : (isAr ? 'بروشور للعميل' : 'Brochure'), disabled: busy, onSelect: async () => { setBusy(true); setBrochureError(false); const ok = await downloadBrochure(prop); setBusy(false); if (!ok) setBrochureError(true); } },
+                { id: 'notify', icon: <MessageSquare size={13} />, label: isAr ? 'ابعته للعملاء المهتمين' : 'Send to matching clients', onSelect: () => { setNotifierProperty(prop); setNotifierEventType(status === 'sold' ? 'sold_unit' : 'new_unit'); } },
+                onNotes && { id: 'team-notes', icon: <MessageSquare size={13} />, label: isAr ? 'ملاحظات الفريق' : 'Team notes', onSelect: () => onNotes(prop) },
+                !readOnly && { id: 'trash', separator: true, danger: true, icon: <Trash2 size={13} />, label: isAr ? 'نقل للمهملات' : 'Move to trash', onSelect: () => handleSoftDelete(prop.id) }
+              ]}
+            />
+          </>
+        )}
+        </div>
+        {brochureError && (
+          <small role="alert" className="crm-prow__error">{isAr ? 'البروشور ماتجهزش، جرّب تاني.' : 'Could not build the brochure.'}</small>
+        )}
+      </td>
+    </tr>
+  );
+}

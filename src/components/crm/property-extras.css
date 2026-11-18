@@ -50,7 +50,8 @@
 }
 .pxe-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--crm-text-xs, 0.74rem); color: var(--crm-muted, #64748b); }
 .pxe-field > span { font-weight: 600; }
-.pxe-field input {
+.pxe-field input,
+.pxe-field select {
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
@@ -92,3 +93,36 @@
   font-weight: 700;
 }
 .dark-theme .pxe-chip.is-on, [data-theme="dark"] .pxe-chip.is-on { color: #E9D29A; }
+
+/* Property form: farmland size in feddan + qirat (PropertyFormModal) */
+.pf-size-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.pf-feddan { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pf-loc-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-muted); }
+.pf-loc-hint.is-exact { color: var(--crm-positive); }
+
+.pxe-building { margin-top: 12px; }
+.pxe-building .pxe-sec-head { cursor: default; }
+
+/* Payment: cash / installment switch and the term input with its unit */
+.pxe-pay-switch { display: inline-flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--crm-input-bg, rgba(148, 163, 184, 0.12)); align-self: flex-start; }
+.pxe-pay-switch button {
+  min-width: 96px;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--crm-muted);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--crm-text-sm, 0.82rem);
+  cursor: pointer;
+}
+.pxe-pay-switch button.is-on { background: var(--ui-accent); color: var(--ui-n900); }
+.pxe-pay-term { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.pxe-pay-term select { width: auto; }
+.pxe-hint { font-size: 0.7rem; color: var(--crm-muted); }
+
+/* Rooms, bathrooms and floor side by side: three short numbers, one row, on any width */
+.pf-rooms-row { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pf-rooms-row .form-group-item { min-width: 0; }
+.pf-rooms-row input { width: 100%; }
