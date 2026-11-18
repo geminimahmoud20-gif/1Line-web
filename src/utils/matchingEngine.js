@@ -4,10 +4,10 @@
 
 import { normalizeAreaKey, getAreas } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
-import { inArea } from './areaLookup.js';
 import { isSellerLead, parseMoney } from './crmLeadViews.js';
-import { assetClass, liveListings } from './marketStats.js';
+import { liveListings } from './marketStats.js';
 import { matchUnit, hardFit } from './buyerMatch.js';
+import { requestOf, missingInRequest } from './buyerRequest.js';
 import { paymentTerms, planSummary } from './paymentTerms.js';
 
 /**
@@ -26,51 +26,40 @@ export function formatWhatsAppPhone(phone) {
 
 /** A unit more than 20% above the buyer's budget is never offered (see BUDGET_STRETCH) */
 export const BUDGET_STRETCH = 1.2;
-/** Out of 100: area 40, kind of property 30, budget 30; below this a buyer is not matched */
+/** Out of 100; below this a buyer is not matched */
 export const MATCH_THRESHOLD = 70;
 /** A unit under a quarter of the buyer's budget is not what they are after (a typo in the budget, or a buyer for something bigger): capped below the threshold */
 export const MIN_BUDGET_RATIO = 0.25;
+/** What the budget or the area is worth when the buyer gave none (a client the team entered by hand, with little written) */
+const UNKNOWN_CORE = 0.3;
+/** No kind of property asked for: the match is less certain */
+const UNKNOWN_KIND_PENALTY = 20;
 
 const phoneKey = (phone) => String(phone || '').replace(/[^0-9]/g, '').slice(-10);
 
 /**
- * How well a property fits one buyer (a lead or a buyer request), or null when it clearly doesn't.
- *  - Kind: compared by market class (an «apartment» listing fits a buyer who asked for «residential»,
- *    which is what the website forms save). A different kind is never a match; an unknown kind is neutral.
- *  - Area: the buyer's area, or any area when none was given.
- *  - Budget: the unit must fit the budget. Up to 20% above it is still shown, lower; more is dropped.
- *    A budget written in words or Arabic digits is read ("2 مليون"). No budget is neutral.
- * @returns {{score: number, reasons: string[]} | null}
+ * How well a listing fits one buyer (a lead or a buyer request), or null when it clearly doesn't. One scoring
+ * for everybody (utils/buyerMatch): the buyer's request is read by utils/buyerRequest from his own answers,
+ * what the advisor wrote in «طلب العميل» and the plain fields (kind, area, budget). The kind, the area, the
+ * budget (up to 20% above) and a minimum size are firm; rooms, handover and purpose only move the score.
+ * @returns {{score: number, reasons: string[], misses: string[], missing: string[]} | null}
  */
-export function scoreBuyer(property, buyer) {
+export function scoreForBuyer(property, source) {
+  const { answers, complete } = requestOf(source);
+  const areas = getAreas();
+  const hard = hardFit(property, answers, areas, { stretch: BUDGET_STRETCH - 1 });
+  if ((answers.kind && !hard.kind) || !hard.area || !hard.budget || !hard.size) return null;
+  const fit = matchUnit(property, answers, areas, { unknownScore: complete ? 1 : UNKNOWN_CORE, stretch: BUDGET_STRETCH - 1 });
+  let score = fit.score - (answers.kind ? 0 : UNKNOWN_KIND_PENALTY);
+  const reasons = [...(answers.kind ? ['نفس نوع العقار'] : []), ...fit.matches];
+  // A unit far below the budget: most likely a typo in the budget, not a buyer who wants it
   const price = parseMoney(property.price);
-  const propertyArea = normalizeAreaKey(property.areaKey);
-  const propertyClass = property.type ? assetClass({ type: property.type }) : '';
-  const buyerClass = buyer.type ? assetClass({ type: buyer.type }) : '';
-  const reasons = [];
-  let score = 0;
-  let capped = false;
-
-  if (buyerClass && propertyClass && buyerClass !== propertyClass) return null;
-  if (buyerClass) { score += 30; reasons.push('نفس نوع العقار'); } else score += 10;
-
-  if (buyer.area) {
-    if (propertyArea === 'all' || inArea(propertyArea, buyer.area, getAreas())) { score += 40; reasons.push('نفس المنطقة'); }
-  } else {
-    score += 20;
+  const budget = answers.payment === 'cash' ? parseMoney(answers.budget) : 0;
+  if (budget > 0 && price > 0 && price / budget < MIN_BUDGET_RATIO) {
+    score = Math.min(score, MATCH_THRESHOLD - 10);
+    reasons.push('العقار أرخص بكتير من الميزانية، راجع الميزانية');
   }
-
-  if (buyer.budget > 0 && price > 0) {
-    const ratio = price / buyer.budget;
-    if (ratio > BUDGET_STRETCH) return null;
-    if (ratio < MIN_BUDGET_RATIO) { score += 10; reasons.push('العقار أرخص بكتير من الميزانية، راجع الميزانية'); capped = true; }
-    else if (ratio <= 1) { score += ratio >= 0.6 ? 30 : 20; reasons.push('داخل الميزانية'); }
-    else if (ratio <= 1.1) { score += 20; reasons.push('قريبة من الميزانية'); }
-    else { score += 8; reasons.push('أعلى من الميزانية بشوية'); }
-  } else {
-    score += 10;
-  }
-  return { score: Math.min(capped ? MATCH_THRESHOLD - 10 : 100, score), reasons };
+  return { score: Math.max(0, Math.min(100, Math.round(score))), reasons, misses: fit.misses, missing: missingInRequest(answers) };
 }
 
 /**
@@ -94,43 +83,13 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
   leads.forEach((lead) => {
     if (lead.status === 'closed' || lead.status === 'lost' || lead.status === 'inactive' || lead.isArchived) return;
     if (isSellerLead(lead)) return;
-    const details = lead.details || {};
     const contactPhone = lead.whatsapp || lead.phone;
     if (!contactPhone) return;
-
-    // A buyer who answered «رشح لي عقاري» left real answers: size, rooms, handover, installments…
-    // They are scored the way the website scored them for the buyer, and kind, area, budget and minimum size are firm.
-    const answers = details.matchAnswers;
-    if (answers && typeof answers === 'object' && answers.kind) {
-      const areas = getAreas();
-      const hard = hardFit(property, answers, areas);
-      if (!hard.kind || !hard.area || !hard.budget || !hard.size) return;
-      const fit = matchUnit(property, answers, areas);
-      if (fit.score < MATCH_THRESHOLD) return;
-      keep({
-        id: lead.id,
-        name: lead.name || 'عميل 1Line',
-        phone: contactPhone,
-        whatsapp: contactPhone,
-        source: 'قاعدة بيانات العملاء (CRM)',
-        score: fit.score,
-        reasons: fit.matches,
-        leadArea: normalizeAreaKey((answers.areas || [])[0] || ''),
-        leadType: answers.kind,
-        leadBudget: parseMoney(answers.payment === 'cash' ? answers.budget : answers.down),
-        notes: lead.notes || ''
-      });
-      return;
-    }
-
-    // lead.type is the kind of request («buyer», «viewing»…), not of property: only propertyType counts
-    const buyer = {
-      type: details.propertyType || lead.propertyType || '',
-      area: normalizeAreaKey(details.area || lead.area || ''),
-      budget: parseMoney(details.budget) || parseMoney(details.expectedPrice) || parseMoney(lead.budget)
-    };
-    const fit = scoreBuyer(property, buyer);
+    // A listing the client turned down is not offered again
+    if ((lead.details?.matchDismissed || []).includes(property.id)) return;
+    const fit = scoreForBuyer(property, lead);
     if (!fit || fit.score < MATCH_THRESHOLD) return;
+    const { answers } = requestOf(lead);
     keep({
       id: lead.id,
       name: lead.name || 'عميل 1Line',
@@ -139,24 +98,20 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
       source: 'قاعدة بيانات العملاء (CRM)',
       score: fit.score,
       reasons: fit.reasons,
-      leadArea: buyer.area,
-      leadType: buyer.type,
-      leadBudget: buyer.budget,
+      missing: fit.missing,
+      leadArea: normalizeAreaKey((answers.areas || [])[0] || ''),
+      leadType: answers.kind,
+      leadBudget: parseMoney(answers.payment === 'cash' ? answers.budget : (answers.down || answers.budget)),
       notes: lead.notes || ''
     });
   });
 
-  // 2. Buyer demands (if a phone is provided)
+  // 2. Buyer demands (if a phone is provided): the same request shape
   demands.forEach((demand) => {
     if (demand.status !== 'published' && demand.status !== 'pending') return;
-    const buyer = {
-      type: demand.type || '',
-      area: normalizeAreaKey(demand.area || ''),
-      budget: parseMoney(demand.budget)
-    };
     const contactPhone = demand.whatsapp || demand.phone;
     if (!contactPhone) return;
-    const fit = scoreBuyer(property, buyer);
+    const fit = scoreForBuyer(property, { propertyType: demand.type, area: demand.area, budget: demand.budget, minSize: demand.minSize, paymentMethod: demand.paymentMethod });
     if (!fit || fit.score < MATCH_THRESHOLD) return;
     keep({
       id: demand.id,
@@ -166,9 +121,10 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
       source: 'طلبات المشترين (Demands)',
       score: fit.score,
       reasons: fit.reasons,
-      leadArea: buyer.area,
-      leadType: buyer.type,
-      leadBudget: buyer.budget,
+      missing: fit.missing,
+      leadArea: normalizeAreaKey(demand.area || ''),
+      leadType: demand.type || '',
+      leadBudget: parseMoney(demand.budget),
       notes: demand.text_ar || ''
     });
   });
@@ -192,9 +148,10 @@ export function matchBuyersToProperties(leads = [], properties = [], { minScore 
       if (m.score < minScore) continue;
       const key = phoneKey(m.phone) || `id:${m.id}`;
       let row = rows.get(key);
-      if (!row) { row = { key, lead: null, name: m.name, phone: m.phone, budget: 0, best: 0, items: [] }; rows.set(key, row); }
+      if (!row) { row = { key, lead: null, name: m.name, phone: m.phone, budget: 0, best: 0, missing: [], items: [] }; rows.set(key, row); }
       if (m.score > row.best) { row.best = m.score; row.lead = leadById.get(String(m.id)) || row.lead; row.name = m.name; row.phone = m.phone; }
       row.budget = Math.max(row.budget, m.leadBudget || 0);
+      row.missing = m.missing || row.missing || [];
       row.items.push({ property, score: m.score, reasons: m.reasons });
     }
   }

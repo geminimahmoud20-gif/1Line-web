@@ -47,6 +47,8 @@ export function calculateMatchScore(buyerProfileOrLead, property, _options = {})
   const rejectedPropertyIds = new Set([
     ...(buyerProfileOrLead.rejectedPropertyIds || []),
     ...(profile.rejectedPropertyIds || []),
+    // the advisor set this listing aside for this client («مش مناسب»)
+    ...(profile.matchDismissed || []),
     ...((profile.rejectedOptions || []).map(r => r.propertyId))
   ]);
 
@@ -255,6 +257,13 @@ export function rankAndNominateProperties(buyerProfileOrLead, properties = [], o
   const evaluated = properties
     .map(prop => {
       const result = calculateMatchScore(buyerProfileOrLead, prop, options);
+      // `scorer`: the CRM's one scoring (utils/matchingEngine scoreForBuyer), so this list gives the same
+      // percentage as the alerts and the matching screen. The exclusions above still apply first.
+      if (options.scorer && !result.isExcluded) {
+        const fit = options.scorer(prop, buyerProfileOrLead);
+        if (!fit) return { property: prop, ...result, score: 0, isExcluded: true, exclusionReason: 'خارج المعايير الأساسية للعميل' };
+        return { property: prop, ...result, score: fit.score, reasons: fit.reasons, misses: fit.misses, missing: fit.missing };
+      }
       return {
         property: prop,
         ...result
