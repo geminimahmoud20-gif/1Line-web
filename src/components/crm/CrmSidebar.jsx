@@ -20,6 +20,7 @@ export default function CrmSidebar({
   canCampaigns = false,
   canWorkRequests = true,
   tasksBadge = 0,
+  chatBadge = 0,
   collapsed = false,
   onToggleCollapse,
   width = 270,
@@ -154,7 +155,9 @@ export default function CrmSidebar({
               id: 'chat',
               icon: MessagesSquare,
               label_ar: 'محادثة الفريق',
-              label_en: 'Team chat'
+              label_en: 'Team chat',
+              badge: chatBadge > 0 ? chatBadge : undefined,
+              badgeDanger: chatBadge > 0
             },
             {
               id: 'leads',
@@ -213,7 +216,9 @@ export default function CrmSidebar({
             id: 'chat',
             icon: MessagesSquare,
             label_ar: 'محادثة الفريق',
-            label_en: 'Team chat'
+            label_en: 'Team chat',
+            badge: chatBadge > 0 ? chatBadge : undefined,
+            badgeDanger: chatBadge > 0
           },
           {
             id: 'dashboard',
@@ -344,7 +349,7 @@ export default function CrmSidebar({
         ]
       }
     ];
-  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests, tasksBadge]);
+  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests, tasksBadge, chatBadge]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);
