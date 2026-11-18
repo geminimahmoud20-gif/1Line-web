@@ -268,3 +268,8 @@
 .crm-gap__nums b { font-variant-numeric: tabular-nums; color: var(--ui-text); }
 .crm-gap__verdict { font-weight: var(--ui-fw-semibold); }
 .crm-gap__need { color: var(--ui-danger); font-weight: var(--ui-fw-semibold); }
+
+/* Who added a listing, and why a rejected one was sent back */
+.crm-prow__by { color: var(--ui-text-2); }
+.crm-prow__why { flex-basis: 100%; padding: 4px 8px; border-radius: var(--ui-r-sm); background: var(--ui-danger-tint); color: var(--ui-danger); font-size: var(--ui-fs-1); line-height: 1.5; }
+.crm-lost-hint { margin: 0 0 var(--ui-s-3); font-size: var(--ui-fs-2); line-height: 1.7; color: var(--ui-text-2); }

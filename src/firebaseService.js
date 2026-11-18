@@ -9,6 +9,7 @@
 
 export * from './services/catalog.js';
 export * from './services/cmsMedia.js';
+export * from './services/propertyMeta.js';
 export * from './services/adStats.js';
 export * from './services/clientErrors.js';
 export * from './services/contactIntents.js';

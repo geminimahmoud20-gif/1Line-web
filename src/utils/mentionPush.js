@@ -3,6 +3,7 @@
 //  one, grouped per person into one short message. Pure, so tests/unit/mention-push.test.mjs runs it.
 // =============================================================
 import { ENTITY_LABEL, noteSnippet } from './teamNotes.js';
+import { REJECT_MARK } from './listingMeta.js';
 
 export const LOOKBACK_MS = 18 * 3600 * 1000; // a mention older than this is no longer news
 const TAB = { lead: 'leads', property: 'properties', project: 'projects', team: 'chat' };
@@ -30,11 +31,13 @@ export function pushPlan(mentions = [], { now = Date.now(), lookbackMs = LOOKBAC
     const place = latest.entityType === 'team' ? where : `${where}${latest.entityName ? ` «${latest.entityName}»` : ''}`;
     const senders = [...new Set(list.map((m) => m.fromName).filter(Boolean))];
     const one = list.length === 1;
+    // A listing sent back by the manager reads as that, not as a mention
+    const sentBack = one && String(latest.snippet || '').startsWith(REJECT_MARK);
     out.push({
       toUid,
       ids: list.map((m) => m.id),
-      title: one ? `${latest.fromName || 'زميل'} ذكرك في ${place}` : `${list.length} رسايل من الفريق ليك`,
-      body: one ? noteSnippet(latest.snippet, 110) : `${senders.slice(0, 3).join('، ')}: ${noteSnippet(latest.snippet, 80)}`,
+      title: sentBack ? `${latest.fromName || 'المدير'} رجّع ${place}` : one ? `${latest.fromName || 'زميل'} ذكرك في ${place}` : `${list.length} رسايل من الفريق ليك`,
+      body: one ? noteSnippet(sentBack ? latest.snippet.slice(REJECT_MARK.length) : latest.snippet, 110) : `${senders.slice(0, 3).join('، ')}: ${noteSnippet(latest.snippet, 80)}`,
       url: `/crm?tab=${TAB[latest.entityType] || 'chat'}`,
       leadId: latest.entityType === 'lead' ? latest.entityId : '',
       tag: 'oneline-mentions'

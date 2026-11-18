@@ -37,7 +37,13 @@ import OfferModal from './OfferModal';
 import FacebookPostModal from './FacebookPostModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import ShareSellLink from '../common/ShareSellLink';
-import { blockedByApproval } from '../../utils/publishApproval';
+import { blockedByApproval, rejectUpdate } from '../../utils/publishApproval';
+import usePropertyMeta from '../../hooks/usePropertyMeta';
+import RejectListingModal from './RejectListingModal';
+import { rejectionField, rejectionNotice } from '../../utils/listingMeta';
+import { saveRejection, sendRejectionNotice } from '../../firebaseLazy';
+import { useAuth } from '../../context/AuthContext';
+import { userDisplayName } from '../../utils/assignees';
 import { useProperties } from '../../context/PropertiesContext';
 import { paymentTerms, paymentFields, paymentProblem, planPrice } from '../../utils/paymentTerms';
 import { areaFamily } from '../../utils/areaLookup';
@@ -684,6 +690,29 @@ export default function PropertyManagerPanel({
   const shown = paging.key === pageKey ? paging.n : LIST_PAGE;
   const setShown = (next) => setPaging({ key: pageKey, n: typeof next === 'function' ? next(shown) : next });
   const pageRows = filteredProperties.slice(0, shown);
+  // Who added each listing on screen, and why a rejected one was sent back
+  const { meta: propMeta, patch: patchMeta } = usePropertyMeta(useMemo(() => pageRows.map((p) => String(p.id)), [pageRows]));
+  const { currentUser } = useAuth();
+  const [rejecting, setRejecting] = useState(null);
+  const confirmReject = async (text) => {
+    const prop = rejecting;
+    setRejecting(null);
+    if (!prop) return;
+    const me = { uid: currentUser?.uid, name: userDisplayName(currentUser) };
+    if (onUpdateProperty(prop.id, rejectUpdate()) === false) return;
+    const field = rejectionField(text, me);
+    const saved = await saveRejection(prop.id, field);
+    if (saved) patchMeta(prop.id, { rejection: field });
+    const toUid = propMeta[String(prop.id)]?.submittedByUid;
+    const sent = toUid ? await sendRejectionNotice(rejectionNotice({ property: prop, toUid, text, manager: me })) : false;
+    const who = propMeta[String(prop.id)]?.submittedByName;
+    triggerToast(
+      sent
+        ? (isAr ? `اترفض ورجع لـ ${who} وبعتنا له إشعار بالسبب` : `Rejected; ${who} was notified`)
+        : (isAr ? 'اترفض ومش هيظهر على الموقع. مفيش مسؤول مسجّل لإشعاره: كلّمه بنفسك' : 'Rejected. Nobody to notify: tell the owner yourself'),
+      sent ? 'success' : 'info'
+    );
+  };
 
   // Selection (bulk actions) only ever holds rows that are on screen
   const visibleIds = useMemo(() => new Set(filteredProperties.map((p) => p.id)), [filteredProperties]);
@@ -821,6 +850,15 @@ export default function PropertyManagerPanel({
       )}
 
       <NotesModal open={Boolean(notesFor)} onClose={() => setNotesFor(null)} entityType="property" entityId={String(notesFor?.id || '')} entityName={notesFor ? (notesFor.title_ar || notesFor.title_en || '') : ''} lang={isAr ? 'ar' : 'en'} />
+      {rejecting && (
+        <RejectListingModal
+          property={rejecting}
+          submitterName={propMeta[String(rejecting.id)]?.submittedByName || ''}
+          isAr={isAr}
+          onConfirm={confirmReject}
+          onCancel={() => setRejecting(null)}
+        />
+      )}
       {fbPost && (
         <FacebookPostModal property={fbPost} areas={areas} isAr={isAr} triggerToast={triggerToast} onClose={() => setFbPost(null)} />
       )}
@@ -1060,6 +1098,8 @@ export default function PropertyManagerPanel({
                       onUploadInline={readOnly ? undefined : handleUploadInline}
                       inlineProgress={uploadingInline?.id === prop.id ? uploadingInline : null}
                       canApprove={canApprove && !readOnly}
+                      meta={propMeta[String(prop.id)] || null}
+                      onRequestReject={setRejecting}
                     />
                   ))
                 )}
