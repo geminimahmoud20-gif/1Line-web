@@ -2,7 +2,7 @@
 //  1LINE SOLUTIONS CRM - ENTERPRISE RBAC PERMISSIONS MATRIX
 // =============================================================
 
-import { DEFAULT_ACCESS, canEditInventory, leadSideScope } from './accessModel.js';
+import { DEFAULT_ACCESS, canEditInventory, leadSideScope, canDeleteLeads } from './accessModel.js';
 import { isSellerLead } from './crmLeadViews.js';
 import { formatPhoneNumber } from './crmNoteSanitizer.js';
 
@@ -160,8 +160,8 @@ export const canEditLeadsRole = (role, perms = null) => {
 /**
  * Validates whether a given user/role can delete a lead
  */
-export const canDeleteLead = (role) => {
-  return role === CRM_ROLES.SUPER_ADMIN;
+export const canDeleteLead = (role, perms = []) => {
+  return role === CRM_ROLES.SUPER_ADMIN || canDeleteLeads(perms);
 };
 
 /**

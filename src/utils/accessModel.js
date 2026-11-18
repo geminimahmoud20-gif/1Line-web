@@ -22,11 +22,13 @@ export const PERMISSIONS = [
   { id: 'ld.phone', group: 'leads', ar: 'يشوف أرقام وإيميلات العملاء', en: 'See client phones and emails' },
   { id: 'ld.import', group: 'leads', ar: 'استيراد عملاء من ملف', en: 'Import leads from a file' },
   // Which side of the business a role works. Neither ticked (or both) = every client, as every role saved before this.
+  { id: 'ld.delete', group: 'leads', ar: 'يحذف العملاء نهائيًا (بعد رسالة تأكيد)', en: 'Delete clients permanently (after a confirmation)' },
   { id: 'ld.only_sellers', group: 'leads', ar: 'عملاء البيع بس (الملاك والوسطاء)', en: 'Seller clients only (owners and brokers)' },
   { id: 'ld.only_buyers', group: 'leads', ar: 'عملاء الشراء بس (الباحثين عن عقار)', en: 'Buyer clients only (people looking to buy)' },
   // Inventory, one switch per kind of item. «كل المخزون» (inv.edit) covers the three at once and is
   // what the roles saved before this split carry. Whoever lacks «ينشر» saves for approval: the item
   // stays off the site until someone with it approves (src/utils/publishApproval.js).
+  { id: 'task.assign', group: 'tasks', ar: 'يكلّف زملاءه بمهام ويتابع مهام الفريق كلها', en: 'Assign tasks to colleagues and follow the team’s tasks' },
   { id: 'inv.listings', group: 'inventory', ar: 'العقارات: يضيف ويعدّل', en: 'Listings: add and edit' },
   { id: 'inv.projects', group: 'inventory', ar: 'المشروعات: يضيف ويعدّل', en: 'Projects: add and edit' },
   { id: 'inv.demands', group: 'inventory', ar: 'طلبات المشترين: يضيف ويعدّل', en: 'Buyer requests: add and edit' },
@@ -65,7 +67,8 @@ export const INVENTORY_PERM = { listings: 'inv.listings', projects: 'inv.project
 export const PERM_IMPLIED_BY = {
   'inv.listings': 'inv.edit', 'inv.projects': 'inv.edit', 'inv.demands': 'inv.edit',
   'deal.add': 'deal.edit', 'deal.close': 'deal.edit',
-  'fin.view': 'fin'
+  'fin.view': 'fin',
+  'task.assign': 'ld.manage'
 };
 
 /**
@@ -89,8 +92,13 @@ export const canEditFinance = (perms = []) => has(perms, 'fin');
 /** Whether a permission list may publish without approval and approve what others submitted */
 export const canPublishInventory = (perms = []) => Array.isArray(perms) && (perms.includes('*') || perms.includes('inv.publish'));
 
+/** Same tests as firestore.rules canAssignTasks() / canDeleteLeads() */
+export const canAssignTasks = (perms = []) => has(perms, 'ld.manage', 'task.assign');
+export const canDeleteLeads = (perms = []) => has(perms, 'ld.delete');
+
 export const PERM_GROUPS = [
   { id: 'leads', ar: 'العملاء', en: 'Leads', hint_ar: '«بس» معناها يشوف نوع واحد من العملاء: ملاك ووسطاء، أو باحثين عن عقار. لو سبت الاتنين فاضيين (أو علّمتهم مع بعض) الدور بيشوف النوعين.', hint_en: '“Only” limits the role to one side: owners and brokers, or buyers. Leave both off (or tick both) to see every client.' },
+  { id: 'tasks', ar: 'المهام', en: 'Tasks', hint_ar: 'الكل بيعمل مهام لنفسه. «يكلّف» معناها يعمل مهام لزملاؤه ويشوف مهام الفريق كلها ويتابع إنجازها. «يدير كل العملاء» فيها ضمنًا.', hint_en: 'Everyone makes tasks for themselves. “Assign” lets them give tasks to colleagues and follow the whole team’s. “Manage every lead” already includes it.' },
   { id: 'inventory', ar: 'العقارات', en: 'Inventory', hint_ar: 'اللي مالوش «ينشر» بيضيف ويعدّل، بس اللي يحفظه بيستنى موافقة قبل ما يظهر على الموقع.', hint_en: 'Without “Publish”, what they save waits for approval before it is on the site.' },
   { id: 'deals', ar: 'الصفقات', en: 'Deals', hint_ar: 'اللي معاه «يضيف ويعدّل» بس يشتغل على الصفقة لكن مايقدرش يقفلها. «يقفل» هو اللي بيحوّلها «قيد الإغلاق» أو «اتقفلت» (وبيدخل في العمولات).', hint_en: 'With “add and edit” only, they work deals but cannot close them. “Close” moves a deal to closing or won (it feeds commissions).' },
   { id: 'finance', ar: 'المالية والتقارير', en: 'Finance & reports', hint_ar: '«يشوف بس» للمراقب أو المحاسب اللي بيراجع من غير ما يعدّل. «يشوف ويعدّل» هو اللي بيصدر الإيصالات ويسجّل التحصيل. والتصدير بيعتمد على «تصدير» وبس، مش على اسم الدور.', hint_en: '“View only” is for someone who reviews without changing anything. Exporting depends on “Export” alone, not on the role’s name.' }
