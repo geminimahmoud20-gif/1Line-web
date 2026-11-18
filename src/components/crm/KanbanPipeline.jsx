@@ -13,7 +13,8 @@ import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
-import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
+import { PageHeader, KpiRow, KpiTile, Chip, useConfirm } from '../ui';
+import { archivePrompt } from '../../utils/deleteConfirm';
 import './kanban-redesign.css';
 import './kanban-mobile.css';
 import './client-card.css';
@@ -165,6 +166,7 @@ export default function KanbanPipeline({
   };
 
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
 
   const allAreas = useMemo(() => getAreas(), []);
 
@@ -527,8 +529,9 @@ export default function KanbanPipeline({
   };
 
   // Test or duplicate deals: archived (hidden here and in the inbox, restorable from the leads table)
-  const handleArchive = (lead) => {
+  const handleArchive = async (lead) => {
     if (!onUpdateLead) return;
+    if (!(await confirm(archivePrompt({ name: lead.name, isAr })))) return;
     onUpdateLead(lead.id, { isArchived: true, lastActivityAt: new Date().toISOString() });
     triggerToast?.(isAr ? 'اتنقل للأرشيف واتخفى من المسار' : 'Archived', 'info', {
       onUndo: () => onUpdateLead(lead.id, { isArchived: false, lastActivityAt: new Date().toISOString() }),
