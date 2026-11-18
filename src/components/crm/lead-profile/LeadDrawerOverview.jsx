@@ -18,7 +18,7 @@ import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../../utils/sellerRole';
 import { PROPERTY_TYPES } from '../../../data/propertiesData';
 import { getAreas } from '../../../utils/areasData';
 import { areaNameOf } from '../../../utils/areaLookup';
-import { OUTCOMES, STAGE_RULES, attemptsOf } from '../../../utils/stageGate';
+import { OUTCOMES, STAGE_RULES, attemptsOf, outcomesOf, outcomeById, FOLLOW_UP_ACTIONS } from '../../../utils/stageGate';
 import { LOST_REASONS } from '../../../utils/crmLeadViews';
 
 export default function LeadDrawerOverview({
@@ -40,7 +40,8 @@ export default function LeadDrawerOverview({
   triggerToast,
   newNote,
   setNewNote,
-  onAddNote
+  onAddNote,
+  agentName = ''
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -53,6 +54,25 @@ export default function LeadDrawerOverview({
   // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
   const stageOutcomes = (STAGE_RULES.find((s) => s.id === (lead?.status || 'new'))?.outcomes || []).map((id) => OUTCOMES.find((o) => o.id === id)).filter(Boolean);
   const attempts = attemptsOf(lead || {});
+  // What was logged last, shown next to the buttons: the record of what happened, and what was done after it
+  const lastOut = outcomesOf(lead || {}).at(-1) || null;
+  const lastOutMeta = lastOut ? outcomeById(lastOut.id) : null;
+  const [nowMs] = useState(() => Date.now());
+  const agoText = (ms) => {
+    const m = Math.max(0, Math.floor((nowMs - ms) / 60000));
+    if (m < 60) return L(`من ${Math.max(1, m)} د`, `${Math.max(1, m)}m ago`);
+    const h = Math.floor(m / 60);
+    return h < 48 ? L(`من ${h} س`, `${h}h ago`) : L(`من ${Math.floor(h / 24)} يوم`, `${Math.floor(h / 24)}d ago`);
+  };
+  const logFollowUp = (action) => {
+    if (!onUpdateLead) return;
+    const at = new Date().toISOString();
+    onUpdateLead(lead.id, {
+      activityLogs: [{ timestamp: at, action: `بعد ${lastOutMeta?.ar || 'النتيجة'}: ${action.ar}`, kind: 'note', ...(agentName ? { agent: agentName } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100),
+      lastActivityAt: at
+    }, lead.version);
+    triggerToast?.(L(`اتسجّل: ${action.ar}`, `Logged: ${action.en}`), 'success');
+  };
   const [pendingNeg, setPendingNeg] = useState('');
   const [negReason, setNegReason] = useState('');
   // Sending a message counts as the first reply: the "no reply" clock stops
@@ -142,6 +162,22 @@ export default function LeadDrawerOverview({
             </Button>
           ))}
         </div>
+        {lastOutMeta && (
+          <div className={`crm-ld__last is-${lastOutMeta.kind}`}>
+            <span>{L('آخر نتيجة', 'Last result')}: <b>{lastOutMeta.ar}{lastOut.id === 'no_answer' && attempts > 0 ? ` · ${L(`محاولة ${attempts}`, `try ${attempts}`)}` : ''}</b></span>
+            <small>{agoText(lastOut.at)}</small>
+          </div>
+        )}
+        {lastOut && (lastOut.id === 'no_answer' || lastOut.id === 'callback') && (
+          <div className="crm-ld__followup">
+            <span>{L('عملت إيه بعدها؟', 'What did you do after?')}</span>
+            <div className="crm-ld__row">
+              {FOLLOW_UP_ACTIONS.map((a) => (
+                <Button key={a.id} variant="ghost" size="sm" onClick={() => logFollowUp(a)}>{L(a.ar, a.en)}</Button>
+              ))}
+            </div>
+          </div>
+        )}
         {pendingNeg && (
           <form
             className="crm-ld__form"

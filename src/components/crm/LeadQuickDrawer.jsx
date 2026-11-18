@@ -445,6 +445,7 @@ export default function LeadQuickDrawer({
               lead={lead}
               egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               handleLogCall={handleLogCall}
+              agentName={userDisplayName(currentUser)}
               handleScheduleViewing={handleScheduleViewing}
               isAr={isAr}
               onConvertToProperty={onConvertToProperty}
