@@ -95,12 +95,20 @@ export const reconcilePublicDemands = async (demands) => {
  * everyone else gets the published, contact-free `public_demands`. Follows login/logout.
  * Returns an unsubscribe function, or null if Firebase isn't configured.
  */
-export const subscribeToDemands = (callback, maxCount = 100) => {
+export const subscribeToDemands = (callback, maxCount = 100, { guestsFromCatalog = false } = {}) => {
   if (!isFirebaseConfigured() || !db) return null;
   const toDemands = (snapshot) => snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
   let unsubSnapshot = null;
   let authVersion = 0;
 
+  // guestsFromCatalog: a visitor's published demands come with the CDN-cached /api/catalog, so no listener
+  // is opened for them; a signed-out staff list is cleared once so it never stays on a shared device.
+  let hadStaff = false;
+  const listenGuest = () => {
+    if (!guestsFromCatalog) return listenPublic();
+    if (hadStaff) { hadStaff = false; callback([], { fromCache: false, isPublic: true, cleared: true }); }
+    return null;
+  };
   const listenPublic = () => onSnapshot(
     query(collection(db, 'public_demands'), limit(maxCount)),
     (snapshot) => callback(toDemands(snapshot), { fromCache: snapshot.metadata.fromCache, isPublic: true }),
@@ -129,13 +137,14 @@ export const subscribeToDemands = (callback, maxCount = 100) => {
 
   try {
     if (!auth) {
-      unsubSnapshot = listenPublic();
+      unsubSnapshot = listenGuest();
       return stopSnapshot;
     }
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       const version = ++authVersion;
       stopSnapshot();
-      unsubSnapshot = user ? listenStaff(version) : listenPublic();
+      if (user) hadStaff = true;
+      unsubSnapshot = user ? listenStaff(version) : listenGuest();
     });
     return () => {
       authVersion++;
@@ -146,6 +155,19 @@ export const subscribeToDemands = (callback, maxCount = 100) => {
     console.error('Firebase subscribeToDemands error:', error);
     return null;
   }
+};
+
+/**
+ * The published, contact-free demands as a live listener: the visitor's fallback when the cached /api/catalog
+ * copy is unavailable (local dev, preview without functions). Returns an unsubscribe function, or null.
+ */
+export const subscribeToPublicDemands = (callback, maxCount = 100) => {
+  if (!isFirebaseConfigured() || !db) return null;
+  return onSnapshot(
+    query(collection(db, 'public_demands'), limit(maxCount)),
+    (snapshot) => callback(snapshot.docs.map((d) => ({ ...d.data(), id: d.id }))),
+    (err) => console.warn('Firebase public demands warning:', err)
+  );
 };
 
 /**

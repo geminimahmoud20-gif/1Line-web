@@ -5,7 +5,7 @@
 //  settings/developers' list (the developer pages). The client cleans both.
 //  Visitors load this instead of opening a live Firestore listener each, so a visit costs
 //  no Firestore reads: Vercel's CDN serves the same copy to everyone and the function reads
-//  Firestore at most about once every 5 minutes per region. The CRM keeps its live listener.
+//  Firestore at most about once every 15 minutes per region. The CRM keeps its live listener.
 //
 //  Environment (Vercel → Settings → Environment Variables):
 //    FIREBASE_SERVICE_ACCOUNT — optional here; without it the (publicly readable) collections are
@@ -15,9 +15,9 @@
 import { SignJWT, importPKCS8 } from 'jose';
 import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems, decodeFields, siteListingsQuery, queryDocuments } from './_catalog-core.js';
 
-// Each refresh reads every listing and project document, so it is kept to about every 5 minutes
+// Each refresh reads every listing and project document, so it is kept to about every 15 minutes
 // (the free Firestore plan allows 50,000 reads a day); a stale copy may be served up to a day.
-const FRESH_SECONDS = 300;
+const FRESH_SECONDS = 900;
 const STALE_SECONDS = 86400;
 
 const json = (status, body, cache = 'no-store') => new Response(JSON.stringify(body), {
@@ -72,6 +72,19 @@ async function listCollection(base, docRoot, name, headers) {
   return toCatalogItems(documents);
 }
 
+// The published, contact-free demands visitors see (public_demands): inside the cached response, so a visit
+// opens no Firestore listener of its own. A missing or unreadable list is not an error for the catalog.
+async function readPublicDemands(base, docRoot, headers) {
+  try {
+    const res = await fetch(`${base}/v1/${docRoot}/public_demands?pageSize=100`, { headers });
+    if (!res.ok) return [];
+    const page = await res.json();
+    return (page.documents || []).map((d) => ({ ...decodeFields(d.fields), id: String(d.name || '').split('/').pop() }));
+  } catch {
+    return [];
+  }
+}
+
 // One settings document; a missing or unreadable one is not an error for the catalog
 async function readSettings(base, docRoot, headers, key) {
   try {
@@ -94,13 +107,14 @@ export async function GET() {
     const headers = emulator
       ? { authorization: 'Bearer owner' }
       : (sa?.private_key && sa?.client_email ? { authorization: `Bearer ${await accessToken(sa)}` } : {});
-    const [[properties, projects], site, devs] = await Promise.all([
+    const [[properties, projects], site, devs, demands] = await Promise.all([
       Promise.all(CATALOG_COLLECTIONS.map((name) => listCollection(base, docRoot, name, headers))),
       readSettings(base, docRoot, headers, 'site_cms'),
-      readSettings(base, docRoot, headers, 'developers')
+      readSettings(base, docRoot, headers, 'developers'),
+      readPublicDemands(base, docRoot, headers)
     ]);
     const developers = Array.isArray(devs?.list) ? devs.list : [];
-    return json(200, { ok: true, at: new Date().toISOString(), properties, projects, site, developers },
+    return json(200, { ok: true, at: new Date().toISOString(), properties, projects, site, developers, demands },
       `public, max-age=0, s-maxage=${FRESH_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`);
   } catch (err) {
     console.error('catalog failed:', err?.message || err);

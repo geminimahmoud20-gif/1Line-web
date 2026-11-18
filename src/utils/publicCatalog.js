@@ -12,7 +12,7 @@ export async function fetchPublicCatalog(fetchImpl = globalThis.fetch) {
     if (!res.ok || !String(res.headers.get('content-type') || '').includes('application/json')) return null;
     const body = await res.json();
     if (!body?.ok || !Array.isArray(body.properties) || !Array.isArray(body.projects)) return null;
-    return { properties: body.properties, projects: body.projects, site: body.site ?? null, developers: Array.isArray(body.developers) ? body.developers : null };
+    return { properties: body.properties, projects: body.projects, site: body.site ?? null, developers: Array.isArray(body.developers) ? body.developers : null, demands: Array.isArray(body.demands) ? body.demands : null };
   } catch {
     return null;
   }
