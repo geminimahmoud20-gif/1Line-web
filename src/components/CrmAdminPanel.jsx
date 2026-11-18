@@ -181,6 +181,7 @@ export const CrmAdminPanel = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all');
   // The oldest client still waiting for a reply comes first; everyone already answered follows, newest first
   const [leadSort, setLeadSort] = useState('waiting');
 
@@ -727,8 +728,8 @@ export const CrmAdminPanel = ({
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
   const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
     myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
-    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, searchQuery, duplicateIds
-  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
+    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds
+  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, leadSort]);
 
   // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)
   const handleMergeLeads = async (keepId, otherIds) => {
@@ -922,6 +923,8 @@ export const CrmAdminPanel = ({
           sourceFilter={sourceFilter}
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}
+          ownerFilter={ownerFilter}
+          setOwnerFilter={setOwnerFilter}
           setDateFilter={setDateFilter}
           leadSort={leadSort}
           setLeadSort={setLeadSort}
