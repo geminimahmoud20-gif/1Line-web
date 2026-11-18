@@ -21,7 +21,7 @@ import { planDuplicateMerges } from '../../utils/dedupePlan';
 import { guardStage, lastOutcomeLabel, outcomesOf } from '../../utils/stageGate';
 import { useTasks } from '../../hooks/useTasks';
 import { nextTaskFor, bucketOf, dueLabel } from '../../utils/tasks';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs, leadCampaign } from '../../utils/crmLeadViews';
+import { needsDetails, LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs, leadCampaign } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -30,7 +30,7 @@ import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../
 import { cx } from '../ui/cx';
 import './leads-tab.css';
 import './client-card.css';
-const MORE_FILTER_KEYS = ['converted', 'not_fit', 'qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
+const MORE_FILTER_KEYS = ['incomplete', 'converted', 'not_fit', 'qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
 
 const COLUMN_OPTIONS = [
   { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & budget' },
@@ -254,6 +254,7 @@ export default function LeadsTab({
       unassigned: open.filter(isUnassigned).length,
       stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
+      incomplete: leads.filter(needsDetails).length,
       converted: leads.filter((l) => !l.isArchived && situations.get(l.id) === 'converted').length,
       notFit: leads.filter((l) => !l.isArchived && situations.get(l.id) === 'not_fit').length,
       won: leads.filter((l) => !l.isArchived && l.status === 'closed').length,
@@ -573,6 +574,7 @@ export default function LeadsTab({
           onChange={(e) => e.target.value && setLeadFilter(e.target.value)}
           placeholder={isAr ? 'حالات تانية' : 'More views'}
           options={[
+            { value: 'incomplete', label: isAr ? `ملاك بياناتهم ناقصة (${counts.incomplete})` : `Owners missing details (${counts.incomplete})` },
             { value: 'converted', label: isAr ? `اتحوّلوا لعقارات (${counts.converted})` : `Made into listings (${counts.converted})` },
             { value: 'not_fit', label: isAr ? `غير مناسب (${counts.notFit})` : `Not a fit (${counts.notFit})` },
             { value: 'qualified', label: isAr ? 'جدية عالية' : 'High score' },

@@ -161,3 +161,6 @@
 .crm-ld__last.is-negative { background: var(--ui-danger-tint); }
 .crm-ld__last.is-neutral { background: var(--ui-warning-tint); }
 .crm-ld__followup { display: grid; gap: 4px; font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+
+/* An owner's request that lacks the size, the address or photos: what is missing and the one-tap message */
+.crm-ld__missing { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px 10px; border-radius: var(--ui-r-md, 10px); background: var(--ui-warning-tint); color: var(--ui-warning); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }

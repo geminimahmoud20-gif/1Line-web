@@ -271,3 +271,21 @@ test('«معروض على الموقع» counts only real listings visitors can 
     assert.equal(isListedOnSite(p), false, JSON.stringify(p));
   }
 });
+
+import { sellerMissing, needsDetails } from '../../src/utils/crmLeadViews.js';
+import { completeDetailsMessage } from '../../src/utils/sharePages.js';
+test('an owner whose request lacks the size, the address or photos is found, and asked for exactly those', () => {
+  const quick = { type: 'seller', source: 'Portals 1-Step (sell)', status: 'new', details: { sellerRole: 'owner', propertyType: 'apartment' } };
+  assert.deepEqual(sellerMissing(quick), ['size', 'address', 'photos']);
+  assert.equal(needsDetails(quick), true);
+  const full = { ...quick, details: { ...quick.details, size: 120, address: 'شارع الجمهورية', images: ['https://x/y.jpg'] } };
+  assert.deepEqual(sellerMissing(full), []);
+  assert.deepEqual(sellerMissing({ type: 'buyer', status: 'new' }), []);
+  assert.equal(needsDetails({ ...quick, status: 'closed' }), false);
+  assert.equal(needsDetails({ ...quick, isArchived: true }), false);
+  assert.equal(filterLeads([quick, full, { type: 'buyer', status: 'new' }], { leadFilter: 'incomplete' }).length, 1);
+  const msg = completeDetailsMessage({ name: 'محمد الضبع', missing: ['المساحة', 'العنوان'], siteUrl: 'https://www.1lineestate.com/' });
+  assert.match(msg, /أهلاً أستاذ محمد/);
+  assert.match(msg, /المساحة، العنوان/);
+  assert.match(msg, /https:\/\/www\.1lineestate\.com\/sell\?/);
+});

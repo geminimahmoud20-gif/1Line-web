@@ -187,6 +187,24 @@ export function isSellerLead(l = {}) {
 }
 
 /**
+ * What an owner's request still lacks for a listing: the size, the address and photos (the price is the team's to set
+ * after the viewing). [] for anyone who is not an owner selling. The quick request on /sell asked for none of these.
+ */
+export const SELLER_DETAIL_LABELS = { size: 'المساحة', address: 'العنوان', photos: 'صور العقار' };
+export function sellerMissing(l = {}) {
+  if (!isSellerLead(l)) return [];
+  const d = l.details || {};
+  const out = [];
+  if (!(Number(d.size) > 0)) out.push('size');
+  if (!String(d.address || '').trim()) out.push('address');
+  if (!(Array.isArray(d.images) && d.images.some((u) => typeof u === 'string' && u))) out.push('photos');
+  return out;
+}
+
+/** An owner's request still worth completing: open, and lacking the size, the address or photos */
+export const needsDetails = (l = {}) => !l.isArchived && !['lost', 'closed', 'inactive'].includes(l.status) && sellerMissing(l).length > 0;
+
+/**
  * Someone known to want to buy: not an owner selling, an investor, a broker, a client account or a visit request
  * (those have their own chips). A site account says nothing about what the person wants (the sign-up asks only name,
  * number and email), so it stays under «حسابات جديدة» until someone classifies it. The «شراء» chip used to take only
@@ -522,6 +540,8 @@ export function filterLeads(leads = [], opts = {}) {
       if (!isAccountLead(l)) return false;
     } else if (leadFilter === 'buyer') {
       if (!isBuyerLead(l)) return false;
+    } else if (leadFilter === 'incomplete') {
+      if (!needsDetails(l)) return false;
     } else if (leadFilter === 'converted') {
       if (situationById?.get(l.id) !== 'converted') return false;
     } else if (leadFilter === 'not_fit') {
