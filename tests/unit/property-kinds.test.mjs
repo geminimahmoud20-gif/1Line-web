@@ -41,3 +41,27 @@ test('filledSpecs lists only the filled details of the right family', () => {
   assert.deepEqual(filledSpecs(p).map((s) => s.key), ['agriWater']);
   assert.deepEqual(filledSpecs({ type: 'apartment', agriWater: 'x' }), []);
 });
+
+test('the floor fact follows what the unit is: a house has floors, a flat is on one', async () => {
+  const { floorSpec, isHouseType } = await import('../../src/utils/propertyKinds.js');
+  assert.equal(isHouseType('villa'), true);
+  assert.equal(isHouseType('apartment'), false);
+  // a house or villa: how many floors it has (never «الدور»), even if an old record kept a floor number
+  assert.equal(floorSpec({ type: 'villa', totalFloors: 2, floor: 0 }), 'دورين');
+  assert.equal(floorSpec({ type: 'villa', totalFloors: 3, floor: 3 }), '3 أدوار');
+  assert.equal(floorSpec({ type: 'villa', totalFloors: 1 }), 'دور واحد');
+  assert.equal(floorSpec({ type: 'villa', totalFloors: 12 }), '12 دور');
+  assert.equal(floorSpec({ type: 'villa' }), '');
+  assert.equal(floorSpec({ type: 'villa', totalFloors: 2 }, false), '2 floors');
+  // a whole building: its floors
+  assert.equal(floorSpec({ type: 'building', totalFloors: 5 }), '5 أدوار');
+  // a flat: its floor, and the building's when known
+  assert.equal(floorSpec({ type: 'apartment', floor: 0 }), 'أرضي');
+  assert.equal(floorSpec({ type: 'apartment', floor: 3 }), 'الدور 3');
+  assert.equal(floorSpec({ type: 'apartment', floor: 3, totalFloors: 8 }), 'الدور 3 من 8');
+  assert.equal(floorSpec({ type: 'apartment', floor: 9, totalFloors: 8 }), 'الدور 9'); // a total smaller than the floor is a typo
+  assert.equal(floorSpec({ type: 'apartment', floor: '' }), '');
+  // shops, offices and land keep their own lines
+  assert.equal(floorSpec({ type: 'commercial', floor: 1 }), '');
+  assert.equal(floorSpec({ type: 'land' }), '');
+});
