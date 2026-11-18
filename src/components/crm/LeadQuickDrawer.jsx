@@ -446,6 +446,7 @@ export default function LeadQuickDrawer({
           {['work', 'client', 'history'].includes(activeTab) && (
             <LeadDrawerOverview
               view={activeTab}
+              onOpenClient={() => setActiveTab('client')}
               lead={lead}
               egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               handleLogCall={handleLogCall}
