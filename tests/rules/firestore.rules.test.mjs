@@ -978,3 +978,27 @@ test('crm_tasks: the person a task was given to can mark it seen; nobody else\'s
   await assertFails(updateDoc(doc(me, 'crm_tasks/g1'), { secret: 'x' }));
   await assertFails(updateDoc(doc(as('agent_east'), 'crm_tasks/g1'), { seenAt: '2026-11-18T10:00:00.000Z' }));
 });
+
+test('task.assign: a role with it gives tasks to colleagues and reads the team\'s without managing every client; a plain advisor does not', async () => {
+  const lead = env.authenticatedContext('u-lead', { role: 'r_lead', staff: true, perms: ['ld.edit', 'ld.phone', 'task.assign'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(setDoc(doc(lead, 'crm_tasks/a1'), task({ assigneeUid: 'u-sales_agent', createdBy: 'u-lead' })));
+  await assertSucceeds(getDocs(collection(lead, 'crm_tasks')));
+  await assertSucceeds(updateDoc(doc(lead, 'crm_tasks/a1'), { assigneeUid: 'u-other', assigneeName: 'تاني' }));
+  await assertSucceeds(deleteDoc(doc(lead, 'crm_tasks/a1')));
+  // «يدير كل العملاء» includes it; an advisor with ld.edit alone does not
+  const plain = env.authenticatedContext('u-plain', { role: 'r_plain', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
+  await assertFails(setDoc(doc(plain, 'crm_tasks/a2'), task({ assigneeUid: 'u-sales_agent', createdBy: 'u-plain' })));
+  await assertFails(getDocs(collection(plain, 'crm_tasks')));
+  // and with it alone the role does not become a lead manager: it still cannot move a client between teams
+  await assertFails(updateDoc(doc(lead, 'leads/a'), { assignedTo: 'Sales Team B' }));
+});
+
+test('ld.delete: a role with it deletes a client and its contact; without it nobody but the admin does', async () => {
+  const cleaner = env.authenticatedContext('u-clean', { role: 'r_clean', staff: true, perms: ['ld.edit', 'ld.phone', 'ld.delete'], desk: 'Sales Team A' }).firestore();
+  const plain = env.authenticatedContext('u-plain2', { role: 'r_plain2', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
+  const del = (db) => { const batch = writeBatch(db); batch.delete(doc(db, 'leads/c1')); batch.delete(doc(db, 'lead_contacts/c1')); return batch.commit(); };
+  await assertFails(del(plain));
+  await assertFails(del(as('sales_manager'))); // a manager is not a deleter either
+  await assertSucceeds(del(cleaner));
+  await assertSucceeds(deleteDoc(doc(asAdmin(), 'leads/a')));
+});
