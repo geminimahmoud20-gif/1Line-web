@@ -1,0 +1,41 @@
+/* The floating messages icon and its panel: over the page, never moving it */
+.mh-fab {
+  position: fixed; z-index: 900; inset-inline-end: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 56px; height: 56px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: var(--ui-primary); color: var(--ui-on-primary); cursor: pointer;
+  box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--ui-n900) 55%, transparent), 0 2px 6px color-mix(in srgb, var(--ui-n900) 25%, transparent);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.mh-fab:hover { transform: translateY(-2px); }
+.mh-fab:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.mh-fab__badge {
+  position: absolute; top: -4px; inset-inline-end: -4px; min-width: 22px; height: 22px; padding: 0 6px; display: grid; place-items: center;
+  border-radius: 999px; background: var(--ui-danger); color: var(--ui-n0); font-size: 12px; font-weight: 700; border: 2px solid var(--ui-surface);
+}
+.mh-panel {
+  position: fixed; z-index: 950; inset-inline-end: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: min(400px, calc(100vw - 32px)); height: min(600px, calc(100dvh - 110px)); display: flex; flex-direction: column;
+  border: 1px solid var(--ui-line); border-radius: 20px; background: var(--ui-surface); overflow: hidden;
+  box-shadow: 0 28px 64px -16px color-mix(in srgb, var(--ui-n900) 45%, transparent), 0 4px 12px color-mix(in srgb, var(--ui-n900) 12%, transparent);
+  animation: mh-in .16s ease;
+}
+@keyframes mh-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+.mh-panel__head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); padding: var(--ui-s-2) var(--ui-s-3); border-bottom: 1px solid var(--ui-line); background: var(--ui-surface-2); }
+.mh-tabs { display: flex; gap: 4px; }
+.mh-tabs button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--ui-s-3); border: 0; border-radius: 999px; background: none; color: var(--ui-text-2); font: inherit; font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); cursor: pointer; }
+.mh-tabs button.is-on { background: var(--ui-surface); color: var(--ui-text); box-shadow: 0 1px 3px color-mix(in srgb, var(--ui-n900) 12%, transparent); }
+.mh-tabs b { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--ui-danger); color: var(--ui-n0); font-size: 11px; text-align: center; }
+.mh-close { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--ui-text-2); cursor: pointer; }
+.mh-close:hover { background: var(--ui-surface); }
+.mh-panel__body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.mh-panel__body > .tc { flex: 1; }
+.mh-panel__body .mm__list { overflow-y: auto; flex: 1; }
+.mh-panel__body .mm__head--bare { justify-content: flex-end; border-bottom: 1px solid var(--ui-line); }
+.mh-panel__body .tc-general { padding-bottom: 0; }
+.mh-panel__body .tc-general .tn { padding: var(--ui-s-2); }
+
+@media (max-width: 640px) {
+  .mh-fab { width: 52px; height: 52px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .mh-panel { inset-inline: 8px; width: auto; top: calc(var(--crm-topbar-h, 64px) + 6px); bottom: 8px; height: auto; border-radius: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .mh-panel { animation: none; } .mh-fab { transition: none; } }

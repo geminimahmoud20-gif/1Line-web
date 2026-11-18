@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import MentionsMenu from './MentionsMenu';
 import './team-notes.css';
 import { Menu, Search, X, Plus, ChevronDown, Bell, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, UserRound, House, Eye, Download, Inbox } from 'lucide-react';
 import { getMergedCrmRoles } from './crmRoles';
@@ -47,8 +46,7 @@ export default function CrmTopbar({
   onToggleMobileSidebar,
   onRequestOpen,
   canAdd = {},
-  onOpenCommandPalette,
-  onOpenMention
+  onOpenCommandPalette
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
@@ -424,8 +422,6 @@ export default function CrmTopbar({
           )}
         </div>
 
-        {/* Messages from colleagues (@mentions) */}
-        <MentionsMenu isAr={isAr} onOpen={onOpenMention} />
 
         {/* Notifications Center */}
         <div className="crm-notif-wrap" ref={notifRef}>

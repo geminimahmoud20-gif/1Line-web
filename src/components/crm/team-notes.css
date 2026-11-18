@@ -31,10 +31,6 @@
 
 /* Mentions menu in the top bar */
 .mm { position: relative; }
-.mm__btn { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text-2); cursor: pointer; }
-.mm__btn:hover { background: var(--ui-surface-2); }
-.mm__badge { position: absolute; top: -5px; inset-inline-end: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--ui-r-full); background: var(--ui-danger); color: white; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
-.mm__panel { position: absolute; top: calc(100% + 8px); inset-inline-end: 0; z-index: 60; width: min(360px, 92vw); max-height: 70vh; overflow-y: auto; border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); box-shadow: var(--ui-sh-3, var(--ui-sh-2)); }
 .mm__head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); padding: var(--ui-s-3); border-bottom: 1px solid var(--ui-line); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); }
 .mm__head button { border: 0; background: none; color: var(--ui-info); font: inherit; font-size: var(--ui-fs-1); cursor: pointer; }
 .mm__item { width: 100%; display: grid; gap: 2px; padding: var(--ui-s-3); border: 0; border-bottom: 1px solid var(--ui-line); background: none; font: inherit; text-align: start; cursor: pointer; }
@@ -44,14 +40,3 @@
 .mm__who b { color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
 .mm__snip { font-size: var(--ui-fs-2); color: var(--ui-text); line-height: 1.55; overflow-wrap: anywhere; }
 .mm__empty { margin: 0; padding: var(--ui-s-5) var(--ui-s-3); text-align: center; color: var(--ui-text-3); font-size: var(--ui-fs-2); }
-
-/* Phones: the messages panel spans the screen under the top bar (anchored to its button it ran past the screen
-   edge and cut the sender, the time and the text) */
-@media (max-width: 640px) {
-  .mm__panel {
-    position: fixed; top: calc(var(--crm-topbar-h, 64px) + 6px); inset-inline: 8px; width: auto; max-width: none;
-    max-height: calc(100dvh - var(--crm-topbar-h, 64px) - 20px); overscroll-behavior: contain;
-  }
-  .mm__item { padding: var(--ui-s-3) var(--ui-s-4); }
-  .mm__who { line-height: 1.5; overflow-wrap: anywhere; }
-}
