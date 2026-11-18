@@ -55,6 +55,7 @@ import { areaFamily } from '../utils/areaLookup';
 import { useConfirm } from './ui';
 import { phoneProblem, nameProblem } from '../utils/contactValidation';
 import { userDisplayName } from '../utils/assignees';
+import { deletePrompt } from '../utils/deleteConfirm';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -413,7 +414,7 @@ export const CrmAdminPanel = ({
       }
       return;
     }
-    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`, tone: 'danger' })) {
+    if (await confirm(deletePrompt({ names: leads.filter((l) => selectedLeadIds.includes(l.id)).map((l) => l.name), isAr }))) {
       const idsToDelete = [...selectedLeadIds];
       setSelectedLeadIds([]);
       if (onDeleteLead) {
@@ -679,7 +680,7 @@ export const CrmAdminPanel = ({
       if (triggerToast) triggerToast(isAr ? 'حذف العملاء متاح للمدير العام فقط — يمكنك أرشفة العميل بدلاً من ذلك' : 'Only Super Admin can delete leads', 'error');
       return;
     }
-    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`, tone: 'danger' })) {
+    if (await confirm(deletePrompt({ names: [leadName], isAr }))) {
       auditLeadDeleted(leadId);
       if (onDeleteLead) {
         onDeleteLead(leadId);

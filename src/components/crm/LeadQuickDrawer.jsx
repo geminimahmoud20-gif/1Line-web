@@ -23,6 +23,7 @@ import NextStepSheet from './NextStepSheet';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { sourceText } from '../../utils/crmLabels';
+import { deletePrompt } from '../../utils/deleteConfirm';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
@@ -239,11 +240,7 @@ export default function LeadQuickDrawer({
   };
 
   const handleDelete = async () => {
-    const ok = await confirm({
-      title: isAr ? `حذف ${lead.name || 'العميل'}؟` : `Delete ${lead.name || 'this lead'}?`,
-      message: isAr ? 'العميل وسجله هيتمسحوا ومش هتقدر ترجّعهم.' : 'The lead and its history are removed for good.',
-      confirmLabel: isAr ? 'احذف العميل' : 'Delete lead'
-    });
+    const ok = await confirm(deletePrompt({ names: [lead.name], isAr }));
     if (!ok) return;
     onDeleteLead(lead.id);
     onClose();

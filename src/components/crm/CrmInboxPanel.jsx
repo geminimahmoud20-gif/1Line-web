@@ -15,7 +15,7 @@ import {
   Clock,
   Hand
 } from 'lucide-react';
-import { PageHeader, Tabs, Chip, Badge, Button, IconButton, Select, Card, Avatar, EmptyState, MotionRoot } from '../ui';
+import { PageHeader, Tabs, Chip, Badge, Button, IconButton, Select, Card, Avatar, EmptyState, MotionRoot, useConfirm } from '../ui';
 import { cx } from '../ui/cx';
 import './CrmInboxPanel.css';
 import './client-card.css';
@@ -27,6 +27,7 @@ import { subscribeToContactIntents, resolveContactIntent } from '../../firebaseL
 import WhatsAppIntentsList from './WhatsAppIntentsList';
 import { listTeamMembers } from '../../services/team';
 import { userDisplayName } from '../../utils/assignees';
+import { archivePrompt } from '../../utils/deleteConfirm';
 import { withoutGeneratedOffer } from '../../utils/clientTimeline';
 import {
   INBOX_VIEWS, TEAM_DESKS, isLeadUnclaimed, isLeadClaimedByMe,
@@ -182,6 +183,7 @@ export default function CrmInboxPanel({
   slaMinutes = 15
 }) {
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
   const isSuperAdmin = userRole === 'super_admin' || userRole === 'admin';
   const isMarketing = userRole === 'marketing' || userRole === 'content_creator';
   const isSales = userRole === 'sales_agent' || userRole === 'sales_manager' || userRole === 'broker';
@@ -485,8 +487,9 @@ export default function CrmInboxPanel({
   };
 
   // Test or duplicate requests: archived (hidden, restorable from the leads table), never deleted
-  const handleArchive = (lead) => {
+  const handleArchive = async (lead) => {
     if (!onUpdateLead) return;
+    if (!(await confirm(archivePrompt({ name: lead.name, isAr })))) return;
     onUpdateLead(lead.id, { isArchived: true, lastActivityAt: new Date().toISOString() });
     triggerToast?.(isAr ? 'الطلب اتخفى من الوارد واتنقل للأرشيف' : 'Request archived', 'info', {
       onUndo: () => onUpdateLead(lead.id, { isArchived: false, lastActivityAt: new Date().toISOString() }),
