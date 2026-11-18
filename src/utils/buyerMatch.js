@@ -91,23 +91,26 @@ const rentedNow = (p) => (Array.isArray(p.features_ar) ? p.features_ar : []).som
 const bedroomsOf = (p) => num(p.bedrooms ?? p.rooms);
 const handoverOf = (p) => (p.completionStatus === 'ready' || p.completionStatus === 'under_construction' ? p.completionStatus : '');
 
-function budgetPart(p, a) {
+function budgetPart(p, a, { stretch = 0.1 } = {}) {
   const price = num(p.price);
   const terms = paymentTerms(p);
   const plan = hasInstallmentPlan(terms) ? terms : null;
   if (a.payment === 'cash') {
     const budget = num(a.budget);
-    if (!budget) return { score: 1, ok: null };
+    if (!budget) return { score: 1, ok: null, unknown: true, core: true };
     const total = price || (plan ? plan.total : 0);
     if (!total) return { score: 0.5, ok: null, text: 'السعر مش مكتوب' };
-    if (total <= budget) return { score: 1, ok: true, text: `السعر ${fmt(total)} ج.م في حدود ميزانيتك` };
+    // Well under the budget is still a fit, a little less of one (the buyer may be after something bigger)
+    if (total <= budget) return { score: total / budget < 0.6 ? 0.8 : 1, ok: true, text: `السعر ${fmt(total)} ج.م في حدود ميزانيتك` };
     const over = total / budget - 1;
     if (over <= 0.1) return { score: 0.6, ok: false, text: `أعلى من ميزانيتك بـ ${Math.round(over * 100)}% (قابل للتفاوض غالباً)` };
+    if (over <= stretch) return { score: 0.3, ok: false, text: `أعلى من ميزانيتك بـ ${Math.round(over * 100)}%` };
     return { score: 0, ok: false, text: `السعر ${fmt(total)} ج.م أعلى من ميزانيتك` };
   }
   // Installments: the plan's down payment and its monthly equivalent against what the buyer can pay
   const maxDown = num(a.down);
   const maxMonthly = num(a.monthly);
+  if (!maxDown && !maxMonthly && !num(a.budget)) return { score: 1, ok: null, unknown: true, core: true };
   if (!plan) {
     // A cash-only home still fits when the buyer's down payment alone covers it
     if (maxDown && price && price <= maxDown) return { score: 0.9, ok: true, text: 'كاش، والمقدم اللي معاك يغطيه' };
@@ -128,7 +131,7 @@ function budgetPart(p, a) {
 
 function areaPart(p, a, areas) {
   const wanted = Array.isArray(a.areas) ? a.areas.filter(Boolean) : [];
-  if (!wanted.length) return { score: 1, ok: null };
+  if (!wanted.length) return { score: 1, ok: null, unknown: true, core: true };
   const hit = wanted.some((id) => inArea(p.areaKey, id, areas));
   return hit ? { score: 1, ok: true, text: 'في المنطقة اللي اخترتها' } : { score: 0, ok: false, text: 'في منطقة تانية غير اللي اخترتها' };
 }
@@ -136,7 +139,7 @@ function areaPart(p, a, areas) {
 function roomsPart(p, a) {
   if (a.kind && !kindOf(a.kind).home) return { score: 1, ok: null };
   const need = FAMILY_SIZES.find((f) => f.id === a.family)?.rooms || 0;
-  if (!need) return { score: 1, ok: null };
+  if (!need) return { score: 1, ok: null, unknown: true };
   const rooms = bedroomsOf(p);
   if (!rooms) return { score: 0.5, ok: null, text: 'عدد الغرف مش مكتوب، اسألنا عليه' };
   if (rooms >= need) return { score: 1, ok: true, text: `${rooms} ${rooms === 1 ? 'غرفة' : rooms === 2 ? 'غرفتين' : 'غرف'} تكفي أسرتك` };
@@ -146,7 +149,7 @@ function roomsPart(p, a) {
 
 function deliveryPart(p, a) {
   if (a.kind && !kindOf(a.kind).handover) return { score: 1, ok: null };
-  if (!a.delivery || a.delivery === 'any') return { score: 1, ok: null };
+  if (!a.delivery || a.delivery === 'any') return { score: 1, ok: null, unknown: !a.delivery };
   const state = handoverOf(p);
   if (!state) return { score: 0.5, ok: null, text: 'موعد الاستلام مش مكتوب' };
   if (a.delivery === 'now') {
@@ -178,7 +181,7 @@ function purposePart(p, a) {
       if (handoverOf(p) === 'under_construction') return { score: 0.4, ok: false, text: 'لسه تحت الإنشاء، مش هتقدر تشغّلها دلوقتي' };
       return { score: 0.7, ok: null };
     }
-    return { score: 1, ok: null };
+    return { score: 1, ok: null, unknown: !a.purpose };
   }
   if (a.purpose === 'invest') {
     const plan = hasInstallmentPlan(paymentTerms(p));
@@ -194,12 +197,12 @@ function purposePart(p, a) {
     if (group === 'core') return { score: 0.4, ok: false, text: 'محتاجة تشطيب قبل السكن' };
     return { score: 0.6, ok: null };
   }
-  return { score: 1, ok: null };
+  return { score: 1, ok: null, unknown: true };
 }
 
 function sizePart(p, a) {
   const min = num(a.minSize);
-  if (!min) return { score: 1, ok: null };
+  if (!min) return { score: 1, ok: null, unknown: true };
   const size = num(p.size);
   if (!size) return { score: 0.5, ok: null, text: 'المساحة مش مكتوبة' };
   if (size >= min) return { score: 1, ok: true, text: `${size} م²` };
@@ -212,10 +215,12 @@ function sizePart(p, a) {
  * `answers`: { priorities: [], areas: [], minSize, purpose: 'home'|'invest', family, delivery:
  * 'now'|'wait'|'any', payment: 'cash'|'installments', budget, down, monthly }
  * `only` limits the score to some parts, e.g. ['budget', 'area', 'size'].
+ * `unknownScore` (0..1): what the budget or the area is worth when the buyer gave none; 1 unless the request is incomplete.
+ * `stretch`: how far above the budget a unit is still shown (as a weak match).
  */
-export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
+export function matchUnit(p, answers = {}, areas = [], { only = null, unknownScore = 1, stretch = 0.1 } = {}) {
   const all = {
-    budget: budgetPart(p, answers),
+    budget: budgetPart(p, answers, { stretch }),
     area: areaPart(p, answers, areas),
     rooms: roomsPart(p, answers),
     delivery: deliveryPart(p, answers),
@@ -230,14 +235,17 @@ export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
   for (const [key, part] of Object.entries(parts)) {
     const w = BASE_WEIGHTS[key] * (boosted.has(key) ? 1.6 : 1);
     total += w;
-    got += w * part.score;
+    // a part the buyer gave no answer to: full marks by default (the website wizard always asks), less for a client entered by hand
+    got += w * (part.unknown && part.core ? unknownScore : part.score);
   }
   const list = Object.values(parts).filter((x) => x.text);
   return {
     score: Math.round((got / total) * 100),
     matches: list.filter((x) => x.ok === true).map((x) => x.text),
     misses: list.filter((x) => x.ok === false).map((x) => x.text),
-    notes: list.filter((x) => x.ok === null).map((x) => x.text)
+    notes: list.filter((x) => x.ok === null).map((x) => x.text),
+    // what the request lacks that matters (the CRM shows it so the advisor asks the client)
+    missing: Object.entries(parts).filter(([, part]) => part.unknown && part.core).map(([key]) => key)
   };
 }
 
@@ -246,11 +254,11 @@ export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
  * earlier (the CRM, when a new unit arrives): the kind of property, the area, the budget and the
  * minimum size. Rooms and handover only change the score.
  */
-export function hardFit(p, answers = {}, areas = []) {
+export function hardFit(p, answers = {}, areas = [], { stretch = 0.1 } = {}) {
   return {
     kind: isKind(p, answers.kind),
     area: areaPart(p, answers, areas).score > 0,
-    budget: budgetPart(p, answers).score >= 0.5,
+    budget: budgetPart(p, answers, { stretch }).score >= 0.3,
     size: sizePart(p, answers).score > 0
   };
 }

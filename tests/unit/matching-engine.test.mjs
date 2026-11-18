@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findMatchingClientsForProperty, scoreBuyer, MATCH_THRESHOLD } from '../../src/utils/matchingEngine.js';
+import { findMatchingClientsForProperty, scoreForBuyer, MATCH_THRESHOLD } from '../../src/utils/matchingEngine.js';
 
 const apartment = { id: 'p1', type: 'apartment', areaKey: 'new_sohag', price: 2000000 };
 let n = 0;
@@ -46,7 +46,7 @@ test('the area counts, and a buyer with no area is open to any', () => {
 
 test('lead.type is the kind of request, never the kind of property', () => {
   const l = buyer({ area: 'new_sohag', budget: 2000000 }, { type: 'buyer' });
-  assert.equal(scoreBuyer(apartment, { type: l.type === 'buyer' ? '' : l.type, area: 'new_sohag', budget: 2000000 }).score, 80);
+  assert.equal(scoreForBuyer(apartment, l).score, 80);
   const out = findMatchingClientsForProperty(apartment, [l]);
   assert.equal(out.length, 1); // unknown kind is neutral, not a mismatch
   assert.equal(out[0].score, 80);
@@ -107,7 +107,7 @@ test('leads without answers still use the plain matching', () => {
 
 test('a unit far below the buyer’s budget is not a match (a typo in the budget must not match everything)', () => {
   const typo = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 50_000_000 }); // 25× the unit
-  assert.ok(scoreBuyer(apartment, { type: 'apartment', area: 'new_sohag', budget: 50_000_000 }).score < MATCH_THRESHOLD);
+  assert.ok(scoreForBuyer(apartment, typo).score < MATCH_THRESHOLD);
   assert.deepEqual(ids(findMatchingClientsForProperty(apartment, [typo])), []);
 });
 

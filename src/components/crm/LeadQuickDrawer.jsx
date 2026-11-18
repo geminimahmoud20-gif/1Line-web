@@ -25,6 +25,8 @@ import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { sourceText } from '../../utils/crmLabels';
 import { deletePrompt } from '../../utils/deleteConfirm';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
+import { scoreForBuyer } from '../../utils/matchingEngine';
+import { liveListings } from '../../utils/marketStats';
 import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
 import ClientDetails from './client-file/ClientDetails';
@@ -104,7 +106,7 @@ export default function LeadQuickDrawer({
   const sellerFile = Boolean(lead) && isSellerLead(lead);
   // The same ranking the "matches" tab shows, so the tab count and the list agree
   const matchingResult = useMemo(
-    () => (lead && !sellerFile ? rankAndNominateProperties(lead, properties) : { matches: [] }),
+    () => (lead && !sellerFile ? rankAndNominateProperties(lead, liveListings(properties), { scorer: scoreForBuyer }) : { matches: [] }),
     [lead, sellerFile, properties]
   );
   const sellerBuyers = useMemo(
