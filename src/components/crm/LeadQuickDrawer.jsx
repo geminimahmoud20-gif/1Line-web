@@ -384,7 +384,7 @@ export default function LeadQuickDrawer({
           </>
         )}
       >
-        <div className="crm-ld">
+        <div className="crm-ld" data-stage={lead.status || 'new'}>
           <section className="crm-ld__summary" aria-label={isAr ? 'ملخص العميل' : 'Client summary'}>
             <div className="crm-ld__contact">
               <span className="crm-ld__phone"><Phone size={14} aria-hidden="true" /><bdi dir="ltr">{phoneText}</bdi></span>
