@@ -458,3 +458,11 @@
   .crm-layout .crm-leads .crm-table .crm-th--client { width: 19%; }
   .crm-layout .crm-leads .crm-table .crm-th--specs { width: 12%; }
 }
+
+/* «الموقف الحالي»: what happened last with the client, under the stage pill */
+.crm-situation { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: var(--ui-r-pill, 999px); font-size: var(--ui-fs-1); line-height: 1.5; font-weight: var(--ui-fw-semibold); background: var(--ui-surface-2); color: var(--ui-text-2); max-width: 100%; }
+.crm-situation.is-good { background: var(--ui-success-tint); color: var(--ui-success); }
+.crm-situation.is-bad { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-situation.is-warn { background: var(--ui-warning-tint); color: var(--ui-warning); }
+.crm-situation.is-info { background: var(--ui-primary-tint); color: var(--ui-primary-text); }
+.crm-situation.is-none { background: transparent; color: var(--ui-text-3); padding-inline: 0; font-weight: var(--ui-fw-regular, 400); }

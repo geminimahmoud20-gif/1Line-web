@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { leadSituation, listingByLead, situationKinds } from '../../src/utils/leadSituation.js';
+
+const at = (h) => new Date(Date.now() - h * 3600000).toISOString();
+
+test('a client with a listing made from him says so, with the listing state', () => {
+  const m = listingByLead([{ id: 'p1', sourceLeadId: 'L1', status: 'hidden' }, { id: 'p2', sourceLeadId: 'L2', status: 'sold' }]);
+  assert.equal(leadSituation({ id: 'L1' }, m.get('L1')).label, 'اتحوّل لعقار · مسودة غير منشورة');
+  assert.equal(leadSituation({ id: 'L2' }, m.get('L2')).tone, 'good');
+});
+
+test('otherwise the last logged outcome, with the reason when it was «غير مناسب»', () => {
+  const l = { id: 'a', outcomes: [{ id: 'reached', at: at(30) }, { id: 'not_fit', at: at(2), reason: 'price' }] };
+  const s = leadSituation(l);
+  assert.equal(s.kind, 'not_fit');
+  assert.equal(s.tone, 'bad');
+  assert.match(s.label, /غير مناسب · السعر/);
+  const n = leadSituation({ id: 'b', outcomes: [{ id: 'no_answer', at: at(30) }, { id: 'no_answer', at: at(5) }] });
+  assert.equal(n.label, 'لم يرد · محاولة 2');
+  assert.equal(leadSituation({ id: 'c' }), null);
+});
+
+test('situationKinds maps clients to converted / outcome kinds', () => {
+  const kinds = situationKinds(
+    [{ id: 'L1' }, { id: 'L3', outcomes: [{ id: 'not_fit', at: at(1), reason: 'price' }] }, { id: 'L4' }],
+    [{ id: 'p1', sourceLeadId: 'L1', status: 'published' }]
+  );
+  assert.equal(kinds.get('L1'), 'converted');
+  assert.equal(kinds.get('L3'), 'not_fit');
+  assert.equal(kinds.has('L4'), false);
+});

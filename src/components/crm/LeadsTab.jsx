@@ -8,6 +8,7 @@ import DeskOptions from './DeskOptions';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import { assigneeValue, assignmentUpdates, personFor } from '../../utils/assignees';
 import OwnerPerformance from './OwnerPerformance';
+import { leadSituation } from '../../utils/leadSituation';
 import { ownersTable } from '../../utils/ownerPerformance';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
@@ -29,7 +30,7 @@ import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../
 import { cx } from '../ui/cx';
 import './leads-tab.css';
 import './client-card.css';
-const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
+const MORE_FILTER_KEYS = ['converted', 'not_fit', 'qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
 
 const COLUMN_OPTIONS = [
   { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & budget' },
@@ -127,6 +128,8 @@ export default function LeadsTab({
   setDateFilter,
   ownerFilter = 'all',
   setOwnerFilter,
+  situations = new Map(),
+  listingByLead = new Map(),
   leadSort = 'waiting',
   setLeadSort,
   canEdit = true,
@@ -251,11 +254,13 @@ export default function LeadsTab({
       unassigned: open.filter(isUnassigned).length,
       stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
+      converted: leads.filter((l) => !l.isArchived && situations.get(l.id) === 'converted').length,
+      notFit: leads.filter((l) => !l.isArchived && situations.get(l.id) === 'not_fit').length,
       won: leads.filter((l) => !l.isArchived && l.status === 'closed').length,
       inactive: leads.filter((l) => !l.isArchived && l.status === 'inactive').length,
       archived: leads.filter((l) => l.isArchived).length
     };
-  }, [leads, duplicateIds, now]);
+  }, [leads, duplicateIds, situations, now]);
 
   const renderVisitBadge = (l) => {
     const vd = getLeadVisitDate(l);
@@ -568,6 +573,8 @@ export default function LeadsTab({
           onChange={(e) => e.target.value && setLeadFilter(e.target.value)}
           placeholder={isAr ? 'حالات تانية' : 'More views'}
           options={[
+            { value: 'converted', label: isAr ? `اتحوّلوا لعقارات (${counts.converted})` : `Made into listings (${counts.converted})` },
+            { value: 'not_fit', label: isAr ? `غير مناسب (${counts.notFit})` : `Not a fit (${counts.notFit})` },
             { value: 'qualified', label: isAr ? 'جدية عالية' : 'High score' },
             { value: 'account', label: isAr ? `حسابات جديدة (${counts.accounts})` : `Accounts (${counts.accounts})` },
             ...(counts.stale > 0 ? [{ value: 'stale', label: isAr ? `راكدين (${counts.stale})` : `Stale (${counts.stale})` }] : []),
@@ -1056,6 +1063,12 @@ export default function LeadsTab({
                           ))}
                         </select>
                       </div>
+                      {(() => {
+                        const sit = leadSituation(l, listingByLead.get(String(l.id)) || null);
+                        return sit
+                          ? <span className={`crm-situation is-${sit.tone}`} title={sit.at ? new Date(sit.at).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB') : undefined}>{sit.label}{sit.at ? ` · ${fmtWait(now - sit.at)}` : ''}</span>
+                          : <span className="crm-situation is-none">{isAr ? 'لسه متواصلناش' : 'No contact yet'}</span>;
+                      })()}
                     </td>
                   )}
 

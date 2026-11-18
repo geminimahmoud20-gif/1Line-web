@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { situationKinds, listingByLead } from '../utils/leadSituation';
 import { X, Clock } from 'lucide-react';
 import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
@@ -726,10 +727,13 @@ export const CrmAdminPanel = ({
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
+  // What happened last with each client (turned into a listing, «غير مناسب», no answer…): the status cell and two filters
+  const situations = useMemo(() => situationKinds(leads, properties), [leads, properties]);
+  const situationByListing = useMemo(() => listingByLead(properties), [properties]);
   const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
     myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
-    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds
-  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, leadSort]);
+    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, situationById: situations
+  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, situations, leadSort]);
 
   // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)
   const handleMergeLeads = async (keepId, otherIds) => {
@@ -924,6 +928,8 @@ export const CrmAdminPanel = ({
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}
           ownerFilter={ownerFilter}
+          situations={situations}
+          listingByLead={situationByListing}
           setOwnerFilter={setOwnerFilter}
           setDateFilter={setDateFilter}
           leadSort={leadSort}
