@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BarChart3, X, ChevronDown } from 'lucide-react';
-import { ownerStats, matchesOwner, formatMins } from '../../utils/ownerPerformance';
+import { ownerStats, matchesOwner, formatMins, ownersPeriodTable } from '../../utils/ownerPerformance';
+import { PRESETS, resolveRange, comparisonRange, rangeText } from '../../utils/reportPeriods';
 import { cx } from '../ui/cx';
 import './owner-performance.css';
 
@@ -25,7 +26,7 @@ const agoLabel = (ms, now, isAr) => {
  * (tap a row to open that person's clients). With a person picked: their stages, what is waiting,
  * how fast they first reply, and what they closed or lost.
  */
-export default function OwnerPerformance({ isAr, leads, owners, ownerFilter, onPickOwner }) {
+function Current({ isAr, leads, owners, ownerFilter, onPickOwner }) {
   const [open, setOpen] = useState(false);
   const [now] = useState(() => Date.now());
   const picked = ownerFilter && ownerFilter !== 'all';
@@ -123,5 +124,98 @@ export default function OwnerPerformance({ isAr, leads, owners, ownerFilter, onP
         ))}
       </dl>
     </section>
+  );
+}
+
+const PERIOD_PRESETS = PRESETS.filter((p) => p.id !== 'custom');
+
+const Change = ({ c, goodWhenDown = false }) => {
+  if (c == null) return null;
+  const up = c > 0;
+  const good = goodWhenDown ? !up : up;
+  return <small className={cx('op__chg', c !== 0 && (good ? 'is-good' : 'is-bad'))}>{c > 0 ? '▲' : c < 0 ? '▼' : '='} {Math.abs(c)}%</small>;
+};
+
+/** Each person's work inside a chosen period, next to the period before it */
+function Period({ isAr, leads, tasks, people, ownerFilter, onPickOwner }) {
+  const [preset, setPreset] = useState('30');
+  const [now] = useState(() => Date.now());
+  const range = useMemo(() => resolveRange(preset, now), [preset, now]);
+  const prev = useMemo(() => comparisonRange(range, 'previous'), [range]);
+  const picked = ownerFilter && ownerFilter !== 'all';
+  const rows = useMemo(() => {
+    const all = ownersPeriodTable(leads, people, tasks, range, prev, now);
+    return picked ? all.filter((r) => r.key === ownerFilter) : all;
+  }, [leads, people, tasks, range, prev, now, picked, ownerFilter]);
+  const cell = (r, k, opts = {}) => (
+    <td>
+      {opts.fmt ? opts.fmt(r.cur[k]) : r.cur[k]}
+      <Change c={r.cmp[k]?.change} goodWhenDown={opts.down} />
+    </td>
+  );
+  return (
+    <div className="op__period">
+      <div className="op__periodbar">
+        <select className="op__select" aria-label={isAr ? 'الفترة' : 'Period'} value={preset} onChange={(e) => setPreset(e.target.value)}>
+          {PERIOD_PRESETS.map((p) => <option key={p.id} value={p.id}>{isAr ? p.ar : p.en}</option>)}
+        </select>
+        <small>{rangeText(range)}{prev ? (isAr ? ` · مقارنة بـ ${rangeText(prev)}` : ` · vs ${rangeText(prev)}`) : ''}</small>
+      </div>
+      {rows.length === 0 ? (
+        <p className="op__empty">{isAr ? 'مفيش نشاط للمسؤولين في الفترة دي.' : 'No activity in this period.'}</p>
+      ) : (
+        <div className="op__scroll">
+          <table className="op__table">
+            <thead>
+              <tr>
+                <th>{isAr ? 'المسؤول' : 'Owner'}</th>
+                <th>{isAr ? 'عملاء جُدد' : 'New'}</th>
+                <th>{isAr ? 'اتردّ عليهم' : 'Replied'}</th>
+                <th>{isAr ? 'في الوقت' : 'On time'}</th>
+                <th>{isAr ? 'أول رد (وسيط)' : 'First reply'}</th>
+                <th>{isAr ? 'وصلوا معاينة' : 'Viewings'}</th>
+                <th>{isAr ? 'صفقات' : 'Won'}</th>
+                <th>{isAr ? 'خسارة' : 'Lost'}</th>
+                <th>{isAr ? 'مهام خلصت' : 'Tasks done'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.key} onClick={() => onPickOwner(r.key)} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') onPickOwner(r.key); }}>
+                  <th scope="row">{r.key === 'none' ? (isAr ? 'من غير مسؤول' : 'No owner') : r.name}</th>
+                  {cell(r, 'newLeads')}
+                  {cell(r, 'replied')}
+                  <td>{r.cur.replied ? `${r.cur.inTimePct}%` : '—'}</td>
+                  <td>{r.cur.replied ? formatMins(r.cur.medianReplyMs / 60000, isAr) : '—'}</td>
+                  {cell(r, 'viewings')}
+                  {cell(r, 'closed')}
+                  {cell(r, 'lost', { down: true })}
+                  {cell(r, 'tasksDone')}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="op__note">{isAr ? 'العميل بيتحسب على المسؤول الحالي عنه. الأسهم مقارنة بالفترة اللي قبلها بنفس الطول.' : 'Clients count under their current owner. Arrows compare with the period before.'}</p>
+    </div>
+  );
+}
+
+/** «الوضع الحالي» (stages and what is waiting now) or «خلال فترة» (what was done in a chosen period) */
+export default function OwnerPerformance(props) {
+  const [mode, setMode] = useState('now');
+  return (
+    <div className="op-wrap">
+      <div className="op__modes" role="tablist" aria-label={props.isAr ? 'نوع العرض' : 'View'}>
+        <button type="button" role="tab" aria-selected={mode === 'now'} className={cx('op__mode', mode === 'now' && 'is-on')} onClick={() => setMode('now')}>{props.isAr ? 'الوضع الحالي' : 'Right now'}</button>
+        <button type="button" role="tab" aria-selected={mode === 'period'} className={cx('op__mode', mode === 'period' && 'is-on')} onClick={() => setMode('period')}>{props.isAr ? 'خلال فترة' : 'In a period'}</button>
+      </div>
+      {mode === 'now' ? <Current {...props} /> : (
+        <section className="op" aria-label={props.isAr ? 'أداء خلال فترة' : 'Performance in a period'}>
+          <Period isAr={props.isAr} leads={props.leads} tasks={props.tasks || []} people={props.people || []} ownerFilter={props.ownerFilter} onPickOwner={props.onPickOwner} />
+        </section>
+      )}
+    </div>
   );
 }

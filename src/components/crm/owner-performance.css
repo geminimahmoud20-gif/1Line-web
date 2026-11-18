@@ -30,3 +30,17 @@
 .op__tile.is-warn dd { color: var(--ui-warning); }
 .op__tile.is-good dd { color: var(--ui-success); }
 @media (max-width: 640px) { .op__funnel { gap: 4px; } }
+
+.op-wrap { margin: 0 0 12px; }
+.op-wrap > .op { margin: 0; }
+.op__modes { display: inline-flex; gap: 4px; padding: 3px; margin-bottom: 8px; border-radius: 999px; background: color-mix(in srgb, var(--ui-text-3) 12%, transparent); }
+.op__mode { padding: 5px 14px; border: 0; border-radius: 999px; background: none; font: inherit; font-size: 13px; color: var(--ui-text-2); cursor: pointer; }
+.op__mode.is-on { background: var(--ui-surface); color: var(--ui-text); font-weight: 700; box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 15%, transparent); }
+.op__period { padding: 12px 0 4px; }
+.op__periodbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 0 14px 10px; }
+.op__periodbar small { color: var(--ui-text-3); font-size: 12px; }
+.op__select { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--ui-line); background: var(--ui-surface); color: inherit; font: inherit; font-size: 13px; }
+.op__chg { margin-inline-start: 6px; font-size: 11px; color: var(--ui-text-3); }
+.op__chg.is-good { color: var(--ui-success); }
+.op__chg.is-bad { color: var(--ui-danger); }
+.op__empty, .op__note { margin: 0; padding: 10px 14px; color: var(--ui-text-3); font-size: 12px; }
