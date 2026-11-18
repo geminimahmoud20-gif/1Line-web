@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { BarChart3, X, ChevronDown } from 'lucide-react';
-import { ownerStats, matchesOwner, formatMins, ownersPeriodTable } from '../../utils/ownerPerformance';
+import { ownerStats, matchesOwner, formatMins, ownersPeriodTable, recentContacts } from '../../utils/ownerPerformance';
 import { PRESETS, resolveRange, comparisonRange, rangeText } from '../../utils/reportPeriods';
 import { cx } from '../ui/cx';
 import './owner-performance.css';
@@ -26,13 +26,18 @@ const agoLabel = (ms, now, isAr) => {
  * (tap a row to open that person's clients). With a person picked: their stages, what is waiting,
  * how fast they first reply, and what they closed or lost.
  */
-function Current({ isAr, leads, owners, ownerFilter, onPickOwner }) {
+function Current({ isAr, leads, owners, ownerFilter, onPickOwner, onOpenLead }) {
   const [open, setOpen] = useState(false);
   const [now] = useState(() => Date.now());
   const picked = ownerFilter && ownerFilter !== 'all';
   const row = useMemo(() => owners.find((o) => o.key === ownerFilter), [owners, ownerFilter]);
   const stats = useMemo(
     () => (picked ? ownerStats(leads.filter((l) => matchesOwner(l, ownerFilter))) : null),
+    [leads, ownerFilter, picked]
+  );
+
+  const contacts = useMemo(
+    () => (picked ? recentContacts(leads.filter((l) => matchesOwner(l, ownerFilter)), 8) : []),
     [leads, ownerFilter, picked]
   );
 
@@ -123,6 +128,26 @@ function Current({ isAr, leads, owners, ownerFilter, onPickOwner }) {
           </div>
         ))}
       </dl>
+      <div className="op__contacts">
+        <h4>{isAr ? 'آخر التواصلات' : 'Latest contacts'}</h4>
+        {contacts.length === 0 ? (
+          <p className="op__empty">{isAr ? 'لسه مفيش تواصل متسجل مع عملائه.' : 'No contact logged yet.'}</p>
+        ) : (
+          <ul>
+            {contacts.map((c, i) => (
+              <li key={`${c.leadId}-${c.at}-${i}`}>
+                <button type="button" className="op__contact" onClick={() => onOpenLead?.(leads.find((l) => l.id === c.leadId))}>
+                  <i className={cx('op__dot', `is-${c.kind}`)} aria-hidden="true" />
+                  <span className="op__who">{c.name || '—'}</span>
+                  <span className="op__what">{c.label}{c.reason ? ` · ${c.reason}` : ''}</span>
+                  <small>{agoLabel(c.at, now, isAr)}{c.by ? ` · ${c.by}` : ''}</small>
+                  {c.note && <em>{c.note}</em>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

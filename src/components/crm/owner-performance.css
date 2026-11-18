@@ -44,3 +44,17 @@
 .op__chg.is-good { color: var(--ui-success); }
 .op__chg.is-bad { color: var(--ui-danger); }
 .op__empty, .op__note { margin: 0; padding: 10px 14px; color: var(--ui-text-3); font-size: 12px; }
+
+.op__contacts { margin-top: 14px; }
+.op__contacts h4 { margin: 0 0 6px; font-size: 13px; color: var(--ui-text-2); }
+.op__contacts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.op__contact { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2px 8px; width: 100%; padding: 7px 8px; border: 0; border-radius: 8px; background: none; font: inherit; text-align: start; color: inherit; cursor: pointer; }
+.op__contact:hover, .op__contact:focus-visible { background: color-mix(in srgb, var(--ui-primary) 7%, transparent); outline: none; }
+.op__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ui-text-3); }
+.op__dot.is-positive { background: var(--ui-success); }
+.op__dot.is-negative { background: var(--ui-danger); }
+.op__dot.is-neutral { background: var(--ui-warning); }
+.op__who { font-weight: 600; font-size: 13px; }
+.op__what { grid-column: 2; font-size: 12px; color: var(--ui-text-2); }
+.op__contact small { grid-column: 3; grid-row: 1 / span 2; color: var(--ui-text-3); font-size: 11px; white-space: nowrap; }
+.op__contact em { grid-column: 2 / -1; font-style: normal; font-size: 12px; color: var(--ui-text-3); }
