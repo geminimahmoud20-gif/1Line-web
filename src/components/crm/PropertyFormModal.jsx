@@ -572,6 +572,21 @@ export default function PropertyFormModal({
               required={!editingPropertyId && !contactLead && !form.sourceLeadId}
               isAr={isAr}
             />
+            {/* Saved in property_private (staff only): never on the listing, so never on the site */}
+            <div className="form-group-item">
+              <label htmlFor="pf-private-notes">{isAr ? 'ملاحظات داخلية للفريق (مش بتظهر على الموقع)' : 'Internal notes (never shown on the site)'}</label>
+              <textarea
+                id="pf-private-notes"
+                rows="3"
+                maxLength={3000}
+                value={form.privateNotes ?? ''}
+                onChange={(e) => setForm({ ...form, privateNotes: e.target.value })}
+                className="form-input"
+                style={{ width: '100%', resize: 'vertical' }}
+                placeholder={isAr ? 'مثال: المالك بيقبل أقل بـ ٥٪، المفتاح مع البواب، متاح للمعاينة بعد ٥ مساءً' : 'e.g. owner takes 5% less, keys with the doorman, viewing after 5 pm'}
+              />
+              <small style={{ color: 'var(--ui-text-3)' }}>{isAr ? 'الفريق بس هو اللي بيشوفها.' : 'Only the team sees this.'}</small>
+            </div>
           </FormStep>
 
           <FormStep id="pf-step-more" n={6} title={isAr ? 'تفاصيل إضافية (اختياري)' : 'More details (optional)'} hint={isAr ? 'الاستلام، المبنى، التكاليف، الخدمات القريبة' : 'Handover, building, costs, nearby'} collapsible>

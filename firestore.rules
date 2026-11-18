@@ -301,6 +301,18 @@ service cloud.firestore {
       allow delete: if hasPerm('inv.delete');
     }
 
+    // 🔒 Internal details of a listing (what the owner told us, the lowest price he takes, where the keys are).
+    // /properties is public, so these live in their own document with the same id, readable by staff only.
+    match /property_private/{propId} {
+      allow read: if isStaff();
+      allow create, update: if canEditListings()
+        && request.resource.data.keys().hasOnly(['notes', 'updatedAt', 'updatedBy'])
+        && request.resource.data.notes is string && request.resource.data.notes.size() <= 3000
+        && boundedText(request.resource.data, 'updatedBy', 80)
+        && request.resource.data.get('updatedAt', 0) is int;
+      allow delete: if canEditListings();
+    }
+
     // 🔔 4. NOTIFICATIONS
     match /notifications/{notifId} {
       // Not public-writable (spam vector); staff see new public leads via the leads listener.
@@ -436,6 +448,52 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
         && request.resource.data.readAt is string;
       allow delete: if isStaff() && resource.data.toUid == request.auth.uid;
+    }
+
+    // 💬 PRIVATE TEAM CHATS: a conversation between colleagues. Only the people in `members` read or write it:
+    // not other team members, not managers, not the admin (that is the point). A «dm» is the one conversation
+    // between two people (its id says who), a «group» is a small private group. Same shapes as src/utils/privateChat.js.
+    match /chats/{chatId} {
+      function chatKeys() {
+        return ['kind', 'title', 'members', 'createdBy', 'createdAt', 'lastMessageAt', 'lastMessageText', 'lastSenderUid', 'reads'];
+      }
+      function isMember(d) { return request.auth.uid in d.members; }
+      function validNewChat(d) {
+        return d.keys().hasOnly(chatKeys())
+          && d.kind in ['dm', 'group']
+          && d.members is list && d.members.size() >= 2 && d.members.size() <= 30
+          && request.auth.uid in d.members
+          && d.createdBy == request.auth.uid
+          && d.createdAt is int
+          && d.get('lastMessageAt', 0) == 0
+          && d.get('title', '') is string && d.get('title', '').size() <= 60
+          && (d.kind == 'dm'
+              ? (d.members.size() == 2 && d.members[0] < d.members[1] && chatId == 'dm_' + d.members[0] + '_' + d.members[1])
+              : d.get('title', '').size() > 0)
+          && d.get('reads', {}) is map;
+      }
+      allow read: if isStaff() && isMember(resource.data);
+      allow create: if isStaff() && validNewChat(request.resource.data);
+      // A member sends (the preview and time move) or opens it (their own read marker): nobody else's marker, no new members
+      allow update: if isStaff() && isMember(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt', 'lastMessageText', 'lastSenderUid', 'reads'])
+        && request.resource.data.get('lastMessageAt', 0) is int
+        && request.resource.data.get('lastMessageText', '') is string && request.resource.data.get('lastMessageText', '').size() <= 120
+        && request.resource.data.get('lastSenderUid', '') in [resource.data.get('lastSenderUid', ''), request.auth.uid]
+        && request.resource.data.get('reads', {}).diff(resource.data.get('reads', {})).affectedKeys().hasOnly([request.auth.uid])
+        && request.resource.data.get('reads', {})[request.auth.uid] is int;
+      allow delete: if false;
+
+      match /messages/{msgId} {
+        allow read: if isStaff() && isMember(get(/databases/$(database)/documents/chats/$(chatId)).data);
+        allow create: if isStaff() && isMember(get(/databases/$(database)/documents/chats/$(chatId)).data)
+          && request.resource.data.keys().hasOnly(['text', 'authorUid', 'authorName', 'createdAt'])
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+          && request.resource.data.authorUid == request.auth.uid
+          && request.resource.data.authorName is string && request.resource.data.authorName.size() <= 80
+          && request.resource.data.createdAt is int;
+        allow update, delete: if false;
+      }
     }
 
     // ✅ 7c. CRM TASKS («مهامي», crm_tasks: not the operational `tasks` handoffs below): things a team member has to do by a day, with or without a client behind

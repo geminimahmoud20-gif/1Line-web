@@ -39,3 +39,25 @@ test('a custom role is judged by its permissions, not its name', () => {
   assert.equal(r.length, 4);
   assert.equal(r[1].phone, '011****32');
 });
+
+test('a role for one side of the business only sees that side: owners and brokers, or buyers', async () => {
+  const { leadSideScope } = await import('../../src/utils/accessModel.js');
+  const leads = [
+    { id: 's1', type: 'seller', assignedTo: 'Unassigned' },
+    { id: 's2', type: 'seller_instant', assignedTo: 'Unassigned' },
+    { id: 's3', type: 'website', details: { sellerRole: 'owner' }, assignedTo: 'Unassigned' },
+    { id: 'b1', type: 'buyer', assignedTo: 'Unassigned' },
+    { id: 'b2', type: 'viewing', assignedTo: 'Unassigned' },
+    { id: 'b3', assignedTo: 'Unassigned' }
+  ];
+  const ids = (perms, role = 'x') => scopeLeadsForAccess(leads, { role, perms }).map((l) => l.id).join(',');
+  assert.equal(leadSideScope(['ld.all']), 'all');
+  assert.equal(leadSideScope(['ld.only_sellers']), 'seller');
+  assert.equal(leadSideScope(['ld.only_buyers']), 'buyer');
+  assert.equal(leadSideScope(['ld.only_sellers', 'ld.only_buyers']), 'all'); // both ticked: no limit
+  assert.equal(ids(['ld.all']), 's1,s2,s3,b1,b2,b3');
+  assert.equal(ids(['ld.all', 'ld.only_sellers']), 's1,s2,s3');
+  assert.equal(ids(['ld.all', 'ld.only_buyers']), 'b1,b2,b3');
+  assert.equal(ids(['ld.edit', 'ld.only_buyers']), 'b1,b2,b3'); // a desk agent: the queue, then the side
+  assert.equal(ids(['ld.only_sellers'], 'super_admin'), 's1,s2,s3,b1,b2,b3'); // the super admin sees both
+});

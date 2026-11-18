@@ -58,6 +58,24 @@ export function parseTeamRequest(body, config = null) {
     return { action, uid, role, ...(desk !== undefined ? { desk } : {}) };
   }
 
+  // A member's own details: their name and sign-in email (the role and desk have their own action)
+  if (action === 'profile') {
+    const uid = String(body.uid || '');
+    if (!UID_RE.test(uid)) return null;
+    const out = { action, uid };
+    if (body.name !== undefined) {
+      const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (!name) return null;
+      out.name = name;
+    }
+    if (body.email !== undefined) {
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!EMAIL_RE.test(email) || email.length > 120) return null;
+      out.email = email;
+    }
+    return out.name === undefined && out.email === undefined ? null : out;
+  }
+
   if (['disable', 'enable', 'remove', 'signout'].includes(action)) {
     const uid = String(body.uid || '');
     if (!UID_RE.test(uid)) return null;
@@ -128,7 +146,7 @@ export function toMember(u, config = null) {
 
 /** Lockout prevention rules */
 export function checkChange({ action, uid, role }, callerUid, members) {
-  if (['add', 'save_role', 'delete_role', 'save_team', 'delete_team'].includes(action)) return null;
+  if (['add', 'profile', 'save_role', 'delete_role', 'save_team', 'delete_team'].includes(action)) return null;
   if (uid === callerUid) return 'self';
   const target = members.find((m) => m.uid === uid);
   if (!target) return 'not-found';
@@ -323,6 +341,25 @@ export function teamStore(call, registry = null, accessStorage = null, fs = null
         const resolvedDesk = desk !== undefined ? desk : (claims?.desk || '');
         if (role) await registry.set(uid, role, resolvedDesk);
         else await registry.remove(uid);
+      }
+    },
+    /** The member's name and/or sign-in email. A new email signs them out (their token carries the old one) and is unverified until they use it. */
+    async updateProfile(uid, { name, email }) {
+      const body = { localId: uid };
+      if (name) body.displayName = name;
+      if (email) {
+        body.email = email;
+        body.emailVerified = false;
+        body.validSince = String(Math.floor(Date.now() / 1000));
+      }
+      await ok(await call('POST', 'accounts:update', body), 'update');
+      if (email) await markSignedOut(uid);
+      // The team directory (names in lists and @mentions) follows; a member with no entry yet gets one on their next visit
+      if (name && fs) {
+        const res = await fs('PATCH', `team_directory/${encodeURIComponent(uid)}?updateMask.fieldPaths=name&updateMask.fieldPaths=updatedAt&currentDocument.exists=true`, {
+          fields: { name: { stringValue: name }, updatedAt: { stringValue: new Date().toISOString() } }
+        });
+        if (!res.ok && res.status !== 404 && res.status !== 400) console.warn('team_directory update failed', res.status);
       }
     },
     async reassignLeads(oldTeamId, targetTeamId) {
@@ -525,6 +562,13 @@ export async function handleTeam({ method, body, callerUid, store }) {
     const targetDesk = req.desk !== undefined ? req.desk : (parseClaims(user.customAttributes).desk || '');
     const claims = claimsForMember(parseClaims(user.customAttributes), req.role, targetDesk, config);
     await store.updateUser(req.uid, { claims, desk: targetDesk });
+  } else if (req.action === 'profile') {
+    const changesEmail = req.email && req.email !== String(user.email || '').toLowerCase();
+    if (changesEmail) {
+      const other = await store.findByEmail(req.email);
+      if (other && other.localId !== req.uid) return { status: 409, body: { error: 'email-exists' } };
+    }
+    await store.updateProfile(req.uid, { name: req.name, email: changesEmail ? req.email : undefined });
   } else if (req.action === 'disable') {
     await store.updateUser(req.uid, { disabled: true });
   } else if (req.action === 'enable') {

@@ -24,6 +24,7 @@ export { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLi
 export { subscribeToTasks, addTask, addTaskWithId, updateTask, removeTask } from './services/tasks.js';
 export { loadGoals, saveGoals } from './services/goals.js';
 export { registerSelf, subscribeToPeople, subscribeToNotes, sendNote, removeNote, subscribeToMentions, markMentionsRead } from './services/teamNotes.js';
+export { subscribeToChats, subscribeToMessages, openChat, sendChatMessage, markChatRead } from './services/privateChat.js';
 export { pullMetaSpend, pullMetaPerformance } from './services/adsSpend.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';
 export * from './services/demands.js';

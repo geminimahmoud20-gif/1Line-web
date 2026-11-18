@@ -47,6 +47,7 @@ import { MotionRoot, ConfirmProvider } from '../components/ui';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { useTasks, useTasksSync } from '../hooks/useTasks';
+import { usePrivateChats, usePrivateChatsSync } from '../hooks/usePrivateChats';
 import { taskCounts, tasksOfEndedLeads, autoCompletion } from '../utils/tasks';
 import { cadenceTasks, leadsNeedingCadence } from '../utils/followUpCadence';
 import CallOutcomePrompt from '../components/crm/CallOutcomePrompt';
@@ -194,6 +195,9 @@ export default function CrmPage({
   // a manager sees the whole team's, everyone else the tasks assigned to them
   useTasksSync(currentUser?.uid, can.campaigns);
   useCampaignNames();
+  // Private chats: one subscription for the sidebar's unread count and the chat page
+  usePrivateChatsSync(currentUser?.uid);
+  const { unread: unreadChatCount } = usePrivateChats(currentUser?.uid);
   const { tasks: allTasks, ready: tasksReady } = useTasks();
   // Team notes and chat: this person's name card (so colleagues can @mention them), the colleagues' cards, and
   // the messages addressed to them, which ring and toast when one arrives while the CRM is open
@@ -344,8 +348,8 @@ export default function CrmPage({
 
   // New lead in the live list → chime, toast and (if allowed) a desktop notification
   useEffect(() => {
-    if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
-  }, [leads, crmAuthenticated, lang, triggerToast]);
+    if (crmAuthenticated) announceNewLeads(visibleLeads, { isAr: lang === 'ar', toast: triggerToast });
+  }, [visibleLeads, crmAuthenticated, lang, triggerToast]);
 
   // Expat remote inspections and trade-ins (their own lists): ring and show in the bell like leads
   const [intakeRequests, setIntakeRequests] = useState([]);
@@ -852,6 +856,7 @@ export default function CrmPage({
         canRetarget={can.retarget}
         canCampaigns={can.campaigns}
         tasksBadge={taskBadge}
+        chatBadge={unreadChatCount}
         canWorkRequests={can.editLeads}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleCollapse}

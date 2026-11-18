@@ -13,9 +13,11 @@ import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
-import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
+import { PageHeader, KpiRow, KpiTile, Chip, useConfirm } from '../ui';
+import { archivePrompt } from '../../utils/deleteConfirm';
 import './kanban-redesign.css';
 import './kanban-mobile.css';
+import './client-card.css';
 import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
 
 const CARDS_PER_STAGE = 5;
@@ -164,6 +166,7 @@ export default function KanbanPipeline({
   };
 
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
 
   const allAreas = useMemo(() => getAreas(), []);
 
@@ -526,8 +529,9 @@ export default function KanbanPipeline({
   };
 
   // Test or duplicate deals: archived (hidden here and in the inbox, restorable from the leads table)
-  const handleArchive = (lead) => {
+  const handleArchive = async (lead) => {
     if (!onUpdateLead) return;
+    if (!(await confirm(archivePrompt({ name: lead.name, isAr })))) return;
     onUpdateLead(lead.id, { isArchived: true, lastActivityAt: new Date().toISOString() });
     triggerToast?.(isAr ? 'اتنقل للأرشيف واتخفى من المسار' : 'Archived', 'info', {
       onUndo: () => onUpdateLead(lead.id, { isArchived: false, lastActivityAt: new Date().toISOString() }),
@@ -802,6 +806,7 @@ export default function KanbanPipeline({
                         key={lead.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, lead.id)}
+                        data-stage={stage.id}
                         className={`kb-card animate-fadeIn ${isOverdue ? 'is-overdue' : ''}`}
                         aria-label={`${leadName} — ${isAr ? stage.title_ar : stage.title_en}`}
                       >

@@ -2,7 +2,8 @@
 //  1LINE SOLUTIONS CRM - ENTERPRISE RBAC PERMISSIONS MATRIX
 // =============================================================
 
-import { DEFAULT_ACCESS, canEditInventory } from './accessModel.js';
+import { DEFAULT_ACCESS, canEditInventory, leadSideScope } from './accessModel.js';
+import { isSellerLead } from './crmLeadViews.js';
 import { formatPhoneNumber } from './crmNoteSanitizer.js';
 
 export const CRM_ROLES = {
@@ -221,8 +222,11 @@ export const scopeLeadsForAccess = (leads = [], { role, perms = [], desk = '' } 
   const seesAll = isSuper || perms.includes('ld.all') || perms.includes('ld.manage');
   const seesPhones = isSuper || perms.includes('ld.phone');
   const queue = [desk || UNASSIGNED_DESK, UNASSIGNED_DESK];
+  // A role for owners and brokers, or for buyers, only works its own side of the business (the super admin sees both)
+  const side = isSuper ? 'all' : leadSideScope(perms);
   return leads
     .filter((l) => seesAll || queue.includes(l?.assignedTo || UNASSIGNED_DESK))
+    .filter((l) => side === 'all' || (side === 'seller') === isSellerLead(l))
     .map((l) => (seesPhones ? l : {
       ...l,
       phone: l.phone ? maskPhoneNumber(l.phone, role, perms) : '',

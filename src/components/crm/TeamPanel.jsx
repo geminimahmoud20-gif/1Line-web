@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { UserPlus, KeyRound, UserX, UserCheck, Trash2, RefreshCw, X, Users, ShieldCheck, Building, LogOut } from 'lucide-react';
+import { UserPlus, KeyRound, UserX, UserCheck, Trash2, RefreshCw, X, Users, ShieldCheck, Building, LogOut, Pencil } from 'lucide-react';
 import { auth } from '../../firebase';
 import { listTeamMembers, teamAction, requestPasswordReset, logAuditEvent } from '../../firebaseService';
 import { DEFAULT_ACCESS } from '../../utils/accessModel';
@@ -97,6 +97,47 @@ function AddMemberModal({ isAr, roles = [], teams = [], busy, onClose, onSubmit 
   );
 }
 
+function EditMemberModal({ isAr, member, self, busy, onClose, onSubmit }) {
+  const [name, setName] = useState(member.name || '');
+  const [email, setEmail] = useState(member.email || '');
+  const cleanName = name.replace(/\s+/g, ' ').trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+  const nameChanged = cleanName !== (member.name || '');
+  const emailChanged = cleanEmail !== String(member.email || '').toLowerCase();
+  const valid = emailOk && cleanName.length > 0 && (nameChanged || emailChanged);
+  return (
+    <div className="tm-overlay" role="dialog" aria-modal="true" aria-labelledby="tm-edit-title" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+      <form className="tm-modal" onSubmit={(e) => { e.preventDefault(); if (valid && !busy) onSubmit({ name: nameChanged ? cleanName : undefined, email: emailChanged ? cleanEmail : undefined }); }}>
+        <div className="tm-modal-head">
+          <h3 id="tm-edit-title">{isAr ? 'تعديل بيانات العضو' : 'Edit member'}</h3>
+          <button type="button" className="tm-icon-btn" onClick={onClose} aria-label={isAr ? 'إغلاق' : 'Close'} disabled={busy}><X size={18} /></button>
+        </div>
+        <label className="tm-field">
+          <span>{isAr ? 'الاسم' : 'Name'}</span>
+          <input type="text" autoFocus required value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+        </label>
+        <label className="tm-field">
+          <span>{isAr ? 'الإيميل (للدخول)' : 'Sign-in email'}</span>
+          <input type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        </label>
+        {emailChanged && (
+          <p className="tm-note">
+            {self
+              ? (isAr ? 'هتخرج من حسابك وتدخل بالإيميل الجديد والباسورد الحالي.' : 'You will be signed out and sign in with the new email and your current password.')
+              : (isAr ? 'هيتسجّل خروجه من كل الأجهزة، ويدخل بالإيميل الجديد والباسورد الحالي. لو مش فاكره ابعتله لينك الباسورد على الإيميل الجديد.' : 'They are signed out everywhere and sign in with the new email and their current password.')}
+          </p>
+        )}
+        <p className="tm-note">{isAr ? 'الاسم الجديد بيظهر من دلوقتي في القوائم. العملاء والمهام القديمة بتفضل بالاسم اللي اتسجّلت بيه.' : 'The new name shows in lists from now on; past records keep the name they were saved with.'}</p>
+        <div className="tm-modal-actions">
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{isAr ? 'إلغاء' : 'Cancel'}</button>
+          <button type="submit" className="btn btn-primary" disabled={!valid || busy}>{busy ? (isAr ? 'جاري الحفظ…' : 'Saving…') : (isAr ? 'حفظ' : 'Save')}</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
   const isAr = lang === 'ar';
   const confirm = useConfirm();
@@ -106,6 +147,8 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
   const [busyUid, setBusyUid] = useState(null);
   const [adding, setAdding] = useState(false);
   const [addBusy, setAddBusy] = useState(false);
+  const [editing, setEditing] = useState(null); // the member whose name / email is open
+  const [editBusy, setEditBusy] = useState(false);
   const me = auth?.currentUser?.uid;
 
   const [accessConfig, setAccessConfig] = useState(() => getActiveAccessConfig() || DEFAULT_ACCESS);
@@ -209,6 +252,20 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
     toast(res.needsPassword
       ? (isAr ? `اتضاف، واتبعتله إيميل يختار منه الباسورد على ${form.email.trim()}` : 'Added; a set-password email was sent')
       : (isAr ? 'اتضاف للفريق بالدور ده' : 'Added to the team'));
+    load();
+  };
+
+  const saveProfile = async (patch) => {
+    const m = editing;
+    setEditBusy(true);
+    const res = await teamAction({ action: 'profile', uid: m.uid, ...patch });
+    setEditBusy(false);
+    if (!res.ok) { toast(errorText(res.error, isAr), 'error'); return; }
+    audit('TEAM_PROFILE', m.uid, { from: { name: m.name, email: m.email }, to: patch });
+    setEditing(null);
+    toast(patch.email
+      ? (isAr ? 'اتحفظت البيانات. الإيميل الجديد هيشتغل من أول دخول' : 'Saved. The new email works from the next sign-in')
+      : (isAr ? 'اتحفظ الاسم' : 'Name saved'));
     load();
   };
 
@@ -355,6 +412,9 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
                           <td data-label={isAr ? 'آخر نشاط' : 'Last active'}>{fmtDate(m.lastLoginAt, isAr)}</td>
                           <td data-label={isAr ? 'إجراءات' : 'Actions'}>
                             <div className="tm-actions">
+                              <button type="button" className="tm-icon-btn" onClick={() => setEditing(m)} disabled={busy} title={isAr ? 'تعديل الاسم والإيميل' : 'Edit name and email'} aria-label={isAr ? `تعديل ${m.name || m.email}` : `Edit ${m.email}`}>
+                                <Pencil size={16} />
+                              </button>
                               <button type="button" className="tm-icon-btn" onClick={() => sendPasswordLink(m)} disabled={busy || m.disabled} title={isAr ? 'إرسال لينك تعيين الباسورد' : 'Send password link'}>
                                 <KeyRound size={16} />
                               </button>
@@ -406,6 +466,10 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
           isAr={isAr}
           triggerToast={toast}
         />
+      )}
+
+      {editing && (
+        <EditMemberModal isAr={isAr} member={editing} self={editing.uid === me} busy={editBusy} onClose={() => setEditing(null)} onSubmit={saveProfile} />
       )}
 
       {adding && (

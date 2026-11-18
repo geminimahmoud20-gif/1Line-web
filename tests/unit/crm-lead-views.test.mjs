@@ -232,3 +232,9 @@ test('dashboard: buyers\' budgets and owners\' asking prices are never added tog
   assert.equal(m.supplyValue, 35000000);
   assert.equal(m.openCount, 2);
 });
+
+import { defaultLeadFilter } from '../../src/utils/crmLeadViews.js';
+test('the clients list opens on «الكل» for a salesperson (it used to open on viewing requests and look empty)', () => {
+  for (const role of ['sales_agent', 'agent_east', 'agent_new_sohag', 'sales_manager', 'super_admin']) assert.equal(defaultLeadFilter(role), 'all', role);
+  assert.equal(defaultLeadFilter('property_manager'), 'seller');
+});
