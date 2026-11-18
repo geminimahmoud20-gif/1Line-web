@@ -44,3 +44,21 @@ test('formatMins', () => {
   assert.equal(formatMins(30), '30 د');
   assert.equal(formatMins(180), '3 س');
 });
+
+import { ownersPeriodTable } from '../../src/utils/ownerPerformance.js';
+test('ownersPeriodTable: new clients and closed per owner in a range, with the range before', () => {
+  const day = (h) => new Date(NOW - h * 3600000).toISOString();
+  const ls = [
+    { id: '1', ownerUid: 'u1', ownerName: 'محمود', status: 'closed', createdAt: day(30), closedAt: day(5), stageHistory: [{ s: 'new', at: day(30) }, { s: 'closed', at: day(5) }] },
+    { id: '2', ownerUid: 'u1', ownerName: 'محمود', status: 'new', createdAt: day(60 * 24) },
+    { id: '3', ownerUid: 'u1', ownerName: 'محمود', status: 'new', createdAt: day(2) },
+    { id: '4', ownerUid: 'u2', ownerName: 'سارة', status: 'new', createdAt: day(3 * 24 * 40) }
+  ];
+  const range = { from: '2026-11-11', to: '2026-11-18', days: 8 };
+  const prev = { from: '2026-11-03', to: '2026-11-10', days: 8 };
+  const rows = ownersPeriodTable(ls, [], [], range, prev, NOW);
+  const m = rows.find((r) => r.name === 'محمود');
+  assert.equal(m.cur.newLeads, 2);
+  assert.equal(m.cur.closed, 1);
+  assert.ok(!rows.some((r) => r.name === 'سارة'));
+});

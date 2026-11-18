@@ -4,6 +4,7 @@
 //  whoever is picked in the owner filter (and a table of everyone).
 // =============================================================
 import { assigneeValue } from './assignees.js';
+import { periodMetrics, compareMetrics } from './performanceReport.js';
 import { toMs, leadCreatedMs, isOverdue, isStale, localDayKey, waitingMs, responseSlaMs } from './crmLeadViews.js';
 
 export { OWNER_ALL, OWNER_NONE, matchesOwner } from './crmLeadViews.js';
@@ -89,3 +90,24 @@ export function formatMins(mins, isAr = true) {
   if (mins < 60 * 24) return isAr ? `${Math.round(mins / 60)} س` : `${Math.round(mins / 60)} h`;
   return isAr ? `${Math.round(mins / 1440)} يوم` : `${Math.round(mins / 1440)} d`;
 }
+
+/**
+ * Each owner's activity inside a date range, next to the range before it: new clients, replies,
+ * visits, closed deals, lost, tasks done. Clients count under whoever holds them now.
+ * range / prevRange are { from, to } day keys (utils/reportPeriods); prevRange may be null.
+ */
+export function ownersPeriodTable(leads = [], people = [], tasks = [], range, prevRange = null, now = Date.now()) {
+  return ownersTable(leads, people, now).map((o) => {
+    const list = leads.filter((l) => matchesOwnerKey(l, o.key));
+    const uid = o.key.startsWith('user:') && !o.key.startsWith('user:name:') ? o.key.slice(5) : '';
+    const mine = uid ? tasks.filter((t) => t.assigneeUid === uid) : [];
+    const cur = periodMetrics(list, mine, range);
+    const prev = prevRange ? periodMetrics(list, mine, prevRange) : null;
+    return { key: o.key, name: o.name, cur, prev, cmp: compareMetrics(cur, prev) };
+  }).filter((r) => r.cur.newLeads || r.cur.replied || r.cur.viewings || r.cur.closed || r.cur.lost || r.cur.tasksDone || (r.prev && (r.prev.newLeads || r.prev.closed)));
+}
+
+const matchesOwnerKey = (lead, key) => {
+  const v = assigneeValue(lead);
+  return key === OWNER_NONE ? !v.startsWith('user:') : v === key;
+};

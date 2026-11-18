@@ -592,6 +592,8 @@ export default function LeadsTab({
           isAr={isAr}
           leads={leads}
           owners={owners}
+          tasks={allTasks}
+          people={teamMembers}
           ownerFilter={ownerFilter}
           onPickOwner={setOwnerFilter}
           onPickView={setLeadFilter}
