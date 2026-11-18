@@ -44,3 +44,4 @@
 @media (max-width: 1023px) {
   .crm-dash__split { grid-template-columns: 1fr; }
 }
+.crm-dash__stats dd small { font-size: var(--ui-fs-1); font-weight: var(--ui-fw-regular, 400); color: var(--ui-text-3); }

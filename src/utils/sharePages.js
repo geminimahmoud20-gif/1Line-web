@@ -30,3 +30,14 @@ export function sharePageMessage(page, { name = '', siteUrl = '' } = {}) {
   const url = tagged(`${siteUrl.replace(/\/+$/, '')}${page.path}`, 'crm_whatsapp', 'staff_share');
   return `${first ? `أهلاً أستاذ ${first}، ` : 'أهلاً بحضرتك، '}${page.msg}\n${url}`;
 }
+
+/**
+ * The WhatsApp text that asks an owner for what his request still lacks (the quick request took only the name, the
+ * number and the type): says which items, and links the full form. `missing` = labels such as «المساحة».
+ */
+export function completeDetailsMessage({ name = '', missing = [], siteUrl = '' } = {}) {
+  const first = String(name || '').trim().split(/\s+/)[0];
+  const url = tagged(`${siteUrl.replace(/\/+$/, '')}/sell`, 'crm_whatsapp', 'complete_details');
+  const list = missing.length ? ` عشان نقيّم عقارك محتاجين: ${missing.join('، ')}.` : '';
+  return `${first ? `أهلاً أستاذ ${first}، ` : 'أهلاً بحضرتك، '}شكراً لتواصلك مع 1Line.${list} تقدر تكمّلها في دقيقتين من هنا:\n${url}`;
+}

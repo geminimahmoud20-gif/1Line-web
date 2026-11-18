@@ -152,3 +152,29 @@
 /* The next step is the block to act on: it carries the stage colour on its edge */
 .crm-ld__stack > .crm-ld__block:first-child { border-inline-start: 5px solid var(--lead-accent); }
 .crm-ld__stack { gap: var(--ui-s-4); }
+
+/* «حصل إيه؟»: the last result logged, and what was done after a no-answer */
+.crm-ld__last { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--ui-r-md, 10px); background: var(--ui-surface-2); font-size: var(--ui-fs-2); color: var(--ui-text-2); }
+.crm-ld__last b { color: var(--ui-text); }
+.crm-ld__last small { color: var(--ui-text-3); white-space: nowrap; }
+.crm-ld__last.is-positive { background: var(--ui-success-tint); }
+.crm-ld__last.is-negative { background: var(--ui-danger-tint); }
+.crm-ld__last.is-neutral { background: var(--ui-warning-tint); }
+.crm-ld__followup { display: grid; gap: 4px; font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+
+/* An owner's request that lacks the size, the address or photos: what is missing and the one-tap message */
+.crm-ld__missing { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px 10px; border-radius: var(--ui-r-md, 10px); background: var(--ui-warning-tint); color: var(--ui-warning); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+
+/* ── Calmer drawer: sections are separate tabs (work, client, team, history), tools are one grouped card ── */
+.crm-ld { gap: var(--ui-s-3); }
+.crm-ld__stack { gap: var(--ui-s-3); }
+.crm-ld__stage { padding: 0; background: none; }
+.crm-ld__stage-head { margin-bottom: var(--ui-s-1); }
+.crm-ld__stages { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.crm-ld__stages::-webkit-scrollbar { display: none; }
+.crm-ld__stages > * { flex: 0 0 auto; }
+.crm-ld__block { padding: var(--ui-s-3) var(--ui-s-4); }
+.crm-ld__tools { display: flex; flex-direction: column; padding: var(--ui-s-3) var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.crm-ld__tools-h { margin: 0 0 var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.crm-ld__tools > .crm-ld__block { border: 0; border-radius: 0; border-top: 1px solid var(--ui-line); padding: var(--ui-s-3) 0; background: none; }
+.crm-ld__tools-h + .crm-ld__block { border-top: 0; }

@@ -4,9 +4,9 @@ import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
 import SellerAskingPrice from './SellerAskingPrice';
 import { auditContactUse } from '../../../utils/contactAudit';
-import { isSellerLead, firstContactPatch } from '../../../utils/crmLeadViews';
+import { isSellerLead, firstContactPatch, sellerMissing, leadBudget, SELLER_DETAIL_LABELS } from '../../../utils/crmLeadViews';
 import { askingPriceOf } from '../../../utils/leadPipeline';
-import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
+import { sharePagesFor, sharePageMessage, completeDetailsMessage } from '../../../utils/sharePages';
 import { SITE_URL } from '../../../config/siteConfig';
 import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
@@ -18,7 +18,7 @@ import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../../utils/sellerRole';
 import { PROPERTY_TYPES } from '../../../data/propertiesData';
 import { getAreas } from '../../../utils/areasData';
 import { areaNameOf } from '../../../utils/areaLookup';
-import { OUTCOMES, STAGE_RULES, attemptsOf } from '../../../utils/stageGate';
+import { OUTCOMES, STAGE_RULES, attemptsOf, outcomesOf, outcomeById, FOLLOW_UP_ACTIONS } from '../../../utils/stageGate';
 import { LOST_REASONS } from '../../../utils/crmLeadViews';
 
 export default function LeadDrawerOverview({
@@ -40,7 +40,10 @@ export default function LeadDrawerOverview({
   triggerToast,
   newNote,
   setNewNote,
-  onAddNote
+  onAddNote,
+  agentName = '',
+  view = 'work',
+  onOpenClient
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -53,6 +56,25 @@ export default function LeadDrawerOverview({
   // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
   const stageOutcomes = (STAGE_RULES.find((s) => s.id === (lead?.status || 'new'))?.outcomes || []).map((id) => OUTCOMES.find((o) => o.id === id)).filter(Boolean);
   const attempts = attemptsOf(lead || {});
+  // What was logged last, shown next to the buttons: the record of what happened, and what was done after it
+  const lastOut = outcomesOf(lead || {}).at(-1) || null;
+  const lastOutMeta = lastOut ? outcomeById(lastOut.id) : null;
+  const [nowMs] = useState(() => Date.now());
+  const agoText = (ms) => {
+    const m = Math.max(0, Math.floor((nowMs - ms) / 60000));
+    if (m < 60) return L(`من ${Math.max(1, m)} د`, `${Math.max(1, m)}m ago`);
+    const h = Math.floor(m / 60);
+    return h < 48 ? L(`من ${h} س`, `${h}h ago`) : L(`من ${Math.floor(h / 24)} يوم`, `${Math.floor(h / 24)}d ago`);
+  };
+  const logFollowUp = (action) => {
+    if (!onUpdateLead) return;
+    const at = new Date().toISOString();
+    onUpdateLead(lead.id, {
+      activityLogs: [{ timestamp: at, action: `بعد ${lastOutMeta?.ar || 'النتيجة'}: ${action.ar}`, kind: 'note', ...(agentName ? { agent: agentName } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100),
+      lastActivityAt: at
+    }, lead.version);
+    triggerToast?.(L(`اتسجّل: ${action.ar}`, `Logged: ${action.en}`), 'success');
+  };
   const [pendingNeg, setPendingNeg] = useState('');
   const [negReason, setNegReason] = useState('');
   // Sending a message counts as the first reply: the "no reply" clock stops
@@ -66,6 +88,19 @@ export default function LeadDrawerOverview({
   const [pagePath, setPagePath] = useState(pages[0].path);
   const page = pages.find((p) => p.path === pagePath) || pages[0];
   const pageMessage = sharePageMessage(page, { name: lead?.name, siteUrl: SITE_URL });
+  // An owner whose request lacks the size, the address or photos: one tap sends the full form and logs it
+  const missing = sellerMissing(lead || {}).map((k) => SELLER_DETAIL_LABELS[k]);
+  const completeMessage = completeDetailsMessage({ name: lead?.name, missing, siteUrl: SITE_URL });
+  const sendCompletion = () => {
+    auditContactUse(lead, 'whatsapp');
+    if (!onUpdateLead) return;
+    const at = new Date().toISOString();
+    onUpdateLead(lead.id, {
+      ...(firstContactPatch(lead, at) || {}),
+      activityLogs: [{ timestamp: at, action: `بعتّله رابط تكملة البيانات (${missing.join('، ')})`, kind: 'note', ...(agentName ? { agent: agentName } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100),
+      lastActivityAt: at
+    }, lead.version);
+  };
 
   const handleDownloadCalendar = () => {
     if (!hasSchedule) return;
@@ -114,6 +149,15 @@ export default function LeadDrawerOverview({
   // What the buyer answered in «رشح لي عقاري» (saved with the lead as data)
   const matchFacts = isSeller ? [] : answersFacts(details.matchAnswers, Array.isArray(details.areas) ? details.areas.filter(Boolean) : []);
 
+  // The short version for the work tab: the first few facts (the long ones, address and features, stay under «العميل»)
+  // A buyer who did not answer «رشح لي عقاري» still left a type, an area or a budget on the request
+  const buyerBasics = [
+    [L('نوع العقار', 'Type'), quickType],
+    [L('المنطقة', 'Area'), quickArea],
+    [L('الميزانية', 'Budget'), leadBudget(lead || {}) > 0 && `${leadBudget(lead).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`]
+  ].filter(([, v]) => v);
+  const briefFacts = (isSeller ? sellerFacts : (matchFacts.length ? matchFacts : buyerBasics)).filter(([, , wide]) => !wide).slice(0, 6);
+
   // Where the client came from: the source, the campaign and ad, the page, and a return after an earlier visit
   const sourceFacts = attributionFacts(lead);
   // What the client wrote himself (the notes without the team's log lines)
@@ -121,6 +165,47 @@ export default function LeadDrawerOverview({
 
   return (
     <div className="crm-ld__stack">
+      {view === 'work' && (
+      <>
+      {/* 0. What he asked for, in short (the whole file is under «العميل») */}
+      <section className="crm-ld__block crm-ld__brief" aria-labelledby="crm-ld-brief">
+        <div className="crm-ld__block-head">
+          <h3 id="crm-ld-brief" className="crm-ld__h">
+            {isSeller ? <Building size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+            {isSeller ? L('العقار المعروض للبيع', 'Property for sale') : L('طلب العميل', 'What he asked for')}
+          </h3>
+          {onOpenClient && <Button variant="ghost" size="sm" onClick={onOpenClient}>{L('كل التفاصيل', 'All details')}</Button>}
+        </div>
+        {briefFacts.length > 0 ? (
+          <dl className="crm-ld__facts">
+            {briefFacts.map(([label, value]) => (
+              <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
+        ) : (
+          <p className="crm-ld__hint">{isSeller
+            ? L('العميل ملاّ الاسم والرقم بس، ومفيش تفاصيل عن العقار لسه.', 'Only a name and number came with this request.')
+            : L('العميل سايب الاسم والرقم بس، ومفيش تفاصيل عن طلبه لسه.', 'Only a name and number came with this request.')}</p>
+        )}
+        {isSeller && missing.length > 0 && (
+          <div className="crm-ld__missing">
+            <span>{L(`ناقص: ${missing.join('، ')}`, `Missing: ${missing.join(', ')}`)}</span>
+            {egWhatsapp && (
+              <a
+                href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(completeMessage)}`}
+                onClick={sendCompletion}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ui-btn ui-btn--secondary ui-btn--sm"
+              >
+                <Send size={16} aria-hidden="true" />{L('ابعت له رابط تكملة البيانات', 'Send the form to complete it')}
+              </a>
+            )}
+          </div>
+        )}
+        {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
+      </section>
+
       {/* 1. What to do next, and what just happened */}
       <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} />
 
@@ -142,6 +227,22 @@ export default function LeadDrawerOverview({
             </Button>
           ))}
         </div>
+        {lastOutMeta && (
+          <div className={`crm-ld__last is-${lastOutMeta.kind}`}>
+            <span>{L('آخر نتيجة', 'Last result')}: <b>{lastOutMeta.ar}{lastOut.id === 'no_answer' && attempts > 0 ? ` · ${L(`محاولة ${attempts}`, `try ${attempts}`)}` : ''}</b></span>
+            <small>{agoText(lastOut.at)}</small>
+          </div>
+        )}
+        {lastOut && (lastOut.id === 'no_answer' || lastOut.id === 'callback') && (
+          <div className="crm-ld__followup">
+            <span>{L('عملت إيه بعدها؟', 'What did you do after?')}</span>
+            <div className="crm-ld__row">
+              {FOLLOW_UP_ACTIONS.map((a) => (
+                <Button key={a.id} variant="ghost" size="sm" onClick={() => logFollowUp(a)}>{L(a.ar, a.en)}</Button>
+              ))}
+            </div>
+          </div>
+        )}
         {pendingNeg && (
           <form
             className="crm-ld__form"
@@ -183,7 +284,11 @@ export default function LeadDrawerOverview({
           </div>
         </section>
       )}
+      </>
+      )}
 
+      {view === 'client' && (
+      <>
       {/* 2. What he asked for */}
       {(isSeller || matchFacts.length > 0 || words) && (
         <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
@@ -196,6 +301,22 @@ export default function LeadDrawerOverview({
           </div>
           {isSeller && isQuick && (
             <p className="crm-ld__hint">{L('طلب سريع: الاسم والرقم ونوع العقار بس. المساحة والعنوان والصور لسه محتاجة منه (ابعتله صفحة «سجّل وحدتك» من «الأدوات»).', 'Quick request: name, phone and type only. Size, address and photos are still to collect (send the listing page from Tools).')}</p>
+          )}
+          {isSeller && missing.length > 0 && (
+            <div className="crm-ld__missing">
+              <span>{L(`ناقص: ${missing.join('، ')}`, `Missing: ${missing.join(', ')}`)}</span>
+              {egWhatsapp && (
+                <a
+                  href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(completeMessage)}`}
+                  onClick={sendCompletion}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ui-btn ui-btn--secondary ui-btn--sm"
+                >
+                  <Send size={16} aria-hidden="true" />{L('ابعت له رابط تكملة البيانات', 'Send the form to complete it')}
+                </a>
+              )}
+            </div>
           )}
           {(isSeller ? sellerFacts : matchFacts).length > 0 && (
             <dl className="crm-ld__facts">
@@ -225,10 +346,16 @@ export default function LeadDrawerOverview({
           )}
         </section>
       )}
+      </>
+      )}
 
       {/* 3. Everything that happened */}
+      {view === 'history' && (
       <ClientTimeline lead={lead} isAr={isAr} newNote={newNote} setNewNote={setNewNote} onAddNote={onAddNote} />
+      )}
 
+      {view === 'client' && (
+      <>
       {/* 4. Tools, folded */}
       {sourceFacts.length > 0 && (
         <details className="crm-ld__block crm-ld__fold">
@@ -242,7 +369,12 @@ export default function LeadDrawerOverview({
       )}
 
       <LeadCommissionBox key={lead?.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />
+      </>
+      )}
 
+      {view === 'work' && (
+        <div className="crm-ld__tools">
+          <h3 className="crm-ld__tools-h">{L('إرسال وحجز', 'Send & book')}</h3>
       {egWhatsapp && (
         <details className="crm-ld__block crm-ld__fold">
           <summary className="crm-ld__fold-sum"><MessageSquare size={16} aria-hidden="true" />{L('رسايل واتساب جاهزة', 'WhatsApp templates')}</summary>
@@ -329,6 +461,8 @@ export default function LeadDrawerOverview({
           </form>
         )}
       </section>
+    </div>
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   subscribeToLeads,
   searchLeads,
   subscribeToDemands,
+  subscribeToPublicDemands,
   isFirebaseActive,
   updateLeadField,
   deleteLeads,
@@ -323,6 +324,8 @@ export function PropertiesProvider({ children }) {
   // cloud-only items (added in the CRM) go first. Visitors read the shared CDN copy
   // (/api/catalog, no Firestore reads per visit); the CRM asks for the live listener.
   const [liveCatalog, setLiveCatalog] = useState(false);
+  // Set once the demands state exists (below): hands the cached public demands to it
+  const applyPublicDemandsRef = useRef(null);
   // Listing ids the live listener says the database holds (null until it has answered)
   const [cloudPropertyIds, setCloudPropertyIds] = useState(null);
   const requestLiveCatalog = useCallback(() => setLiveCatalog(true), []);
@@ -380,11 +383,18 @@ export function PropertiesProvider({ children }) {
     let cancelled = false;
     const load = () => fetchPublicCatalog().then((res) => {
       if (cancelled || unsubs.length) return;
-      if (!res) { goLive(true); return; }
+      if (!res) {
+        goLive(true);
+        // No cached copy to take the demands from: a visitor listens to the published ones directly
+        unsubs.push(subscribeToPublicDemands((list) => applyPublicDemandsRef.current?.(list)));
+        return;
+      }
       applyProperties(res.properties);
       applyProjects(res.projects);
       applySiteSettings(res.site);
       if (res.developers) applyDevelopers(res.developers);
+      // Visitors read the published demands from the same cached copy (no listener per visit)
+      if (Array.isArray(res.demands)) applyPublicDemandsRef.current?.(res.demands);
     });
     load();
     const timer = setInterval(() => {
@@ -760,10 +770,22 @@ export function PropertiesProvider({ children }) {
     }
   }, []);
 
+  // true once a signed-in staff account's own demand list arrived: the shared public copy must not replace it
+  const staffDemandsLive = useRef(false);
+  useEffect(() => {
+    applyPublicDemandsRef.current = (list) => {
+      if (staffDemandsLive.current) return;
+      const valid = list.filter((d) => d && typeof d === 'object');
+      const time = (d) => new Date(d?.approvedAt || d?.createdAt || d?.timestamp || 0).getTime();
+      setDemands(valid.length ? [...valid].sort((a, b) => time(b) - time(a)) : DEMO_DEMANDS);
+    };
+  }, []);
   // Firebase Real-time subscriptions
   useEffect(() => {
     if (isFirebaseActive()) {
       const unsubDemands = subscribeToDemands((cloudDemands, meta) => {
+        if (meta?.cleared) { staffDemandsLive.current = false; setDemands(DEMO_DEMANDS); return; }
+        if (!meta?.isPublic) staffDemandsLive.current = true;
         // No published demands yet → show the labelled samples (also clears a signed-out staff list)
         if (meta?.isPublic && !meta.fromCache && cloudDemands?.length === 0) {
           setDemands(DEMO_DEMANDS);
@@ -786,7 +808,7 @@ export function PropertiesProvider({ children }) {
           });
           setDemands(sorted);
         }
-      });
+      }, 100, { guestsFromCatalog: true });
       return () => {
         if (unsubDemands) unsubDemands();
       };

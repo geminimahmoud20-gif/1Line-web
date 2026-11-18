@@ -27,7 +27,6 @@ import { deletePrompt } from '../../utils/deleteConfirm';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { scoreForBuyer } from '../../utils/matchingEngine';
 import { liveListings } from '../../utils/marketStats';
-import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
 import ClientDetails from './client-file/ClientDetails';
 import ClientJourney from './client-file/ClientJourney';
@@ -36,6 +35,8 @@ import './lead-drawer.css';
 import BrokerFile from './lead-profile/BrokerFile';
 import { brokerUnits, brokerDemands } from '../../utils/brokerFile';
 import { userDisplayName } from '../../utils/assignees';
+import LeadTeamPanel from './lead-profile/LeadTeamPanel';
+import useTeamMembers from '../../hooks/useTeamMembers';
 
 export default function LeadQuickDrawer({
   lead,
@@ -53,7 +54,8 @@ export default function LeadQuickDrawer({
   allLeads = [],
   isAr = true,
   triggerToast,
-  activeRole = 'super_admin'
+  activeRole = 'super_admin',
+  mayAssignTasks = false
 }) {
   const [newNote, setNewNote] = useState('');
   const [selectedViewingPropId, setSelectedViewingPropId] = useState('');
@@ -61,7 +63,8 @@ export default function LeadQuickDrawer({
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
-  const [localTab, setLocalTab] = useState('overview'); // 'overview' | 'details' | 'matching' | 'team' | 'journey'
+  const [localTab, setLocalTab] = useState('work'); // 'work' | 'client' | 'team' | 'history' | 'matching' | 'broker'
+  const members = useTeamMembers(allLeads);
   const activeTab = tabProp || localTab;
   const setActiveTab = (t) => { setLocalTab(t); onTabChange?.(t); };
   const confirm = useConfirm();
@@ -429,22 +432,25 @@ export default function LeadQuickDrawer({
             value={activeTab}
             onChange={setActiveTab}
             items={[
-              { id: 'overview', label: isAr ? 'الملف' : 'File', count: historyCount || null },
-              { id: 'details', label: isAr ? 'التفاصيل' : 'Details' },
+              { id: 'work', label: isAr ? 'الشغل' : 'Work' },
+              { id: 'client', label: isAr ? 'العميل' : 'Client' },
+              { id: 'team', label: isAr ? 'الفريق' : 'Team' },
+              { id: 'history', label: isAr ? 'السجل' : 'History', count: historyCount || null },
               sellerFile
                 ? { id: 'matching', label: isAr ? 'مشترين مناسبين' : 'Buyers', count: sellerBuyers.length }
                 : { id: 'matching', label: isAr ? 'العقارات المناسبة' : 'Matches', count: matchingResult.matches.length },
-              ...(showBrokerFile ? [{ id: 'broker', label: isAr ? 'ملف الوسيط' : 'Broker file', count: brokerCount || null }] : []),
-              { id: 'team', label: isAr ? 'الفريق' : 'Team' },
-              { id: 'journey', label: isAr ? 'رحلة الزائر' : 'Visitor journey' }
+              ...(showBrokerFile ? [{ id: 'broker', label: isAr ? 'ملف الوسيط' : 'Broker file', count: brokerCount || null }] : [])
             ]}
           />
 
-          {activeTab === 'overview' && (
+          {['work', 'client', 'history'].includes(activeTab) && (
             <LeadDrawerOverview
+              view={activeTab}
+              onOpenClient={() => setActiveTab('client')}
               lead={lead}
               egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               handleLogCall={handleLogCall}
+              agentName={userDisplayName(currentUser)}
               handleScheduleViewing={handleScheduleViewing}
               isAr={isAr}
               onConvertToProperty={onConvertToProperty}
@@ -464,11 +470,16 @@ export default function LeadQuickDrawer({
             />
           )}
 
-          {activeTab === 'details' && (
+          {activeTab === 'client' && (
             <ClientDetails key={lead.id} lead={lead} onUpdateLead={onUpdateLead} isAr={isAr} lang={isAr ? 'ar' : 'en'} triggerToast={triggerToast} userRole={activeRole} />
           )}
 
-          {activeTab === 'journey' && <ClientJourney lead={lead} properties={properties} isAr={isAr} />}
+          {activeTab === 'history' && (
+            <details className="crm-ld__block crm-ld__fold">
+              <summary className="crm-ld__fold-sum">{isAr ? 'رحلة الزائر على الموقع' : 'Visitor journey'}</summary>
+              <ClientJourney lead={lead} properties={properties} isAr={isAr} />
+            </details>
+          )}
 
           {activeTab === 'matching' && sellerFile && (
             <LeadDrawerBuyers lead={lead} buyers={sellerBuyers} areaName={areaName} propTypeName={propTypeName} isAr={isAr} />
@@ -492,7 +503,7 @@ export default function LeadQuickDrawer({
           )}
 
           {activeTab === 'team' && (
-            <NotesThread entityType="lead" entityId={lead.id} entityName={lead.name || ''} lang={isAr ? 'ar' : 'en'} className="crm-ld__team" />
+            <LeadTeamPanel key={lead.id} lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} members={members} canAssign={mayAssignTasks} />
           )}
 
         </div>
@@ -523,7 +534,7 @@ export default function LeadQuickDrawer({
         lead={lead}
         onOpenDeliverableAction={() => {
           setBlockerModal({ isOpen: false, blockerInfo: null });
-          setActiveTab('overview');
+          setActiveTab('work');
         }}
       />
     </>

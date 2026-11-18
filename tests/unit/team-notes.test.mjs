@@ -59,3 +59,27 @@ test('mentions are cut out of the text for highlighting, and the one being typed
   assert.equal(mentionDraft('mail@x', 6), null);
   assert.equal(mentionDraft('شوف @منى سعيد ', 14), null);
 });
+
+import { cleanAttachment, MAX_ATTACHMENTS, fileSizeText } from '../../src/utils/teamNotes.js';
+test('a note can be only files; unsafe or oversized files are dropped, at most four stay', () => {
+  const ok = { url: 'https://x.public.blob.vercel-storage.com/lead-files/a/1-y.pdf', name: 'عقد.pdf', type: 'application/pdf', size: 5000 };
+  assert.deepEqual(cleanAttachment(ok), ok);
+  assert.equal(cleanAttachment({ ...ok, url: 'http://x.example/a.pdf' }), null);
+  assert.equal(cleanAttachment({ ...ok, type: 'application/zip' }), null);
+  assert.equal(cleanAttachment({ ...ok, size: 9 * 1024 * 1024 }), null);
+  const author = { uid: 'u1', name: 'أحمد' };
+  assert.equal(buildNote({ entityType: 'lead', entityId: 'a', text: '', author }).error, 'empty');
+  const r = buildNote({ entityType: 'lead', entityId: 'a', text: '', author, attachments: [ok, { ...ok, type: 'x' }, ...Array(6).fill(ok)] });
+  assert.equal(r.note.text, '');
+  assert.equal(r.note.attachments.length, MAX_ATTACHMENTS);
+  assert.equal(fileSizeText(500 * 1024), '500 KB');
+  assert.equal(fileSizeText(3 * 1024 * 1024), '3.0 MB');
+});
+
+import { attachmentPath } from '../../src/utils/teamNotes.js';
+test('a file path has the shape the upload route accepts', () => {
+  const p = attachmentPath('AbC123', 2, 'صورة العقار (1).jpg', 1700000000000);
+  assert.match(p, /^lead-files\/[\w-]{1,128}\/[\w.-]{1,120}$/);
+  assert.ok(p.startsWith('lead-files/AbC123/1700000000000-2-'));
+  assert.match(attachmentPath('a/b c', 0, '', 1), /^lead-files\/a_b_c\/1-0-file$/);
+});

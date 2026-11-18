@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { situationKinds, listingByLead } from '../utils/leadSituation';
 import { X, Clock } from 'lucide-react';
 import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
@@ -181,13 +182,14 @@ export const CrmAdminPanel = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all');
   // The oldest client still waiting for a reply comes first; everyone already answered follows, newest first
   const [leadSort, setLeadSort] = useState('waiting');
 
   // Customer 360 & Add Lead Modal States
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   // The client file (drawer) opens on «الملف»; the old «ملف العميل» window is gone: its data is the «التفاصيل» tab
-  const [drawerTab, setDrawerTab] = useState('overview');
+  const [drawerTab, setDrawerTab] = useState('work');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
 
@@ -725,10 +727,13 @@ export const CrmAdminPanel = ({
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
+  // What happened last with each client (turned into a listing, «غير مناسب», no answer…): the status cell and two filters
+  const situations = useMemo(() => situationKinds(leads, properties), [leads, properties]);
+  const situationByListing = useMemo(() => listingByLead(properties), [properties]);
   const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
     myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
-    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, searchQuery, duplicateIds
-  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
+    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, situationById: situations
+  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, situations, leadSort]);
 
   // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)
   const handleMergeLeads = async (keepId, otherIds) => {
@@ -922,6 +927,10 @@ export const CrmAdminPanel = ({
           sourceFilter={sourceFilter}
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}
+          ownerFilter={ownerFilter}
+          situations={situations}
+          listingByLead={situationByListing}
+          setOwnerFilter={setOwnerFilter}
           setDateFilter={setDateFilter}
           leadSort={leadSort}
           setLeadSort={setLeadSort}
@@ -935,7 +944,7 @@ export const CrmAdminPanel = ({
           setSelectedLeadIds={setSelectedLeadIds}
           setShowAddLeadModal={setShowAddLeadModal}
           setTemperatureFilter={setTemperatureFilter}
-          setViewingProfileLead={(l) => { setDrawerTab('details'); setQuickDrawerLead(l); }}
+          setViewingProfileLead={(l) => { setDrawerTab('client'); setQuickDrawerLead(l); }}
           temperatureFilter={temperatureFilter}
           triggerToast={triggerToast}
         />
@@ -1193,7 +1202,7 @@ export const CrmAdminPanel = ({
         lead={quickDrawerLead}
         tab={drawerTab}
         onTabChange={setDrawerTab}
-        onClose={() => { setQuickDrawerLead(null); setDrawerTab('overview'); }}
+        onClose={() => { setQuickDrawerLead(null); setDrawerTab('work'); }}
         onUpdateLead={(leadId, updatedData, expectedVer) => {
           const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
           if (result !== false) {
@@ -1212,6 +1221,7 @@ export const CrmAdminPanel = ({
         isAr={isAr}
         triggerToast={triggerToast}
         activeRole={activeRole}
+        mayAssignTasks={isSuperRole || canAssignTasks(perms)}
       />
 
       {/* ⚠️ MODAL: CONCURRENCY CONFLICT RESOLUTION */}

@@ -4,6 +4,8 @@
 //  run them directly.
 // =============================================================
 
+import { assigneeValue } from './assignees.js';
+
 export function getNormalizedPropertyStatus(prop) {
   if (!prop) return 'published';
   if (prop.isDeleted || prop.status === 'trash') return 'trash';
@@ -12,6 +14,14 @@ export function getNormalizedPropertyStatus(prop) {
   if (prop.status === 'hidden' || prop.status === 'archived' || prop.status === 'draft' || prop.isArchived) return 'hidden';
   return 'published';
 }
+
+/** Listing statuses that are on the site and still for sale (a contracted or sold one is not «معروض») */
+export const LISTED_STATUSES = ['published', 'under_negotiation', 'reserved', 'deposit_paid'];
+
+/** A real listing that visitors can see now: not a sample, not deleted or archived, approved, and still for sale */
+export const isListedOnSite = (p) => Boolean(p) && !p.isDemo && !p.isDeleted && !p.isArchived
+  && p.approval !== 'pending' && p.approval !== 'rejected'
+  && LISTED_STATUSES.includes(p.status || 'published');
 
 /** Dashboard counters for the given leads */
 export function computeCrmAnalytics(leads = []) {
@@ -177,6 +187,24 @@ export function isSellerLead(l = {}) {
 }
 
 /**
+ * What an owner's request still lacks for a listing: the size, the address and photos (the price is the team's to set
+ * after the viewing). [] for anyone who is not an owner selling. The quick request on /sell asked for none of these.
+ */
+export const SELLER_DETAIL_LABELS = { size: 'المساحة', address: 'العنوان', photos: 'صور العقار' };
+export function sellerMissing(l = {}) {
+  if (!isSellerLead(l)) return [];
+  const d = l.details || {};
+  const out = [];
+  if (!(Number(d.size) > 0)) out.push('size');
+  if (!String(d.address || '').trim()) out.push('address');
+  if (!(Array.isArray(d.images) && d.images.some((u) => typeof u === 'string' && u))) out.push('photos');
+  return out;
+}
+
+/** An owner's request still worth completing: open, and lacking the size, the address or photos */
+export const needsDetails = (l = {}) => !l.isArchived && !['lost', 'closed', 'inactive'].includes(l.status) && sellerMissing(l).length > 0;
+
+/**
  * Someone known to want to buy: not an owner selling, an investor, a broker, a client account or a visit request
  * (those have their own chips). A site account says nothing about what the person wants (the sign-up asks only name,
  * number and email), so it stays under «حسابات جديدة» until someone classifies it. The «شراء» chip used to take only
@@ -279,7 +307,8 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
   const supplyValue = open.filter(isSellerLead).reduce((sum, l) => sum + leadBudget(l), 0);
   const liveDemands = scopeDesk ? [] : demands.filter((d) => !d.isArchived && d.status !== 'archived' && d.status !== 'rejected');
   const purchasingPower = liveDemands.reduce((sum, d) => sum + parseMoney(d.budget), 0);
-  const won = leads.filter((l) => l.status === 'closed');
+  // Won and lost are counted the same way (archived ones are out of both), so the rate is not skewed
+  const won = leads.filter((l) => l.status === 'closed' && !l.isArchived);
   const lost = leads.filter((l) => l.status === 'lost' && !l.isArchived);
   const decided = won.length + lost.length;
 
@@ -291,6 +320,12 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
     purchasingPower,
     expectedCommission: pipelineValue * commissionRate,
     openCount: open.length,
+    // The open buyers (what the budgets add up) and how many of them carry a budget; owners' listings are counted apart
+    openBuyers: open.filter((l) => !isSellerLead(l)).length,
+    budgetedBuyers: open.filter((l) => !isSellerLead(l) && leadBudget(l) > 0).length,
+    openSellers: open.filter(isSellerLead).length,
+    liveDemandsCount: liveDemands.length,
+    createdTodayCount: open.filter((l) => localDayKey(leadCreatedMs(l)) === todayKey).length,
     newCount: open.filter((l) => !l.status || l.status === 'new').length,
     qualifiedCount: open.filter((l) => ['contacted', 'site_visit', 'negotiating'].includes(l.status)).length,
     closingCount: open.filter((l) => ['negotiating', 'closing'].includes(l.status)).length,
@@ -440,11 +475,22 @@ function inDateRange(l, range, now) {
  * Archived and lost leads only show under their own filter. today (YYYY-MM-DD) and now (ms)
  * default to the current time; tests pass them in.
  */
+export const OWNER_ALL = 'all';
+export const OWNER_NONE = 'none';
+
+/** Does this lead belong to the owner filter value (a select value from utils/assignees, `none`, or `all`)? */
+export function matchesOwner(lead, ownerFilter = OWNER_ALL) {
+  if (!ownerFilter || ownerFilter === OWNER_ALL) return true;
+  const v = assigneeValue(lead);
+  if (ownerFilter === OWNER_NONE) return !v.startsWith('user:');
+  return v === ownerFilter;
+}
+
 export function filterLeads(leads = [], opts = {}) {
   const {
     myDealsOnly = false, activeRole, agentName, leadFilter = 'all',
     temperatureFilter = 'all', areaFilter = 'all', areaIds = null, sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
-    today, now = Date.now(), duplicateIds = null
+    today, now = Date.now(), duplicateIds = null, ownerFilter = 'all', situationById = null
   } = opts;
   const q = searchQuery.trim().toLowerCase();
   const todayKey = today || localDayKey(now);
@@ -494,10 +540,17 @@ export function filterLeads(leads = [], opts = {}) {
       if (!isAccountLead(l)) return false;
     } else if (leadFilter === 'buyer') {
       if (!isBuyerLead(l)) return false;
+    } else if (leadFilter === 'incomplete') {
+      if (!needsDetails(l)) return false;
+    } else if (leadFilter === 'converted') {
+      if (situationById?.get(l.id) !== 'converted') return false;
+    } else if (leadFilter === 'not_fit') {
+      if (situationById?.get(l.id) !== 'not_fit') return false;
     } else if (leadFilter !== 'all' && l.type !== leadFilter) {
       return false;
     }
 
+    if (!matchesOwner(l, ownerFilter)) return false;
     if (temperatureFilter !== 'all') {
       const t = l.temperature || 'unknown';
       if (t !== temperatureFilter) return false;

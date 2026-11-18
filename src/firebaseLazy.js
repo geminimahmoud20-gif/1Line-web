@@ -152,6 +152,7 @@ export const updateIntakeRecord = lazyCall('updateIntakeRecord');
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
 export const subscribeToClientDownloads = lazySubscribe('subscribeToClientDownloads');
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');
+export const subscribeToPublicDemands = lazySubscribe('subscribeToPublicDemands');
 export const monitorAuthState = lazySubscribe('monitorAuthState');
 export const subscribeToSettings = lazySubscribe('subscribeToSettings');
 // Only used when the CDN catalog is unavailable (or in the CRM): the listings themselves, so no wait

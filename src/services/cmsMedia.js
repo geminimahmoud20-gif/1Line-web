@@ -8,7 +8,8 @@ import { auth } from '../firebase.js';
 export const CMS_MEDIA_LIMITS = {
   video: { maxBytes: 20 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
   image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] },
-  thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] }
+  thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] },
+  leadfile: { maxBytes: 8 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] }
 };
 
 // Files go to Vercel Blob (Firebase Storage was never enabled for this project: its bucket

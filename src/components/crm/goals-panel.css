@@ -31,3 +31,7 @@
 .gl-person[open] { padding-bottom: var(--ui-s-3); }
 .gl-note { margin: 0; color: var(--ui-text-3); font-size: var(--ui-fs-2); }
 .gl-actions { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+
+.gl-empty, .gl-behind { margin: 6px 0 0; font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.gl-behind { color: var(--ui-warning); font-weight: var(--ui-fw-semibold); }
+.gl-link { background: none; border: 0; padding: 0; font: inherit; color: var(--ui-primary-text); text-decoration: underline; cursor: pointer; }

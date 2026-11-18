@@ -7,6 +7,27 @@
 
 export const NOTE_MAX = 1500;
 export const MAX_MENTIONS = 10;
+/** Files on a note: photos and PDFs, a few per note (the upload route /api/cms-upload signs the same list) */
+export const MAX_ATTACHMENTS = 4;
+export const ATTACH_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+export const ATTACH_MAX_BYTES = 8 * 1024 * 1024;
+
+/** One attachment as stored on the note, or null when it is not a safe https link to an allowed file */
+export function cleanAttachment(a) {
+  if (!a || typeof a !== 'object') return null;
+  const url = String(a.url || '');
+  const size = Number(a.size);
+  if (!/^https:\/\/[^\s]{4,380}$/.test(url) || !ATTACH_TYPES.includes(a.type) || !(size > 0 && size <= ATTACH_MAX_BYTES)) return null;
+  return { url, name: String(a.name || 'ملف').slice(0, 120), type: a.type, size: Math.round(size) };
+}
+/** Where a file goes: lead-files/<entity>/<time>-<n>-<name> (the route /api/cms-upload accepts exactly this shape) */
+export function attachmentPath(entityId, n, name, now = Date.now()) {
+  const folder = String(entityId).replace(/[^\w-]/g, '_').slice(0, 100) || 'x';
+  const safe = String(name || '').normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-60) || 'file';
+  return `lead-files/${folder}/${now}-${n}-${safe}`;
+}
+export const isImageType = (t) => String(t || '').startsWith('image/');
+export const fileSizeText = (bytes) => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 export const ENTITY_TYPES = ['lead', 'property', 'project', 'team'];
 /** The team's general thread: entityType 'team', this id */
 export const TEAM_THREAD_ID = 'general';
@@ -88,9 +109,10 @@ export function noteSnippet(text, max = 120) {
  * The note document and its mention notifications, or { error } when the text is empty or too long.
  * @returns {{ note: object, mentions: object[] } | { error: 'empty' | 'too-long' }}
  */
-export function buildNote({ entityType, entityId, entityName = '', text, author, people = [], now = new Date() }) {
+export function buildNote({ entityType, entityId, entityName = '', text, author, people = [], attachments = [], now = new Date() }) {
   const body = String(text || '').trim();
-  if (!body) return { error: 'empty' };
+  const files = (Array.isArray(attachments) ? attachments : []).map(cleanAttachment).filter(Boolean).slice(0, MAX_ATTACHMENTS);
+  if (!body && !files.length) return { error: 'empty' };
   if (body.length > NOTE_MAX) return { error: 'too-long' };
   if (!ENTITY_TYPES.includes(entityType) || !entityId) return { error: 'empty' };
   const mentions = mentionedUids(body, people, author?.uid);
@@ -103,6 +125,7 @@ export function buildNote({ entityType, entityId, entityName = '', text, author,
     mentions,
     authorUid: author?.uid || '',
     authorName: String(author?.name || '').slice(0, 80),
+    ...(files.length ? { attachments: files } : {}),
     createdAt
   };
   const notices = mentions.map((toUid) => ({
@@ -112,7 +135,7 @@ export function buildNote({ entityType, entityId, entityName = '', text, author,
     entityType: note.entityType,
     entityId: note.entityId,
     entityName: note.entityName,
-    snippet: noteSnippet(body, 140),
+    snippet: body ? noteSnippet(body, 140) : `📎 ${files.length === 1 ? files[0].name : `${files.length} مرفقات`}`,
     createdAt
   }));
   return { note, mentions: notices };

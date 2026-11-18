@@ -7,6 +7,9 @@ import { formatFollowUp, formatBudget, campaignLabel } from '../../utils/crmLabe
 import DeskOptions from './DeskOptions';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import { assigneeValue, assignmentUpdates, personFor } from '../../utils/assignees';
+import OwnerPerformance from './OwnerPerformance';
+import { leadSituation } from '../../utils/leadSituation';
+import { ownersTable } from '../../utils/ownerPerformance';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
@@ -18,7 +21,7 @@ import { planDuplicateMerges } from '../../utils/dedupePlan';
 import { guardStage, lastOutcomeLabel, outcomesOf } from '../../utils/stageGate';
 import { useTasks } from '../../hooks/useTasks';
 import { nextTaskFor, bucketOf, dueLabel } from '../../utils/tasks';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs, leadCampaign } from '../../utils/crmLeadViews';
+import { needsDetails, LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs, leadCampaign } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -27,7 +30,7 @@ import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../
 import { cx } from '../ui/cx';
 import './leads-tab.css';
 import './client-card.css';
-const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
+const MORE_FILTER_KEYS = ['incomplete', 'converted', 'not_fit', 'qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
 
 const COLUMN_OPTIONS = [
   { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & budget' },
@@ -123,6 +126,10 @@ export default function LeadsTab({
   setSourceFilter,
   dateFilter = 'all',
   setDateFilter,
+  ownerFilter = 'all',
+  setOwnerFilter,
+  situations = new Map(),
+  listingByLead = new Map(),
   leadSort = 'waiting',
   setLeadSort,
   canEdit = true,
@@ -247,11 +254,14 @@ export default function LeadsTab({
       unassigned: open.filter(isUnassigned).length,
       stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
+      incomplete: leads.filter(needsDetails).length,
+      converted: leads.filter((l) => !l.isArchived && situations.get(l.id) === 'converted').length,
+      notFit: leads.filter((l) => !l.isArchived && situations.get(l.id) === 'not_fit').length,
       won: leads.filter((l) => !l.isArchived && l.status === 'closed').length,
       inactive: leads.filter((l) => !l.isArchived && l.status === 'inactive').length,
       archived: leads.filter((l) => l.isArchived).length
     };
-  }, [leads, duplicateIds, now]);
+  }, [leads, duplicateIds, situations, now]);
 
   const renderVisitBadge = (l) => {
     const vd = getLeadVisitDate(l);
@@ -314,18 +324,26 @@ export default function LeadsTab({
       : (isAr ? 'مفيش عميل بالاسم أو الرقم ده' : 'No client matches'), res.leads.length ? 'success' : 'info');
   };
 
-  const hasActiveFilters = leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || Boolean(searchQuery);
+  const hasActiveFilters = (ownerFilter && ownerFilter !== 'all') || leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || Boolean(searchQuery);
   // Dropdown filters set (the views row and search show their own state)
-  const activeFilterCount = [temperatureFilter !== 'all', sourceFilter && sourceFilter !== 'all', dateFilter && dateFilter !== 'all', areaFilter && areaFilter !== 'all'].filter(Boolean).length;
+  const activeFilterCount = [ownerFilter && ownerFilter !== 'all', temperatureFilter !== 'all', sourceFilter && sourceFilter !== 'all', dateFilter && dateFilter !== 'all', areaFilter && areaFilter !== 'all'].filter(Boolean).length;
   const resetFilters = () => {
     setLeadFilter('all');
     setTemperatureFilter('all');
     setSourceFilter?.('all');
     setDateFilter?.('all');
     setAreaFilter?.('all');
+    setOwnerFilter?.('all');
     setSearchQuery?.('');
   };
   const [showFilters, setShowFilters] = useState(false);
+  // Who holds the clients: the owner filter's options, with how many open clients each has
+  const owners = useMemo(() => ownersTable(leads, teamMembers), [leads, teamMembers]);
+  const ownerOptions = useMemo(() => [
+    { value: 'all', label: isAr ? 'كل المسؤولين' : 'All owners' },
+    ...owners.filter((o) => o.key !== 'none').map((o) => ({ value: o.key, label: `${o.name} (${o.stats.open})` })),
+    ...(owners.some((o) => o.key === 'none') ? [{ value: 'none', label: isAr ? 'من غير مسؤول' : 'No owner' }] : [])
+  ], [owners, isAr]);
 
   const kpiStats = useMemo(() => {
     const total = leads.length;
@@ -556,6 +574,9 @@ export default function LeadsTab({
           onChange={(e) => e.target.value && setLeadFilter(e.target.value)}
           placeholder={isAr ? 'حالات تانية' : 'More views'}
           options={[
+            { value: 'incomplete', label: isAr ? `ملاك بياناتهم ناقصة (${counts.incomplete})` : `Owners missing details (${counts.incomplete})` },
+            { value: 'converted', label: isAr ? `اتحوّلوا لعقارات (${counts.converted})` : `Made into listings (${counts.converted})` },
+            { value: 'not_fit', label: isAr ? `غير مناسب (${counts.notFit})` : `Not a fit (${counts.notFit})` },
             { value: 'qualified', label: isAr ? 'جدية عالية' : 'High score' },
             { value: 'account', label: isAr ? `حسابات جديدة (${counts.accounts})` : `Accounts (${counts.accounts})` },
             ...(counts.stale > 0 ? [{ value: 'stale', label: isAr ? `راكدين (${counts.stale})` : `Stale (${counts.stale})` }] : []),
@@ -573,6 +594,21 @@ export default function LeadsTab({
           <span>{isAr ? 'نفس العميل ملا أكتر من فورم؟ ادمجهم في ملف واحد، وكل طلب بيتسجل في سجل أحداثه.' : 'One client, several forms? Merge them into one file; each request goes into its history.'}</span>
           <Button size="sm" onClick={() => setMergeAllOpen(true)}>{isAr ? 'دمج كل المكرر' : 'Merge all duplicates'}</Button>
         </div>
+      )}
+
+      {setOwnerFilter && owners.length > 1 && (
+        <OwnerPerformance
+          isAr={isAr}
+          leads={leads}
+          owners={owners}
+          tasks={allTasks}
+          people={teamMembers}
+          ownerFilter={ownerFilter}
+          onPickOwner={setOwnerFilter}
+          onPickView={setLeadFilter}
+          onOpenLead={setQuickDrawerLead}
+          leadFilter={leadFilter}
+        />
       )}
 
       <div className="crm-leads__toolbar">
@@ -646,6 +682,16 @@ export default function LeadsTab({
               { value: 'unknown', label: isAr ? 'مش محددة' : 'Not set' }
             ]}
           />
+          {setOwnerFilter && owners.length > 1 && (
+            <Select
+              hideLabel
+              className="crm-leads__owner"
+              label={isAr ? 'المسؤول' : 'Owner'}
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              options={ownerOptions}
+            />
+          )}
           {setSourceFilter && (
             <Select
               hideLabel
@@ -1019,6 +1065,12 @@ export default function LeadsTab({
                           ))}
                         </select>
                       </div>
+                      {(() => {
+                        const sit = leadSituation(l, listingByLead.get(String(l.id)) || null);
+                        return sit
+                          ? <span className={`crm-situation is-${sit.tone}`} title={sit.at ? new Date(sit.at).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB') : undefined}>{sit.label}{sit.at ? ` · ${fmtWait(now - sit.at)}` : ''}</span>
+                          : <span className="crm-situation is-none">{isAr ? 'لسه متواصلناش' : 'No contact yet'}</span>;
+                      })()}
                     </td>
                   )}
 

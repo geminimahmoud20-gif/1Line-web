@@ -78,7 +78,14 @@ const nowMs = now.getTime();
 const taskSnap = await db.collection('crm_tasks').where('status', '==', 'open').get();
 const tasks = taskSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 let leads = [];
-if (digestHours) {
+// The digest goes out about once an hour per person (shouldSend's gap), so the clients are read only when someone
+// is due one: this job runs every 15 minutes, and reading every new and due client each time was most of its cost.
+const GAP_MS = 55 * 60 * 1000;
+const digestDue = force || subscribers.some((d) => {
+  const at = Date.parse(d.data().lastDigest?.at || '');
+  return !at || nowMs - at >= GAP_MS;
+});
+if (digestHours && digestDue) {
   const [due, fresh] = await Promise.all([
     db.collection('leads').where('nextFollowUpAt', '<=', `${today}`).get(),
     db.collection('leads').where('status', '==', 'new').get()
@@ -117,9 +124,9 @@ for (const doc of subscribers) {
   const patch = {};
 
   // 1. The digest
-  if (digestHours) {
+  if (digestHours && digestDue) {
     const digest = digestFor(leads, member, { now: nowMs, tasks });
-    if (digest && (force || shouldSend(digest, data.lastDigest, nowMs, { minGapMs: 55 * 60 * 1000 }))) {
+    if (digest && (force || shouldSend(digest, data.lastDigest, nowMs, { minGapMs: GAP_MS }))) {
       if (dryRun) console.log(`[dry run] ${member.name || doc.id}: ${digest.body}`);
       else {
         const r = await pushTo(doc.id, subs, { title: digest.title, body: digest.body, url: '/crm?tab=leads' });
