@@ -175,3 +175,35 @@ test('after «لم يرد» the next call is a task, up to the third try', async
   assert.equal(nextAttemptTask({ lead, attempts: 0, me, now: morning }), null);
   assert.equal(nextAttemptTask({ lead: {}, attempts: 1, me }), null);
 });
+
+// ── Giving tasks to colleagues ──
+test('a task one person made for another is delegated; the assignee has not seen it until they open the list', async () => {
+  const { isDelegated, assignedByMe, newAssignmentsFor, seenPatch, delegatedLate, workload, assignmentPayload } = await import('../../src/utils/tasks.js');
+  const NOW = new Date('2026-11-18T10:00:00').getTime();
+  const mk = (over) => ({ id: over.id, title: 'اتصل', status: 'open', priority: 'normal', dueAt: '2026-11-18', assigneeUid: 'u2', assigneeName: 'منى', createdBy: 'boss', createdByName: 'المدير', ...over });
+  const mine = mk({ id: 'a', createdBy: 'u2', assigneeUid: 'u2' });
+  const given = mk({ id: 'b' });
+  const late = mk({ id: 'c', dueAt: '2026-11-10' });
+  const seen = mk({ id: 'd', seenAt: '2026-11-18T09:00:00.000Z' });
+  const other = mk({ id: 'e', assigneeUid: 'u3', assigneeName: 'علي' });
+  const done = mk({ id: 'f', status: 'done', doneAt: '2026-11-17T09:00:00.000Z' });
+  const all = [mine, given, late, seen, other, done];
+  assert.deepEqual([isDelegated(mine), isDelegated(given)], [false, true]);
+  assert.deepEqual(assignedByMe(all, 'boss').map((t) => t.id), ['b', 'c', 'd', 'e', 'f']);
+  assert.deepEqual(newAssignmentsFor(all, 'u2').map((t) => t.id), ['b', 'c']); // mine and the seen one are not new
+  assert.equal(newAssignmentsFor([done], 'u2').length, 0);
+  assert.ok(Date.parse(seenPatch(NOW).seenAt) === NOW);
+  assert.equal(delegatedLate(all, 'boss', NOW), 1); // only c is late and still open
+  const rows = workload(all, [{ uid: 'u2', name: 'منى' }, { uid: 'u9', name: 'ساكت' }], NOW);
+  assert.deepEqual(rows.map((r) => r.uid), ['u2', 'u3']); // most behind first; a member with nothing is not listed
+  assert.deepEqual([rows[0].open, rows[0].overdue, rows[0].today, rows[0].doneWeek, rows[0].unseen], [4, 1, 3, 1, 2]);
+  assert.match(assignmentPayload(given).title, /المدير/);
+});
+
+test('the counts of a list with no person are the whole list (the team view)', async () => {
+  const { taskCounts } = await import('../../src/utils/tasks.js');
+  const NOW = new Date('2026-11-18T10:00:00').getTime();
+  const list = [{ assigneeUid: 'a', status: 'open', dueAt: '2026-11-10' }, { assigneeUid: 'b', status: 'open', dueAt: '2026-11-18' }, { assigneeUid: 'b', status: 'done', dueAt: '2026-11-18' }];
+  assert.deepEqual(taskCounts(list, undefined, NOW), { overdue: 1, today: 1, open: 2, due: 2 });
+  assert.deepEqual(taskCounts(list, 'b', NOW), { overdue: 0, today: 1, open: 1, due: 1 });
+});

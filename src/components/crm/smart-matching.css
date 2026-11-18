@@ -34,3 +34,5 @@
   .smh__tabs { width: 100%; }
   .smh__tabs button { flex: 1; padding: 0 var(--ui-s-2); }
 }
+
+.smh__missing { padding: 2px 10px; border: 0; border-radius: 999px; background: var(--ui-warning-tint); color: var(--ui-warning); font: inherit; font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); cursor: pointer; }

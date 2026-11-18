@@ -11,7 +11,7 @@ import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assig
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
 import { memberDesk } from '../utils/inboxView';
 import useTeamMembers from '../hooks/useTeamMembers';
-import { permsOfRole, canViewFinance, canCloseDeals as canCloseDealsPerm } from '../utils/accessModel';
+import { permsOfRole, canViewFinance, canCloseDeals as canCloseDealsPerm, canAssignTasks } from '../utils/accessModel';
 import { isValidPhoneNumber } from '../utils/securityShield';
 
 // Enterprise PropTech Modules
@@ -260,6 +260,8 @@ export const CrmAdminPanel = ({
   const allCurrentRoles = getMergedCrmRoles(getActiveAccessConfig());
   const currentRoleObj = allCurrentRoles.find(r => r.id === activeRole) || CRM_ROLES[0];
   const isSuperAdmin = activeRole === 'super_admin';
+  // «يحذف العملاء»: the super admin, or a role that was given it
+  const mayDeleteLeads = canDeleteLead(activeRole, perms);
 
   // Leads saved before desk scoping may lack assignedTo; desk agents' queue queries can't see
   // them. A manager's session files them into the shared pool once (only cloud-synced leads).
@@ -401,7 +403,7 @@ export const CrmAdminPanel = ({
 
   const handleBulkDelete = async () => {
     if (selectedLeadIds.length === 0) return;
-    if (!canDeleteLead(activeRole)) {
+    if (!mayDeleteLeads) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بحذف العملاء (تتطلب صلاحية Super Admin)' : 'Unauthorized: requires Super Admin', 'error');
       }
@@ -669,7 +671,7 @@ export const CrmAdminPanel = ({
 
   // Delete Lead
   const handleDeleteLeadClick = async (leadId, leadName) => {
-    if (!canDeleteLead(activeRole)) {
+    if (!mayDeleteLeads) {
       if (triggerToast) triggerToast(isAr ? 'حذف العملاء متاح للمدير العام فقط — يمكنك أرشفة العميل بدلاً من ذلك' : 'Only Super Admin can delete leads', 'error');
       return;
     }
@@ -858,7 +860,7 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           onUpdateLead={onUpdateLead}
-          onDeleteLead={canDeleteLead(activeRole) ? onDeleteLead : undefined}
+          onDeleteLead={mayDeleteLeads ? onDeleteLead : undefined}
           onOpenEditLead={handleOpenEditLead}
           onOpenLead={(lead) => setQuickDrawerLead(lead)}
           lang={lang}
@@ -900,6 +902,7 @@ export const CrmAdminPanel = ({
           handleToggleSelectOne={handleToggleSelectOne}
           isAr={isAr}
           isSuperAdmin={isSuperAdmin}
+          canDeleteLeads={mayDeleteLeads}
           kbdIndex={kbdIndex}
           lang={lang}
           leadFilter={leadFilter}
@@ -911,7 +914,7 @@ export const CrmAdminPanel = ({
           duplicateIds={duplicateIds}
           onMergeLeads={handleMergeLeads}
           onMergeAllDuplicates={handleMergeAllDuplicates}
-          canMergeLeads={canDeleteLead(activeRole)}
+          canMergeLeads={mayDeleteLeads}
           canEdit={canEditLeads}
           canExport={canExport}
           canClaimLead={canClaimLead}
@@ -991,7 +994,7 @@ export const CrmAdminPanel = ({
           leads={leads}
           members={teamMembers}
           me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
-          canManage={isSuperRole || perms.includes('ld.manage')}
+          canManage={isSuperRole || canAssignTasks(perms)}
           lang={lang}
           triggerToast={triggerToast}
           onOpenLead={(l) => setQuickDrawerLead(l)}
@@ -1198,7 +1201,8 @@ export const CrmAdminPanel = ({
           }
           return result;
         }}
-        onDeleteLead={onDeleteLead}
+        onDeleteLead={mayDeleteLeads ? onDeleteLead : undefined}
+        canDeleteLeads={mayDeleteLeads}
         onConvertToProperty={onConvertToProperty}
         onNavigate={(l) => setQuickDrawerLead(l)}
         properties={properties}

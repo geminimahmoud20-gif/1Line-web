@@ -3,7 +3,10 @@ import { useMemo } from 'react';
 import { Building, ExternalLink, Share2, CheckCircle2, Search } from 'lucide-react';
 import { SITE_URL } from '../../../config/siteConfig';
 import { rankAndNominateProperties, formatNominationWhatsAppPitch } from '../../../services/matchingEngineV2';
+import { scoreForBuyer } from '../../../utils/matchingEngine';
+import { liveListings } from '../../../utils/marketStats';
 import { Badge, Button, EmptyState } from '../../ui';
+import LeadRequestEditor from './LeadRequestEditor';
 
 const TIERS = [
   { ar: 'الأقرب لطلبه', en: 'Closest', tone: 'info' },
@@ -23,7 +26,7 @@ export default function LeadDrawerMatching({
 }) {
   const L = (ar, en) => (isAr ? ar : en);
   // The drawer passes the ranking it already computed for the tab count
-  const computed = useMemo(() => (givenResult ? null : rankAndNominateProperties(lead, properties)), [givenResult, lead, properties]);
+  const computed = useMemo(() => (givenResult ? null : rankAndNominateProperties(lead, liveListings(properties), { scorer: scoreForBuyer })), [givenResult, lead, properties]);
   const { matches = [], nominationPack = [], canAssemble3TierPack, needsSearchRequest, searchRequestDraft } = givenResult || computed;
 
   const propertiesMap = useMemo(() => {
@@ -64,8 +67,17 @@ export default function LeadDrawerMatching({
   const hasOpenSearchRequest = Boolean(lead.hasOpenSearchRequest || lead.searchRequest);
   const budget = lead.budget || lead.details?.budget;
 
+  // The advisor sets a listing aside for this client: it is never offered to him again (here, in the alerts, in the matching screen)
+  const dismiss = (propertyId) => {
+    if (!onUpdateLead) return;
+    const list = [...new Set([...(lead.details?.matchDismissed || []), propertyId])].slice(-50);
+    onUpdateLead(lead.id, { details: { ...(lead.details || {}), matchDismissed: list } }, lead.version);
+    triggerToast?.(L('مش هيترشّح للعميل ده تاني', 'Set aside for this client'), 'success');
+  };
+
   return (
     <div className="crm-ld__stack">
+      <LeadRequestEditor lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} />
       <p className="crm-ld__hint">
         {L(`بنقارن الميزانية (${budget || 'مش محددة'}) والمنطقة (${areaName}) بالعقارات المتاحة، ومن غير اللي العميل رفضها قبل كده.`,
           `Matching budget (${budget || 'not set'}) and area (${areaName}) against available listings, skipping ones the client turned down.`)}
@@ -160,6 +172,7 @@ export default function LeadDrawerMatching({
                     <a href={`/properties/${p.id}`} target="_blank" rel="noopener noreferrer" className="ui-btn ui-btn--ghost ui-btn--sm">
                       <ExternalLink size={16} aria-hidden="true" />{L('صفحة العقار', 'Listing page')}
                     </a>
+                    {onUpdateLead && <Button variant="ghost" size="sm" onClick={() => dismiss(p.id)}>{L('مش مناسب', 'Not for him')}</Button>}
                   </div>
                 </div>
               </li>

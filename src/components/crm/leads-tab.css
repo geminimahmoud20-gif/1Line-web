@@ -359,3 +359,102 @@
 }
 /* Arabic and English in one line (a campaign name next to an ad's code) keep the order they were written in */
 .crm-lead-campaign { unicode-bidi: plaintext; }
+
+/* ===== Clients on a desktop, redesigned =====
+   A summary of the day on top (each number opens its list), and every client is its own card: a gap between
+   rows, the stage colour on the edge, the same raised look as the phone cards and the pipeline.
+   Written last, with full selectors, so it wins over the older table rules above. */
+.crm-leads__kpis { display: none; }
+.crm-leads__urgent { display: none; }
+@media (min-width: 769px) {
+  .crm-layout .crm-leads .crm-leads__stats { display: none; }
+  .crm-leads__kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ui-s-3); margin-bottom: var(--ui-s-4); }
+  .crm-kpi {
+    display: grid; gap: 2px; padding: var(--ui-s-3) var(--ui-s-4); text-align: start; font: inherit; color: var(--ui-text);
+    border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-surface); cursor: pointer;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 5%, transparent);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+  .crm-kpi.is-static { cursor: default; }
+  .crm-kpi:not(.is-static):hover { border-color: var(--ui-line-strong); transform: translateY(-1px); box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--ui-n900) 40%, transparent); }
+  .crm-kpi.is-on { border-color: var(--ui-primary); box-shadow: inset 0 0 0 1px var(--ui-primary); }
+  .crm-kpi:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+  .crm-kpi__label { font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); color: var(--ui-text-3); }
+  .crm-kpi__value { font-size: 28px; line-height: 1.15; font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+  .crm-kpi small { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+  .crm-kpi.is-danger .crm-kpi__value { color: var(--ui-danger); }
+  .crm-kpi.is-danger small { color: var(--ui-danger); }
+  .crm-kpi.is-warn .crm-kpi__value { color: var(--ui-warning); }
+  .crm-kpi.is-warn small { color: var(--ui-warning); }
+
+  /* One focus ring on the search box (the field inside kept a second one) */
+  .crm-layout .crm-leads .crm-leads__search input,
+  .crm-layout .crm-leads .crm-leads__search input:focus { border: 0; box-shadow: none; outline: 0; background: transparent; }
+
+  /* Rows as cards */
+  .crm-layout .crm-leads .crm-table-scroll-wrapper { background: transparent; border: 0; box-shadow: none; padding: 0; }
+  .crm-layout .crm-leads .crm-table { border-collapse: separate; border-spacing: 0 8px; width: 100%; }
+  .crm-layout .crm-leads .crm-table thead th { background: transparent; border: 0; padding: 0 var(--ui-s-4) var(--ui-s-1); white-space: nowrap; }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td {
+    background: var(--ui-surface); border: 0; border-block: 1px solid var(--ui-line); padding: var(--ui-s-3) var(--ui-s-3);
+    transition: background-color .15s ease, border-color .15s ease;
+  }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:first-child {
+    border-inline-start: 5px solid var(--lead-accent); border-start-start-radius: 16px; border-end-start-radius: 16px; padding-inline: var(--ui-s-3);
+  }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:last-child { border-inline-end: 1px solid var(--ui-line); border-start-end-radius: 16px; border-end-end-radius: 16px; }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row:hover > td { background: var(--ui-surface-hover); border-block-color: var(--ui-line-strong); }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row[data-selected] > td { background: var(--ui-primary-tint); }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-kbd-active > td { border-block-color: var(--ui-primary); }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-kbd-active > td:first-child { box-shadow: none; }
+
+  /* Fewer lines per client: the specs on one line each, the status on one line */
+  .crm-layout .crm-leads .crm-lead-req-cell { min-width: 150px; }
+  .crm-layout .crm-leads .crm-lead-spec-sub { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+  .crm-layout .crm-leads .crm-table .crm-status-select-wrap { min-width: 150px; }
+  .crm-layout .crm-leads .crm-table td:is([data-label='الإجراءات'], [data-label='Actions']) { white-space: nowrap; }
+}
+/* A narrower screen drops the column that is mostly empty (the last outcome shows in the client's file) */
+@media (min-width: 769px) and (max-width: 1500px) {
+  .crm-layout .crm-leads .crm-table .crm-th--outcome,
+  .crm-layout .crm-leads .crm-table td[data-label='آخر نتيجة'],
+  .crm-layout .crm-leads .crm-table td[data-label='Last outcome'] { display: none; }
+}
+
+/* Desktop columns: a fixed share each, so every column is on screen (no sideways scrolling to find the follow-up and the owner) */
+@media (min-width: 769px) {
+  .crm-layout .crm-leads .crm-table { table-layout: fixed; }
+  /* Three columns have a fixed width (the tick, the score and the actions); the rest share what is left */
+  .crm-layout .crm-leads .crm-table .crm-th--check { width: 44px; }
+  .crm-layout .crm-leads .crm-table .crm-th--client { width: 21%; }
+  .crm-layout .crm-leads .crm-table .crm-th--specs { width: 13%; }
+  .crm-layout .crm-leads .crm-table .crm-th--score { width: 100px; }
+  .crm-layout .crm-leads .crm-table .crm-th--status { width: 13%; min-width: 132px; }
+  .crm-layout .crm-leads .crm-table .crm-th--outcome { width: 8%; }
+  .crm-layout .crm-leads .crm-table .crm-th--next { width: 11%; }
+  .crm-layout .crm-leads .crm-table .crm-th--agent { width: 11%; min-width: 96px; }
+  .crm-layout .crm-leads .crm-table .crm-th--actions { width: 156px; }
+  .crm-layout .crm-leads .crm-table thead th,
+  .crm-layout .crm-leads .crm-table thead th:nth-child(n) { background: transparent; position: static; box-shadow: none; }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td { padding-inline: var(--ui-s-2); min-width: 0; overflow: hidden; }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:first-child { padding-inline: var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-table td:is([data-label='المسؤول'], [data-label='Agent']) { min-width: 0; }
+  .crm-layout .crm-leads .crm-table .crm-status-select-wrap { min-width: 0; width: 100%; max-width: 160px; }
+
+  /* The client: name, then phone · source · wait on one line, the late flag under it */
+  .crm-layout .crm-leads .crm-client-identity-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--ui-s-2); min-width: 0; }
+  .crm-layout .crm-leads .crm-client-identity-meta > .crm-client-identity-row:first-child { flex: 1 1 100%; }
+  .crm-layout .crm-leads .crm-client-identity-meta .crm-lead-source { display: inline-flex; align-items: center; gap: var(--ui-s-1); }
+  .crm-layout .crm-leads .crm-client-identity-meta .crm-lead-campaign { display: none; }
+  .crm-layout .crm-leads .crm-lead-meta { margin-top: 0; }
+
+  /* Actions: call, WhatsApp, open and more as icons; a click on the row opens the file as well */
+  .crm-layout .crm-leads .crm-action-group { gap: 4px; }
+  .crm-layout .crm-leads .crm-action-group .crm-btn-quick { width: 32px; padding: 0; justify-content: center; }
+  .crm-layout .crm-leads .crm-action-group .crm-btn-quick > span { display: none; }
+}
+
+@media (min-width: 1501px) {
+  .crm-layout .crm-leads .crm-table .crm-th--client { width: 19%; }
+  .crm-layout .crm-leads .crm-table .crm-th--specs { width: 12%; }
+}

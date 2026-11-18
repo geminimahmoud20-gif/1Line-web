@@ -1,6 +1,6 @@
 import { Plus, Sparkles, Image as ImageIcon, Save, Upload, MapPin, Loader2 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
-import { hasNoRooms, isLandType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';
+import { hasNoRooms, isLandType, isHouseType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
 import BuildingFieldsEditor from './BuildingFieldsEditor';
@@ -108,7 +108,9 @@ export default function PropertyFormModal({
                       category: categoryOfType(newType),
                       bedrooms: hasNoRooms(newType) ? 0 : (form.bedrooms || 3),
                       bathrooms: isLandType(newType) ? 0 : form.bathrooms,
-                      floor: isLandType(newType) ? 0 : form.floor
+                      // A house has floors in all (not a floor it is on); a flat has its own floor and, if known, the building's
+                      floor: isLandType(newType) || isHouseType(newType) || newType === 'building' ? 0 : form.floor,
+                      totalFloors: isHouseType(newType) ? (Number(form.totalFloors) > 0 && form.type === 'villa' ? form.totalFloors : 2) : (newType === 'building' && Number(form.totalFloors) > 0 ? form.totalFloors : 0)
                     });
                   }}
                 >
@@ -452,6 +454,28 @@ export default function PropertyFormModal({
                     <span>{isAr ? 'عقار كامل (سكني + تجاري): لن يتم حساب متوسط سعر المتر السكني البسيط تلقائياً لتجنب تشويه التقييم، وسيتم عرض تفصيل الوحدات للعملاء.' : 'Full Building (Mixed-Use): Flat price/sqm calculation is disabled to protect fair valuation.'}</span>
                   </div>
                 </>
+              ) : isHouseType(form.type) ? (
+                /* A house or villa: rooms and bathrooms, and how many floors it has (it is not «on» a floor) */
+                <div className="pf-rooms-row">
+                  <div className="form-group-item">
+                    <label>{isAr ? 'غرف النوم' : 'Bedrooms'}</label>
+                    <input type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group-item">
+                    <label>{isAr ? 'الحمامات' : 'Bathrooms'}</label>
+                    <input type="number" value={form.bathrooms} onChange={(e) => setForm({ ...form, bathrooms: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group-item">
+                    <label>{isAr ? 'عدد الأدوار' : 'Number of floors'}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={form.totalFloors || ''}
+                      placeholder="2"
+                      onChange={(e) => setForm({ ...form, totalFloors: parseInt(e.target.value) || 0, floor: 0 })}
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="pf-rooms-row">
                   <div className="form-group-item">
@@ -473,11 +497,21 @@ export default function PropertyFormModal({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'الدور' : 'Floor'}</label>
+                    <label>{isAr ? 'الدور (0 = أرضي)' : 'Floor (0 = ground)'}</label>
                     <input
                       type="number"
                       value={form.floor}
                       onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div className="form-group-item">
+                    <label>{isAr ? 'عدد أدوار العمارة (اختياري)' : 'Floors in the building (optional)'}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.totalFloors || ''}
+                      placeholder="5"
+                      onChange={(e) => setForm({ ...form, totalFloors: parseInt(e.target.value) || 0 })}
                     />
                   </div>
                 </div>

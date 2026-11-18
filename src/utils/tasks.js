@@ -124,7 +124,8 @@ export function taskCounts(tasks = [], uid, now = Date.now()) {
   let today = 0;
   let open = 0;
   for (const t of tasks) {
-    if (t.assigneeUid !== uid || t.status === 'done') continue;
+    // no uid: the whole list (the team view)
+    if ((uid && t.assigneeUid !== uid) || t.status === 'done') continue;
     open += 1;
     const b = bucketOf(t, now);
     if (b === 'overdue') overdue += 1;
@@ -265,4 +266,68 @@ export function nextAttemptTask({ lead, attempts, me, now = Date.now() } = {}) {
   const who = lead.name ? ` — ${String(lead.name).split(' ').slice(0, 2).join(' ')}` : '';
   const task = buildTask({ title: `محاولة اتصال ${next} من ${MAX_CALL_ATTEMPTS}${who}`, dueAt: nextAttemptDue(next, now), priority: 'high', kind: 'call', lead, me, now });
   return task ? { id: `retry-${lead.id}-${next}`, task } : null;
+}
+
+// ── Giving tasks to colleagues, and following them ────────────────────────────
+
+/** A task one person made for another (a manager's «كلّف زميلك بمهمة») */
+export const isDelegated = (t) => Boolean(t?.createdBy) && t.createdBy !== t.assigneeUid;
+
+/** The tasks this person gave to colleagues, open ones and done ones */
+export const assignedByMe = (tasks = [], uid) => (uid ? tasks.filter((t) => isDelegated(t) && t.createdBy === uid) : []);
+
+/** Open tasks someone gave to this person that they have not opened yet */
+export const newAssignmentsFor = (tasks = [], uid) => (uid
+  ? tasks.filter((t) => t.status !== 'done' && t.assigneeUid === uid && isDelegated(t) && !t.seenAt)
+  : []);
+
+/** The patch that says the assignee has seen the task (the assigner reads it as «اتشافت») */
+export const seenPatch = (now = Date.now()) => ({ seenAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() });
+
+/** Open tasks this person gave to colleagues that are late: what the assigner has to chase */
+export const delegatedLate = (tasks = [], uid, now = Date.now()) => assignedByMe(tasks, uid)
+  .filter((t) => t.status !== 'done' && bucketOf(t, now) === 'overdue').length;
+
+/**
+ * One row per person who has tasks (or is on the team): how many are open, late, due today, done this week, and how
+ * many were given by someone else and not opened yet. Most behind first; `members`: [{ uid, name }].
+ */
+export function workload(tasks = [], members = [], now = Date.now()) {
+  const weekAgo = now - 7 * DAY;
+  const byUid = new Map();
+  const row = (uid, name) => {
+    if (!byUid.has(uid)) byUid.set(uid, { uid, name: name || '', open: 0, overdue: 0, today: 0, doneWeek: 0, unseen: 0 });
+    const r = byUid.get(uid);
+    if (name && !r.name) r.name = name;
+    return r;
+  };
+  for (const m of members) if (m?.uid) row(m.uid, m.name || m.email || '');
+  for (const t of tasks) {
+    if (!t?.assigneeUid) continue;
+    const r = row(t.assigneeUid, t.assigneeName);
+    if (t.status === 'done') {
+      if (Date.parse(t.doneAt || '') >= weekAgo) r.doneWeek += 1;
+      continue;
+    }
+    r.open += 1;
+    const b = bucketOf(t, now);
+    if (b === 'overdue') r.overdue += 1;
+    else if (b === 'today') r.today += 1;
+    if (isDelegated(t) && !t.seenAt) r.unseen += 1;
+  }
+  return [...byUid.values()]
+    .filter((r) => r.open > 0 || r.doneWeek > 0)
+    .sort((a, b) => b.overdue - a.overdue || b.open - a.open || String(a.name).localeCompare(String(b.name)));
+}
+
+/** The push the assignee gets when a colleague gives them a task */
+export function assignmentPayload(task) {
+  const who = String(task.createdByName || '').trim() || 'زميلك';
+  const day = String(task.dueAt || '').slice(0, 10);
+  const time = String(task.dueAt || '').length > 10 ? String(task.dueAt).slice(11, 16) : '';
+  return {
+    title: `كلّفك ${who} بمهمة`.slice(0, 120),
+    body: [task.title, task.leadName, [day, time].filter(Boolean).join(' ')].filter(Boolean).join(' · '),
+    url: '/crm?tab=tasks'
+  };
 }

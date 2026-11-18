@@ -45,6 +45,12 @@ export default function SmartMatchingHub({ leads = [], properties = [], onUpdate
     .filter((r) => r.items.length > 0), [leads, properties, minScore, dismissed]);
 
   const dismiss = (row, property) => {
+    // Set aside on the client himself (every device, and the alerts and his own list follow); a buyer with no file here is remembered on this device
+    if (row.lead && onUpdateLead) {
+      const list = [...new Set([...(row.lead.details?.matchDismissed || []), property.id])].slice(-50);
+      onUpdateLead(row.lead.id, { details: { ...(row.lead.details || {}), matchDismissed: list } }, row.lead.version);
+      return;
+    }
     const next = { ...dismissed, [`${row.key}|${property.id}`]: true };
     setDismissed(next);
     try { localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch { /* private mode: this visit only */ }
@@ -105,6 +111,11 @@ export default function SmartMatchingHub({ leads = [], properties = [], onUpdate
                   <button type="button" className="smh__name" onClick={() => row.lead && onOpenLead?.(row.lead)} disabled={!row.lead}>{row.name}</button>
                   <bdi dir="ltr" className="smh__phone">{formatPhoneNumber(row.phone) || '—'}</bdi>
                 </div>
+                {row.missing?.length > 0 && (
+                  <button type="button" className="smh__missing" onClick={() => row.lead && onOpenLead?.(row.lead)} title={isAr ? 'افتح ملف العميل وكمّل طلبه' : 'Open the client to complete the request'}>
+                    {isAr ? `ناقص في طلبه: ${row.missing.join('، ')}` : `Missing: ${row.missing.length}`}
+                  </button>
+                )}
                 <span className="smh__budget">
                   {row.budget ? `${isAr ? 'ميزانية' : 'Budget'} ${row.budget.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}` : (isAr ? 'من غير ميزانية' : 'No budget')}
                 </span>

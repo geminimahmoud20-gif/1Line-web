@@ -95,3 +95,31 @@ export const filledSpecs = (p, isAr = true) =>
   specFieldsFor(p?.type)
     .filter((f) => String(p?.[f.key] || '').trim())
     .map((f) => ({ key: f.key, label: isAr ? f.ar : f.en, value: String(p[f.key]).trim() }));
+
+/** A detached house or villa: described by how many floors it has, not by which floor it is on */
+export const isHouseType = (type) => type === 'villa';
+
+const floorsWord = (n, isAr) => {
+  if (!isAr) return `${n} ${n === 1 ? 'floor' : 'floors'}`;
+  if (n === 1) return 'دور واحد';
+  if (n === 2) return 'دورين';
+  return n <= 10 ? `${n} أدوار` : `${n} دور`;
+};
+
+/**
+ * The floor fact a buyer reads, by what the unit is: «3 أدوار» for a house or a whole building, «الدور 3 من 8»
+ * (or «أرضي») for a flat, and '' when it says nothing (land, farms, factories, or a number nobody entered).
+ * Shops and offices keep their own floor line, so they give '' here too.
+ */
+export function floorSpec(p, isAr = true) {
+  const type = p?.type;
+  const total = Number(p?.totalFloors);
+  if (isHouseType(type) || type === 'building') return total > 0 ? floorsWord(total, isAr) : '';
+  if (hasNoRooms(type)) return '';
+  const raw = p?.floor;
+  if (raw === undefined || raw === null || raw === '') return '';
+  const floor = Number(raw);
+  if (!Number.isFinite(floor)) return '';
+  const base = floor === 0 ? (isAr ? 'أرضي' : 'Ground floor') : (isAr ? `الدور ${floor}` : `Floor ${floor}`);
+  return total > 0 && floor > 0 && total >= floor ? `${base} ${isAr ? `من ${total}` : `of ${total}`}` : base;
+}

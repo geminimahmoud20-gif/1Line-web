@@ -84,3 +84,42 @@
 .tk-quick--flat { padding-inline-start: 0; }
 .tk-q:disabled { opacity: 0.6; cursor: default; }
 .tk-problem { color: var(--ui-danger); font-size: var(--ui-fs-2); }
+
+/* ===== Tasks, redesigned: every task a card with its urgency on the edge; the team's load at a glance ===== */
+.tk-section .tk-list { gap: var(--ui-s-3); }
+.tk-row {
+  border-radius: 16px; border: 1px solid var(--ui-line); border-inline-start: 5px solid var(--ui-line-strong);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 5%, transparent), 0 12px 24px -20px color-mix(in srgb, var(--ui-n900) 30%, transparent);
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.tk-row:hover { box-shadow: 0 2px 4px color-mix(in srgb, var(--ui-n900) 7%, transparent), 0 16px 28px -18px color-mix(in srgb, var(--ui-n900) 34%, transparent); }
+.tk-section.is-danger .tk-row { border-inline-start-color: var(--ui-danger); }
+.tk-section.is-primary .tk-row { border-inline-start-color: var(--ui-primary); }
+.tk-row.is-high:not(.is-done) { border-inline-start-color: var(--ui-warning); }
+.tk-section.is-danger .tk-row.is-high:not(.is-done) { border-inline-start-color: var(--ui-danger); }
+.tk-row.is-done { border-inline-start-color: var(--ui-success); }
+.tk-title { font-weight: var(--ui-fw-semibold); font-size: var(--ui-fs-3); }
+.tk-pill { display: inline-flex; align-items: center; gap: 4px; }
+.tk-pill.is-from { background: var(--ui-info-tint); color: var(--ui-info); }
+.tk-pill.is-seen { background: var(--ui-success-tint); color: var(--ui-success); }
+.tk-pill.is-unseen { background: var(--ui-warning-tint); color: var(--ui-warning); }
+
+/* The team's load: one card per person; a tap filters the list to them */
+.tk-load { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--ui-s-3); }
+.tk-person {
+  display: grid; gap: 6px; padding: var(--ui-s-3); text-align: start; font: inherit; color: var(--ui-text);
+  border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-surface); cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 5%, transparent);
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.tk-person:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--ui-n900) 40%, transparent); }
+.tk-person.is-on { border-color: var(--ui-primary); box-shadow: inset 0 0 0 1px var(--ui-primary); }
+.tk-person.is-late { border-inline-start: 5px solid var(--ui-danger); }
+.tk-person__name { font-weight: var(--ui-fw-bold); font-size: var(--ui-fs-3); }
+.tk-person__nums { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; color: var(--ui-text-2); font-size: var(--ui-fs-2); }
+.tk-person__nums b { font-size: 22px; color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.tk-person__nums em { font-style: normal; padding: 1px 8px; border-radius: 999px; background: var(--ui-surface-2); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); }
+.tk-person__nums em.is-late { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.tk-person__bar { height: 6px; border-radius: 999px; background: var(--ui-surface-2); overflow: hidden; }
+.tk-person__bar i { display: block; height: 100%; border-radius: 999px; background: var(--ui-success); }
+.tk-person small { color: var(--ui-text-3); font-size: var(--ui-fs-1); }

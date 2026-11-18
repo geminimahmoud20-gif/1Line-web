@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { isAgricultural, isIndustrial, isLandType } from '../../utils/propertyKinds';
+import { isAgricultural, isIndustrial, isLandType, floorSpec } from '../../utils/propertyKinds';
 import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, FileText, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video, Layers3, Clock3, ShieldCheck, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
@@ -59,9 +59,7 @@ export default function QuickViewModal({
     ? Math.round(Number(property.price) / Number(property.size))
     : 0;
   const hasRooms = !isLand && !isCommercial && !isOffice && !isSpecial;
-  const floorText = !hasRooms || property.floor === undefined || property.floor === null || property.floor === ''
-    ? ''
-    : (Number(property.floor) === 0 ? (isAr ? 'أرضي' : 'Ground floor') : (isAr ? `الدور ${property.floor}` : `Floor ${property.floor}`));
+  const floorText = hasRooms ? floorSpec(property, isAr) : '';
   const handoverText = property.completionStatus === 'ready'
     ? (isAr ? 'استلام فوري' : 'Ready now')
     : property.deliveryYear
