@@ -27,3 +27,14 @@ test('the CRM offers «عقار جديد» exactly when the database will accept
   assert.equal(canEditProperties('super_admin', []), true);
   assert.equal(canEditProperties('property_manager'), true);
 });
+
+test('files on a client note: any signed-in account that works clients, never a viewer or a guest', () => {
+  assert.equal(canUploadMedia({ role: 'super_admin', admin: true }, 'leadfile'), true);
+  assert.equal(canUploadMedia({ role: 'sales_agent', staff: true, perms: ['ld.edit'] }, 'leadfile'), true);
+  assert.equal(canUploadMedia({ role: 'sales_manager', staff: true, perms: ['ld.manage'] }, 'leadfile'), true);
+  assert.equal(canUploadMedia({ role: 'viewer', staff: true, perms: [] }, 'leadfile'), false);
+  assert.equal(canUploadMedia({}, 'leadfile'), false);
+  // listing photos still need the inventory right, the video stays admin-only
+  assert.equal(canUploadMedia({ role: 'sales_agent', staff: true, perms: ['ld.edit'] }, 'image'), false);
+  assert.equal(canUploadMedia({ role: 'sales_agent', staff: true, perms: ['ld.edit'] }, 'video'), false);
+});

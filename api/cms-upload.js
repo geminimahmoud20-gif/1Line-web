@@ -21,8 +21,11 @@ const LIMITS = {
   video: { maxBytes: 20 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
   image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] },
   // 640px copies of listing photos (src/utils/imageThumbs.js): a fixed path, so no random suffix
-  thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] }
+  thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] },
+  // A photo or a PDF attached to a note on a client (lead-files/<client id>/<file>)
+  leadfile: { maxBytes: 8 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] }
 };
+const LEADFILE_PATH = /^lead-files\/[\w-]{1,128}\/[\w.-]{1,120}$/;
 const THUMB_PATH = /^cms\/thumbs\/[\w.-]{1,200}\.w640\.jpg$/;
 const GRANT_TTL_MS = 30 * 60 * 1000;
 const CACHE_SECONDS = 60 * 60 * 24 * 365;
@@ -61,7 +64,9 @@ const authorise = async (pathname, clientPayload) => {
   const limits = LIMITS[payload.kind];
   const pathOk = payload.kind === 'thumb'
     ? THUMB_PATH.test(pathname)
-    : pathname.startsWith(`cms/${payload.kind}s/`) && /^cms\/(videos|images)\/[\w.-]{1,120}$/.test(pathname);
+    : payload.kind === 'leadfile'
+      ? LEADFILE_PATH.test(pathname)
+      : pathname.startsWith(`cms/${payload.kind}s/`) && /^cms\/(videos|images)\/[\w.-]{1,120}$/.test(pathname);
   if (!limits || !pathOk) throw new Error('bad-path');
   const uid = await verifyUploader(String(payload.idToken || ''), payload.kind);
   // A small copy is rewritten in place when it is made again

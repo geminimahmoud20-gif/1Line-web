@@ -407,12 +407,28 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /crm_notes/{noteId} {
+      // Up to four files (https link, name, type, size): the same list /api/cms-upload signs
+      function validAttachment(a) {
+        return a is map && a.keys().hasOnly(['url', 'name', 'type', 'size'])
+          && a.url is string && a.url.matches('https://.*') && a.url.size() <= 400
+          && a.name is string && a.name.size() <= 120
+          && a.type in ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+          && a.size is number && a.size > 0 && a.size <= 8388608;
+      }
+      // Rules functions cannot call themselves, so the four places are spelled out
+      function validAttachments(l) {
+        return (l.size() <= 0 || validAttachment(l[0])) && (l.size() <= 1 || validAttachment(l[1]))
+          && (l.size() <= 2 || validAttachment(l[2])) && (l.size() <= 3 || validAttachment(l[3]));
+      }
       function validNote(d) {
-        return d.keys().hasOnly(['entityType', 'entityId', 'entityName', 'text', 'mentions', 'authorUid', 'authorName', 'createdAt'])
+        return d.keys().hasOnly(['entityType', 'entityId', 'entityName', 'text', 'mentions', 'attachments', 'authorUid', 'authorName', 'createdAt'])
           && d.entityType in ['lead', 'property', 'project', 'team']
           && d.entityId is string && d.entityId.size() > 0 && d.entityId.size() <= 128
           && d.get('entityName', '') is string && d.get('entityName', '').size() <= 80
-          && d.text is string && d.text.size() > 0 && d.text.size() <= 1500
+          && d.text is string && d.text.size() <= 1500
+          && d.get('attachments', []) is list && d.get('attachments', []).size() <= 4
+          && (d.text.size() > 0 || d.get('attachments', []).size() > 0)
+          && validAttachments(d.get('attachments', []))
           && d.mentions is list && d.mentions.size() <= 10
           && d.authorUid == request.auth.uid
           && d.authorName is string && d.authorName.size() <= 80
