@@ -348,8 +348,8 @@ export default function CrmPage({
 
   // New lead in the live list → chime, toast and (if allowed) a desktop notification
   useEffect(() => {
-    if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
-  }, [leads, crmAuthenticated, lang, triggerToast]);
+    if (crmAuthenticated) announceNewLeads(visibleLeads, { isAr: lang === 'ar', toast: triggerToast });
+  }, [visibleLeads, crmAuthenticated, lang, triggerToast]);
 
   // Expat remote inspections and trade-ins (their own lists): ring and show in the bell like leads
   const [intakeRequests, setIntakeRequests] = useState([]);
