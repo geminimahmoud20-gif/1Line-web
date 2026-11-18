@@ -7,6 +7,8 @@ import { formatFollowUp, formatBudget, campaignLabel } from '../../utils/crmLabe
 import DeskOptions from './DeskOptions';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import { assigneeValue, assignmentUpdates, personFor } from '../../utils/assignees';
+import OwnerPerformance from './OwnerPerformance';
+import { ownersTable } from '../../utils/ownerPerformance';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
@@ -123,6 +125,8 @@ export default function LeadsTab({
   setSourceFilter,
   dateFilter = 'all',
   setDateFilter,
+  ownerFilter = 'all',
+  setOwnerFilter,
   leadSort = 'waiting',
   setLeadSort,
   canEdit = true,
@@ -314,18 +318,26 @@ export default function LeadsTab({
       : (isAr ? 'مفيش عميل بالاسم أو الرقم ده' : 'No client matches'), res.leads.length ? 'success' : 'info');
   };
 
-  const hasActiveFilters = leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || Boolean(searchQuery);
+  const hasActiveFilters = (ownerFilter && ownerFilter !== 'all') || leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || Boolean(searchQuery);
   // Dropdown filters set (the views row and search show their own state)
-  const activeFilterCount = [temperatureFilter !== 'all', sourceFilter && sourceFilter !== 'all', dateFilter && dateFilter !== 'all', areaFilter && areaFilter !== 'all'].filter(Boolean).length;
+  const activeFilterCount = [ownerFilter && ownerFilter !== 'all', temperatureFilter !== 'all', sourceFilter && sourceFilter !== 'all', dateFilter && dateFilter !== 'all', areaFilter && areaFilter !== 'all'].filter(Boolean).length;
   const resetFilters = () => {
     setLeadFilter('all');
     setTemperatureFilter('all');
     setSourceFilter?.('all');
     setDateFilter?.('all');
     setAreaFilter?.('all');
+    setOwnerFilter?.('all');
     setSearchQuery?.('');
   };
   const [showFilters, setShowFilters] = useState(false);
+  // Who holds the clients: the owner filter's options, with how many open clients each has
+  const owners = useMemo(() => ownersTable(leads, teamMembers), [leads, teamMembers]);
+  const ownerOptions = useMemo(() => [
+    { value: 'all', label: isAr ? 'كل المسؤولين' : 'All owners' },
+    ...owners.filter((o) => o.key !== 'none').map((o) => ({ value: o.key, label: `${o.name} (${o.stats.open})` })),
+    ...(owners.some((o) => o.key === 'none') ? [{ value: 'none', label: isAr ? 'من غير مسؤول' : 'No owner' }] : [])
+  ], [owners, isAr]);
 
   const kpiStats = useMemo(() => {
     const total = leads.length;
@@ -575,6 +587,18 @@ export default function LeadsTab({
         </div>
       )}
 
+      {setOwnerFilter && owners.length > 1 && (
+        <OwnerPerformance
+          isAr={isAr}
+          leads={leads}
+          owners={owners}
+          ownerFilter={ownerFilter}
+          onPickOwner={setOwnerFilter}
+          onPickView={setLeadFilter}
+          leadFilter={leadFilter}
+        />
+      )}
+
       <div className="crm-leads__toolbar">
         <label className="crm-leads__search">
           <Search size={16} aria-hidden="true" />
@@ -646,6 +670,16 @@ export default function LeadsTab({
               { value: 'unknown', label: isAr ? 'مش محددة' : 'Not set' }
             ]}
           />
+          {setOwnerFilter && owners.length > 1 && (
+            <Select
+              hideLabel
+              className="crm-leads__owner"
+              label={isAr ? 'المسؤول' : 'Owner'}
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              options={ownerOptions}
+            />
+          )}
           {setSourceFilter && (
             <Select
               hideLabel

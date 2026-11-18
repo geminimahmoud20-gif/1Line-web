@@ -4,6 +4,8 @@
 //  run them directly.
 // =============================================================
 
+import { assigneeValue } from './assignees.js';
+
 export function getNormalizedPropertyStatus(prop) {
   if (!prop) return 'published';
   if (prop.isDeleted || prop.status === 'trash') return 'trash';
@@ -440,11 +442,22 @@ function inDateRange(l, range, now) {
  * Archived and lost leads only show under their own filter. today (YYYY-MM-DD) and now (ms)
  * default to the current time; tests pass them in.
  */
+export const OWNER_ALL = 'all';
+export const OWNER_NONE = 'none';
+
+/** Does this lead belong to the owner filter value (a select value from utils/assignees, `none`, or `all`)? */
+export function matchesOwner(lead, ownerFilter = OWNER_ALL) {
+  if (!ownerFilter || ownerFilter === OWNER_ALL) return true;
+  const v = assigneeValue(lead);
+  if (ownerFilter === OWNER_NONE) return !v.startsWith('user:');
+  return v === ownerFilter;
+}
+
 export function filterLeads(leads = [], opts = {}) {
   const {
     myDealsOnly = false, activeRole, agentName, leadFilter = 'all',
     temperatureFilter = 'all', areaFilter = 'all', areaIds = null, sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
-    today, now = Date.now(), duplicateIds = null
+    today, now = Date.now(), duplicateIds = null, ownerFilter = 'all'
   } = opts;
   const q = searchQuery.trim().toLowerCase();
   const todayKey = today || localDayKey(now);
@@ -498,6 +511,7 @@ export function filterLeads(leads = [], opts = {}) {
       return false;
     }
 
+    if (!matchesOwner(l, ownerFilter)) return false;
     if (temperatureFilter !== 'all') {
       const t = l.temperature || 'unknown';
       if (t !== temperatureFilter) return false;

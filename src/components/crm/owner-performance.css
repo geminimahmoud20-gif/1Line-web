@@ -1,0 +1,32 @@
+.op { background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: 14px; margin: 0 0 12px; overflow: hidden; }
+.op__toggle { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; background: none; border: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
+.op__chev { margin-inline-start: auto; transition: transform .15s; }
+.op__chev.is-open { transform: rotate(180deg); }
+.op__scroll { overflow-x: auto; border-top: 1px solid var(--ui-line); }
+.op__table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+.op__table th, .op__table td { padding: 8px 10px; text-align: start; white-space: nowrap; }
+.op__table thead th { font-size: 12px; color: var(--ui-text-3); font-weight: 600; background: transparent; }
+.op__table tbody tr { cursor: pointer; border-top: 1px solid var(--ui-line); }
+.op__table tbody tr:hover, .op__table tbody tr:focus-visible { background: color-mix(in srgb, var(--ui-primary) 7%, transparent); outline: none; }
+.op__table tbody th { font-weight: 600; }
+.op .is-bad { color: var(--ui-danger); font-weight: 700; }
+.op .is-warn { color: var(--ui-warning); font-weight: 700; }
+.op .is-good { color: var(--ui-success); font-weight: 700; }
+.op--picked { padding: 14px; }
+.op__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.op__head b { font-size: 16px; }
+.op__sub { color: var(--ui-text-3); font-size: 12px; }
+.op__close { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--ui-line); background: none; font: inherit; font-size: 12px; cursor: pointer; color: inherit; }
+.op__funnel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+.op__stage { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.op__stage small { font-size: 11px; color: var(--ui-text-3); }
+.op__bar { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 44px; background: color-mix(in srgb, var(--ui-text-3) 10%, transparent); border-radius: 8px; overflow: hidden; }
+.op__bar i { display: block; width: 46%; max-width: 28px; background: var(--ui-primary); opacity: .85; border-radius: 6px 6px 0 0; }
+.op__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; margin: 0; }
+.op__tile { padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--ui-text-3) 8%, transparent); }
+.op__tile dt { font-size: 11px; color: var(--ui-text-3); }
+.op__tile dd { margin: 2px 0 0; font-size: 18px; font-weight: 700; }
+.op__tile.is-bad dd { color: var(--ui-danger); }
+.op__tile.is-warn dd { color: var(--ui-warning); }
+.op__tile.is-good dd { color: var(--ui-success); }
+@media (max-width: 640px) { .op__funnel { gap: 4px; } }
