@@ -3,6 +3,7 @@
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { doc, getDoc, setDoc, deleteDoc, updateDoc, collection, query, where, orderBy, limit, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
 import { test, before, after, beforeEach } from 'node:test';
 
 const ADMIN_UID = 'dB6GM2RoPQRE0iksDnqcdvUKgXy2'; // the owner account; admin only through its claim
@@ -904,4 +905,66 @@ test('property_private: internal notes of a listing are staff-only, written by t
   await assertFails(setDoc(doc(as('property_manager'), 'property_private/p2'), { ...note, notes: 'x'.repeat(3001) }));
   await assertFails(setDoc(doc(guest(), 'property_private/p3'), note));
   await assertSucceeds(deleteDoc(doc(as('property_manager'), 'property_private/p1')));
+});
+
+test('chats: a private conversation is read and written by its members only, not by the admin or the rest of the team', async () => {
+  const agent = as('sales_agent'); // uid u-sales_agent
+  const mgr = as('sales_manager');
+  const other = as('agent_east');
+  const id = 'dm_u-sales_agent_u-sales_manager';
+  const chat = { kind: 'dm', members: ['u-sales_agent', 'u-sales_manager'], createdBy: 'u-sales_agent', createdAt: 1, lastMessageAt: 0, reads: { 'u-sales_agent': 1 } };
+  await assertSucceeds(setDoc(doc(agent, `chats/${id}`), chat));
+  // a dm is the pair's one conversation: its id says who, and the members are sorted
+  await assertFails(setDoc(doc(agent, 'chats/dm_other'), chat));
+  await assertFails(setDoc(doc(agent, `chats/dm_u-sales_manager_u-sales_agent`), { ...chat, members: ['u-sales_manager', 'u-sales_agent'] }));
+  // nobody makes a conversation they are not in
+  await assertFails(setDoc(doc(other, 'chats/dm_u-sales_agent_u-sales_manager2'), { ...chat, members: ['u-sales_agent', 'u-sales_manager2'], createdBy: 'u-agent_east' }));
+  await assertFails(setDoc(doc(guest(), `chats/${id}x`), chat));
+
+  // members read it; the rest of the team, an admin and a guest do not
+  await assertSucceeds(getDoc(doc(agent, `chats/${id}`)));
+  await assertSucceeds(getDoc(doc(mgr, `chats/${id}`)));
+  await assertFails(getDoc(doc(other, `chats/${id}`)));
+  await assertFails(getDoc(doc(asAdmin(), `chats/${id}`)));
+  await assertFails(getDoc(doc(guest(), `chats/${id}`)));
+  // the list: your own conversations, never someone else's
+  const mine = (db, uid) => getDocs(query(collection(db, 'chats'), where('members', 'array-contains', uid)));
+  assert.equal((await assertSucceeds(mine(mgr, 'u-sales_manager'))).size, 1);
+  await assertFails(mine(other, 'u-sales_manager'));
+  assert.equal((await assertSucceeds(mine(other, 'u-agent_east'))).size, 0);
+
+  // a message: by a member, as themselves, and the preview moves with it
+  const msg = { text: 'مساء الخير', authorUid: 'u-sales_manager', authorName: 'مدير', createdAt: 2 };
+  const send = (db, uid, m = msg) => {
+    const batch = writeBatch(db);
+    batch.set(doc(db, `chats/${id}/messages/m1`), m);
+    batch.update(doc(db, `chats/${id}`), { lastMessageAt: 2, lastMessageText: m.text, lastSenderUid: uid, [`reads.${uid}`]: 2 });
+    return batch.commit();
+  };
+  await assertSucceeds(send(mgr, 'u-sales_manager'));
+  await assertFails(send(other, 'u-agent_east', { ...msg, authorUid: 'u-agent_east' }));
+  await assertFails(setDoc(doc(mgr, `chats/${id}/messages/m2`), { ...msg, authorUid: 'u-sales_agent' })); // not as someone else
+  await assertFails(setDoc(doc(mgr, `chats/${id}/messages/m3`), { ...msg, text: '' }));
+  await assertSucceeds(getDoc(doc(agent, `chats/${id}/messages/m1`)));
+  await assertFails(getDoc(doc(other, `chats/${id}/messages/m1`)));
+  await assertFails(getDoc(doc(asAdmin(), `chats/${id}/messages/m1`)));
+  await assertFails(getDocs(collection(other, `chats/${id}/messages`)));
+  assert.equal((await assertSucceeds(getDocs(collection(agent, `chats/${id}/messages`)))).size, 1);
+  // messages are never edited or removed
+  await assertFails(updateDoc(doc(mgr, `chats/${id}/messages/m1`), { text: 'x' }));
+  await assertFails(deleteDoc(doc(mgr, `chats/${id}/messages/m1`)));
+
+  // «seen»: your own marker only; the members and the kind of conversation stay as they are
+  await assertSucceeds(updateDoc(doc(agent, `chats/${id}`), { 'reads.u-sales_agent': 3 }));
+  await assertFails(updateDoc(doc(agent, `chats/${id}`), { 'reads.u-sales_manager': 3 }));
+  await assertFails(updateDoc(doc(agent, `chats/${id}`), { members: ['u-sales_agent', 'u-sales_manager', 'u-agent_east'] }));
+  await assertFails(updateDoc(doc(other, `chats/${id}`), { 'reads.u-agent_east': 3 }));
+  await assertFails(deleteDoc(doc(agent, `chats/${id}`)));
+
+  // a group needs a name; its members read it
+  const group = { kind: 'group', title: 'فريق المعاينات', members: ['u-agent_east', 'u-sales_agent', 'u-sales_manager'], createdBy: 'u-sales_agent', createdAt: 1, lastMessageAt: 0, reads: { 'u-sales_agent': 1 } };
+  await assertFails(setDoc(doc(agent, 'chats/g0'), { ...group, title: '' }));
+  await assertSucceeds(setDoc(doc(agent, 'chats/g1'), group));
+  await assertSucceeds(getDoc(doc(other, 'chats/g1')));
+  await assertFails(getDoc(doc(as('finance'), 'chats/g1')));
 });
