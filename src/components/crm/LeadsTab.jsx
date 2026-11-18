@@ -92,6 +92,7 @@ export default function LeadsTab({
   handleToggleSelectOne,
   isAr,
   isSuperAdmin,
+  canDeleteLeads,
   kbdIndex,
   lang,
   leadFilter,
@@ -705,7 +706,7 @@ export default function LeadsTab({
             />
           )}
           <Button variant="secondary" size="sm" icon={<Download size={16} aria-hidden="true" />} onClick={handleBulkExportSelected}>{isAr ? 'تصدير' : 'Export'}</Button>
-          {isSuperAdmin && (
+          {(canDeleteLeads ?? isSuperAdmin) && (
             <Button variant="danger" size="sm" icon={<Trash2 size={16} aria-hidden="true" />} onClick={handleBulkDelete}>{isAr ? 'حذف' : 'Delete'}</Button>
           )}
           <Button variant="ghost" size="sm" icon={<X size={16} aria-hidden="true" />} onClick={() => setSelectedLeadIds([])}>{isAr ? 'إلغاء التحديد' : 'Clear'}</Button>
@@ -1099,7 +1100,7 @@ export default function LeadsTab({
                       lead={l}
                       isAr={isAr}
                       canEdit={canEdit}
-                      isSuperAdmin={isSuperAdmin}
+                      isSuperAdmin={canDeleteLeads ?? isSuperAdmin}
                       onQuickDrawer={setQuickDrawerLead}
                       onWhatsAppClick={onWhatsAppClick}
                       onViewingProfileLead={setViewingProfileLead}

@@ -55,7 +55,7 @@ import { useProperties } from '../context/PropertiesContext';
 import { parseMoney } from '../utils/crmLeadViews';
 import { canEditInventory, canPublishInventory } from '../utils/accessModel';
 import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess } from '../utils/rbacRules';
-import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
+import { permsOfRole, PERM_IDS, LEGACY_DESK, canAssignTasks } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
 import { handoverFromSeller } from '../utils/unitHandover';
@@ -193,7 +193,7 @@ export default function CrmPage({
   };
   // Tasks: one shared subscription for the sidebar badge, the tasks tab and a client's drawer;
   // a manager sees the whole team's, everyone else the tasks assigned to them
-  useTasksSync(currentUser?.uid, can.campaigns);
+  useTasksSync(currentUser?.uid, activeRole === 'super_admin' || canAssignTasks(userPerms));
   useCampaignNames();
   // Private chats: one subscription for the sidebar's unread count and the chat page
   usePrivateChatsSync(currentUser?.uid);

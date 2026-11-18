@@ -42,6 +42,7 @@ export default function LeadQuickDrawer({
   onClose,
   onUpdateLead,
   onDeleteLead,
+  canDeleteLeads = false,
   onConvertToProperty,
   onNavigate,
   tab: tabProp,
@@ -370,7 +371,7 @@ export default function LeadQuickDrawer({
         )}
         footer={(
           <>
-            {activeRole === 'super_admin' && onDeleteLead && (
+            {(activeRole === 'super_admin' || canDeleteLeads) && onDeleteLead && (
               <Button variant="ghost" size="sm" className="crm-ld__delete" icon={<Trash2 size={16} aria-hidden="true" />} onClick={handleDelete}>
                 {isAr ? 'حذف' : 'Delete'}
               </Button>

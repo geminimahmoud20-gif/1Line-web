@@ -234,3 +234,16 @@ test('exporting depends on the «export» right when the account has a permissio
   assert.equal(canExportCsv('sales_manager', null), true); // no list known: the old role defaults
   assert.equal(canExportCsv('sales_agent', null), false);
 });
+
+test('task.assign and ld.delete: «يدير كل العملاء» includes the first, nothing includes the second', async () => {
+  const { canAssignTasks, canDeleteLeads, PERM_IMPLIED_BY, PERMISSIONS, PERM_GROUPS } = await import('../../src/utils/accessModel.js');
+  assert.equal(canAssignTasks(['ld.edit']), false);
+  assert.equal(canAssignTasks(['task.assign']), true);
+  assert.equal(canAssignTasks(['ld.manage']), true);
+  assert.equal(PERM_IMPLIED_BY['task.assign'], 'ld.manage');
+  assert.equal(canDeleteLeads(['ld.manage', 'ld.all', 'ld.edit']), false); // a manager does not delete clients unless it is given
+  assert.equal(canDeleteLeads(['ld.delete']), true);
+  // every permission is shown in a group the roles screen has
+  const groups = new Set(PERM_GROUPS.map((g) => g.id));
+  assert.ok(PERMISSIONS.every((p) => groups.has(p.group)));
+});
