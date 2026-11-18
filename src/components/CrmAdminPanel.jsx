@@ -189,7 +189,7 @@ export const CrmAdminPanel = ({
   // Customer 360 & Add Lead Modal States
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   // The client file (drawer) opens on «الملف»; the old «ملف العميل» window is gone: its data is the «التفاصيل» tab
-  const [drawerTab, setDrawerTab] = useState('overview');
+  const [drawerTab, setDrawerTab] = useState('work');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
 
@@ -944,7 +944,7 @@ export const CrmAdminPanel = ({
           setSelectedLeadIds={setSelectedLeadIds}
           setShowAddLeadModal={setShowAddLeadModal}
           setTemperatureFilter={setTemperatureFilter}
-          setViewingProfileLead={(l) => { setDrawerTab('details'); setQuickDrawerLead(l); }}
+          setViewingProfileLead={(l) => { setDrawerTab('client'); setQuickDrawerLead(l); }}
           temperatureFilter={temperatureFilter}
           triggerToast={triggerToast}
         />
@@ -1202,7 +1202,7 @@ export const CrmAdminPanel = ({
         lead={quickDrawerLead}
         tab={drawerTab}
         onTabChange={setDrawerTab}
-        onClose={() => { setQuickDrawerLead(null); setDrawerTab('overview'); }}
+        onClose={() => { setQuickDrawerLead(null); setDrawerTab('work'); }}
         onUpdateLead={(leadId, updatedData, expectedVer) => {
           const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
           if (result !== false) {
@@ -1221,6 +1221,7 @@ export const CrmAdminPanel = ({
         isAr={isAr}
         triggerToast={triggerToast}
         activeRole={activeRole}
+        mayAssignTasks={isSuperRole || canAssignTasks(perms)}
       />
 
       {/* ⚠️ MODAL: CONCURRENCY CONFLICT RESOLUTION */}
