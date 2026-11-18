@@ -10,29 +10,26 @@ import {
   Lock,
   UserCog,
   Archive,
-  Building,
   DollarSign,
   Briefcase,
   Clock,
   Hand
 } from 'lucide-react';
-import { PageHeader, Tabs, SegmentedControl, Chip, Badge, Button, IconButton, Select, Card, Avatar, EmptyState, MotionRoot } from '../ui';
+import { PageHeader, Tabs, Chip, Badge, Button, IconButton, Select, Card, Avatar, EmptyState, MotionRoot } from '../ui';
 import { cx } from '../ui/cx';
 import './CrmInboxPanel.css';
 import './client-card.css';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
-import { guardStage } from '../../utils/stageGate';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
 import { sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { subscribeToContactIntents, resolveContactIntent } from '../../firebaseLazy';
 import WhatsAppIntentsList from './WhatsAppIntentsList';
-import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { listTeamMembers } from '../../services/team';
 import { userDisplayName } from '../../utils/assignees';
 import { withoutGeneratedOffer } from '../../utils/clientTimeline';
 import {
-  INBOX_STAGES as STAGES, INBOX_VIEWS, TEAM_DESKS, isInboxStage, pipelineStageLabel, isLeadUnclaimed, isLeadClaimedByMe,
+  INBOX_VIEWS, TEAM_DESKS, isLeadUnclaimed, isLeadClaimedByMe,
   isInboxActive, needsAction, matchesView, receivedMs, ageLabel, formatReceived, requestsCount, slaSummary, splitNotes,
   reassignUpdates, knownOwners
 } from '../../utils/inboxView';
@@ -179,7 +176,6 @@ export default function CrmInboxPanel({
   lang = 'ar',
   onUpdateLead,
   onOpenLead,
-  onConvertToProperty,
   triggerToast,
   onAddNewLead,
   canEditLeads = false,
@@ -466,23 +462,6 @@ export default function CrmInboxPanel({
     }
   };
 
-  // Stage buttons: only for the inbox's own stages, so a deal already in negotiation or closing
-  // is never sent back to "جديد" by a click here
-  const handleSetStage = (lead, newStage) => {
-    if (!onUpdateLead || !isInboxStage(lead.status)) return;
-    // The stage lock: log the activity outcome first (from the client's drawer)
-    if (!guardStage(lead, { status: newStage }, { role: userRole, toast: triggerToast })) return;
-    const nowIso = new Date().toISOString();
-    onUpdateLead(lead.id, {
-      status: newStage,
-      lastStatusUpdate: nowIso,
-      lastActivityAt: nowIso,
-      ...(newStage !== 'new' && !lead.firstContactedAt ? { firstContactedAt: nowIso } : {})
-    });
-    const stageObj = STAGES.find((s) => s.id === newStage);
-    triggerToast?.(isAr ? `المرحلة بقت: ${stageObj ? stageObj.label_ar : newStage}` : 'Stage updated', 'info');
-  };
-
   const openReassign = (lead) => {
     loadTeam();
     setReassigningLeadId(lead.id);
@@ -521,40 +500,6 @@ export default function CrmInboxPanel({
     if (tab) { setTabPicked(true); setActiveTab(tab); }
     setView('unclaimed');
     setSearchQuery('');
-  };
-
-  // Generate customized WhatsApp text based on stream without false promises or fake data
-  const getWhatsAppMessage = (lead) => {
-    const name = lead.name || (isAr ? 'العميل' : 'Client');
-    const d = lead.details || {};
-
-    if (activeTab === 'visits') {
-      const propCode = d.propertyCode || d.propertyId ? ` (كود: ${d.propertyCode || d.propertyId})` : '';
-      const datePart = d.visitDate ? ` يوم ${d.visitDate}${d.visitSlot ? ` (${d.visitSlot})` : ''}` : '';
-      return isAr
-        ? `أهلاً بك أ. ${name}، بخصوص طلبكم لمعاينة العقار${propCode}${datePart} عبر منصة 1Line، نسعد بتأكيد الموعد معكم ومتابعة التفاصيل...`
-        : `Hello ${name}, regarding your viewing request${propCode ? ` for property ${propCode}` : ''}${datePart ? ` on ${datePart}` : ''} on 1Line...`;
-    }
-
-    if (activeTab === 'sellers') {
-      const propType = formatPropertyType(d.propertyType || lead.propertyType) || (isAr ? 'عقاركم' : 'property');
-      const area = formatAreaName(d.area || lead.area) || (isAr ? 'سوهاج' : 'Sohag');
-      return isAr
-        ? `أهلاً بك أ. ${name}، بخصوص رغبتكم في عرض (${propType}) في (${area}) للبيع والتسويق عبر منصة 1Line، نود مراجعة التفاصيل والصور معكم للبدء فوراً...`
-        : `Hello ${name}, regarding your listing request on 1Line...`;
-    }
-
-    if (activeTab === 'buyers') {
-      const propType = formatPropertyType(d.propertyType || lead.propertyType) || (isAr ? 'عقار' : 'property');
-      const budget = d.budget || lead.budget ? ` بميزانية ${d.budget || lead.budget}` : '';
-      return isAr
-        ? `أهلاً بك أ. ${name}، استلمنا طلبكم بخصوص البحث عن (${propType})${budget} عبر 1Line، وسنتواصل معكم لطرح بعض الأسئلة لترشيح أفضل الخيارات المناسبة لكم بدقة...`
-        : `Hello ${name}, we received your request for (${propType})${budget} on 1Line, and our advisor will follow up with a few discovery questions to shortlist the best options for you...`;
-    }
-
-    return isAr
-      ? `أهلاً بك أ. ${name}، بخصوص تواصلكم مع منصة 1Line للحلول العقارية...`
-      : `Hello ${name}, regarding your inquiry on 1Line...`;
   };
 
   const totalNew = (categorized[activeTab] || []).filter((l) => isInboxActive(l) && isLeadUnclaimed(l)).length;
@@ -653,7 +598,6 @@ export default function CrmInboxPanel({
               const isClaimedByMe = isLeadClaimedByMe(lead, myUid, currentStaffName);
               const isUnclaimed = isLeadUnclaimed(lead);
               const ownerDisplay = getLeadOwnerDisplay(lead, isAr);
-              const waPhone = formatWhatsAppPhone(lead.whatsapp || lead.phone || '');
               const facts = getLeadFacts(lead, activeTab, isAr);
               const images = lead.details?.images || [];
               // CRM log lines ("[09:19 ص] تم تحديث المرحلة…") are split off before the client's text is tidied
@@ -665,7 +609,6 @@ export default function CrmInboxPanel({
               const age = Number.isFinite(got) ? ageLabel(currentTime - got, isAr) : '';
               const followUp = receivedMs({ createdAt: lead.nextFollowUpAt });
               const followLate = Number.isFinite(followUp) && followUp < new Date(currentTime).setHours(0, 0, 0, 0);
-              const inboxStage = isInboxStage(lead.status);
 
               return (
                 <li key={lead.id}>
@@ -772,50 +715,16 @@ export default function CrmInboxPanel({
                       </div>
                     )}
 
-                    <div className="crm-inbox-item__foot">
-                      {inboxStage ? (
-                        <SegmentedControl
-                          label={isAr ? 'مرحلة المتابعة' : 'Follow-up stage'}
-                          value={lead.status || 'new'}
-                          onChange={(id) => handleSetStage(lead, id)}
-                          options={STAGES.map((st) => ({ value: st.id, label: isAr ? st.label_ar : st.label_en }))}
-                        />
-                      ) : (
-                        <span className="crm-inbox-item__stage">
-                          <Badge tone="info">{pipelineStageLabel(lead.status, isAr)}</Badge>
-                          <span>{isAr ? 'المرحلة دي بتتغيّر من مسار الصفقات' : 'Change this stage from the pipeline'}</span>
-                        </span>
-                      )}
-                      <div className="crm-inbox-item__actions">
-                        {canSeePhone && waPhone && (
-                          <a
-                            href={`https://wa.me/${waPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ui-btn ui-btn--secondary ui-btn--sm"
-                          >
-                            <MessageCircle size={16} aria-hidden="true" />
-                            {isAr ? 'واتساب' : 'WhatsApp'}
-                          </a>
-                        )}
-                        {canSeePhone && lead.phone && (
-                          <a href={`tel:${lead.phone}`} className="ui-btn ui-btn--secondary ui-btn--sm">
-                            <Phone size={16} aria-hidden="true" />
-                            {isAr ? 'اتصال' : 'Call'}
-                          </a>
-                        )}
-                        {activeTab === 'sellers' && onConvertToProperty && (
-                          <Button variant="secondary" size="sm" icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
-                            {isAr ? 'حوّله لعقار' : 'To listing'}
-                          </Button>
-                        )}
-                        {onOpenLead && (
-                          <Button variant="ghost" size="sm" icon={<Eye size={16} aria-hidden="true" />} onClick={() => onOpenLead(lead)}>
-                            {isAr ? 'ملف العميل' : 'Client profile'}
-                          </Button>
-                        )}
+                    {/* The inbox is an alert: the form's details and «استلم الطلب». Calling, WhatsApp, the stage and
+                        «حوّله لعقار» belong to the person who took the client, in العملاء. A client someone already took
+                        keeps one button to open the file. */}
+                    {!isUnclaimed && onOpenLead && (
+                      <div className="crm-inbox-item__foot">
+                        <Button variant="secondary" size="sm" icon={<Eye size={16} aria-hidden="true" />} onClick={() => onOpenLead(lead)}>
+                          {isAr ? 'افتح ملف العميل' : 'Open client file'}
+                        </Button>
                       </div>
-                    </div>
+                    )}
                   </Card>
                 </li>
               );
