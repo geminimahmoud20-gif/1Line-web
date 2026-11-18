@@ -186,3 +186,11 @@ export function guardStage(lead, patch, { role, isManager, toast } = {}) {
   if (!r.ok) toast?.(r.message, 'error');
   return r.ok;
 }
+
+/** What the team did right after a «لم يرد» / «كلّمني بعدين»: the quick notes under «حصل إيه؟» (stored as a history line) */
+export const FOLLOW_UP_ACTIONS = [
+  { id: 'whatsapp', ar: 'بعتّله واتساب', en: 'Sent a WhatsApp' },
+  { id: 'voice', ar: 'سبت رسالة صوتية', en: 'Left a voice message' },
+  { id: 'sms', ar: 'بعتّله رسالة SMS', en: 'Sent an SMS' },
+  { id: 'retry', ar: 'هحاول تاني', en: 'Will try again' }
+];
