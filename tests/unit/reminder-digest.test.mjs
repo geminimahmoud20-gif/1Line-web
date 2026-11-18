@@ -98,3 +98,19 @@ test('with a minimum gap the digest waits even when it changed', () => {
   assert.equal(shouldSend(d, last, now, { minGapMs: 55 * 60 * 1000 }), false);
   assert.equal(shouldSend(d, { sig: 'y', at: '2026-11-17T08:55:00Z' }, now, { minGapMs: 55 * 60 * 1000 }), true);
 });
+
+test('the one who gave a task is told when it is late, and the one who got it is not told twice', async () => {
+  const { digestFor } = await import('../../src/utils/reminderDigest.js');
+  const NOW = new Date('2026-11-18T10:00:00').getTime();
+  const tasks = [
+    { id: 'a', status: 'open', dueAt: '2026-11-10', assigneeUid: 'u2', createdBy: 'boss' },
+    { id: 'b', status: 'open', dueAt: '2026-11-25', assigneeUid: 'u2', createdBy: 'boss' }
+  ];
+  const boss = digestFor([], { uid: 'boss', name: 'المدير', manager: true }, { now: NOW, tasks });
+  assert.equal(boss.givenLate, 1);
+  assert.match(boss.body, /1 مهمة كلّفت بيها اتأخرت/);
+  const colleague = digestFor([], { uid: 'u2', name: 'منى' }, { now: NOW, tasks });
+  assert.equal(colleague.givenLate, 0);
+  assert.equal(colleague.tasksLate, 1);
+  assert.equal(digestFor([], { uid: 'u9' }, { now: NOW, tasks }), null);
+});

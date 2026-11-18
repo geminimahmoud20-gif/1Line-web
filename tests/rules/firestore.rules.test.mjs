@@ -969,6 +969,16 @@ test('chats: a private conversation is read and written by its members only, not
   await assertFails(getDoc(doc(as('finance'), 'chats/g1')));
 });
 
+test('crm_tasks: the person a task was given to can mark it seen; nobody else\'s task, and nothing but the known fields', async () => {
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'crm_tasks/g1'), task({ assigneeUid: 'u-sales_agent', createdBy: 'u-sales_manager', createdByName: 'مدير' })));
+  const me = as('sales_agent');
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/g1'), { seenAt: '2026-11-18T10:00:00.000Z', updatedAt: '2026-11-18T10:00:00.000Z' }));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/g1'), { seenAt: 'x'.repeat(40) }));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/g1'), { secret: 'x' }));
+  await assertFails(updateDoc(doc(as('agent_east'), 'crm_tasks/g1'), { seenAt: '2026-11-18T10:00:00.000Z' }));
+});
+
 test('task.assign: a role with it gives tasks to colleagues and reads the team\'s without managing every client; a plain advisor does not', async () => {
   const lead = env.authenticatedContext('u-lead', { role: 'r_lead', staff: true, perms: ['ld.edit', 'ld.phone', 'task.assign'], desk: 'Sales Team A' }).firestore();
   await assertSucceeds(setDoc(doc(lead, 'crm_tasks/a1'), task({ assigneeUid: 'u-sales_agent', createdBy: 'u-lead' })));

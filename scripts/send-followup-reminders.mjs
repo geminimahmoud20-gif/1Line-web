@@ -19,6 +19,7 @@ import { initAdmin } from './backup-format.mjs';
 import { digestFor, shouldSend } from '../src/utils/reminderDigest.js';
 import { dueSoonFor, taskAlertPayload } from '../src/utils/nextStep.js';
 import { localDayKey } from '../src/utils/crmLeadViews.js';
+import { assignmentPayload } from '../src/utils/tasks.js';
 
 const dryRun = process.argv.includes('--dry-run');
 const force = process.argv.includes('--force');
@@ -141,7 +142,23 @@ for (const doc of subscribers) {
       if (r.delivered) { alerted[t.id] = t.dueAt; changed = true; sent += 1; }
     }
     for (const id of Object.keys(alerted)) if (!openIds.has(id)) { delete alerted[id]; changed = true; }
-    if (changed && !dryRun) await stateRef.set({ taskAlerts: alerted, updatedAt: now.toISOString() });
+    if (changed && !dryRun) await stateRef.set({ taskAlerts: alerted, updatedAt: now.toISOString() }, { merge: true });
+  }
+
+  // 3. A colleague gave this person a task and they have not opened it: told once, within 15 minutes of it being given
+  const given = alertHours ? tasks.filter((t) => t.assigneeUid === doc.id && t.createdBy && t.createdBy !== doc.id && !t.seenAt) : [];
+  if (given.length) {
+    const stateRef = db.doc(`push_state/${doc.id}`);
+    const announced = { ...((await stateRef.get()).data()?.taskAssigned || {}) };
+    let changed = false;
+    for (const t of given.filter((x) => !announced[x.id]).slice(0, 3)) {
+      if (dryRun) { console.log(`[dry run] ${member.name || doc.id}: ${assignmentPayload(t).title}`); continue; }
+      const r = await pushTo(doc.id, subs, assignmentPayload(t));
+      subs = r.alive;
+      if (r.delivered) { announced[t.id] = true; changed = true; sent += 1; }
+    }
+    for (const id of Object.keys(announced)) if (!openIds.has(id)) { delete announced[id]; changed = true; }
+    if (changed && !dryRun) await stateRef.set({ taskAssigned: announced }, { merge: true });
   }
 
   if (!dryRun && (subs.length !== data.subs.length || Object.keys(patch).length)) await doc.ref.update({ subs, ...patch });
