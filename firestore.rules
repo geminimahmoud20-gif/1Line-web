@@ -318,6 +318,29 @@ service cloud.firestore {
       allow delete: if canEditListings();
     }
 
+    // 🏷️ Who added a listing, and why the manager sent it back. /properties is public, so none of this lives on the
+    // listing. The one who adds it stamps their own name once (create only); only a publisher writes `rejection`.
+    match /property_meta/{propId} {
+      function validRejection(r) {
+        return r is map && r.keys().hasOnly(['reason', 'byName', 'byUid', 'at'])
+          && r.reason is string && r.reason.size() > 0 && r.reason.size() <= 300
+          && r.byName is string && r.byName.size() <= 80
+          && r.byUid == request.auth.uid
+          && r.at is string && r.at.size() <= 40;
+      }
+      allow read: if isStaff();
+      allow create: if (canEditListings()
+          && request.resource.data.keys().hasOnly(['submittedByUid', 'submittedByName', 'submittedAt'])
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.submittedByName is string && request.resource.data.submittedByName.size() <= 80
+          && request.resource.data.get('submittedAt', '') is string && request.resource.data.get('submittedAt', '').size() <= 40)
+        || (hasPerm('inv.publish') && request.resource.data.keys().hasOnly(['rejection']) && validRejection(request.resource.data.rejection));
+      allow update: if hasPerm('inv.publish')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rejection'])
+        && validRejection(request.resource.data.rejection);
+      allow delete: if canEditListings();
+    }
+
     // 🔔 4. NOTIFICATIONS
     match /notifications/{notifId} {
       // Not public-writable (spam vector); staff see new public leads via the leads listener.
