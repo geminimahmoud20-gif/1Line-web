@@ -56,6 +56,7 @@ import { useConfirm } from './ui';
 import { phoneProblem, nameProblem } from '../utils/contactValidation';
 import { userDisplayName } from '../utils/assignees';
 import { deletePrompt } from '../utils/deleteConfirm';
+import { defaultLeadFilter } from '../utils/crmLeadViews';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -169,19 +170,11 @@ export const CrmAdminPanel = ({
     setLocalAdminTab(tab);
     if (onSwitchTab) onSwitchTab(tab);
   }, [onSwitchTab]);
-  const [leadFilter, setLeadFilter] = useState(() => {
-    if (activeRole === 'property_manager') return 'seller';
-    if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') return 'viewing_request';
-    return 'all';
-  });
+  const [leadFilter, setLeadFilter] = useState(() => defaultLeadFilter(activeRole));
   const [prevActiveRole, setPrevActiveRole] = useState(activeRole);
   if (activeRole !== prevActiveRole) {
     setPrevActiveRole(activeRole);
-    if (activeRole === 'property_manager') {
-      setLeadFilter('seller');
-    } else if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') {
-      setLeadFilter('viewing_request');
-    }
+    setLeadFilter(defaultLeadFilter(activeRole));
   }
   const [temperatureFilter, setTemperatureFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');

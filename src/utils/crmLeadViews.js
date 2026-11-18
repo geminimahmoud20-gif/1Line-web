@@ -152,6 +152,13 @@ export function isViewingLead(l = {}) {
   );
 }
 
+/**
+ * The list a person lands on in العملاء. Everyone starts on «الكل»; only a property manager, who works the owners'
+ * offers, starts on «بيع». A salesperson used to start on «طلبات معاينة», so a person with clients saw an empty list
+ * («٢ عميل · ٠ ظاهر بالفلتر») and thought their clients were missing.
+ */
+export const defaultLeadFilter = (role) => (role === 'property_manager' ? 'seller' : 'all');
+
 export function isSellerLead(l = {}) {
   const type = (l.type || '').toLowerCase();
   const notes = (l.notes || '').toLowerCase();
