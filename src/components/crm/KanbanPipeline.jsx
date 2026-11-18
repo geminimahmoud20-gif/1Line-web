@@ -16,6 +16,7 @@ import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
 import './kanban-redesign.css';
 import './kanban-mobile.css';
+import './client-card.css';
 import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
 
 const CARDS_PER_STAGE = 5;
@@ -802,6 +803,7 @@ export default function KanbanPipeline({
                         key={lead.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, lead.id)}
+                        data-stage={stage.id}
                         className={`kb-card animate-fadeIn ${isOverdue ? 'is-overdue' : ''}`}
                         aria-label={`${leadName} — ${isAr ? stage.title_ar : stage.title_en}`}
                       >

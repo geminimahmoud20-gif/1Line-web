@@ -5,7 +5,8 @@
    Colours come from the design tokens, so dark mode follows.
    ============================================================= */
 .crm-lead-row,
-.crm-inbox-item { --lead-accent: var(--ui-line-strong); }
+.crm-inbox-item,
+.kb-card { --lead-accent: var(--ui-line-strong); }
 [data-stage='new'] { --lead-accent: var(--ui-accent); }
 [data-stage='contacted'] { --lead-accent: var(--ui-info); }
 [data-stage='site_visit'] { --lead-accent: var(--ui-primary); }
@@ -48,3 +49,13 @@
 @media (min-width: 769px) {
   .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:first-child { border-inline-start: 4px solid var(--lead-accent); }
 }
+
+/* The pipeline's deal cards: the same raised card with the stage colour on its edge (a late first reply turns it red) */
+.kb-card.is-overdue { --lead-accent: var(--ui-danger); }
+.kb-card,
+.kb-card.is-overdue {
+  border-radius: 18px; border: 1px solid var(--ui-line); border-inline-start: 5px solid var(--lead-accent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent), 0 14px 26px -20px color-mix(in srgb, var(--ui-n900) 30%, transparent);
+}
+.kb-card:hover { box-shadow: 0 2px 4px color-mix(in srgb, var(--ui-n900) 8%, transparent), 0 18px 30px -18px color-mix(in srgb, var(--ui-n900) 34%, transparent); }
+.kanban-cards-container { gap: var(--ui-s-3); }
