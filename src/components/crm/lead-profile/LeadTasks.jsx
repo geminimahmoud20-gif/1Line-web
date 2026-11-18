@@ -9,7 +9,7 @@ import TaskDoneFlow from '../TaskDoneFlow';
 import { userDisplayName } from '../../../utils/assignees';
 
 /** The open tasks behind one client, and a quick way to add the next one */
-export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title }) {
+export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title, members = [], canAssign = false }) {
   const { currentUser } = useAuth();
   const { tasks } = useTasks();
   const me = useMemo(() => ({ uid: currentUser?.uid, name: userDisplayName(currentUser) }), [currentUser]);
@@ -18,6 +18,8 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
   const [flowTask, setFlowTask] = useState(null);
   const [now] = useState(() => Date.now()); // the drawer is short-lived: the time it opened is fine
   if (!lead?.id || !me.uid) return null;
+  // A manager adding a task from a client's file gives it to the person who holds the client (shown in their list)
+  const ownerUid = lead.ownerUid && lead.ownerUid !== me.uid && members.some((m) => m.uid === lead.ownerUid) ? lead.ownerUid : '';
 
   const done = (t) => setFlowTask(t);
 
@@ -34,14 +36,17 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
               <button type="button" onClick={() => done(t)} aria-label={isAr ? 'تمّت' : 'Done'} style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--ui-text-3)', minWidth: 36, minHeight: 36 }}>
                 {bucketOf(t, now) === 'done' ? <CheckCircle2 size={20} aria-hidden="true" /> : <Circle size={20} aria-hidden="true" />}
               </button>
-              <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{t.title}</span>
+              <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+                {t.title}
+                {t.assigneeUid !== me.uid && <small style={{ display: 'block', color: 'var(--ui-text-3)' }}>{isAr ? `عند ${t.assigneeName || 'زميل'}${t.seenAt ? ' · شافها' : ' · لسه ما شافهاش'}` : `${t.assigneeName || 'Colleague'}${t.seenAt ? ' · seen' : ' · not seen yet'}`}</small>}
+              </span>
               <small style={{ color: bucketOf(t, now) === 'overdue' ? 'var(--ui-danger)' : 'var(--ui-text-3)', whiteSpace: 'nowrap' }}>{dueLabel(t, isAr, now)}</small>
             </li>
           ))}
         </ul>
       )}
       {flowTask && <TaskDoneFlow key={flowTask.id} task={flowTask} lead={lead} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />}
-      <TaskForm isAr={isAr} me={me} lead={{ id: lead.id, name: lead.name }} triggerToast={triggerToast} compact />
+      <TaskForm key={lead.id} isAr={isAr} me={me} members={members} canAssign={canAssign} defaultAssigneeUid={ownerUid} lead={{ id: lead.id, name: lead.name }} triggerToast={triggerToast} compact />
     </section>
   );
 }

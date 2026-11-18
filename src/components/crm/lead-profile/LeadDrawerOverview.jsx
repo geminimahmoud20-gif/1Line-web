@@ -41,7 +41,8 @@ export default function LeadDrawerOverview({
   newNote,
   setNewNote,
   onAddNote,
-  agentName = ''
+  agentName = '',
+  view = 'work'
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -154,6 +155,8 @@ export default function LeadDrawerOverview({
 
   return (
     <div className="crm-ld__stack">
+      {view === 'work' && (
+      <>
       {/* 1. What to do next, and what just happened */}
       <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} />
 
@@ -232,7 +235,11 @@ export default function LeadDrawerOverview({
           </div>
         </section>
       )}
+      </>
+      )}
 
+      {view === 'client' && (
+      <>
       {/* 2. What he asked for */}
       {(isSeller || matchFacts.length > 0 || words) && (
         <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
@@ -290,10 +297,16 @@ export default function LeadDrawerOverview({
           )}
         </section>
       )}
+      </>
+      )}
 
       {/* 3. Everything that happened */}
+      {view === 'history' && (
       <ClientTimeline lead={lead} isAr={isAr} newNote={newNote} setNewNote={setNewNote} onAddNote={onAddNote} />
+      )}
 
+      {view === 'client' && (
+      <>
       {/* 4. Tools, folded */}
       {sourceFacts.length > 0 && (
         <details className="crm-ld__block crm-ld__fold">
@@ -307,7 +320,12 @@ export default function LeadDrawerOverview({
       )}
 
       <LeadCommissionBox key={lead?.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />
+      </>
+      )}
 
+      {view === 'work' && (
+        <div className="crm-ld__tools">
+          <h3 className="crm-ld__tools-h">{L('إرسال وحجز', 'Send & book')}</h3>
       {egWhatsapp && (
         <details className="crm-ld__block crm-ld__fold">
           <summary className="crm-ld__fold-sum"><MessageSquare size={16} aria-hidden="true" />{L('رسايل واتساب جاهزة', 'WhatsApp templates')}</summary>
@@ -394,6 +412,8 @@ export default function LeadDrawerOverview({
           </form>
         )}
       </section>
+    </div>
+      )}
     </div>
   );
 }

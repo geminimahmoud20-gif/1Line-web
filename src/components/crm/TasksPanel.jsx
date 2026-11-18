@@ -143,7 +143,7 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
 }
 
 /** The quick-add form: starters, a title, when, how urgent, and (for a manager) who */
-export function TaskForm({ isAr, me, members = [], canAssign = false, lead = null, onAdded, triggerToast, compact = false }) {
+export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAssigneeUid = '', lead = null, onAdded, triggerToast, compact = false }) {
   const [title, setTitle] = useState('');
   const [preset, setPreset] = useState('today');
   const [customDay, setCustomDay] = useState('');
@@ -152,7 +152,7 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, lead = nul
   const [kind, setKind] = useState('call');
   const [note, setNote] = useState('');
   const [showNote, setShowNote] = useState(false);
-  const [assigneeUid, setAssigneeUid] = useState('');
+  const [assigneeUid, setAssigneeUid] = useState(defaultAssigneeUid || '');
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(!compact);
 
@@ -176,6 +176,7 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, lead = nul
     setBusy(false);
     if (!id) { triggerToast?.(isAr ? 'المهمة ماتحفظتش، جرّب تاني' : 'The task was not saved', 'error'); return; }
     setTitle(''); setTime(''); setPriority('normal'); setNote(''); setShowNote(false);
+    if (compact) setOpen(false);
     triggerToast?.(payload.assigneeUid !== payload.createdBy
       ? (isAr ? `اتكلّف ${payload.assigneeName || 'زميلك'} بالمهمة، وهتلاقي إنجازها في «كلّفت بيها»` : 'Assigned')
       : (isAr ? 'اتضافت المهمة' : 'Task added'), 'success');

@@ -164,3 +164,17 @@
 
 /* An owner's request that lacks the size, the address or photos: what is missing and the one-tap message */
 .crm-ld__missing { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px 10px; border-radius: var(--ui-r-md, 10px); background: var(--ui-warning-tint); color: var(--ui-warning); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+
+/* ── Calmer drawer: sections are separate tabs (work, client, team, history), tools are one grouped card ── */
+.crm-ld { gap: var(--ui-s-3); }
+.crm-ld__stack { gap: var(--ui-s-3); }
+.crm-ld__stage { padding: 0; background: none; }
+.crm-ld__stage-head { margin-bottom: var(--ui-s-1); }
+.crm-ld__stages { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.crm-ld__stages::-webkit-scrollbar { display: none; }
+.crm-ld__stages > * { flex: 0 0 auto; }
+.crm-ld__block { padding: var(--ui-s-3) var(--ui-s-4); }
+.crm-ld__tools { display: flex; flex-direction: column; padding: var(--ui-s-3) var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.crm-ld__tools-h { margin: 0 0 var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.crm-ld__tools > .crm-ld__block { border: 0; border-radius: 0; border-top: 1px solid var(--ui-line); padding: var(--ui-s-3) 0; background: none; }
+.crm-ld__tools-h + .crm-ld__block { border-top: 0; }
