@@ -243,6 +243,8 @@ export function canUploadMedia(claims = {}, kind = 'image') {
   const access = accessFromClaims(claims);
   if (access.isAdmin) return true;
   if (kind === 'video') return false;
+  // A file attached to a client's team notes: any account that works clients (same people the notes rules let in)
+  if (kind === 'leadfile') return access.isStaff && has(access.perms, 'ld.edit', 'ld.manage', 'ld.all');
   return canEditInventory(access.perms, 'listings') || canEditInventory(access.perms, 'projects');
 }
 

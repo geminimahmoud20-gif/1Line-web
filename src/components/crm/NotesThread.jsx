@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Send, Trash2, AtSign } from 'lucide-react';
+import { Send, Trash2, AtSign, Paperclip, FileText, X } from 'lucide-react';
 import useNotes from '../../hooks/useNotes';
 import { useTeamDirectory } from '../../hooks/useTeamDirectory';
 import { sendNote, removeNote } from '../../firebaseLazy';
-import { buildNote, mentionSegments, mentionDraft, mentionedUids, NOTE_MAX } from '../../utils/teamNotes';
+import { buildNote, mentionSegments, mentionDraft, mentionedUids, NOTE_MAX, MAX_ATTACHMENTS, attachmentPath, ATTACH_TYPES, ATTACH_MAX_BYTES, isImageType, fileSizeText } from '../../utils/teamNotes';
+import { prepareAttachment } from '../../utils/prepareAttachment';
+import { uploadCmsMedia } from '../../services/cmsMedia';
 import { Avatar, EmptyState, useConfirm } from '../ui';
 import './team-notes.css';
 
@@ -22,6 +24,13 @@ export default function NotesThread({ entityType, entityId, entityName = '', lan
   const [caret, setCaret] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [files, setFiles] = useState([]);
+  const [progress, setProgress] = useState('');
+  const picker = useRef(null);
+  const canAttach = canWrite && entityType !== 'team';
+  // Thumbnails of the photos waiting to be sent (released when the list changes)
+  const previews = useMemo(() => files.map((f) => (isImageType(f.type) ? URL.createObjectURL(f) : '')), [files]);
+  useEffect(() => () => previews.forEach((u) => u && URL.revokeObjectURL(u)), [previews]);
   const box = useRef(null);
   const end = useRef(null);
 
@@ -53,17 +62,51 @@ export default function NotesThread({ entityType, entityId, entityName = '', lan
     requestAnimationFrame(() => { box.current?.focus(); box.current?.setSelectionRange?.(np, np); setCaret(np); });
   };
 
+  const addFiles = async (list) => {
+    setError('');
+    const picked = [];
+    for (const f of Array.from(list || [])) {
+      if (!ATTACH_TYPES.includes(f.type)) { setError(L('بنقبل صور (JPG, PNG, WebP) وملفات PDF بس.', 'Photos and PDFs only.')); continue; }
+      const ready = await prepareAttachment(f);
+      if (ready.size > ATTACH_MAX_BYTES) { setError(L('الملف أكبر من ٨ ميجا.', 'The file is over 8 MB.')); continue; }
+      picked.push(ready);
+    }
+    setFiles((cur) => {
+      if (cur.length + picked.length > MAX_ATTACHMENTS) setError(L(`أقصى عدد ${MAX_ATTACHMENTS} ملفات في الرسالة.`, `At most ${MAX_ATTACHMENTS} files.`));
+      return [...cur, ...picked].slice(0, MAX_ATTACHMENTS);
+    });
+    if (picker.current) picker.current.value = '';
+  };
+  const uploadError = (reason) => ({
+    'bucket-unavailable': L('رفع الملفات مش متفعّل على الموقع دلوقتي.', 'File upload is not set up.'),
+    'storage/unauthorized': L('مفيش صلاحية لرفع ملفات على العميل ده.', 'Not allowed to upload.'),
+    offline: L('مفيش نت. جرّب تاني.', 'You are offline.'),
+    unauthenticated: L('سجّل دخولك بحسابك الأول.', 'Sign in first.'),
+    stalled: L('الرفع اتأخر قوي. جرّب تاني.', 'The upload stalled.')
+  }[reason] || L('الملف ما اترفعش. جرّب تاني.', 'The file was not uploaded.'));
+
   const send = async () => {
     if (busy || !self) return;
-    const r = buildNote({ entityType, entityId, entityName, text, author: self, people });
-    if (r.error) { setError(r.error === 'too-long' ? L(`الرسالة أطول من ${NOTE_MAX} حرف`, 'Too long') : ''); return; }
+    if (!text.trim() && !files.length) return;
     setBusy(true);
     setError('');
+    const uploaded = [];
+    for (let i = 0; i < files.length; i += 1) {
+      const f = files[i];
+      setProgress(L(`بيرفع ملف ${i + 1} من ${files.length}…`, `Uploading ${i + 1} of ${files.length}…`));
+      const r = await uploadCmsMedia(f, 'leadfile', undefined, undefined, { path: attachmentPath(entityId, i, f.name) });
+      if (!r.ok) { setBusy(false); setProgress(''); setError(uploadError(r.reason)); return; }
+      uploaded.push({ url: r.url, name: f.name, type: f.type, size: f.size });
+    }
+    setProgress('');
+    const r = buildNote({ entityType, entityId, entityName, text, author: self, people, attachments: uploaded });
+    if (r.error) { setBusy(false); setError(r.error === 'too-long' ? L(`الرسالة أطول من ${NOTE_MAX} حرف`, 'Too long') : ''); return; }
     const id = await sendNote(r.note, r.mentions);
     setBusy(false);
     if (!id) { setError(L('الرسالة ما اتبعتتش. اتأكد إن عندك صلاحية على العميل ده وجرّب تاني.', 'Not sent. Try again.')); return; }
     setText('');
     setCaret(0);
+    setFiles([]);
   };
 
   const onKeyDown = (e) => {
@@ -105,7 +148,20 @@ export default function NotesThread({ entityType, entityId, entityName = '', lan
                       <button type="button" className="tn__del" onClick={() => del(n)} aria-label={L('امسح الرسالة', 'Delete message')}><Trash2 size={13} aria-hidden="true" /></button>
                     )}
                   </header>
-                  <p>{mentionSegments(n.text, people).map((s, i) => (s.mention ? <mark key={i} className="tn__at">{s.text}</mark> : <span key={i}>{s.text}</span>))}</p>
+                  {n.text && <p>{mentionSegments(n.text, people).map((s, i) => (s.mention ? <mark key={i} className="tn__at">{s.text}</mark> : <span key={i}>{s.text}</span>))}</p>}
+                  {Array.isArray(n.attachments) && n.attachments.length > 0 && (
+                    <ul className="tn__files">
+                      {n.attachments.map((a) => (
+                        <li key={a.url}>
+                          {isImageType(a.type) ? (
+                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="tn__img" title={a.name}><img src={a.url} alt={a.name} loading="lazy" /></a>
+                          ) : (
+                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="tn__file"><FileText size={18} aria-hidden="true" /><span><b>{a.name}</b><small>{fileSizeText(a.size)}</small></span></a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </article>
             );
@@ -138,10 +194,27 @@ export default function NotesThread({ entityType, entityId, entityName = '', lan
             onSelect={(e) => setCaret(e.target.selectionStart || 0)}
             onKeyDown={onKeyDown}
           />
+          {files.length > 0 && (
+            <ul className="tn__picked" aria-label={L('ملفات هتتبعت', 'Files to send')}>
+              {files.map((f, i) => (
+                <li key={`${f.name}-${i}`}>
+                  {previews[i] ? <img src={previews[i]} alt="" /> : <FileText size={16} aria-hidden="true" />}
+                  <span>{f.name}<small> · {fileSizeText(f.size)}</small></span>
+                  <button type="button" onClick={() => setFiles((cur) => cur.filter((_, j) => j !== i))} aria-label={L('شيل الملف', 'Remove file')}><X size={14} aria-hidden="true" /></button>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="tn__bar">
+            {canAttach && (
+              <>
+                <input ref={picker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => addFiles(e.target.files)} />
+                <button type="button" className="tn__at-btn" onClick={() => picker.current?.click()} disabled={busy || files.length >= MAX_ATTACHMENTS} aria-label={L('أرفق صورة أو PDF', 'Attach a photo or PDF')}><Paperclip size={16} aria-hidden="true" /></button>
+              </>
+            )}
             <button type="button" className="tn__at-btn" onClick={insertAt} aria-label={L('اذكر زميل', 'Mention a colleague')}><AtSign size={16} aria-hidden="true" /></button>
-            <span className="tn__hint">{willNotify > 0 ? L(`هتوصل كإشعار لـ ${willNotify}`, `Notifies ${willNotify}`) : L('Enter للإرسال، Shift+Enter سطر جديد', 'Enter to send')}</span>
-            <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" onClick={send} disabled={busy || !text.trim()}><Send size={14} aria-hidden="true" />{L('ابعت', 'Send')}</button>
+            <span className="tn__hint">{progress || (willNotify > 0 ? L(`هتوصل كإشعار لـ ${willNotify}`, `Notifies ${willNotify}`) : L('Enter للإرسال، Shift+Enter سطر جديد', 'Enter to send'))}</span>
+            <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" onClick={send} disabled={busy || (!text.trim() && !files.length)}><Send size={14} aria-hidden="true" />{L('ابعت', 'Send')}</button>
           </div>
           {error && <p role="alert" className="tn__hint is-bad">{error}</p>}
         </div>

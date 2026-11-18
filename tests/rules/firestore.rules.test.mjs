@@ -1002,3 +1002,18 @@ test('ld.delete: a role with it deletes a client and its contact; without it nob
   await assertSucceeds(del(cleaner));
   await assertSucceeds(deleteDoc(doc(asAdmin(), 'leads/a')));
 });
+
+test('crm_notes: a note may carry up to four photos or PDFs (https link, allowed type, size), and may be only files', async () => {
+  const mgr = as('sales_manager');
+  const file = (over = {}) => ({ url: 'https://abc.public.blob.vercel-storage.com/lead-files/a/1-x.pdf', name: 'عقد.pdf', type: 'application/pdf', size: 120000, ...over });
+  await assertSucceeds(setDoc(doc(mgr, 'crm_notes/f1'), noteDoc('u-sales_manager', { text: '', attachments: [file()] })));
+  await assertSucceeds(setDoc(doc(mgr, 'crm_notes/f2'), noteDoc('u-sales_manager', { attachments: [file(), file({ type: 'image/jpeg', name: 'a.jpg' }), file(), file()] })));
+  // nothing at all, five files, a link that is not https, a type outside the list, too big, an extra key
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f3'), noteDoc('u-sales_manager', { text: '' })));
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f4'), noteDoc('u-sales_manager', { attachments: [file(), file(), file(), file(), file()] })));
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f5'), noteDoc('u-sales_manager', { attachments: [file({ url: 'http://x.example/a.pdf' })] })));
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f6'), noteDoc('u-sales_manager', { attachments: [file({ type: 'application/zip' })] })));
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f7'), noteDoc('u-sales_manager', { attachments: [file({ size: 9 * 1024 * 1024 })] })));
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f8'), noteDoc('u-sales_manager', { attachments: [{ ...file(), extra: 1 }] })));
+  await assertFails(setDoc(doc(mgr, 'crm_notes/f9'), noteDoc('u-sales_manager', { attachments: 'x' })));
+});

@@ -40,3 +40,16 @@
 .mm__who b { color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
 .mm__snip { font-size: var(--ui-fs-2); color: var(--ui-text); line-height: 1.55; overflow-wrap: anywhere; }
 .mm__empty { margin: 0; padding: var(--ui-s-5) var(--ui-s-3); text-align: center; color: var(--ui-text-3); font-size: var(--ui-fs-2); }
+
+/* Files on a note: photos as thumbnails, PDFs as a chip; the picked files waiting to be sent */
+.tn__files { list-style: none; margin: var(--ui-s-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.tn__img img { display: block; width: 120px; height: 90px; object-fit: cover; border-radius: var(--ui-r-md); border: 1px solid var(--ui-line); }
+.tn__file { display: inline-flex; align-items: center; gap: var(--ui-s-2); padding: 6px 10px; border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); background: var(--ui-surface-2); color: var(--ui-text); text-decoration: none; max-width: 100%; }
+.tn__file span { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.tn__file b { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.tn__file small, .tn__picked small { color: var(--ui-text-3); font-size: var(--ui-fs-1); }
+.tn__picked { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.tn__picked li { display: inline-flex; align-items: center; gap: var(--ui-s-2); padding: 4px 8px; border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); background: var(--ui-surface-2); font-size: var(--ui-fs-1); max-width: 100%; }
+.tn__picked img { width: 28px; height: 28px; object-fit: cover; border-radius: var(--ui-r-sm); }
+.tn__picked button { display: inline-grid; place-items: center; border: 0; background: none; color: var(--ui-text-3); cursor: pointer; padding: 2px; }
+.tn__at-btn:disabled { opacity: 0.5; cursor: default; }
