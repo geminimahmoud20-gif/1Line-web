@@ -238,3 +238,36 @@ test('the clients list opens on «الكل» for a salesperson (it used to open 
   for (const role of ['sales_agent', 'agent_east', 'agent_new_sohag', 'sales_manager', 'super_admin']) assert.equal(defaultLeadFilter(role), 'all', role);
   assert.equal(defaultLeadFilter('property_manager'), 'seller');
 });
+
+import { computeDashboardMetrics as dashMetrics } from '../../src/utils/crmLeadViews.js';
+test('dashboard: the open-deal count matches what the budgets add up, and won and lost skip archived the same way', () => {
+  const now = Date.parse('2026-11-18T12:00:00');
+  const iso = (h) => new Date(now - h * 3600000).toISOString();
+  const m = dashMetrics([
+    { id: 'b1', type: 'buyer', status: 'new', budget: 2000000, createdAt: iso(2) },
+    { id: 'b2', type: 'buyer', status: 'contacted', createdAt: iso(50) },
+    { id: 's1', type: 'seller', status: 'new', details: { askingPrice: 9000000, sellerRole: 'owner' }, createdAt: iso(60) },
+    { id: 'w1', type: 'buyer', status: 'closed', createdAt: iso(300) },
+    { id: 'w2', type: 'buyer', status: 'closed', isArchived: true, createdAt: iso(300) },
+    { id: 'l1', type: 'buyer', status: 'lost', createdAt: iso(300) }
+  ], [{ status: 'published', budget: 1000000 }, { status: 'rejected', budget: 5000000 }, { status: 'archived', budget: 7000000 }], { now });
+  assert.equal(m.openBuyers, 2);
+  assert.equal(m.budgetedBuyers, 1);
+  assert.equal(m.openSellers, 1);
+  assert.equal(m.pipelineValue, 2000000);
+  assert.equal(m.createdTodayCount, 1);
+  assert.equal(m.wonCount, 1);
+  assert.equal(m.winRate, 50);
+  assert.equal(m.liveDemandsCount, 1);
+  assert.equal(m.purchasingPower, 1000000);
+});
+
+import { isListedOnSite } from '../../src/utils/crmLeadViews.js';
+test('«معروض على الموقع» counts only real listings visitors can see and buy', () => {
+  assert.equal(isListedOnSite({ status: 'published' }), true);
+  assert.equal(isListedOnSite({}), true);
+  assert.equal(isListedOnSite({ status: 'reserved' }), true);
+  for (const p of [{ status: 'hidden' }, { status: 'draft' }, { status: 'trash' }, { status: 'sold' }, { status: 'contracted' }, { status: 'published', isDemo: true }, { status: 'published', approval: 'pending' }, { status: 'published', approval: 'rejected' }, { status: 'published', isDeleted: true }]) {
+    assert.equal(isListedOnSite(p), false, JSON.stringify(p));
+  }
+});

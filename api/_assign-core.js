@@ -28,11 +28,21 @@ export function sellersOf(members = []) {
 }
 
 /**
+ * How loaded a salesperson is: their open clients, and the clients still waiting for a first reply count three
+ * times as much (a person with five untouched clients is busier than one with five clients being worked).
+ * `open` = open clients, `fresh` = those still in the «new» stage.
+ */
+export const loadOf = ({ open = 0, fresh = 0 } = {}) => Math.max(0, open) + 2 * Math.max(0, Math.min(fresh, open));
+
+/** The stages that count as an open client (the same list as the CRM's open pipeline) */
+export const OPEN_STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
+
+/**
  * The person to give the lead to, or null. Same team as the lead first; otherwise anyone on a team
- * that takes part in round-robin. The fewest open clients wins (ties: by id, so it is repeatable).
+ * that takes part in round-robin. The lightest load wins (ties: by id, so it is repeatable).
  * @param {object} lead
  * @param {object[]} sellers   sellersOf(members)
- * @param {Record<string, number>} counts  open clients per uid
+ * @param {Record<string, number>} counts  load per uid (loadOf)
  * @param {object[]} teams  access config teams
  */
 export function chooseSeller(lead, sellers = [], counts = {}, teams = []) {

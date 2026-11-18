@@ -30,5 +30,18 @@ test('forecast: open pipeline, near-term part, won this month, leads without a v
     { budget: 1000000, status: 'closed', closedAt: '2026-09-30T09:00:00Z' }, // last month
     { budget: 9000000, status: 'closing', isArchived: true }
   ];
-  assert.deepEqual(commissionForecast(leads, { now }), { gross: 130000, weighted: 66500, late: 80000, wonThisMonth: 25000, wonCount: 1, missingValue: 1 });
+  assert.deepEqual(commissionForecast(leads, { now }), { gross: 130000, weighted: 66500, late: 80000, wonThisMonth: 25000, wonCount: 1, missingValue: 1, valued: 2 });
+});
+
+import { closedMs, commissionForecast as forecastOf } from '../../src/utils/commission.js';
+test('a won deal counts in the month it was closed, never in the month of a later edit', () => {
+  const now = Date.parse('2026-11-18T12:00:00Z');
+  const old = { status: 'closed', budget: 2000000, closedAt: '2026-08-02T10:00:00Z', updatedAt: '2026-11-17T10:00:00Z' };
+  const fresh = { status: 'closed', budget: 2000000, stageHistory: [{ s: 'new', at: '2026-10-01T00:00:00Z' }, { s: 'closed', at: '2026-11-05T10:00:00Z' }] };
+  const undated = { status: 'closed', budget: 2000000, updatedAt: '2026-11-17T10:00:00Z' };
+  assert.equal(closedMs(undated), 0);
+  const f = forecastOf([old, fresh, undated], { now });
+  assert.equal(f.wonCount, 1);
+  assert.equal(f.wonThisMonth, 50000);
+  assert.equal(forecastOf([{ status: 'new', budget: 1000000 }, { status: 'new' }], { now }).valued, 1);
 });
