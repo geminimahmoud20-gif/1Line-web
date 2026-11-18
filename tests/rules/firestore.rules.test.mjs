@@ -890,3 +890,18 @@ test('crm_tasks: a task needs a day; an older undated task can still be ticked o
   await assertFails(updateDoc(doc(me, 'crm_tasks/old'), { dueAt: 'soon' }));
   await assertFails(updateDoc(doc(me, 'crm_tasks/nd4'), { dueAt: '' }));
 });
+
+test('property_private: internal notes of a listing are staff-only, written by those who edit listings', async () => {
+  const note = { notes: 'المالك بيقبل أقل بـ ٥٪', updatedAt: 1, updatedBy: 'Mona' };
+  await assertSucceeds(setDoc(doc(as('property_manager'), 'property_private/p1'), note));
+  await assertSucceeds(getDoc(doc(as('property_manager'), 'property_private/p1')));
+  await assertSucceeds(getDoc(doc(as('sales_agent'), 'property_private/p1')));
+  // the public, and a signed-in visitor with no staff role, never read them
+  await assertFails(getDoc(doc(guest(), 'property_private/p1')));
+  await assertFails(getDoc(doc(env.authenticatedContext('visitor', {}).firestore(), 'property_private/p1')));
+  // only the fields of a note, and bounded
+  await assertFails(setDoc(doc(as('property_manager'), 'property_private/p2'), { ...note, phone: '01012345678' }));
+  await assertFails(setDoc(doc(as('property_manager'), 'property_private/p2'), { ...note, notes: 'x'.repeat(3001) }));
+  await assertFails(setDoc(doc(guest(), 'property_private/p3'), note));
+  await assertSucceeds(deleteDoc(doc(as('property_manager'), 'property_private/p1')));
+});

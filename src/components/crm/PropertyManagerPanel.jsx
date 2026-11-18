@@ -24,6 +24,7 @@ import ThumbBackfillCard from './ThumbBackfillCard';
 
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
+import { loadPropertyPrivate, savePropertyPrivate } from '../../services/propertyPrivate';
 import PropertyTableRow from './PropertyTableRow';
 import NotesModal from './NotesModal';
 import PropertyFacetFilter from './PropertyFacetFilter';
@@ -99,7 +100,9 @@ const DEFAULT_FORM_STATE = {
   // Who offers the unit; the contact's name and phone are typed here but saved as a client, never on the listing
   listedBy: '',
   contactName: '',
-  contactPhone: ''
+  contactPhone: '',
+  // Internal notes: saved in property_private (staff only), never on the public listing
+  privateNotes: ''
 };
 
 export default function PropertyManagerPanel({
@@ -235,9 +238,14 @@ export default function PropertyManagerPanel({
       bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
       status: prop.status || (prop.isArchived ? 'hidden' : 'published'),
       contactName: '',
-      contactPhone: ''
+      contactPhone: '',
+      privateNotes: null // null until loaded: saving before then must not wipe the saved notes
     });
     setShowAddModal(true);
+    // the notes live in their own protected document: fill them in once loaded
+    loadPropertyPrivate(prop.id).then((text) => {
+      if (text !== null) setForm((f) => (f.id === prop.id && f.privateNotes === null ? { ...f, privateNotes: text } : f));
+    });
   };
 
   // Quick Toggle Visibility (Active / Hidden)
@@ -550,7 +558,7 @@ export default function PropertyManagerPanel({
 
     // Cleanse sector-specific attributes (land, shops, offices, farms and factories have 0 bedrooms)
     const isLand = isLandType(form.type);
-    const { contactName, contactPhone, ...formFields } = form;
+    const { contactName, contactPhone, privateNotes, ...formFields } = form;
     const cleanForm = {
       ...formFields,
       ...paymentFields(form),
@@ -574,6 +582,13 @@ export default function PropertyManagerPanel({
         if (res?.ok && res.ids?.[0]) cleanForm.sourceLeadId = res.ids[0];
         else triggerToast(isAr ? 'الوحدة هتتحفظ، بس رقم صاحبها ما اتسجلش في العملاء. جرّب تاني من تعديل الوحدة.' : "The unit is saved but its contact wasn't added to clients. Try again from edit.", 'error');
       }
+    }
+
+    // Internal notes go to their own staff-only document, whatever happens to the public listing
+    if (privateNotes !== null && (editingPropertyId || String(privateNotes || '').trim())) {
+      savePropertyPrivate(propId, privateNotes).then((ok) => {
+        if (!ok) triggerToast(isAr ? 'الملاحظات الداخلية ما اتحفظتش. جرّب تاني من تعديل الوحدة.' : "The internal notes weren't saved. Try again from edit.", 'error');
+      });
     }
 
     if (editingPropertyId) {
