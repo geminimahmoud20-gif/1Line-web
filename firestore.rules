@@ -301,6 +301,18 @@ service cloud.firestore {
       allow delete: if hasPerm('inv.delete');
     }
 
+    // 🔒 Internal details of a listing (what the owner told us, the lowest price he takes, where the keys are).
+    // /properties is public, so these live in their own document with the same id, readable by staff only.
+    match /property_private/{propId} {
+      allow read: if isStaff();
+      allow create, update: if canEditListings()
+        && request.resource.data.keys().hasOnly(['notes', 'updatedAt', 'updatedBy'])
+        && request.resource.data.notes is string && request.resource.data.notes.size() <= 3000
+        && boundedText(request.resource.data, 'updatedBy', 80)
+        && request.resource.data.get('updatedAt', 0) is int;
+      allow delete: if canEditListings();
+    }
+
     // 🔔 4. NOTIFICATIONS
     match /notifications/{notifId} {
       // Not public-writable (spam vector); staff see new public leads via the leads listener.
