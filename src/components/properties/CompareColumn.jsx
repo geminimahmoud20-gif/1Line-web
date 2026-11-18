@@ -3,6 +3,7 @@ import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, External
 import { Link } from 'react-router-dom';
 import { countLabel } from '../../utils/arabicCount';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { floorSpec } from '../../utils/propertyKinds';
 
 // One property's column in the comparison matrix.
 export default function CompareColumn({ prop, isAr, lang, currency, verdicts, customDownPercent, onRemoveFromCompare, activeTab, setCustomDownPercent, onClose }) {
@@ -213,14 +214,16 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
             <span>
               {prop.type === 'land' ? (
                 isAr ? 'قطعة أرض مستقلة' : 'Independent Plot'
-              ) : prop.floor !== undefined && prop.floor !== null ? (
+              ) : floorSpec(prop, isAr) ? (
+                // a house or a building: how many floors it has; a flat: its floor, and the building's when known
+                floorSpec(prop, isAr)
+              ) : prop.floor !== undefined && prop.floor !== null && prop.type !== 'villa' && prop.type !== 'building' ? (
                 prop.floor === 0 
                   ? (isAr ? 'دور أرضي' : 'Ground Floor')
                   : (isAr ? `الدور ${prop.floor}` : `Floor ${prop.floor}`)
               ) : (
                 isAr ? 'أرضي / متكرر' : 'Typical'
               )}
-              {prop.type !== 'land' && prop.totalFloors ? ` (${isAr ? `من أصل ${prop.totalFloors}` : `of ${prop.totalFloors}`})` : ''}
             </span>
           </div>
 

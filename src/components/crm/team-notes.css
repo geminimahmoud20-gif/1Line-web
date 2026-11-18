@@ -44,3 +44,14 @@
 .mm__who b { color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
 .mm__snip { font-size: var(--ui-fs-2); color: var(--ui-text); line-height: 1.55; overflow-wrap: anywhere; }
 .mm__empty { margin: 0; padding: var(--ui-s-5) var(--ui-s-3); text-align: center; color: var(--ui-text-3); font-size: var(--ui-fs-2); }
+
+/* Phones: the messages panel spans the screen under the top bar (anchored to its button it ran past the screen
+   edge and cut the sender, the time and the text) */
+@media (max-width: 640px) {
+  .mm__panel {
+    position: fixed; top: calc(var(--crm-topbar-h, 64px) + 6px); inset-inline: 8px; width: auto; max-width: none;
+    max-height: calc(100dvh - var(--crm-topbar-h, 64px) - 20px); overscroll-behavior: contain;
+  }
+  .mm__item { padding: var(--ui-s-3) var(--ui-s-4); }
+  .mm__who { line-height: 1.5; overflow-wrap: anywhere; }
+}
