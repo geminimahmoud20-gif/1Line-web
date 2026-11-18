@@ -170,7 +170,6 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     let meta = { fromCache: true };
     let contacts = new Map();
     let contactUnsubs = [];
-    let contactIdsKey = '';
     const stopContacts = () => { contactUnsubs.forEach((u) => u()); contactUnsubs = []; };
 
     const emit = () => leads && callback(leads.map((l) => {
@@ -193,16 +192,16 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
       ));
     }
 
+    // A manager's list also follows each client's private contact document. Only the clients not followed yet
+    // get a new listener: a new lead (or "load more") must not restart, and so re-read, every contact document.
+    const followedIds = new Set();
     const followLeadIds = () => {
       if (contactsMode !== 'all') return;
-      const ids = leads.map((l) => String(l.id)).sort();
-      const key = ids.join('|');
-      if (key === contactIdsKey) return;
-      contactIdsKey = key;
-      stopContacts();
-      contacts = new Map();
-      for (let i = 0; i < ids.length; i += 30) {
-        const chunk = ids.slice(i, i + 30);
+      const fresh = leads.map((l) => String(l.id)).filter((id) => !followedIds.has(id));
+      if (!fresh.length) return;
+      fresh.forEach((id) => followedIds.add(id));
+      for (let i = 0; i < fresh.length; i += 30) {
+        const chunk = fresh.slice(i, i + 30);
         contactUnsubs.push(onSnapshot(
           query(collection(db, 'lead_contacts'), where(documentId(), 'in', chunk)),
           (snap) => {
