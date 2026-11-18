@@ -33,6 +33,17 @@ export function leadCommission(l, fallback = DEFAULT_COMMISSION_PCT) {
 }
 
 const OPEN = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
+/**
+ * When a won deal was closed (ms): the stage history first, then the close date, then the last stage change.
+ * Never «updatedAt»: any later edit of an old deal would move it into this month's commission.
+ */
+export function closedMs(l) {
+  const hist = (Array.isArray(l?.stageHistory) ? l.stageHistory : []).filter((e) => e && e.s === 'closed' && e.at);
+  const stamp = hist.length ? hist[hist.length - 1].at : (l?.closedAt || l?.statusUpdatedAt || l?.lastStatusUpdate || '');
+  const ms = typeof stamp === 'number' ? stamp : Date.parse(stamp);
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 const sameMonth = (iso, now) => {
   const d = new Date(iso);
   const n = new Date(now);
@@ -47,19 +58,21 @@ export function commissionForecast(leads = [], { now = Date.now(), fallback = DE
   let wonThisMonth = 0;
   let wonCount = 0;
   let missingValue = 0;
+  let valued = 0; // open deals that carry a value (what the forecast adds up)
   for (const l of leads) {
     if (!l || l.isArchived) continue;
     const st = l.status || 'new';
     const c = leadCommission(l, fallback);
     if (OPEN.includes(st)) {
       if (!c.value) { missingValue += 1; continue; }
+      valued += 1;
       gross += c.gross;
       weighted += c.weighted;
       if (st === 'negotiating' || st === 'closing') late += c.gross;
-    } else if (st === 'closed' && sameMonth(l.closedAt || l.lastStatusUpdate || l.updatedAt, now)) {
+    } else if (st === 'closed' && closedMs(l) && sameMonth(closedMs(l), now)) {
       wonThisMonth += c.gross;
       wonCount += 1;
     }
   }
-  return { gross, weighted, late, wonThisMonth, wonCount, missingValue };
+  return { gross, weighted, late, wonThisMonth, wonCount, missingValue, valued };
 }

@@ -73,3 +73,15 @@ test('an untouched auto-assigned client moves once, after 15 minutes, to someone
   assert.match(f.activityLogs[0].action, /من أمل إلى بسمة/);
   assert.equal(REASSIGN_AFTER_MS, 900000);
 });
+
+import { loadOf, OPEN_STAGES } from '../../api/_assign-core.js';
+test('load counts untouched clients extra, so the lightest load gets the next client', () => {
+  assert.equal(loadOf({ open: 10, fresh: 0 }), 10);
+  assert.equal(loadOf({ open: 10, fresh: 4 }), 18);
+  assert.equal(loadOf({ open: 0, fresh: 3 }), 0); // untouched clients are open ones: never more than that
+  assert.deepEqual(OPEN_STAGES, ['new', 'contacted', 'site_visit', 'negotiating', 'closing']);
+  const sellers = [{ uid: 'a', desk: 'T' }, { uid: 'b', desk: 'T' }];
+  // a has fewer open clients but a pile nobody has touched: b is the lighter one
+  const counts = { a: loadOf({ open: 8, fresh: 6 }), b: loadOf({ open: 12, fresh: 0 }) };
+  assert.equal(chooseSeller({ assignedTo: 'T' }, sellers, counts, []).uid, 'b');
+});

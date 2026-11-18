@@ -15,6 +15,14 @@ export function getNormalizedPropertyStatus(prop) {
   return 'published';
 }
 
+/** Listing statuses that are on the site and still for sale (a contracted or sold one is not «معروض») */
+export const LISTED_STATUSES = ['published', 'under_negotiation', 'reserved', 'deposit_paid'];
+
+/** A real listing that visitors can see now: not a sample, not deleted or archived, approved, and still for sale */
+export const isListedOnSite = (p) => Boolean(p) && !p.isDemo && !p.isDeleted && !p.isArchived
+  && p.approval !== 'pending' && p.approval !== 'rejected'
+  && LISTED_STATUSES.includes(p.status || 'published');
+
 /** Dashboard counters for the given leads */
 export function computeCrmAnalytics(leads = []) {
   const todayStr = new Date().toDateString();
@@ -281,7 +289,8 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
   const supplyValue = open.filter(isSellerLead).reduce((sum, l) => sum + leadBudget(l), 0);
   const liveDemands = scopeDesk ? [] : demands.filter((d) => !d.isArchived && d.status !== 'archived' && d.status !== 'rejected');
   const purchasingPower = liveDemands.reduce((sum, d) => sum + parseMoney(d.budget), 0);
-  const won = leads.filter((l) => l.status === 'closed');
+  // Won and lost are counted the same way (archived ones are out of both), so the rate is not skewed
+  const won = leads.filter((l) => l.status === 'closed' && !l.isArchived);
   const lost = leads.filter((l) => l.status === 'lost' && !l.isArchived);
   const decided = won.length + lost.length;
 
@@ -293,6 +302,12 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
     purchasingPower,
     expectedCommission: pipelineValue * commissionRate,
     openCount: open.length,
+    // The open buyers (what the budgets add up) and how many of them carry a budget; owners' listings are counted apart
+    openBuyers: open.filter((l) => !isSellerLead(l)).length,
+    budgetedBuyers: open.filter((l) => !isSellerLead(l) && leadBudget(l) > 0).length,
+    openSellers: open.filter(isSellerLead).length,
+    liveDemandsCount: liveDemands.length,
+    createdTodayCount: open.filter((l) => localDayKey(leadCreatedMs(l)) === todayKey).length,
     newCount: open.filter((l) => !l.status || l.status === 'new').length,
     qualifiedCount: open.filter((l) => ['contacted', 'site_visit', 'negotiating'].includes(l.status)).length,
     closingCount: open.filter((l) => ['negotiating', 'closing'].includes(l.status)).length,

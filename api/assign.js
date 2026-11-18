@@ -12,7 +12,7 @@
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
 import { teamStore, staffRegistry, accessStore } from './_team-core.js';
-import { eligible, sellersOf, chooseSeller, ownerFields, MAX_OPEN_COUNT } from './_assign-core.js';
+import { eligible, sellersOf, chooseSeller, ownerFields, loadOf, OPEN_STAGES, MAX_OPEN_COUNT } from './_assign-core.js';
 import { lookupReturning, findEarlier } from './_returning-core.js';
 import { pickPrimary, mergeFields, toFirestore } from './_merge-core.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
@@ -170,24 +170,47 @@ export async function POST(request) {
     const sellers = sellersOf(members);
     if (!sellers.length) return json(200, { assigned: false, reason: 'no-sellers' });
 
-    // Open clients per person (a few reads each; teams are small)
-    const counts = {};
-    for (const s of sellers) {
+    // Each person's load (open clients, the untouched ones counting extra). A COUNT query bills one read per
+    // thousand entries, so this is about two reads a person instead of reading their clients one by one.
+    const countOf = async (uid, stages) => {
+      const stageFilter = stages.length === 1
+        ? { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: stages[0] } } }
+        : { fieldFilter: { field: { fieldPath: 'status' }, op: 'IN', value: { arrayValue: { values: stages.map((v) => ({ stringValue: v })) } } } };
+      const q = await fs('POST', ':runAggregationQuery', {
+        structuredAggregationQuery: {
+          structuredQuery: {
+            from: [{ collectionId: 'leads' }],
+            where: { compositeFilter: { op: 'AND', filters: [
+              { fieldFilter: { field: { fieldPath: 'ownerUid' }, op: 'EQUAL', value: { stringValue: uid } } },
+              stageFilter
+            ] } }
+          },
+          aggregations: [{ alias: 'n', count: {} }]
+        }
+      });
+      if (!q.ok) throw new Error(`count ${q.status}`);
+      const rows = await q.json();
+      return Number(rows?.[0]?.result?.aggregateFields?.n?.integerValue || 0);
+    };
+    // The old way (reading each person's clients): only if the count query is refused
+    const readCounts = async (uid) => {
       const q = await fs('POST', ':runQuery', {
         structuredQuery: {
           from: [{ collectionId: 'leads' }],
-          where: { fieldFilter: { field: { fieldPath: 'ownerUid' }, op: 'EQUAL', value: { stringValue: s.uid } } },
+          where: { fieldFilter: { field: { fieldPath: 'ownerUid' }, op: 'EQUAL', value: { stringValue: uid } } },
           select: { fields: [{ fieldPath: 'status' }, { fieldPath: 'isArchived' }] },
           limit: MAX_OPEN_COUNT
         }
       });
       if (!q.ok) throw new Error(`count ${q.status}`);
-      const rows = await q.json();
-      counts[s.uid] = rows.filter((r) => {
-        if (!r.document) return false;
-        const d = plain(r.document);
-        return !d.isArchived && d.status !== 'closed' && d.status !== 'lost';
-      }).length;
+      const open = (await q.json()).map((r) => r.document && plain(r.document)).filter((d) => d && !d.isArchived && OPEN_STAGES.includes(d.status || 'new'));
+      return { open: open.length, fresh: open.filter((d) => !d.status || d.status === 'new').length };
+    };
+    const counts = {};
+    for (const s of sellers) {
+      let c;
+      try { c = { open: await countOf(s.uid, OPEN_STAGES), fresh: await countOf(s.uid, ['new']) }; } catch { c = await readCounts(s.uid); }
+      counts[s.uid] = loadOf(c);
     }
 
     // A client who already asked before (same phone) goes back to their owner, and the new request is linked to the

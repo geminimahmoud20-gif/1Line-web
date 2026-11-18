@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
-import { computeDashboardMetrics } from '../../utils/crmLeadViews';
+import { computeDashboardMetrics, isListedOnSite } from '../../utils/crmLeadViews';
 import { commissionForecast } from '../../utils/commission';
 import { countWord } from '../../utils/arabicCount';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import { Users, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { PageHeader, KpiRow, KpiTile, Card, CardHeader, Button, Badge, Avatar, EmptyState } from '../ui';
+import { TeamGoals } from './GoalsPanel';
 import './dashboard.css';
 
 export default function CrmExecutiveDashboard({
@@ -61,7 +62,6 @@ export default function CrmExecutiveDashboard({
     };
   }, [leads, demands, now, scopeDesk]);
 
-  const activeDemands = demands.filter((d) => !d.isArchived && d.status !== 'archived').length;
   // Under 1M money reads better as a full amount (87,500 ج.م) than as '0.09 مليون'
   const moneyValue = (v) => (v >= 1e6 ? v / 1e6 : Math.round(v));
   const moneyUnit = (v) => (v >= 1e6 ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP'));
@@ -81,8 +81,8 @@ export default function CrmExecutiveDashboard({
       <PageHeader
         title={isSuperAdmin ? L('لوحة القيادة', 'Dashboard') : L(`أهلاً ${currentRoleObj.label_ar || ''}`.trim(), `Welcome ${currentRoleObj.label_en || ''}`.trim())}
         description={L(
-          `النهارده: ${metrics.dueTodayCount} متابعة · ${metrics.newLeadsCount} عميل جديد · ${metrics.pendingDemandsCount} طلب مستني`,
-          `Today: ${metrics.dueTodayCount} follow-ups · ${metrics.newLeadsCount} new leads · ${metrics.pendingDemandsCount} pending requests`
+          `النهارده: ${metrics.dueTodayCount} متابعة · ${metrics.createdTodayCount} عميل وصل النهارده · ${metrics.newLeadsCount} في مرحلة «جديد» · ${metrics.pendingDemandsCount} طلب مستني`,
+          `Today: ${metrics.dueTodayCount} follow-ups · ${metrics.createdTodayCount} arrived today · ${metrics.newLeadsCount} in the «new» stage · ${metrics.pendingDemandsCount} pending requests`
         )}
         actions={(
           <>
@@ -116,7 +116,10 @@ export default function CrmExecutiveDashboard({
           digits={1}
           unit={L('مليون ج.م', 'M EGP')}
           emptyText={L('مفيش ميزانيات متسجّلة', 'No budgets recorded')}
-          hint={L(`${metrics.openCount} ${countWord('deal', metrics.openCount)} مفتوحة${metrics.scoped ? ' عندك' : ''}`, `${metrics.openCount} open deals`)}
+          hint={L(
+            `${metrics.openBuyers} ${countWord('deal', metrics.openBuyers)} مفتوحة${metrics.scoped ? ' عندك' : ''} · ${metrics.budgetedBuyers} منهم بميزانية${metrics.openSellers ? ` (غير ${metrics.openSellers} مالك)` : ''}`,
+            `${metrics.openBuyers} open buyers · ${metrics.budgetedBuyers} with a budget${metrics.openSellers ? ` (${metrics.openSellers} owners not counted)` : ''}`
+          )}
           icon={<TrendingUp size={16} />}
           onClick={() => onSwitchTab?.('kanban')}
         />
@@ -146,7 +149,10 @@ export default function CrmExecutiveDashboard({
             digits={metrics.forecast.weighted >= 1e6 ? 2 : 0}
             unit={moneyUnit(metrics.forecast.weighted)}
             emptyText={L('مفيش صفقات مفتوحة بقيمة', 'No open deals with a value')}
-            hint={L(`مرجّحة بمرحلة كل صفقة · لو كلها اتقفلت ${fmtMoney(metrics.forecast.gross)}`, `Weighted by stage · ${fmtMoney(metrics.forecast.gross)} if all close`)}
+            hint={L(
+              `مرجّحة بمرحلة كل صفقة · لو كلها اتقفلت ${fmtMoney(metrics.forecast.gross)} · من ${metrics.forecast.valued} عميل بقيمة (مشترين وملاك)${metrics.forecast.missingValue ? ` · ${metrics.forecast.missingValue} من غير قيمة` : ''}`,
+              `Weighted by stage · ${fmtMoney(metrics.forecast.gross)} if all close · from ${metrics.forecast.valued} clients with a value (buyers and owners)${metrics.forecast.missingValue ? ` · ${metrics.forecast.missingValue} without one` : ''}`
+            )}
             icon={<Award size={16} />}
             onClick={() => onSwitchTab?.('kanban')}
           />
@@ -170,7 +176,7 @@ export default function CrmExecutiveDashboard({
             digits={1}
             unit={L('مليون ج.م', 'M EGP')}
             emptyText={L('مفيش طلبات بميزانية', 'No budgeted requests')}
-            hint={L(`${activeDemands} طلب مشتري نشط`, `${activeDemands} active buyer requests`)}
+            hint={L(`${metrics.liveDemandsCount} طلب مشتري نشط`, `${metrics.liveDemandsCount} active buyer requests`)}
             icon={<Zap size={16} />}
             onClick={() => onSwitchTab?.('demands')}
           />
@@ -184,6 +190,8 @@ export default function CrmExecutiveDashboard({
           icon={<Briefcase size={16} />}
         />
       </KpiRow>
+
+      {!metrics.scoped && showMoney && <TeamGoals leads={leads} lang={isAr ? 'ar' : 'en'} onOpenGoals={() => onSwitchTab?.('performance')} />}
 
       {alerts.length > 0 && (
         <Card>
@@ -249,8 +257,8 @@ export default function CrmExecutiveDashboard({
             actions={<Button variant="ghost" size="sm" onClick={() => onSwitchTab?.('properties')}>{L('إدارة العقارات', 'Manage listings')}</Button>}
           />
           <dl className="crm-dash__stats">
-            <div><dt>{L('وحدات معروضة', 'Listed units')}</dt><dd>{properties.length}</dd></div>
-            <div><dt>{L('مشروعات', 'Projects')}</dt><dd>{projects.length}</dd></div>
+            <div><dt>{L('وحدات معروضة على الموقع', 'Listed on the site')}</dt><dd>{properties.filter(isListedOnSite).length}<small> / {properties.filter((p) => p && !p.isDemo && !p.isDeleted).length} {L('في المحفظة', 'in the portfolio')}</small></dd></div>
+            <div><dt>{L('مشروعات', 'Projects')}</dt><dd>{projects.filter((p) => p && !p.isDemo).length}</dd></div>
           </dl>
           <div className="crm-dash__tools">
             <Button variant="secondary" size="sm" icon={<Sparkles size={16} aria-hidden="true" />} onClick={() => onSwitchTab?.('matching')}>{L('المطابقات', 'Matching')}</Button>

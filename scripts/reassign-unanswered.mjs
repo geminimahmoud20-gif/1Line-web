@@ -15,7 +15,7 @@
 // =============================================================
 
 import { initAdmin } from './backup-format.mjs';
-import { needsReassign, chooseReplacement, reassignFields, sellersOf, MAX_OPEN_COUNT } from '../api/_assign-core.js';
+import { needsReassign, chooseReplacement, reassignFields, sellersOf, loadOf, OPEN_STAGES, MAX_OPEN_COUNT } from '../api/_assign-core.js';
 import { toMember } from '../api/_team-core.js';
 import { cadenceTasks, CADENCE_STEPS } from '../src/utils/followUpCadence.js';
 
@@ -62,11 +62,21 @@ if (sellers.length < 2) {
   process.exit(0);
 }
 
-// Open clients per person, for the fewest-clients rule
+// Each person's load (open clients, the untouched ones counting extra), the same rule as a new client's first assignment.
+// COUNT queries bill one read per thousand entries; reading the clients is only the fallback.
 const counts = {};
 for (const s of sellers) {
-  const rows = await db.collection('leads').where('ownerUid', '==', s.uid).select('status', 'isArchived').limit(MAX_OPEN_COUNT).get();
-  counts[s.uid] = rows.docs.filter((d) => !d.data().isArchived && d.data().status !== 'closed' && d.data().status !== 'lost').length;
+  let c;
+  try {
+    const mine = db.collection('leads').where('ownerUid', '==', s.uid);
+    const [open, fresh] = await Promise.all([mine.where('status', 'in', OPEN_STAGES).count().get(), mine.where('status', '==', 'new').count().get()]);
+    c = { open: open.data().count, fresh: fresh.data().count };
+  } catch {
+    const rows = await db.collection('leads').where('ownerUid', '==', s.uid).select('status', 'isArchived').limit(MAX_OPEN_COUNT).get();
+    const open = rows.docs.filter((d) => !d.data().isArchived && OPEN_STAGES.includes(d.data().status || 'new'));
+    c = { open: open.length, fresh: open.filter((d) => !d.data().status || d.data().status === 'new').length };
+  }
+  counts[s.uid] = loadOf(c);
 }
 
 let moved = 0;

@@ -45,6 +45,40 @@ export function MyGoals({ leads = [], uid, lang = 'ar' }) {
   );
 }
 
+/**
+ * The team's goals for the month on the dashboard: each goal's bar and pace, and who is behind it.
+ * Nothing but a link to set them when none exist yet.
+ */
+export function TeamGoals({ leads = [], lang = 'ar', onOpenGoals }) {
+  const isAr = lang !== 'en';
+  const L = (ar, en) => (isAr ? ar : en);
+  const { goals, ready } = useGoals();
+  const [now] = useState(() => Date.now());
+  const progress = useMemo(() => goalProgress(leads, goals, now), [leads, goals, now]);
+  if (!ready) return null;
+  const behind = progress.people.filter((p) => p.rows.some((r) => r.status === 'behind'));
+  if (!progress.team.length && !behind.length) {
+    return onOpenGoals ? (
+      <section className="gl-card" aria-label={L('هدف الشهر', 'Goals this month')}>
+        <h3><Target size={18} aria-hidden="true" /> {L('هدف الشهر', 'Goals this month')}</h3>
+        <p className="gl-empty">{L('لسه مفيش هدف متحدد للشهر ده.', 'No goal is set for this month yet.')} <button type="button" className="gl-link" onClick={onOpenGoals}>{L('حدّد الهدف', 'Set the goals')}</button></p>
+      </section>
+    ) : null;
+  }
+  return (
+    <section className="gl-card" aria-label={L('هدف الشهر', 'Goals this month')}>
+      <h3><Target size={18} aria-hidden="true" /> {L('هدف الشهر', 'Goals this month')}</h3>
+      {progress.team.length > 0 && <ul className="gl-list">{progress.team.map((r) => <GoalBar key={r.key} row={r} isAr={isAr} />)}</ul>}
+      {behind.length > 0 && (
+        <p className="gl-behind">
+          {L('متأخرين عن الإيقاع', 'Behind pace')}: {behind.map((p) => p.name || L('بدون اسم', 'unnamed')).join('، ')}
+          {onOpenGoals && <> · <button type="button" className="gl-link" onClick={onOpenGoals}>{L('التفاصيل', 'Details')}</button></>}
+        </p>
+      )}
+    </section>
+  );
+}
+
 /** The goals editor: the team's four targets, then each person's (collapsed) */
 function Editor({ goals, people, isAr, onSave, onCancel, saving }) {
   const L = (ar, en) => (isAr ? ar : en);
