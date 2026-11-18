@@ -135,6 +135,8 @@
   .crm-layout .crm-leads .crm-table tbody tr:hover,
   .crm-layout .crm-leads .crm-table tbody tr:hover td { background: var(--ui-surface); }
   .crm-layout .crm-leads .crm-table tbody tr td { background: var(--ui-surface); }
+  /* A phone has no hover: the tap leaves :hover stuck on the card, tinting only its first cells (crm-density.css) */
+  .crm-layout .crm-leads .crm-table tbody tr:hover :is(td:first-child, td:nth-child(2), td:last-child) { background: var(--ui-surface); }
   .crm-layout .crm-leads .crm-table tbody tr td[data-label='الإجراءات'],
   .crm-layout .crm-leads .crm-table tbody tr td[data-label='Actions'] { padding-top: var(--ui-s-2); border-top: 1px solid var(--ui-line); }
   .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-kbd-active td { background: none !important; }
