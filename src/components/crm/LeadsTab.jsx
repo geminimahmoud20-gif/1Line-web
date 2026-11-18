@@ -491,6 +491,30 @@ export default function LeadsTab({
         )}
       />
 
+      {/* Desktop: the numbers that decide the day, each one a shortcut to its list */}
+      <div className="crm-leads__kpis" role="group" aria-label={isAr ? 'ملخص العملاء' : 'Clients summary'}>
+        <button type="button" className={`crm-kpi ${leadFilter === 'all' ? 'is-on' : ''}`} onClick={() => setLeadFilter('all')}>
+          <span className="crm-kpi__label">{isAr ? 'إجمالي العملاء' : 'Clients'}</span>
+          <b className="crm-kpi__value">{leads.length}</b>
+          <small>{isAr ? `${filteredLeads.length} ظاهر بالفلتر` : `${filteredLeads.length} shown`}{counts.lost > 0 ? ` · ${counts.lost} ${isAr ? 'خسارة' : 'lost'}` : ''}</small>
+        </button>
+        <button type="button" className={`crm-kpi ${counts.late > 0 ? 'is-danger' : ''} ${leadFilter === 'unanswered' ? 'is-on' : ''}`} onClick={() => setLeadFilter('unanswered')}>
+          <span className="crm-kpi__label">{isAr ? 'مستني أول رد' : 'Awaiting reply'}</span>
+          <b className="crm-kpi__value">{counts.unanswered}</b>
+          <small>{counts.late > 0 ? (isAr ? `${counts.late} اتأخر الرد عليهم` : `${counts.late} waiting too long`) : (isAr ? 'مفيش حد اتأخر' : 'Nobody late')}</small>
+        </button>
+        <button type="button" className={`crm-kpi ${counts.overdue > 0 ? 'is-warn' : ''} ${leadFilter === 'due' ? 'is-on' : ''}`} onClick={() => setLeadFilter('due')}>
+          <span className="crm-kpi__label">{isAr ? 'متابعات النهارده' : 'Follow-ups today'}</span>
+          <b className="crm-kpi__value">{counts.due}</b>
+          <small>{counts.overdue > 0 ? (isAr ? `${counts.overdue} متأخرة` : `${counts.overdue} overdue`) : (isAr ? 'في ميعادها' : 'On time')}</small>
+        </button>
+        <div className="crm-kpi is-static">
+          <span className="crm-kpi__label">{isAr ? 'نسبة الإغلاق' : 'Win rate'}</span>
+          <b className="crm-kpi__value"><bdi>{kpiStats.winRate}%</bdi></b>
+          <small>{counts.archived > 0 ? (isAr ? `${counts.archived} مؤرشف` : `${counts.archived} archived`) : (isAr ? 'من القرارات النهائية' : 'Of final decisions')}</small>
+        </div>
+      </div>
+
       {(counts.late > 0 || counts.due > 0) && (
         <div className="crm-leads__urgent" role="status">
           {counts.late > 0 && (
@@ -717,7 +741,7 @@ export default function LeadsTab({
         <table className="crm-table" data-kbd="leads">
         <thead>
           <tr>
-            <th style={{ width: '36px', textAlign: 'center' }}>
+            <th className="crm-th--check" style={{ width: '36px', textAlign: 'center' }}>
               <input
                 type="checkbox"
                 checked={selectedLeadIds.length > 0 && selectedLeadIds.length === filteredLeads.length}
@@ -726,15 +750,15 @@ export default function LeadsTab({
                 style={{ cursor: 'pointer' }}
               />
             </th>
-            <th>{isAr ? 'العميل والملف الشخصي' : 'Client Profile'}</th>
-            {visibleColumns.requirements && <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>}
+            <th className="crm-th--client">{isAr ? 'العميل والملف الشخصي' : 'Client Profile'}</th>
+            {visibleColumns.requirements && <th className="crm-th--specs">{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>}
             {leadFilter === 'viewing_request' && <th style={{ minWidth: '150px' }}>{isAr ? 'الميعاد المطلوب' : 'Requested Schedule'}</th>}
-            {visibleColumns.score && <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>}
+            {visibleColumns.score && <th className="crm-th--score">{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>}
             {visibleColumns.status && <th className="crm-th--status">{isAr ? 'الحالة' : 'Status'}</th>}
             {visibleColumns.lastOutcome && <th className="crm-th--outcome">{isAr ? 'آخر نتيجة' : 'Last outcome'}</th>}
             {visibleColumns.nextAction && <th className="crm-th--next">{isAr ? 'المتابعة التالية' : 'Next follow-up'}</th>}
-            {visibleColumns.agent && <th>{isAr ? 'المسؤول' : 'Agent'}</th>}
-            <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
+            {visibleColumns.agent && <th className="crm-th--agent">{isAr ? 'المسؤول' : 'Agent'}</th>}
+            <th className="crm-th--actions">{isAr ? 'الإجراءات' : 'Actions'}</th>
           </tr>
         </thead>
         <tbody>
