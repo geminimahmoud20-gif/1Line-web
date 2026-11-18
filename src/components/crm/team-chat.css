@@ -73,3 +73,10 @@
   .tc-back { display: inline-grid; }
   .tc-bubble { max-width: 86%; }
 }
+
+/* Inside the floating messages panel: one pane at a time at any screen width, no outer frame */
+.tc--compact { grid-template-columns: 1fr; height: 100%; min-height: 0; gap: 0; }
+.tc--compact .tc-list, .tc--compact .tc-main { border: 0; border-radius: 0; }
+.tc--compact.is-list .tc-main, .tc--compact.is-thread .tc-list { display: none; }
+.tc--compact .tc-back { display: inline-grid; }
+.tc--compact .tc-bubble { max-width: 86%; }

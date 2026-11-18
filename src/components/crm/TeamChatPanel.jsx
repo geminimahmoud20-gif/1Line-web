@@ -167,7 +167,7 @@ function ChatThread({ chat, self, people, isAr, onBack }) {
  * «محادثة الفريق»: the general thread everyone sees, and private conversations (one colleague, or a small
  * group) that only their members can read. The list shows who wrote last and a dot for what is new.
  */
-export default function TeamChatPanel({ lang = 'ar' }) {
+export default function TeamChatPanel({ lang = 'ar', compact = false }) {
   const isAr = lang === 'ar';
   const L = (ar, en) => (isAr ? ar : en);
   const { self, people } = useTeamDirectory();
@@ -187,7 +187,7 @@ export default function TeamChatPanel({ lang = 'ar' }) {
   };
 
   return (
-    <div className={`tc ${listOpen ? 'is-list' : 'is-thread'}`}>
+    <div className={`tc ${compact ? 'tc--compact' : ''} ${listOpen ? 'is-list' : 'is-thread'}`}>
       <aside className="tc-list" aria-label={L('المحادثات', 'Chats')}>
         <header className="tc-list__head">
           <h2>{L('المحادثات', 'Chats')}</h2>

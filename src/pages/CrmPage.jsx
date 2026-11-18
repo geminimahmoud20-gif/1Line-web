@@ -32,6 +32,7 @@ import { playNotificationChime } from '../utils/notificationHub';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import PushReminderPrompt from '../components/crm/PushReminderPrompt';
 import TaskReminders from '../components/crm/TaskReminders';
+import MessagesHub from '../components/crm/MessagesHub';
 import { useCampaignNames } from '../utils/campaignNames';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
@@ -901,7 +902,6 @@ export default function CrmPage({
           setShowGoLiveWizard={setShowGoLiveWizard}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
-          onOpenMention={openMention}
           onRequestOpen={requestOpen}
           canAdd={canAddMap}
         />
@@ -952,6 +952,7 @@ export default function CrmPage({
         {/* 3. Main Dynamic Content Area */}
         <div className="crm-content-area" id="crm-main-content">
           <TaskReminders uid={currentUser?.uid} triggerToast={triggerToast} />
+          <MessagesHub uid={currentUser?.uid} lang={lang} hidden={activeTab === 'chat'} onOpenMention={openMention} />
           {/* The setup notices share one card instead of stacking as separate boxes above every page */}
           <div className="crm-notices">
             {can.editLeads && (
