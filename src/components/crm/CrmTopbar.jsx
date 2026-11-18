@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import MentionsMenu from './MentionsMenu';
 import './team-notes.css';
-import { Menu, Search, X, Plus, ChevronDown, Bell, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, UserRound } from 'lucide-react';
+import { Menu, Search, X, Plus, ChevronDown, Bell, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, UserRound, House, Eye, Download, Inbox } from 'lucide-react';
 import { getMergedCrmRoles } from './crmRoles';
 import InstallAppButton from '../common/InstallAppButton';
 import { LOCK_OPTIONS, getLockMinutes, setLockMinutes, lockLabel, markCrmActive } from '../../utils/idleLock';
@@ -15,6 +15,15 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 // The command palette key: ⌘K on a Mac, Ctrl K elsewhere (the title already says Ctrl + K)
 const SHORTCUT_LABEL = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '') ? '⌘K' : 'Ctrl K';
+
+// What a request is, for the bell's icon: an owner offering a unit, a viewing, or a buyer
+const leadKind = (l) => {
+  if (l?.type === 'visit' || l?.type === 'viewing') return 'viewing';
+  if (l?.type === 'seller' || l?.type === 'valuation' || l?.landingPage === '/sell') return 'seller';
+  return 'buyer';
+};
+const KIND_ICON = { seller: House, viewing: Eye, buyer: UserRound };
+const NOTIF_LIMIT = 30;
 
 export default function CrmTopbar({
   clientDownloads = [],
@@ -503,73 +512,81 @@ export default function CrmTopbar({
                   </small>
                 )}
 
-                {/* Unseen New Leads */}
+                {/* Unseen new leads: every one, the list scrolls */}
                 {(notifTab === 'all' || notifTab === 'leads') && unseenNewLeads.length > 0 && (
-                  <div className="crm-notif-card is-leads">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <strong style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)' }}>
-                        {isAr ? 'طلبات جديدة مستنية رد' : 'New requests to answer'}
-                      </strong>
-                      <span className="crm-search-result-badge">{unseenNewLeads.length}</span>
-                    </div>
-                    {unseenNewLeads.slice(0, 5).map((l) => (
-                      <div
-                        key={l.id}
-                        className="crm-notif-item"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: l.id, lead: l } }));
-                          setShowNotifMenu(false);
-                        }}
-                      >
-                        <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-xs)' }}>
-                          {panelHeadline(l, isAr)}
-                        </div>
-                        <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)' }}>
-                          {[l.name || (isAr ? 'عميل' : 'Client'), (l.phone || l.whatsapp) ? formatPhoneNumber(l.phone || l.whatsapp) : '', createdMs(l) ? ageLabel(bellNow - createdMs(l), isAr) : ''].filter(Boolean).join(' • ')}
-                        </small>
-                      </div>
-                    ))}
-                  </div>
+                  <section className="crm-notif-group">
+                    <header className="crm-notif-group__head">
+                      <span>{isAr ? 'طلبات جديدة مستنية رد' : 'New requests to answer'}</span>
+                      <b>{unseenNewLeads.length}</b>
+                    </header>
+                    {unseenNewLeads.slice(0, NOTIF_LIMIT).map((l) => {
+                      const kind = leadKind(l);
+                      const Icon = KIND_ICON[kind];
+                      const age = createdMs(l) ? ageLabel(bellNow - createdMs(l), isAr) : '';
+                      const phone = (l.phone || l.whatsapp) ? formatPhoneNumber(l.phone || l.whatsapp) : '';
+                      return (
+                        <button
+                          type="button"
+                          key={l.id}
+                          className={`crm-notif-row is-${kind}`}
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: l.id, lead: l } }));
+                            setShowNotifMenu(false);
+                          }}
+                        >
+                          <span className="crm-notif-row__icon" aria-hidden="true"><Icon size={16} /></span>
+                          <span className="crm-notif-row__text">
+                            <strong>{panelHeadline(l, isAr)}</strong>
+                            <small>
+                              <span>{l.name || (isAr ? 'عميل' : 'Client')}</span>
+                              {phone && <bdi dir="ltr">{phone}</bdi>}
+                            </small>
+                          </span>
+                          {age && <time className="crm-notif-row__age">{age}</time>}
+                        </button>
+                      );
+                    })}
+                  </section>
                 )}
 
                 {/* Expat remote inspections and trade-ins */}
                 {(notifTab === 'all' || notifTab === 'leads') && unseenIntake.length > 0 && (
-                  <div className="crm-notif-card is-leads">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <strong style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)' }}>
-                        {isAr ? 'طلبات المغتربين والبدل' : 'Expat & trade-in requests'}
-                      </strong>
-                      <span className="crm-search-result-badge">{unseenIntake.length}</span>
-                    </div>
-                    {unseenIntake.slice(0, 5).map((r) => (
-                      <div
+                  <section className="crm-notif-group">
+                    <header className="crm-notif-group__head">
+                      <span>{isAr ? 'طلبات المغتربين والبدل' : 'Expat & trade-in requests'}</span>
+                      <b>{unseenIntake.length}</b>
+                    </header>
+                    {unseenIntake.slice(0, NOTIF_LIMIT).map((r) => (
+                      <button
+                        type="button"
                         key={`${r._kind}-${r.id}`}
-                        className="crm-notif-item"
+                        className="crm-notif-row is-intake"
                         onClick={() => { setActiveTab((INTAKE_KINDS[r._kind] || INTAKE_KINDS.remote_inspections).tab); setShowNotifMenu(false); }}
                       >
-                        <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-xs)' }}>
-                          {intakeHeadline(r, isAr)}
-                        </div>
-                      </div>
+                        <span className="crm-notif-row__icon" aria-hidden="true"><Globe size={16} /></span>
+                        <span className="crm-notif-row__text"><strong>{intakeHeadline(r, isAr)}</strong></span>
+                      </button>
                     ))}
-                  </div>
+                  </section>
                 )}
 
                 {/* Client Downloads */}
                 {(notifTab === 'all' || notifTab === 'downloads') && clientDownloads.length > 0 && (
-                  <div className="crm-notif-card is-downloads">
-                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', marginBottom: '6px' }}>
-                      {isAr ? 'آخر تحميلات البروشورات' : 'Client downloads'}
-                    </div>
-                    {clientDownloads.slice(0, 6).map((d) => (
-                      <div key={d.id} className="crm-notif-item">
-                        <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)' }}>{describeDownload(d, isAr)}</div>
-                        <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', direction: 'ltr', display: 'block' }}>
-                          {d.clientPhone || d.clientEmail || ''}
-                        </small>
+                  <section className="crm-notif-group">
+                    <header className="crm-notif-group__head">
+                      <span>{isAr ? 'آخر تحميلات البروشورات' : 'Client downloads'}</span>
+                      <b>{clientDownloads.length}</b>
+                    </header>
+                    {clientDownloads.slice(0, NOTIF_LIMIT).map((d) => (
+                      <div key={d.id} className="crm-notif-row is-download">
+                        <span className="crm-notif-row__icon" aria-hidden="true"><Download size={16} /></span>
+                        <span className="crm-notif-row__text">
+                          <strong>{describeDownload(d, isAr)}</strong>
+                          {(d.clientPhone || d.clientEmail) && <small><bdi dir="ltr">{d.clientPhone || d.clientEmail}</bdi></small>}
+                        </span>
                       </div>
                     ))}
-                  </div>
+                  </section>
                 )}
 
                 {/* Pending Buyer Demands */}
@@ -595,6 +612,15 @@ export default function CrmTopbar({
                   </div>
                 )}
               </div>
+              {unseenNewLeads.length > 0 && (
+                <footer className="crm-notif-foot">
+                  <button type="button" onClick={() => { setActiveTab('inbox'); setShowNotifMenu(false); }}>
+                    <Inbox size={15} aria-hidden="true" />
+                    {isAr ? 'افتح صندوق الوارد' : 'Open the inbox'}
+                    {isAr ? <ArrowLeft size={14} aria-hidden="true" /> : <ArrowRight size={14} aria-hidden="true" />}
+                  </button>
+                </footer>
+              )}
             </div>
           )}
         </div>
