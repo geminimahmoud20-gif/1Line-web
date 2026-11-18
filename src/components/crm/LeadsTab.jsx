@@ -597,6 +597,7 @@ export default function LeadsTab({
           ownerFilter={ownerFilter}
           onPickOwner={setOwnerFilter}
           onPickView={setLeadFilter}
+          onOpenLead={setQuickDrawerLead}
           leadFilter={leadFilter}
         />
       )}

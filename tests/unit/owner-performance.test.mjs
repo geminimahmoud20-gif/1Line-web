@@ -62,3 +62,18 @@ test('ownersPeriodTable: new clients and closed per owner in a range, with the r
   assert.equal(m.cur.closed, 1);
   assert.ok(!rows.some((r) => r.name === 'سارة'));
 });
+
+import { recentContacts } from '../../src/utils/ownerPerformance.js';
+test('recentContacts: newest first across clients, call answers included once', () => {
+  const t = (h) => new Date(NOW - h * 3600000).toISOString();
+  const ls = [
+    { id: 'a', name: 'أ', outcomes: [{ id: 'reached', at: t(5), n: 'محمود', note: 'عاوز ٣ غرف' }, { id: 'no_answer', at: t(30) }], callOutcomes: [{ o: 'answered', at: t(5) }] },
+    { id: 'b', name: 'ب', outcomes: [{ id: 'viewing_set', at: t(1) }] },
+    { id: 'c', name: 'ج', isArchived: true, outcomes: [{ id: 'reached', at: t(0.5) }] }
+  ];
+  const r = recentContacts(ls, 10);
+  assert.deepEqual(r.map((x) => x.leadId), ['b', 'a', 'a']);
+  assert.equal(r[1].label, 'تم التواصل');
+  assert.equal(r[1].note, 'عاوز ٣ غرف');
+  assert.equal(r[0].kind, 'positive');
+});

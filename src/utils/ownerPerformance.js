@@ -4,6 +4,7 @@
 //  whoever is picked in the owner filter (and a table of everyone).
 // =============================================================
 import { assigneeValue } from './assignees.js';
+import { outcomeById, OUTCOME_OF_CALL } from './stageGate.js';
 import { periodMetrics, compareMetrics } from './performanceReport.js';
 import { toMs, leadCreatedMs, isOverdue, isStale, localDayKey, waitingMs, responseSlaMs } from './crmLeadViews.js';
 
@@ -111,3 +112,31 @@ const matchesOwnerKey = (lead, key) => {
   const v = assigneeValue(lead);
   return key === OWNER_NONE ? !v.startsWith('user:') : v === key;
 };
+
+/**
+ * The latest logged contacts across these clients, newest first: [{ leadId, name, outcome, kind, at, by, note, reason }].
+ * Reads the outcomes the team logged (and the call prompt's answers), so it says what came of each call or visit.
+ */
+export function recentContacts(leads = [], limit = 8) {
+  const out = [];
+  for (const l of leads) {
+    if (l.isArchived) continue;
+    const seen = new Set();
+    for (const e of Array.isArray(l.outcomes) ? l.outcomes : []) {
+      const at = toMs(e?.at);
+      if (!outcomeById(e?.id) || !at) continue;
+      seen.add(`${e.id}@${at}`);
+      out.push({ leadId: l.id, name: l.name || '', outcome: e.id, at, by: e.n || '', note: e.note || '', reason: e.reason || '' });
+    }
+    for (const e of Array.isArray(l.callOutcomes) ? l.callOutcomes : []) {
+      const id = OUTCOME_OF_CALL[e?.o];
+      const at = toMs(e?.at);
+      if (!id || !at || seen.has(`${id}@${at}`)) continue;
+      out.push({ leadId: l.id, name: l.name || '', outcome: id, at, by: '', note: '', reason: '' });
+    }
+  }
+  return out
+    .sort((a, b) => b.at - a.at)
+    .slice(0, limit)
+    .map((c) => ({ ...c, kind: outcomeById(c.outcome).kind, label: outcomeById(c.outcome).ar }));
+}
