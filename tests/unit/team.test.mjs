@@ -11,6 +11,17 @@ test('requests are validated', () => {
   assert.equal(parseTeamRequest({ action: 'delete', uid: 'abc' }), null);
 });
 
+test('profile requests: a name and/or a sign-in email, nothing else', () => {
+  assert.deepEqual(parseTeamRequest({ action: 'profile', uid: 'abc', name: '  ندى   علي ' }), { action: 'profile', uid: 'abc', name: 'ندى علي' });
+  assert.deepEqual(parseTeamRequest({ action: 'profile', uid: 'abc', email: ' Nada@Example.com ' }), { action: 'profile', uid: 'abc', email: 'nada@example.com' });
+  assert.equal(parseTeamRequest({ action: 'profile', uid: 'abc' }), null);
+  assert.equal(parseTeamRequest({ action: 'profile', uid: 'abc', name: '   ' }), null);
+  assert.equal(parseTeamRequest({ action: 'profile', uid: 'abc', email: 'nope' }), null);
+  assert.equal(parseTeamRequest({ action: 'profile', uid: '../x', name: 'x' }), null);
+  // changing your own name or email is allowed (a role or access change is not)
+  assert.equal(checkChange({ action: 'profile', uid: 'boss' }, 'boss', [{ uid: 'boss', role: 'super_admin', disabled: false }]), null);
+});
+
 test('nobody locks the CRM: no self-changes, the last super admin stays', () => {
   const members = [{ uid: 'boss', role: 'super_admin', disabled: false }, { uid: 'nada', role: 'sales_agent', disabled: false }];
   assert.equal(checkChange({ action: 'role', uid: 'boss', role: 'viewer' }, 'boss', members), 'self');
@@ -64,10 +75,20 @@ test('team accounts on the Auth emulator', { skip: !HOST && 'Auth emulator not r
   assert.equal((await store.getUser(nada)).disabled, true);
   assert.equal((await call('POST', { action: 'enable', uid: nada })).status, 200);
   assert.equal((await call('POST', { action: 'role', uid: bossUid, role: 'viewer' })).body.error, 'self');
+  // Name and email: a new name keeps the session, a new email must be free and signs the member out
+  assert.equal((await call('POST', { action: 'profile', uid: nada, name: 'ندى محمود' })).status, 200);
+  assert.equal((await store.getUser(nada)).displayName, 'ندى محمود');
+  assert.equal((await call('POST', { action: 'profile', uid: nada, email: 'boss@team.test' })).body.error, 'email-exists');
+  assert.equal((await call('POST', { action: 'profile', uid: nada, email: 'nada2@team.test' })).status, 200);
+  const moved = await store.getUser(nada);
+  assert.equal(moved.email, 'nada2@team.test');
+  assert.equal(moved.emailVerified, false);
+  assert.equal((await call('POST', { action: 'profile', uid: nada, email: 'nada2@team.test', name: 'ندى محمود' })).status, 200);
+  assert.equal((await call('POST', { action: 'profile', uid: 'ghost', name: 'x' })).status, 404);
   assert.equal((await call('POST', { action: 'remove', uid: nada })).status, 200);
   assert.deepEqual((await call('GET')).body.members.map((m) => m.email), ['boss@team.test']);
   // Adding an email that already has an account (e.g. a client account) gives it the role, no new account
-  r = await call('POST', { action: 'add', email: 'nada@team.test', role: 'viewer' });
+  r = await call('POST', { action: 'add', email: 'nada2@team.test', role: 'viewer' });
   assert.equal(r.body.created, false);
   assert.equal(r.body.uid, nada);
 });
