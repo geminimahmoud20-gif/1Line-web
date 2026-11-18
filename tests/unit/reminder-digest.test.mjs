@@ -114,3 +114,14 @@ test('the one who gave a task is told when it is late, and the one who got it is
   assert.equal(colleague.tasksLate, 1);
   assert.equal(digestFor([], { uid: 'u9' }, { now: NOW, tasks }), null);
 });
+
+test('a manager hears which salesperson has piled up clients past the reply target', () => {
+  const boss = { uid: 'm1', name: 'المدير', manager: true };
+  const late = (n, o) => Array.from({ length: n }, (_, i) => lead({ id: `${o.ownerName}${i}`, createdAt: min(300), ...o }));
+  const ls = [...late(4, { ownerUid: 'u2', ownerName: 'محمود كمال' }), ...late(2, { ownerUid: 'u3', ownerName: 'سارة' })];
+  const d = digestFor(ls, boss, { now: NOW });
+  assert.deepEqual(d.piled, [{ name: 'محمود كمال', n: 4 }]);
+  assert.match(d.body, /عملاء متأخرين عند: محمود كمال \(4\)/);
+  // a salesperson (not a manager) is not told about colleagues
+  assert.equal(digestFor(ls, me, { now: NOW }), null);
+});
