@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTasks } from '../../hooks/useTasks';
 import { dueReminders } from '../../utils/nextStep';
-import { dueLabel } from '../../utils/tasks';
+import { dueLabel, newAssignmentsFor } from '../../utils/tasks';
 
 const KEY = 'crm_task_reminded';
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } };
@@ -12,9 +12,28 @@ const write = (m) => { try { localStorage.setItem(KEY, JSON.stringify(m)); } cat
  * plus a browser notification when the tab is in the background. Each task+due value is announced once.
  */
 export default function TaskReminders({ uid, triggerToast }) {
-  const { tasks } = useTasks();
+  const { tasks, ready } = useTasks();
   const ref = useRef({ tasks, triggerToast });
   useEffect(() => { ref.current = { tasks, triggerToast }; });
+
+  // A colleague gives this person a task while the CRM is open: say so once (what was already there at the start is not news)
+  const known = useRef(null);
+  useEffect(() => {
+    if (!uid || !ready) return;
+    const mine = newAssignmentsFor(tasks, uid);
+    if (known.current === null) { known.current = new Set(mine.map((t) => t.id)); return; }
+    for (const t of mine) {
+      if (known.current.has(t.id)) continue;
+      known.current.add(t.id);
+      const text = `${t.title}${t.leadName ? ` — ${t.leadName}` : ''} (${dueLabel(t, true)})`;
+      triggerToast?.(`${t.createdByName || 'زميلك'} كلّفك بمهمة: ${text}`, 'info');
+      try {
+        if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification(`كلّفك ${t.createdByName || 'زميلك'} بمهمة`, { body: text, tag: `assigned-${t.id}` });
+        }
+      } catch { /* not allowed here */ }
+    }
+  }, [tasks, ready, uid, triggerToast]);
 
   useEffect(() => {
     if (!uid) return undefined;

@@ -503,7 +503,7 @@ service cloud.firestore {
     match /crm_tasks/{taskId} {
       function taskKeys() {
         return ['title', 'note', 'dueAt', 'priority', 'status', 'kind', 'leadId', 'leadName', 'assigneeUid', 'assigneeName',
-                'createdBy', 'createdByName', 'createdAt', 'doneAt', 'doneBy', 'updatedAt'];
+                'createdBy', 'createdByName', 'createdAt', 'doneAt', 'doneBy', 'updatedAt', 'seenAt'];
       }
       function validTask(d) {
         return d.keys().hasOnly(taskKeys())
@@ -515,6 +515,7 @@ service cloud.firestore {
           && d.get('kind', 'other') in ['call', 'whatsapp', 'visit', 'docs', 'other']
           && d.get('leadId', '') is string && d.get('leadId', '').size() <= 80
           && d.get('leadName', '') is string && d.get('leadName', '').size() <= 80
+          && d.get('seenAt', '') is string && d.get('seenAt', '').size() <= 32
           && d.assigneeUid is string && d.assigneeUid.size() > 0 && d.assigneeUid.size() <= 128
           && d.createdBy is string;
       }

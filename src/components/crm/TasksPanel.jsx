@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Phone, MessageSquare, Search, Pencil, CalendarClock, X } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { addTask, updateTask, removeTask } from '../../firebaseLazy';
 import {
   PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
-  dueFromPreset, snoozed, pushAllPatch, completion, reopening, dueLabel
+  dueFromPreset, snoozed, pushAllPatch, completion, reopening, dueLabel,
+  workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch
 } from '../../utils/tasks';
 import { firstContactPatch } from '../../utils/crmLeadViews';
 import { auditContactUse } from '../../utils/contactAudit';
@@ -67,7 +68,7 @@ function EditForm({ t, isAr, onSave, onCancel }) {
  * One task: tick it; call or WhatsApp the client from here; move it; open it to edit or delete.
  * `lead` is the client behind it (its phone stays out of the task itself).
  */
-function TaskRow({ t, lead, isAr, team, onTick, onMove, onSave, onDelete, onOpenLead, onCall, onWhatsApp, canDelete, now }) {
+function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, onOpenLead, onCall, onWhatsApp, canDelete, now }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [moving, setMoving] = useState(false);
@@ -88,6 +89,12 @@ function TaskRow({ t, lead, isAr, team, onTick, onMove, onSave, onDelete, onOpen
             {pr && t.priority !== 'normal' && <span className={`tk-pill is-${t.priority}`}>{isAr ? pr.ar : pr.en}</span>}
             {kind && t.kind !== 'other' && <span className="tk-pill">{isAr ? kind.ar : kind.en}</span>}
             {team && t.assigneeName && <span className="tk-pill is-who">{t.assigneeName}</span>}
+            {isDelegated(t) && t.assigneeUid === me?.uid && <span className="tk-pill is-from"><Send size={11} aria-hidden="true" /> {isAr ? `من ${t.createdByName || 'زميل'}` : `From ${t.createdByName || 'a colleague'}`}</span>}
+            {isDelegated(t) && t.assigneeUid !== me?.uid && !done && (
+              <span className={`tk-pill ${t.seenAt ? 'is-seen' : 'is-unseen'}`} title={t.seenAt ? (isAr ? 'المسؤول فتح المهمة' : 'Opened by the assignee') : (isAr ? 'المسؤول لسه ما فتحهاش' : 'Not opened yet')}>
+                {t.seenAt ? <Eye size={11} aria-hidden="true" /> : <EyeOff size={11} aria-hidden="true" />} {t.seenAt ? (isAr ? 'اتشافت' : 'Seen') : (isAr ? 'لسه ما اتشافتش' : 'Not seen')}
+              </span>
+            )}
             {t.leadName && <span className="tk-client">{t.leadName}</span>}
           </span>
         </button>
@@ -169,7 +176,9 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, lead = nul
     setBusy(false);
     if (!id) { triggerToast?.(isAr ? 'المهمة ماتحفظتش، جرّب تاني' : 'The task was not saved', 'error'); return; }
     setTitle(''); setTime(''); setPriority('normal'); setNote(''); setShowNote(false);
-    triggerToast?.(isAr ? 'اتضافت المهمة' : 'Task added', 'success');
+    triggerToast?.(payload.assigneeUid !== payload.createdBy
+      ? (isAr ? `اتكلّف ${payload.assigneeName || 'زميلك'} بالمهمة، وهتلاقي إنجازها في «كلّفت بيها»` : 'Assigned')
+      : (isAr ? 'اتضافت المهمة' : 'Task added'), 'success');
     onAdded?.(id);
   };
 
@@ -238,7 +247,8 @@ function Ring({ done, total }) {
 export default function TasksPanel({ leads = [], members = [], me, canManage = false, lang = 'ar', triggerToast, onOpenLead, onUpdateLead, onWhatsApp }) {
   const isAr = lang === 'ar';
   const { tasks, ready } = useTasks();
-  const [team, setTeam] = useState(false);
+  const [view, setView] = useState('mine'); // 'mine' | 'assigned' (what I gave to colleagues) | 'team'
+  const scopeUid = view === 'mine' ? me?.uid : undefined;
   const [showDone, setShowDone] = useState(false);
   const [focus, setFocus] = useState('');
   const [q, setQ] = useState('');
@@ -248,11 +258,19 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
   // Re-read the clock every minute so a task slips into «متأخرة» on its own
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(id); }, []);
-  const mine = useMemo(() => tasks.filter((t) => team || t.assigneeUid === me?.uid), [tasks, team, me?.uid]);
-  const shown = useMemo(() => filterTasks(mine, { q, kind, priority, assignee: team ? person : '' }), [mine, q, kind, priority, person, team]);
+  const mine = useMemo(() => (view === 'team' ? tasks : view === 'assigned' ? assignedByMe(tasks, me?.uid) : tasks.filter((t) => t.assigneeUid === me?.uid)), [tasks, view, me?.uid]);
+  const shown = useMemo(() => filterTasks(mine, { q, kind, priority, assignee: view === 'mine' ? '' : person }), [mine, q, kind, priority, person, view]);
   const groups = useMemo(() => groupTasks(shown, now), [shown, now]);
-  const counts = taskCounts(mine, team ? undefined : me?.uid, now);
-  const progress = useMemo(() => dayProgress(mine, team ? undefined : me?.uid, now), [mine, team, me?.uid, now]);
+  const counts = taskCounts(mine, scopeUid, now);
+  const progress = useMemo(() => dayProgress(mine, scopeUid, now), [mine, scopeUid, now]);
+  const people = useMemo(() => (canManage ? workload(tasks, members, now) : []), [canManage, tasks, members, now]);
+  // Opening the list is how an assignee «sees» what a colleague gave them (the assigner reads it as seen)
+  const unseen = useMemo(() => newAssignmentsFor(tasks, me?.uid), [tasks, me?.uid]);
+  useEffect(() => {
+    if (view !== 'mine' || unseen.length === 0) return;
+    const patch = seenPatch();
+    unseen.forEach((t) => { updateTask(t.id, patch); });
+  }, [view, unseen]);
   const leadById = useMemo(() => new Map(leads.map((l) => [String(l.id), l])), [leads]);
   const filtering = Boolean(q || kind || priority || person);
 
@@ -284,7 +302,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
 
   const visibleSections = SECTIONS.filter((s) => (!focus || focus === s.id) && groups[s.id].length > 0);
   const empty = SECTIONS.every((s) => groups[s.id].length === 0);
-  const rowProps = { isAr, team, onTick: tick, onMove: move, onSave: save, onDelete: remove, onOpenLead: openLead, onCall: call, onWhatsApp: whatsapp, canDelete, now };
+  const rowProps = { isAr, team: view !== 'mine', me, onTick: tick, onMove: move, onSave: save, onDelete: remove, onOpenLead: openLead, onCall: call, onWhatsApp: whatsapp, canDelete, now };
   const stat = (id, label, n, tone) => (
     <button type="button" className={`tk-stat is-${tone} ${focus === id ? 'is-on' : ''}`} aria-pressed={focus === id} onClick={() => setFocus(focus === id ? '' : id)}>
       <b>{n}</b><span>{label}</span>
@@ -299,16 +317,34 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
       )}
       <header className="tk-head">
         <div>
-          <h2><ListChecks size={20} aria-hidden="true" /> {team ? (isAr ? 'مهام الفريق' : 'Team tasks') : (isAr ? 'مهامي' : 'My tasks')}</h2>
+          <h2><ListChecks size={20} aria-hidden="true" /> {view === 'team' ? (isAr ? 'مهام الفريق' : 'Team tasks') : view === 'assigned' ? (isAr ? 'اللي كلّفت بيه' : 'Tasks I gave') : (isAr ? 'مهامي' : 'My tasks')}</h2>
           <p>{isAr ? `${counts.open} مفتوحة` : `${counts.open} open`}</p>
         </div>
         {canManage && (
           <div className="tk-seg" role="group" aria-label={isAr ? 'العرض' : 'View'}>
-            <button type="button" className={!team ? 'is-on' : ''} aria-pressed={!team} onClick={() => { setTeam(false); setPerson(''); }}>{isAr ? 'مهامي' : 'Mine'}</button>
-            <button type="button" className={team ? 'is-on' : ''} aria-pressed={team} onClick={() => setTeam(true)}><Users size={14} aria-hidden="true" /> {isAr ? 'كل الفريق' : 'Team'}</button>
+            <button type="button" className={view === 'mine' ? 'is-on' : ''} aria-pressed={view === 'mine'} onClick={() => { setView('mine'); setPerson(''); }}>{isAr ? 'مهامي' : 'Mine'}</button>
+            <button type="button" className={view === 'assigned' ? 'is-on' : ''} aria-pressed={view === 'assigned'} onClick={() => { setView('assigned'); setPerson(''); }}><Send size={14} aria-hidden="true" /> {isAr ? 'كلّفت بيها' : 'I assigned'}</button>
+            <button type="button" className={view === 'team' ? 'is-on' : ''} aria-pressed={view === 'team'} onClick={() => setView('team')}><Users size={14} aria-hidden="true" /> {isAr ? 'كل الفريق' : 'Team'}</button>
           </div>
         )}
       </header>
+
+      {view !== 'mine' && people.length > 0 && (
+        <section className="tk-load" aria-label={isAr ? 'حمل الفريق' : 'Team workload'}>
+          {people.map((p) => (
+            <button key={p.uid} type="button" className={`tk-person ${person === p.uid ? 'is-on' : ''} ${p.overdue > 0 ? 'is-late' : ''}`} aria-pressed={person === p.uid} onClick={() => setPerson(person === p.uid ? '' : p.uid)}>
+              <span className="tk-person__name">{p.name || (isAr ? 'عضو' : 'Member')}</span>
+              <span className="tk-person__nums">
+                <b>{p.open}</b> {isAr ? 'مفتوحة' : 'open'}
+                {p.overdue > 0 && <em className="is-late">{p.overdue} {isAr ? 'متأخرة' : 'late'}</em>}
+                {p.today > 0 && <em>{p.today} {isAr ? 'النهارده' : 'today'}</em>}
+              </span>
+              <span className="tk-person__bar" aria-hidden="true"><i style={{ width: `${p.open + p.doneWeek ? Math.round((p.doneWeek / (p.open + p.doneWeek)) * 100) : 0}%` }} /></span>
+              <small>{isAr ? `${p.doneWeek} خلصت الأسبوع ده` : `${p.doneWeek} done this week`}{p.unseen > 0 ? (isAr ? ` · ${p.unseen} ما اتفتحتش` : ` · ${p.unseen} unseen`) : ''}</small>
+            </button>
+          ))}
+        </section>
+      )}
 
       <div className="tk-summary">
         <div className="tk-progress">
@@ -323,8 +359,8 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
       </div>
 
       <MyGoals leads={leads} uid={me?.uid} lang={lang} />
-      <SilentLeads leads={leads} tasks={tasks} uid={team ? '' : me?.uid} me={me} isAr={isAr} onCall={call} onWhatsApp={whatsapp} onOpenLead={onOpenLead} triggerToast={triggerToast} />
-      <TaskForm isAr={isAr} me={me} members={members} canAssign={canManage} triggerToast={triggerToast} />
+      <SilentLeads leads={leads} tasks={tasks} uid={view === 'mine' ? me?.uid : ''} me={me} isAr={isAr} onCall={call} onWhatsApp={whatsapp} onOpenLead={onOpenLead} triggerToast={triggerToast} />
+      <TaskForm isAr={isAr} me={me} members={members} canAssign={canManage} triggerToast={triggerToast} compact />
 
       <div className="tk-filters">
         <label className="tk-search">
@@ -336,7 +372,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
           {KINDS.filter((k) => k.id !== 'other').map((k) => <button key={k.id} type="button" className={kind === k.id ? 'is-on' : ''} aria-pressed={kind === k.id} onClick={() => setKind(kind === k.id ? '' : k.id)}>{isAr ? k.ar : k.en}</button>)}
           <button type="button" className={priority === 'high' ? 'is-on' : ''} aria-pressed={priority === 'high'} onClick={() => setPriority(priority === 'high' ? '' : 'high')}>{isAr ? 'العاجلة' : 'Urgent'}</button>
         </div>
-        {team && members.length > 0 && (
+        {view !== 'mine' && members.length > 0 && (
           <select className="tk-input" value={person} onChange={(e) => setPerson(e.target.value)} aria-label={isAr ? 'الشخص' : 'Person'}>
             <option value="">{isAr ? 'كل الفريق' : 'Everyone'}</option>
             {members.filter((m) => m.uid).map((m) => <option key={m.uid} value={m.uid}>{m.name || m.email || m.uid}</option>)}
