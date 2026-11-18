@@ -4,9 +4,9 @@ import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
 import SellerAskingPrice from './SellerAskingPrice';
 import { auditContactUse } from '../../../utils/contactAudit';
-import { isSellerLead, firstContactPatch } from '../../../utils/crmLeadViews';
+import { isSellerLead, firstContactPatch, sellerMissing, SELLER_DETAIL_LABELS } from '../../../utils/crmLeadViews';
 import { askingPriceOf } from '../../../utils/leadPipeline';
-import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
+import { sharePagesFor, sharePageMessage, completeDetailsMessage } from '../../../utils/sharePages';
 import { SITE_URL } from '../../../config/siteConfig';
 import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
@@ -86,6 +86,19 @@ export default function LeadDrawerOverview({
   const [pagePath, setPagePath] = useState(pages[0].path);
   const page = pages.find((p) => p.path === pagePath) || pages[0];
   const pageMessage = sharePageMessage(page, { name: lead?.name, siteUrl: SITE_URL });
+  // An owner whose request lacks the size, the address or photos: one tap sends the full form and logs it
+  const missing = sellerMissing(lead || {}).map((k) => SELLER_DETAIL_LABELS[k]);
+  const completeMessage = completeDetailsMessage({ name: lead?.name, missing, siteUrl: SITE_URL });
+  const sendCompletion = () => {
+    auditContactUse(lead, 'whatsapp');
+    if (!onUpdateLead) return;
+    const at = new Date().toISOString();
+    onUpdateLead(lead.id, {
+      ...(firstContactPatch(lead, at) || {}),
+      activityLogs: [{ timestamp: at, action: `بعتّله رابط تكملة البيانات (${missing.join('، ')})`, kind: 'note', ...(agentName ? { agent: agentName } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100),
+      lastActivityAt: at
+    }, lead.version);
+  };
 
   const handleDownloadCalendar = () => {
     if (!hasSchedule) return;
@@ -232,6 +245,22 @@ export default function LeadDrawerOverview({
           </div>
           {isSeller && isQuick && (
             <p className="crm-ld__hint">{L('طلب سريع: الاسم والرقم ونوع العقار بس. المساحة والعنوان والصور لسه محتاجة منه (ابعتله صفحة «سجّل وحدتك» من «الأدوات»).', 'Quick request: name, phone and type only. Size, address and photos are still to collect (send the listing page from Tools).')}</p>
+          )}
+          {isSeller && missing.length > 0 && (
+            <div className="crm-ld__missing">
+              <span>{L(`ناقص: ${missing.join('، ')}`, `Missing: ${missing.join(', ')}`)}</span>
+              {egWhatsapp && (
+                <a
+                  href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(completeMessage)}`}
+                  onClick={sendCompletion}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ui-btn ui-btn--secondary ui-btn--sm"
+                >
+                  <Send size={16} aria-hidden="true" />{L('ابعت له رابط تكملة البيانات', 'Send the form to complete it')}
+                </a>
+              )}
+            </div>
           )}
           {(isSeller ? sellerFacts : matchFacts).length > 0 && (
             <dl className="crm-ld__facts">
