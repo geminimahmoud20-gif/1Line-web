@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { reportError } from '../../utils/errorReporter';
+import { showsTechnicalDetails } from '../../utils/errorDetails';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -97,7 +98,7 @@ export default class ErrorBoundary extends React.Component {
             تم عزل الخطأ لمنع تعطل النظام. يمكنك إعادة تحميل الصفحة للعودة للعمل بكفاءة تامة.
           </p>
 
-          {this.state.error && (
+          {this.state.error && showsTechnicalDetails(typeof window !== 'undefined' ? window.location.pathname : '', Boolean(import.meta.env?.DEV)) && (
             <div style={{
               margin: '0 0 24px 0',
               padding: '14px 18px',
