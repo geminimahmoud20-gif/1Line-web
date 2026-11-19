@@ -195,6 +195,13 @@ export const CrmAdminPanel = ({
   const [drawerTab, setDrawerTab] = useState('work');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
+  // The drawer shows the live record, so what a save adds (the activity log line, timestamps) appears at once;
+  // a client opened from search (not in the list) keeps the copy it was opened with
+  const liveDrawerLead = useMemo(() => {
+    if (!quickDrawerLead) return null;
+    const live = leads.find((l) => String(l.id) === String(quickDrawerLead.id));
+    return live ? { ...quickDrawerLead, ...live } : quickDrawerLead;
+  }, [quickDrawerLead, leads]);
 
   // AI Copywriter & Contract Studio Modal States
   const [showAICopywriter, setShowAICopywriter] = useState(false);
@@ -1202,7 +1209,7 @@ export const CrmAdminPanel = ({
 
       {/* ⚡ DRAWER: HIGH-VELOCITY LEAD QUICK DRAWER */}
       <LeadQuickDrawer
-        lead={quickDrawerLead}
+        lead={liveDrawerLead}
         tab={drawerTab}
         onTabChange={setDrawerTab}
         onClose={() => { setQuickDrawerLead(null); setDrawerTab('work'); }}

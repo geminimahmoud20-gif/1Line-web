@@ -63,6 +63,7 @@ import { handoverFromSeller } from '../utils/unitHandover';
 import { getAreas } from '../utils/areasData';
 import { formArea } from '../utils/areaLookup';
 import { userDisplayName } from '../utils/assignees';
+import { setActorName } from '../utils/actorName';
 
 // Sections a link can open directly: /crm?tab=… (desktop-app shortcuts, WhatsApp alerts, tapped notifications)
 const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects', 'expat', 'trade_ins', 'chat'];
@@ -97,6 +98,8 @@ export default function CrmPage({
   const { handleImportProperties, handleImportLeads, requestLiveCatalog } = useProperties();
   // Staff edit the catalog: switch from the cached public copy to the live listener
   useEffect(() => { if (currentUser) requestLiveCatalog(); }, [currentUser, requestLiveCatalog]);
+  // The activity log names who did each thing
+  useEffect(() => { setActorName(userDisplayName(currentUser)); return () => setActorName(''); }, [currentUser]);
   // Desktop-app shortcuts open a section directly: /crm?tab=inbox, /crm?open=add_lead
   const [activeTab, setActiveTab] = useState(() => {
     const t = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
