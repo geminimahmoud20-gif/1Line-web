@@ -20,6 +20,8 @@ import { getAreas } from '../../../utils/areasData';
 import { areaNameOf } from '../../../utils/areaLookup';
 import { OUTCOMES, STAGE_RULES, attemptsOf, outcomesOf, outcomeById, FOLLOW_UP_ACTIONS } from '../../../utils/stageGate';
 import { LOST_REASONS } from '../../../utils/crmLeadViews';
+import { useSiteSettings } from '../../../utils/siteSettings';
+import ReviewRequestCard from './ReviewRequestCard';
 
 export default function LeadDrawerOverview({
   lead,
@@ -51,6 +53,7 @@ export default function LeadDrawerOverview({
   const scheduledDate = scheduledTime ? new Date(scheduledTime) : null;
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
   const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
+  const siteSettings = useSiteSettings();
   const L = (ar, en) => (isAr ? ar : en);
   const sellerRole = sellerRoleOf(lead);
   // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
@@ -205,6 +208,8 @@ export default function LeadDrawerOverview({
         )}
         {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
       </section>
+
+      {lead?.status === 'closed' && <ReviewRequestCard lead={lead} egWhatsapp={egWhatsapp} googleUrl={siteSettings.reviews?.googleUrl || ''} isAr={isAr} onUpdateLead={onUpdateLead} />}
 
       {/* 1. What to do next, and what just happened */}
       <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} />
