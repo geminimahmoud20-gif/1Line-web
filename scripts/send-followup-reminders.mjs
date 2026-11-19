@@ -11,6 +11,10 @@
 //    • Reads only the leads that matter (follow-up due by today, and clients still «new»), so an
 //      hourly run stays far inside the free plan's daily reads.
 //
+//    • Also tells a salesperson when a listing that just went live fits their buyers (utils/matchAlerts): the new
+//      listings (approvedAt since the last run, tracked in push_state/_matching) are scored against the open
+//      buyers, and the leads are read only when there is something new. The first run starts from «now».
+//
 //  Usage: GOOGLE_APPLICATION_CREDENTIALS=key.json TZ=Africa/Cairo node scripts/send-followup-reminders.mjs [--dry-run] [--force]
 //  Hourly run: .github/workflows/followup-reminders.yml  (needs `npm install --no-save firebase-admin web-push`)
 // =============================================================
@@ -20,6 +24,7 @@ import { digestFor, shouldSend } from '../src/utils/reminderDigest.js';
 import { dueSoonFor, taskAlertPayload } from '../src/utils/nextStep.js';
 import { localDayKey } from '../src/utils/crmLeadViews.js';
 import { assignmentPayload } from '../src/utils/tasks.js';
+import { freshListings, matchAlerts, matchAlertPayload, OPEN_BUYER_STAGES } from '../src/utils/matchAlerts.js';
 
 const dryRun = process.argv.includes('--dry-run');
 const force = process.argv.includes('--force');
@@ -115,6 +120,26 @@ async function pushTo(id, subs, message) {
   return { alive, delivered };
 }
 
+// ── New listings that fit somebody's buyers ──
+// push_state/_matching remembers when this last ran and which listings it announced. Properties are read only for
+// those approved since then, and the open buyers only when there is a new listing, so a quiet day costs almost nothing.
+const matchRef = db.doc('push_state/_matching');
+let matchState = null;
+let matchFresh = [];
+let matchByOwner = new Map();
+if (alertHours) {
+  matchState = (await matchRef.get()).data() || null;
+  const since = matchState?.lastRunAt || now.toISOString(); // the first run starts from now: no backlog blast
+  const done = new Set(matchState?.processed || []);
+  const newSnap = matchState ? await db.collection('properties').where('approvedAt', '>', since).get() : { docs: [] };
+  matchFresh = freshListings(newSnap.docs.map((d) => ({ ...d.data(), id: d.data().id ?? d.id })), since, done);
+  if (matchFresh.length) {
+    const buyers = (await db.collection('leads').where('status', 'in', OPEN_BUYER_STAGES).get()).docs.map((d) => ({ id: d.id, ...d.data() }));
+    matchByOwner = matchAlerts(matchFresh, buyers);
+    console.log(`${matchFresh.length} new listing(s) checked against ${buyers.length} open clients: ${matchByOwner.size} salesperson(s) to tell`);
+  }
+}
+
 const openIds = new Set(tasks.map((t) => t.id));
 let sent = 0;
 for (const doc of subscribers) {
@@ -168,6 +193,25 @@ for (const doc of subscribers) {
     if (changed && !dryRun) await stateRef.set({ taskAssigned: announced }, { merge: true });
   }
 
+  // 4. A listing that just went live fits this person's buyers (one push for everything new in this run)
+  const matchPayload = matchAlertPayload(matchByOwner.get(doc.id));
+  if (matchPayload) {
+    if (dryRun) console.log(`[dry run] ${member.name || doc.id}: ${matchPayload.title} — ${matchPayload.body}`);
+    else {
+      const r = await pushTo(doc.id, subs, matchPayload);
+      subs = r.alive;
+      if (r.delivered) sent += 1;
+    }
+  }
+
   if (!dryRun && (subs.length !== data.subs.length || Object.keys(patch).length)) await doc.ref.update({ subs, ...patch });
+}
+
+// What was announced is remembered whether or not someone had a phone subscribed: each listing is announced once
+if (alertHours && !dryRun) {
+  await matchRef.set({
+    lastRunAt: now.toISOString(),
+    processed: [...(matchState?.processed || []), ...matchFresh.map((p) => String(p.id))].slice(-300)
+  });
 }
 console.log(`${sent} reminder${sent === 1 ? '' : 's'} sent`);
