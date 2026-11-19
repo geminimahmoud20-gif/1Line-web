@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { LOST_REASONS } from '../utils/crmLeadViews';
 import { persistDemands } from '../utils/demandStorage';
 import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
 import { INITIAL_LEADS } from '../data/mockData';
