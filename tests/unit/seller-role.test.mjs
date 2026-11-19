@@ -19,3 +19,9 @@ test('unknown stays unknown, never guessed as owner', () => {
   assert.equal(sellerRoleOf(null), null);
   assert.equal(SELLER_ROLE_LABEL.broker.ar, 'وسيط عقاري');
 });
+
+test('a unit added in the CRM records who offers it', () => {
+  assert.equal(sellerRoleOf({ details: { listedBy: 'broker' } }), 'broker');
+  assert.equal(sellerRoleOf({ details: { listedBy: 'owner' } }), 'owner');
+  assert.equal(sellerRoleOf({ details: { listedBy: 'x' } }), null);
+});

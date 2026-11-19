@@ -64,7 +64,8 @@ export function listingContactLead(property, { name = '', phone = '', listedBy =
     name: (cleanName.length >= 2 ? cleanName : `${role} ${unit}`).slice(0, 100),
     phone: p,
     whatsapp: p,
-    type: listedBy === 'broker' ? 'broker' : 'seller',
+    // Someone offering a unit is a seller, owner or broker alike (details.sellerRole says which, as on the /sell form)
+    type: 'seller',
     status: 'new',
     source: 'إضافة وحدة من الـ CRM',
     propertyType: property.type || '',
@@ -72,7 +73,7 @@ export function listingContactLead(property, { name = '', phone = '', listedBy =
     budget: property.price || '',
     assignedTo: 'Unassigned',
     notes: `${role} للوحدة ${unit}${price}${who ? `. سجّلها ${who}` : ''}`.slice(0, 2000),
-    details: { propertyType: property.type || '', area: property.areaKey || '', listingIds: [property.id].filter(Boolean), listedBy },
+    details: { propertyType: property.type || '', area: property.areaKey || '', listingIds: [property.id].filter(Boolean), listedBy, sellerRole: listedBy === 'broker' ? 'broker' : 'owner' },
     importedAt: now.toISOString()
   };
 }
