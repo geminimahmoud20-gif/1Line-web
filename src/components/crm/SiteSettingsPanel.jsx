@@ -25,7 +25,8 @@ const toForm = (s) => ({
   faq: s.faq.map((f) => ({ ...f })),
   testimonials: s.testimonials.map((t) => ({ ...t })),
   seo: Object.fromEntries(SEO_PAGES.map((p) => [p.path, { title_ar: '', description_ar: '', title_en: '', description_en: '', ...(s.seo[p.path] || {}) }])),
-  tracking: { metaPixelId: s.tracking?.metaPixelId || '' }
+  tracking: { metaPixelId: s.tracking?.metaPixelId || '' },
+  reviews: { googleUrl: s.reviews?.googleUrl || '' }
 });
 
 const move = (list, i, dir) => {
@@ -64,6 +65,9 @@ export default function SiteSettingsPanel({ lang = 'ar', triggerToast }) {
 
   // Links that would be dropped on save (not https, or the wrong site for that network)
   const badSocial = SOCIAL_NETWORKS.filter((n) => form.social[n.id].trim() && !normalizeSiteSettings({ social: { [n.id]: form.social[n.id] } }).social[n.id]);
+
+  const reviewInput = form.reviews.googleUrl.trim();
+  const badReview = Boolean(reviewInput) && !normalizeSiteSettings({ reviews: { googleUrl: reviewInput } }).reviews.googleUrl;
 
   const pixelInput = form.tracking.metaPixelId.trim();
   const badPixel = Boolean(pixelInput) && !normalizeSiteSettings({ tracking: { metaPixelId: pixelInput } }).tracking.metaPixelId;
@@ -133,6 +137,29 @@ export default function SiteSettingsPanel({ lang = 'ar', triggerToast }) {
               <Input label={L('مواعيد العمل (عربي)', 'Working hours (Arabic)')} value={form.contact.hours_ar} onChange={(e) => set('contact', 'hours_ar', e.target.value)} />
               <Input label={L('مواعيد العمل (إنجليزي)', 'Working hours (English)')} dir="ltr" value={form.contact.hours_en} onChange={(e) => set('contact', 'hours_en', e.target.value)} />
             </div>
+          </Card>
+        )}
+
+        {tab === 'contact' && (
+          <Card>
+            <CardHeader
+              title={L('مراجعات جوجل', 'Google reviews')}
+              description={L('رابط طلب المراجعة بتاع شركتك على جوجل. بعد ما تقفل صفقة بيظهر في ملف العميل زر «اطلب مراجعة» بيبعت له الرابط على واتساب. المراجعات الحقيقية من عملاء اشتروا فعلًا هي اللي بتقوّي ظهورك في جوجل.', 'Your Google review link. After a deal closes, the client file shows a button that sends it by WhatsApp. Real reviews from real buyers help you appear on Google.')}
+            />
+            <div className="crm-ss__grid">
+              <Input
+                label={L('رابط طلب المراجعة', 'Review link')}
+                type="url"
+                dir="ltr"
+                placeholder="https://g.page/r/.../review"
+                value={form.reviews.googleUrl}
+                error={badReview ? L('لازم يكون رابط https من جوجل (g.page أو google.com)', 'Must be an https Google link (g.page or google.com)') : undefined}
+                onChange={(e) => set('reviews', 'googleUrl', e.target.value)}
+              />
+            </div>
+            <p className="crm-ss__hint">
+              {L('تلاقيه في ملف النشاط التجاري على جوجل ← «طلب مراجعات» (Get more reviews) ← انسخ الرابط. سيبه فاضي لو لسه معملتش الملف.', 'Find it in your Google Business Profile → Get more reviews → copy the link. Leave blank until the profile exists.')}
+            </p>
           </Card>
         )}
 
