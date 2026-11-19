@@ -621,6 +621,26 @@ export default function PropertyFormModal({
               />
               <small style={{ color: 'var(--ui-text-3)' }}>{isAr ? 'الفريق بس هو اللي بيشوفها.' : 'Only the team sees this.'}</small>
             </div>
+            {/* The exclusivity terms: saved in property_private too (the end date is not for the site) */}
+            {form.privateNotes !== null && (
+              <div className="crm-ex-fields">
+                <label htmlFor="pf-exclusive">
+                  <input id="pf-exclusive" type="checkbox" checked={Boolean(form.exclusive)} onChange={(e) => setForm({ ...form, exclusive: e.target.checked })} />
+                  {isAr ? 'عقار حصري لـ 1Line (اتفاق حصري مع المالك)' : 'Exclusive to 1Line (agreement with the owner)'}
+                </label>
+                {form.exclusive && (
+                  <div className="crm-ex-dates">
+                    <label htmlFor="pf-ex-from">{isAr ? 'من' : 'From'}
+                      <input id="pf-ex-from" type="date" className="form-input" value={form.exclusiveFrom || ''} onChange={(e) => setForm({ ...form, exclusiveFrom: e.target.value })} />
+                    </label>
+                    <label htmlFor="pf-ex-until">{isAr ? 'لحد (تاريخ انتهاء الاتفاق)' : 'Until (agreement ends)'}
+                      <input id="pf-ex-until" type="date" className="form-input" value={form.exclusiveUntil || ''} onChange={(e) => setForm({ ...form, exclusiveUntil: e.target.value })} />
+                    </label>
+                  </div>
+                )}
+                <small style={{ color: 'var(--ui-text-3)' }}>{isAr ? 'تاريخ الانتهاء ما بيظهرش على الموقع. هتتنبه قبل ما ينتهي بأسبوعين علشان تجدد.' : 'The end date is never shown on the site. You are reminded two weeks before it ends.'}</small>
+              </div>
+            )}
           </FormStep>
 
           <FormStep id="pf-step-more" n={6} title={isAr ? 'تفاصيل إضافية (اختياري)' : 'More details (optional)'} hint={isAr ? 'الاستلام، المبنى، التكاليف، الخدمات القريبة' : 'Handover, building, costs, nearby'} collapsible>

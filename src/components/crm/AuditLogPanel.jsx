@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollText, Loader2 } from 'lucide-react';
 import { loadAuditEvents } from '../../firebaseLazy';
-import { auditLabel, describeAudit, AUDIT_LABELS } from '../../utils/auditEvents';
+import { auditLabel, describeAudit, AUDIT_LABELS, revealSummary, REVEAL_ALERT_PER_DAY } from '../../utils/auditEvents';
 import { EmptyState } from '../ui';
 import './audit-log.css';
 
@@ -23,6 +23,8 @@ export default function AuditLogPanel({ lang = 'ar' }) {
 
   const actors = useMemo(() => [...new Set((events || []).map((e) => e.actorEmail).filter(Boolean))].sort(), [events]);
   const actions = useMemo(() => [...new Set([...Object.keys(AUDIT_LABELS), ...(events || []).map((e) => e.action)])].filter(Boolean), [events]);
+  const [today] = useState(() => Date.now());
+  const reveals = useMemo(() => revealSummary(events || [], today), [events, today]);
   const shown = (events || []).filter((e) => (!action || e.action === action) && (!who || e.actorEmail === who));
 
   return (
@@ -48,6 +50,22 @@ export default function AuditLogPanel({ lang = 'ar' }) {
           </select>
         </label>
       </div>
+
+      {reveals.length > 0 && (
+        <section className="al-reveals" aria-label={L('إظهار ونسخ الأرقام النهارده', 'Phones revealed or copied today')}>
+          <h4>{L('أرقام اتظهرت أو اتنسخت النهارده', 'Phones revealed or copied today')}</h4>
+          <ul>
+            {reveals.map((r) => (
+              <li key={r.actor} className={r.flagged ? 'is-flagged' : ''}>
+                <span>{r.actor}</span>
+                <b>{r.total}</b>
+                <small>{L(`إظهار ${r.reveals} · نسخ ${r.copies}`, `${r.reveals} shown · ${r.copies} copied`)}</small>
+                {r.flagged && <em>{L(`أكتر من ${REVEAL_ALERT_PER_DAY} في اليوم — راجعه`, `Over ${REVEAL_ALERT_PER_DAY} a day — check`)}</em>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {events === undefined && <p className="al-note"><Loader2 size={14} className="animate-spin" /> {L('جاري التحميل…', 'Loading…')}</p>}
       {events === null && <p className="al-note is-bad">{L('مقدرناش نقرا السجل. اتأكد إنك داخل كمدير عام وجرّب تاني.', 'The log could not be read. Make sure you are signed in as super admin.')}</p>}

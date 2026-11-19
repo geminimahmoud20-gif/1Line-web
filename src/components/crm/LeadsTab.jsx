@@ -30,6 +30,8 @@ import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../
 import { cx } from '../ui/cx';
 import './leads-tab.css';
 import './client-card.css';
+import PhoneText from './PhoneText';
+import { auditPhoneCopy } from '../../utils/contactAudit';
 const MORE_FILTER_KEYS = ['incomplete', 'converted', 'not_fit', 'qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
 
 const COLUMN_OPTIONS = [
@@ -902,7 +904,7 @@ export default function LeadsTab({
 
                         <div className="crm-client-identity-row">
                           <span className="crm-phone-mono-pill">
-                            <bdi dir="ltr">{renderHighlighted(formatPhoneNumber(l.phone || l.whatsapp), searchQuery) || '—'}</bdi>
+                            <PhoneText leadId={l.id} value={formatPhoneNumber(l.phone || l.whatsapp)} surface="leads" isAr={isAr} render={(t) => renderHighlighted(t, searchQuery)} />
                           </span>
                           {(l.phone || l.whatsapp) && (
                             <button
@@ -912,6 +914,7 @@ export default function LeadsTab({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard?.writeText(l.phone || l.whatsapp);
+                                auditPhoneCopy(l.id, 'leads');
                                 triggerToast?.(isAr ? 'تم نسخ الرقم بنجاح' : 'Phone copied', 'success');
                               }}
                             >

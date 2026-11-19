@@ -36,6 +36,9 @@ export const SEO_PAGES = [
   { path: '/about', ar: 'عن الشركة', en: 'About' }
 ];
 
+// The hosts a Google review link can be on (the short «g.page/r/…/review», the maps share link, or google.com itself)
+export const GOOGLE_REVIEW_HOSTS = ['g.page', 'g.co', 'goo.gl', 'google.com', 'share.google'];
+
 export const FAQ_CATEGORIES = ['services', 'valuation', 'legal', 'expats'];
 
 const LIMITS = { short: 120, text: 600, answer: 1500, title: 70, description: 170, faq: 30, testimonials: 20 };
@@ -51,7 +54,8 @@ export const DEFAULT_SITE_SETTINGS = Object.freeze({
   faq: Object.freeze([]),
   testimonials: Object.freeze([]),
   seo: Object.freeze({}),
-  tracking: Object.freeze({})
+  tracking: Object.freeze({}),
+  reviews: Object.freeze({})
 });
 
 const str = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
@@ -133,7 +137,12 @@ export function normalizeSiteSettings(raw) {
   const pixel = String(t.metaPixelId ?? '').replace(/\s+/g, '');
   const tracking = /^\d{8,20}$/.test(pixel) ? { metaPixelId: pixel } : {};
 
-  return { contact, social, faq, testimonials, seo, tracking };
+  // The company's Google review link, sent to a client after a deal (the team's «اطلب مراجعة» button)
+  const r = src.reviews && typeof src.reviews === 'object' ? src.reviews : {};
+  const googleUrl = safeHttpsUrl(r.googleUrl, GOOGLE_REVIEW_HOSTS);
+  const reviews = googleUrl ? { googleUrl } : {};
+
+  return { contact, social, faq, testimonials, seo, tracking, reviews };
 }
 
 // ---- store ----

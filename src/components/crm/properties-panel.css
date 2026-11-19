@@ -271,5 +271,14 @@
 
 /* Who added a listing, and why a rejected one was sent back */
 .crm-prow__by { color: var(--ui-text-2); }
+/* Exclusive to us: green while there is time, amber when it ends soon, red once it ended */
+.crm-prow__ex { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--ui-r-full); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); background: var(--ui-success-tint); color: var(--ui-success); }
+.crm-prow__ex.is-soon { background: var(--ui-warning-tint); color: var(--ui-warning); }
+.crm-prow__ex.is-expired { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-ex-fields { display: grid; gap: var(--ui-s-2); padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface-2); }
+.crm-ex-fields label { display: flex; align-items: center; gap: var(--ui-s-2); font-weight: var(--ui-fw-semibold); }
+.crm-ex-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-s-3); }
+.crm-ex-dates label { display: grid; gap: 4px; font-weight: normal; color: var(--ui-text-2); }
+@media (max-width: 480px) { .crm-ex-dates { grid-template-columns: 1fr; } }
 .crm-prow__why { flex-basis: 100%; padding: 4px 8px; border-radius: var(--ui-r-sm); background: var(--ui-danger-tint); color: var(--ui-danger); font-size: var(--ui-fs-1); line-height: 1.5; }
 .crm-lost-hint { margin: 0 0 var(--ui-s-3); font-size: var(--ui-fs-2); line-height: 1.7; color: var(--ui-text-2); }

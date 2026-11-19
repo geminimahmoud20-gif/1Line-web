@@ -289,3 +289,14 @@ test('an owner whose request lacks the size, the address or photos is found, and
   assert.match(msg, /المساحة، العنوان/);
   assert.match(msg, /https:\/\/www\.1lineestate\.com\/sell\?/);
 });
+
+test('a contact saved from a unit added in the CRM is a seller, even an older one typed «broker»', async () => {
+  const { isSellerLead, isBuyerLead } = await import('../../src/utils/crmLeadViews.js');
+  const oldBroker = { type: 'broker', source: 'إضافة وحدة من الـ CRM', details: { listingIds: ['p1'], listedBy: 'broker' } };
+  assert.equal(isSellerLead(oldBroker), true);
+  assert.equal(isBuyerLead(oldBroker), false);
+  assert.equal(isSellerLead({ type: 'broker', details: { listingIds: ['p1'], listedBy: 'owner' } }), true);
+  // a partner broker from the broker portal offers no unit: not a seller
+  assert.equal(isSellerLead({ type: 'broker', source: 'بوابة الوسطاء والشركاء' }), false);
+  assert.equal(isSellerLead({ type: 'broker', details: { listingIds: ['p1'] } }), false, 'a link without who offers it is not enough');
+});

@@ -58,6 +58,7 @@ import { phoneProblem, nameProblem } from '../utils/contactValidation';
 import { userDisplayName } from '../utils/assignees';
 import { deletePrompt } from '../utils/deleteConfirm';
 import { defaultLeadFilter } from '../utils/crmLeadViews';
+import { setPhonePolicy } from '../utils/phoneReveal';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -109,6 +110,8 @@ export const CrmAdminPanel = ({
   // ld.phone — this keeps the screens, exports and the super admin's role preview consistent.
   const perms = userPerms || permsOfRole(getActiveAccessConfig(), activeRole);
   const isSuperRole = activeRole === 'super_admin';
+  // Everyone but the super admin sees client numbers masked until «إظهار» (which is logged)
+  useEffect(() => { setPhonePolicy({ mask: !isSuperRole }); return () => setPhonePolicy({ mask: false }); }, [isSuperRole]);
   const seesAllLeads = isSuperRole || perms.includes('ld.all') || perms.includes('ld.manage');
   const seesPhones = isSuperRole || perms.includes('ld.phone');
   const canEditLeads = isSuperRole || canEditLeadsRole(activeRole, perms);
@@ -192,6 +195,13 @@ export const CrmAdminPanel = ({
   const [drawerTab, setDrawerTab] = useState('work');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
+  // The drawer shows the live record, so what a save adds (the activity log line, timestamps) appears at once;
+  // a client opened from search (not in the list) keeps the copy it was opened with
+  const liveDrawerLead = useMemo(() => {
+    if (!quickDrawerLead) return null;
+    const live = leads.find((l) => String(l.id) === String(quickDrawerLead.id));
+    return live ? { ...quickDrawerLead, ...live } : quickDrawerLead;
+  }, [quickDrawerLead, leads]);
 
   // AI Copywriter & Contract Studio Modal States
   const [showAICopywriter, setShowAICopywriter] = useState(false);
@@ -1199,7 +1209,7 @@ export const CrmAdminPanel = ({
 
       {/* ⚡ DRAWER: HIGH-VELOCITY LEAD QUICK DRAWER */}
       <LeadQuickDrawer
-        lead={quickDrawerLead}
+        lead={liveDrawerLead}
         tab={drawerTab}
         onTabChange={setDrawerTab}
         onClose={() => { setQuickDrawerLead(null); setDrawerTab('work'); }}

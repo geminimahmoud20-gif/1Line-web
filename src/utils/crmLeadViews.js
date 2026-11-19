@@ -178,6 +178,9 @@ export function isSellerLead(l = {}) {
     // The one-step card on /sell and /valuation (type seller_instant, source «Portals 1-Step (sell)») asks owner or broker
     type === 'seller_instant' ||
     !!l.details?.sellerRole ||
+    // Saved from a unit added in the CRM («إضافة وحدة من الـ CRM»): the contact offers that unit, owner or broker.
+    // Older ones have type 'broker' (the partner portal uses it too, so the type alone says nothing) and only this link.
+    (Array.isArray(l.details?.listingIds) && l.details.listingIds.length > 0 && !!l.details?.listedBy) ||
     /portals 1-step \((sell|valuation)\)/i.test(String(l.source || '')) ||
     !!l.details?.askingPrice ||
     // Old leads with no type at all: the only trace of a sale offer is the text of its note
