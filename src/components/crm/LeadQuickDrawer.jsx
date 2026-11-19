@@ -448,6 +448,7 @@ export default function LeadQuickDrawer({
             <LeadDrawerOverview
               view={activeTab}
               onOpenClient={() => setActiveTab('client')}
+              allLeads={allLeads.length ? allLeads : filteredLeads}
               lead={lead}
               egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               handleLogCall={handleLogCall}

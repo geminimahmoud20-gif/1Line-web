@@ -946,8 +946,8 @@ export default function LeadsTab({
                             </span>
                           )}
                           {dupCount > 0 && (
-                            <button type="button" className="crm-lead-chip is-dupe" onClick={(e) => { e.stopPropagation(); openMerge(l); }} title={isAr ? 'نفس الرقم مسجل في عميل تاني' : 'Same phone on another lead'}>
-                              <CopyPlus size={12} aria-hidden="true" />{isAr ? `مكرر (${dupCount + 1})` : `Duplicate (${dupCount + 1})`}
+                            <button type="button" className="crm-lead-chip is-dupe" onClick={(e) => { e.stopPropagation(); openMerge(l); }} title={isAr ? 'نفس الرقم له طلبات تانية. اضغط للدمج، أو افتح الملف لشوف كل طلباته' : 'Same phone has other requests. Click to merge, or open the file to see them all'}>
+                              <CopyPlus size={12} aria-hidden="true" />{isAr ? `نفس العميل · ${dupCount + 1} طلبات` : `Same client · ${dupCount + 1} requests`}
                             </button>
                           )}
                           {Array.isArray(l.tags) && l.tags.slice(0, 2).map((tag) => (

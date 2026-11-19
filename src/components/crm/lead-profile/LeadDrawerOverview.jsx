@@ -22,6 +22,7 @@ import { OUTCOMES, STAGE_RULES, attemptsOf, outcomesOf, outcomeById, FOLLOW_UP_A
 import { LOST_REASONS } from '../../../utils/crmLeadViews';
 import { useSiteSettings } from '../../../utils/siteSettings';
 import ReviewRequestCard from './ReviewRequestCard';
+import ClientRequestsCard from './ClientRequestsCard';
 
 export default function LeadDrawerOverview({
   lead,
@@ -45,7 +46,8 @@ export default function LeadDrawerOverview({
   onAddNote,
   agentName = '',
   view = 'work',
-  onOpenClient
+  onOpenClient,
+  allLeads = []
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -208,6 +210,8 @@ export default function LeadDrawerOverview({
         )}
         {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
       </section>
+
+      <ClientRequestsCard lead={lead} allLeads={allLeads} isAr={isAr} />
 
       {lead?.status === 'closed' && <ReviewRequestCard lead={lead} egWhatsapp={egWhatsapp} googleUrl={siteSettings.reviews?.googleUrl || ''} isAr={isAr} onUpdateLead={onUpdateLead} />}
 
