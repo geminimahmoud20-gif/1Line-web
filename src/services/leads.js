@@ -5,6 +5,7 @@ import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnaps
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
 import { notifyStaff, requestAutoAssign } from './staffNotify.js';
+import { submitPublicLead } from './publicLead.js';
 import { phoneVariants } from '../utils/phoneVariants.js';
 import { CONTACT_FIELDS, withoutContactFields } from '../utils/leadContactFields.js';
 
@@ -48,6 +49,17 @@ const createdMillis = (lead) => {
 // lead id, so updateLeadField/deleteLead (which use lead.id) reach it, and a retried write lands
 // on the same doc instead of a duplicate.
 const writeLead = async (rawLead, extra = {}) => {
+  // A visitor's request goes through /api/lead first (Turnstile + limits + one commit on the server);
+  // staff, a page without server functions, or any failure there fall back to the direct write below.
+  if (!auth?.currentUser && typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    const fields = Object.fromEntries(Object.entries({ ...rawLead, ...extra }).filter(([k, v]) => v !== undefined && !CLIENT_ONLY_FIELDS.includes(k)));
+    const sent = await submitPublicLead(fields);
+    if (sent.status === 'saved') {
+      notifyStaff('leads', sent.id);
+      requestAutoAssign(sent.id);
+      return { ...rawLead, id: sent.id };
+    }
+  }
   const { lead, contact } = splitLeadFields(rawLead);
   const payload = { ...lead, ...extra, createdAt: serverTimestamp() };
   const write = async (id) => {
