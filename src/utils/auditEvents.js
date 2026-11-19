@@ -8,6 +8,8 @@
 
 export const AUDIT_LABELS = {
   CONTACT_USED: { ar: 'استخدم رقم عميل', en: 'Used a client’s phone' },
+  PHONE_REVEALED: { ar: 'أظهر رقم عميل', en: 'Revealed a client’s phone' },
+  PHONE_COPIED: { ar: 'نسخ رقم عميل', en: 'Copied a client’s phone' },
   LEAD_REASSIGNED: { ar: 'نقل عميل لبياع أو فريق', en: 'Reassigned a client' },
   LEAD_AUTO_ASSIGNED: { ar: 'توزيع تلقائي لعميل جديد', en: 'Auto-assigned a new client' },
   LEAD_CLAIMED: { ar: 'استلم عميل', en: 'Claimed a client' },
@@ -33,6 +35,41 @@ const CHANNELS = { call: { ar: 'اتصال', en: 'Call' }, whatsapp: { ar: 'وا
 export function contactUseEvent(lead, channel) {
   if (!lead?.id || !CHANNELS[channel]) return null;
   return { actionType: 'CONTACT_USED', targetCollection: 'leads', targetId: String(lead.id), details: { channel } };
+}
+
+/** «إظهار» on a masked number: the client's id and the screen it was on, never the number */
+export function phoneRevealEvent(leadId, surface = '') {
+  if (!leadId) return null;
+  return { actionType: 'PHONE_REVEALED', targetCollection: 'leads', targetId: String(leadId), details: { surface: String(surface || '').slice(0, 24) } };
+}
+
+/** The copy button next to a number */
+export function phoneCopyEvent(leadId, surface = '') {
+  if (!leadId) return null;
+  return { actionType: 'PHONE_COPIED', targetCollection: 'leads', targetId: String(leadId), details: { surface: String(surface || '').slice(0, 24) } };
+}
+
+/** How many reveals + copies in one day look like harvesting rather than work */
+export const REVEAL_ALERT_PER_DAY = 40;
+
+/**
+ * Per person, how many numbers they revealed or copied on the day of `now` (local), most first.
+ * `flagged` once someone passes REVEAL_ALERT_PER_DAY. Reads the entries already loaded on screen.
+ */
+export function revealSummary(events = [], now = Date.now(), limit = REVEAL_ALERT_PER_DAY) {
+  const day = new Date(now).toDateString();
+  const by = new Map();
+  for (const e of events) {
+    if (e?.action !== 'PHONE_REVEALED' && e?.action !== 'PHONE_COPIED') continue;
+    if (!e.at || new Date(e.at).toDateString() !== day) continue;
+    const who = e.actorEmail || '—';
+    const row = by.get(who) || { actor: who, reveals: 0, copies: 0, total: 0, flagged: false };
+    if (e.action === 'PHONE_REVEALED') row.reveals += 1; else row.copies += 1;
+    row.total += 1;
+    row.flagged = row.total >= limit;
+    by.set(who, row);
+  }
+  return [...by.values()].sort((a, b) => b.total - a.total);
 }
 
 const holderOf = (l = {}) => l.ownerName || l.claimedBy || l.assignedTo || 'Unassigned';
@@ -95,6 +132,7 @@ export function describeAudit(entry = {}, isAr = true) {
   const d = entry.details || entry.metadata || {};
   const action = entry.action || entry.actionType || '';
   if (action === 'CONTACT_USED') return `${(CHANNELS[d.channel] || {})[isAr ? 'ar' : 'en'] || ''} — ${entry.targetId || ''}`.trim();
+  if (action === 'PHONE_REVEALED' || action === 'PHONE_COPIED') return `${entry.targetId || ''}${d.surface ? ` · ${d.surface}` : ''}`;
   if (action === 'LEAD_AUTO_ASSIGNED') return `${d.to || '—'} (${d.team || ''}) — ${entry.targetId || ''}`;
   if (action === 'LEAD_REASSIGNED') return `${d.from || '—'} ← ${d.to || '—'} (${entry.targetId || ''})`;
   if (action === 'ROLE_SAVED') {

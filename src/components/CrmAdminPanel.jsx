@@ -58,6 +58,7 @@ import { phoneProblem, nameProblem } from '../utils/contactValidation';
 import { userDisplayName } from '../utils/assignees';
 import { deletePrompt } from '../utils/deleteConfirm';
 import { defaultLeadFilter } from '../utils/crmLeadViews';
+import { setPhonePolicy } from '../utils/phoneReveal';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -109,6 +110,8 @@ export const CrmAdminPanel = ({
   // ld.phone — this keeps the screens, exports and the super admin's role preview consistent.
   const perms = userPerms || permsOfRole(getActiveAccessConfig(), activeRole);
   const isSuperRole = activeRole === 'super_admin';
+  // Everyone but the super admin sees client numbers masked until «إظهار» (which is logged)
+  useEffect(() => { setPhonePolicy({ mask: !isSuperRole }); return () => setPhonePolicy({ mask: false }); }, [isSuperRole]);
   const seesAllLeads = isSuperRole || perms.includes('ld.all') || perms.includes('ld.manage');
   const seesPhones = isSuperRole || perms.includes('ld.phone');
   const canEditLeads = isSuperRole || canEditLeadsRole(activeRole, perms);

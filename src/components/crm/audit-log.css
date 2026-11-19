@@ -17,3 +17,11 @@
   .al-row { flex-direction: column; }
   .al-meta { align-items: flex-start; text-align: start; }
 }
+
+.al-reveals { margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--ui-line-strong); border-radius: 12px; background: var(--ui-surface); }
+.al-reveals h4 { margin: 0 0 8px; font-size: 1rem; }
+.al-reveals ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.al-reveals li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; overflow-wrap: anywhere; }
+.al-reveals small { color: var(--ui-text-3); }
+.al-reveals li.is-flagged { color: var(--ui-danger); font-weight: 700; }
+.al-reveals em { font-style: normal; font-size: 0.9rem; }

@@ -34,6 +34,7 @@ import {
   isInboxActive, needsAction, matchesView, receivedMs, ageLabel, formatReceived, requestsCount, slaSummary, splitNotes,
   reassignUpdates, knownOwners
 } from '../../utils/inboxView';
+import PhoneText from './PhoneText';
 
 const PAGE_SIZE = 20;
 
@@ -623,9 +624,11 @@ export default function CrmInboxPanel({
                         <p className="crm-inbox-item__meta">
                           <span>
                             <Phone size={14} aria-hidden="true" />
-                            <bdi dir="ltr">
-                              {canSeePhone ? (formatPhoneNumber(lead.phone) || (isAr ? 'بدون تليفون' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
-                            </bdi>
+                            {canSeePhone
+                              ? (formatPhoneNumber(lead.phone)
+                                ? <PhoneText leadId={lead.id} value={formatPhoneNumber(lead.phone)} surface="inbox" isAr={isAr} />
+                                : <bdi dir="ltr">{isAr ? 'بدون تليفون' : 'No phone'}</bdi>)
+                              : <bdi dir="ltr">{maskPhoneNumber(lead.phone, userRole, userPerms)}</bdi>}
                           </span>
                           {when && (
                             <span title={isAr ? 'وصل' : 'Received'}>

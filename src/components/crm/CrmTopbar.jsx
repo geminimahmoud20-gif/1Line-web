@@ -9,6 +9,7 @@ import { desktopAlertsState, enableDesktopAlerts, describeDownload, panelHeadlin
 import { loadAlertsSeenAt, saveAlertsSeenAt } from '../../firebaseLazy';
 import { ageLabel } from '../../utils/inboxView';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import PhoneText from './PhoneText';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -535,7 +536,7 @@ export default function CrmTopbar({
                             <strong>{panelHeadline(l, isAr)}</strong>
                             <small>
                               <span>{l.name || (isAr ? 'عميل' : 'Client')}</span>
-                              {phone && <bdi dir="ltr">{phone}</bdi>}
+                              {phone && <PhoneText leadId={l.id} value={phone} isAr={isAr} showToggle={false} />}
                             </small>
                           </span>
                           {age && <time className="crm-notif-row__age">{age}</time>}
