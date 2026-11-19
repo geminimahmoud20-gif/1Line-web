@@ -192,7 +192,7 @@ export default function LeadQuickDrawer({
   const markContacted = (channel) => {
     auditContactUse(lead, channel);
     const patch = firstContactPatch(lead);
-    if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
+    if (patch && onUpdateLead) onUpdateLead(lead.id, { ...patch, _logAction: channel === 'whatsapp' ? 'تواصل بالواتساب' : 'اتصال بالعميل' }, lead.version);
   };
 
   // Activity outcome (utils/stageGate): one tap logs what happened. The stage lock reads it, a negative one carries

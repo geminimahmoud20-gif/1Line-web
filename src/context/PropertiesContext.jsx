@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { LOST_REASONS } from '../utils/crmLeadViews';
 import { persistDemands } from '../utils/demandStorage';
 import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
 import { INITIAL_LEADS } from '../data/mockData';
@@ -50,6 +49,8 @@ import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
 import { demandEditStamp } from '../utils/publishApproval';
 import { stageHistoryAfter, initialStageHistory } from '../utils/stageHistory';
+import { changeEntry } from '../utils/leadChangeLog';
+import { getActorName } from '../utils/actorName';
 import { checkStageChange } from '../utils/stageGate';
 import { assignmentEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
@@ -80,21 +81,6 @@ const readLeadCache = () => {
   } catch { return []; }
   return readStoredJson('oneline_crm_leads', [], isRecordArray);
 };
-const LEAD_STAGE_AR = { new: 'عميل محتمل', contacted: 'مؤهل', site_visit: 'اجتماع / معاينة', negotiating: 'تفاوض', closing: 'إغلاق (توقيع وحجز)', closed: 'إغلاق', lost: 'خسارة', inactive: 'غير متفاعل' };
-const LEAD_FIELD_AR = { assignedTo: 'المسؤول', temperature: 'درجة الحرارة', score: 'الجدية', notes: 'الملاحظات', nextFollowUpAt: 'موعد المتابعة', isArchived: 'الأرشفة', tags: 'الوسوم', lastContactedAt: 'تواصل' };
-/** One readable line for the lead's activity log */
-const describeLeadChange = (f = {}) => {
-  if (f.status) {
-    const base = `تغيير المرحلة إلى: ${LEAD_STAGE_AR[f.status] || f.status}`;
-    const reason = f.status === 'lost' && LOST_REASONS.find((r) => r.id === f.lostReason);
-    return reason ? `${base} (${reason.ar}${f.lostNote ? ` — ${f.lostNote}` : ''})` : base;
-  }
-  if ('assignedTo' in f) return `تعيين المسؤول: ${f.assignedTo || '—'}`;
-  if (f.lastContactedAt && Object.keys(f).length <= 2) return 'تواصل مع العميل';
-  const names = Object.keys(f).map((k) => LEAD_FIELD_AR[k]).filter(Boolean);
-  return `تحديث بيانات${names.length ? `: ${[...new Set(names)].join('، ')}` : ''}`;
-};
-
 const PropertiesContext = createContext(null);
 
 const LEADS_PAGE = 150;
@@ -872,7 +858,9 @@ export function PropertiesProvider({ children }) {
   // CRM Leads Handlers
   const handleUpdateLead = useCallback(async (id, requestedFields) => {
     // `_undo` marks the Undo button's change; it is never saved
-    const { _undo: isUndo, ...updatedFields } = requestedFields || {};
+    // `_logAction` is a caller's own wording for the activity log («اتصال بالعميل»); it is never saved either
+    const { _undo: isUndo, _logAction: logAction, ...changed } = requestedFields || {};
+    const updatedFields = changed;
     const nowIso = new Date().toISOString();
     const current = leadsRef.current.find((l) => l.id === id);
 
@@ -910,13 +898,13 @@ export function PropertiesProvider({ children }) {
     }
     // The activity log is saved with the lead (it used to live only in this browser).
     // Callers that build their own log entry pass activityLogs themselves.
-    const activityLogs = updatedFields.activityLogs
-      || [{ timestamp: nowIso, action: describeLeadChange(updatedFields) }, ...(current?.activityLogs || [])].slice(0, 100);
+    const entry = updatedFields.activityLogs ? null : changeEntry({ ...updatedFields, _logAction: logAction }, current || {}, { agent: getActorName(), nowIso });
+    const activityLogs = updatedFields.activityLogs || (entry ? [entry, ...(current?.activityLogs || [])].slice(0, 100) : null);
 
     const enrichedFields = {
       ...updatedFields,
       ...extra,
-      activityLogs,
+      ...(activityLogs ? { activityLogs } : {}),
       updatedAt: nowIso,
       lastActivityAt: nowIso
     };

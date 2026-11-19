@@ -48,6 +48,13 @@ export function buildTimeline(input) {
   // The older lines kept in the notes; the client's words are the rest
   const parsed = String(lead.notes || '').split('\n').map((raw) => ({ raw, line: parseNoteLine(raw) }));
   const lines = parsed.map((p) => p.line).filter((l) => l && l.meta);
+  // The first line: when and how the request arrived (a log that starts at the first edit hides where the client came from)
+  const arrivedAt = toMs(lead.createdAt) || toMs(lead.timestamp);
+  const hasArrival = logs.some((e) => /^(تسجيل العميل لأول مرة|وصل الطلب)/.test(e.text));
+  if (arrivedAt && !hasArrival) {
+    const src = String(lead.source || '').trim();
+    logs.push({ key: 'arrival', at: arrivedAt, meta: '', text: `وصل الطلب${src ? ` من: ${src}` : ''}`, kind: 'request', agent: '', legacy: false });
+  }
   const legacy = lines.map((l, i) => ({ key: `n${i}`, at: 0, meta: l.meta, text: l.text, kind: 'note', agent: '', legacy: true }));
   // A line the activity log already holds (older saves wrote both) is not shown twice
   const have = new Set(logs.map((e) => e.text));
