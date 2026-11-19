@@ -110,8 +110,11 @@ test('old CRM code does not gain hard-coded colours, inline styles or !important
 // no stylesheet or component names another family; numbers use tabular figures instead of monospace.
 test('Cairo is the only font the site loads or names', () => {
   const html = read('index.html');
-  const families = [...html.matchAll(/fonts\.googleapis\.com\/css2\?([^"]+)/g)].flatMap((m) => [...m[1].matchAll(/family=([^:&]+)/g)].map((f) => f[1]));
-  assert.ok(families.length > 0 && families.every((f) => f === 'Cairo'), `index.html loads ${families.join(', ')}`);
+  // Served from this site (public/fonts), never from a third-party host, and only the Cairo family
+  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(html), 'index.html still loads a font from Google');
+  const families = [...html.matchAll(/@font-face\s*\{[^}]*font-family:\s*'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(families.length > 0 && families.every((f) => f === 'Cairo'), `index.html declares ${families.join(', ')}`);
+  for (const m of html.matchAll(/@font-face\s*\{[^}]*src:\s*url\(([^)]+)\)/g)) assert.ok(m[1].startsWith('/fonts/'), `font not served from /fonts: ${m[1]}`);
   const banned = /(Alexandria|Plus Jakarta Sans|IBM Plex|Outfit|Playfair|Montserrat|Tajawal|Readex|Noto Kufi|\bInter\b|monospace)/;
   const files = walk('src').filter((f) => /\.(css|jsx|js)$/.test(f));
   for (const f of files) {
