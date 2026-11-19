@@ -8,6 +8,8 @@
 export function sellerRoleOf(lead = {}) {
   const r = lead?.details?.sellerRole || lead?.sellerRole;
   if (r === 'owner' || r === 'broker') return r;
+  const by = lead?.details?.listedBy; // a unit added in the CRM records who offers it
+  if (by === 'owner' || by === 'broker') return by;
   const first = String(lead?.notes || '').split('|')[0].trim();
   if (first === 'وسيط عقاري') return 'broker';
   if (first === 'المالك') return 'owner';

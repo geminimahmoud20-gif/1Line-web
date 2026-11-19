@@ -23,7 +23,9 @@ test('the contact becomes a client linked to the unit, phone kept off the listin
   assert.equal(lead.details.listedBy, 'owner');
   assert.match(lead.notes, /المالك نفسه للوحدة كود A12/);
   const broker = listingContactLead(prop, { phone: '01112345678', listedBy: 'broker' });
-  assert.equal(broker.type, 'broker');
+  assert.equal(broker.type, 'seller', 'a broker offering a unit is on the seller side');
+  assert.equal(broker.details.sellerRole, 'broker');
+  assert.equal(lead.details.sellerRole, 'owner');
   assert.match(broker.name, /وسيط/);
 });
 
