@@ -9,6 +9,7 @@ import { liveListings } from './marketStats.js';
 import { matchUnit, hardFit } from './buyerMatch.js';
 import { requestOf, missingInRequest } from './buyerRequest.js';
 import { paymentTerms, planSummary } from './paymentTerms.js';
+import { trackedListingUrl } from './linkTracking.js';
 
 /**
  * Normalizes phone number for WhatsApp URL
@@ -180,7 +181,8 @@ export function generateWhatsAppMessage(eventType, client, property, alternative
     })(),
   ].filter(Boolean).join('\n');
   const origin = SITE_URL;
-  const propertyUrl = `${origin}/properties/${property.id}`;
+  // The link carries the client's id, so the salesperson is told when the client opens it (utils/linkTracking)
+  const propertyUrl = trackedListingUrl(origin, property.id, client.id);
 
   if (eventType === 'new_unit') {
     return `مرحباً أ. ${clientName} 🌸،

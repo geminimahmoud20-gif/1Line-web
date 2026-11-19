@@ -7,6 +7,7 @@ import { scoreForBuyer } from '../../../utils/matchingEngine';
 import { liveListings } from '../../../utils/marketStats';
 import { Badge, Button, EmptyState } from '../../ui';
 import LeadRequestEditor from './LeadRequestEditor';
+import { trackedListingUrl } from '../../../utils/linkTracking';
 
 const TIERS = [
   { ar: 'الأقرب لطلبه', en: 'Closest', tone: 'info' },
@@ -149,7 +150,7 @@ export default function LeadDrawerMatching({
               `${p.title_ar || p.title_en}\n` +
               `الموقع: ${p.locationName_ar || p.areaKey}\n` +
               `السعر: ${p.price?.toLocaleString('en-US')} ج.م\n` +
-              `تفاصيل الوحدة: ${SITE_URL}/properties/${p.id}`
+              `تفاصيل الوحدة: ${trackedListingUrl(SITE_URL, p.id, lead.id)}`
             );
             return (
               <li key={p.id} className="crm-ld__match">

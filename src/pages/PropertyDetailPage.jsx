@@ -41,6 +41,7 @@ import { similarListings } from '../utils/similarListings';
 import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
 import { blockedByApproval } from '../utils/publishApproval';
+import { reportLinkOpen } from '../utils/linkOpen';
 
 const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
@@ -106,6 +107,9 @@ export default function PropertyDetailPage({
   const similarProperties = useMemo(() => similarListings(property, properties), [properties, property]);
 
   const isAr = lang === 'ar';
+
+  // Opened from a link the team sent (?lc=<client id>): tell the team once, and drop the tag from the address
+  useEffect(() => { if (id) reportLinkOpen(id); }, [id]);
 
   // 🌐 Inject Google Schema.org & Dynamic OpenGraph Meta Tags
   useEffect(() => {

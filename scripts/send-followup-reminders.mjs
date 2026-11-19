@@ -18,6 +18,9 @@
 //    • Tells the managers once a day when an exclusive agreement is about to end (14, 7, 3 days, and the day it ends;
 //      utils/exclusivity), from property_private (only the exclusive listings are read). Remembered in push_state/_exclusive.
 //
+//    • Tells a salesperson when a client opens a listing link the team sent them (utils/linkTracking → api/link-open.js
+//      writes link_opens/{lead__listing}; the opens changed since the last run are read, tracked in push_state/_linkopens).
+//
 //  Usage: GOOGLE_APPLICATION_CREDENTIALS=key.json TZ=Africa/Cairo node scripts/send-followup-reminders.mjs [--dry-run] [--force]
 //  Hourly run: .github/workflows/followup-reminders.yml  (needs `npm install --no-save firebase-admin web-push`)
 // =============================================================
@@ -28,6 +31,7 @@ import { dueSoonFor, taskAlertPayload } from '../src/utils/nextStep.js';
 import { localDayKey } from '../src/utils/crmLeadViews.js';
 import { assignmentPayload } from '../src/utils/tasks.js';
 import { freshListings, matchAlerts, matchAlertPayload, OPEN_BUYER_STAGES } from '../src/utils/matchAlerts.js';
+import { linkOpenAlerts, linkOpenPayload } from '../src/utils/linkOpenAlerts.js';
 import { exclusiveAlerts, exclusiveAlertPayload, cleanExclusive, todayKey } from '../src/utils/exclusivity.js';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -171,6 +175,39 @@ if (digestHours && hasManagers) {
   }
 }
 
+// ── Clients who opened a listing link the team sent them ──
+// Only the link_opens documents changed since the last run are read (first run: from now), then the clients and listings they name.
+const linkRef = db.doc('push_state/_linkopens');
+let linkState = null;
+let linkByOwner = new Map();
+let linkNext = null;
+let linkAlertCount = 0;
+let linkDelivered = 0;
+if (alertHours) {
+  linkState = (await linkRef.get()).data() || null;
+  const since = linkState?.lastRunAt || now.toISOString();
+  const snap = linkState ? await db.collection('link_opens').where('lastAt', '>', since).get() : { docs: [] };
+  const opens = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  if (opens.length) {
+    const leadIds = [...new Set(opens.map((o) => o.leadId))].slice(0, 40);
+    const leadMap = new Map();
+    for (const id of leadIds) {
+      const l = (await db.doc(`leads/${id}`).get()).data();
+      if (l) leadMap.set(id, { name: l.name, ownerUid: l.ownerUid, status: l.status, isArchived: l.isArchived });
+    }
+    const titles = {};
+    for (const id of [...new Set(opens.map((o) => o.propertyId))].slice(0, 40)) {
+      const p = (await db.doc(`properties/${id}`).get()).data();
+      titles[id] = p?.title_ar || p?.title_en || '';
+    }
+    const res = linkOpenAlerts(opens, leadMap, titles, linkState?.notified || {});
+    linkByOwner = res.byOwner;
+    linkNext = res.next;
+    linkAlertCount = res.byOwner.size;
+    console.log(`${opens.length} link open(s) since the last run: ${linkAlertCount} salesperson(s) to tell`);
+  }
+}
+
 const openIds = new Set(tasks.map((t) => t.id));
 let sent = 0;
 for (const doc of subscribers) {
@@ -235,6 +272,17 @@ for (const doc of subscribers) {
     }
   }
 
+  // 6. A client opened a listing link this person sent
+  const linkPayload = linkOpenPayload(linkByOwner.get(doc.id));
+  if (linkPayload) {
+    if (dryRun) console.log(`[dry run] ${member.name || doc.id}: ${linkPayload.title} — ${linkPayload.body}`);
+    else {
+      const r = await pushTo(doc.id, subs, linkPayload);
+      subs = r.alive;
+      if (r.delivered) { linkDelivered += 1; sent += 1; }
+    }
+  }
+
   // 5. An exclusive agreement is about to end (managers only)
   if (exclusivePayload && member.manager) {
     if (dryRun) console.log(`[dry run] ${member.name || doc.id}: ${exclusivePayload.title} — ${exclusivePayload.body}`);
@@ -246,6 +294,12 @@ for (const doc of subscribers) {
   }
 
   if (!dryRun && (subs.length !== data.subs.length || Object.keys(patch).length)) await doc.ref.update({ subs, ...patch });
+}
+
+// The opens are marked as seen once the people to tell got it (or there was nobody to tell); a failed push is tried again next run
+if (!dryRun && alertHours && (linkAlertCount === 0 || linkDelivered > 0)) {
+  const notified = Object.fromEntries(Object.entries(linkNext || linkState?.notified || {}).slice(-300));
+  await linkRef.set({ lastRunAt: now.toISOString(), notified });
 }
 
 // Remembered only once somebody got it (or there was nothing to say), so a failed push is tried again next run

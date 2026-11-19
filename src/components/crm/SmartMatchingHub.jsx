@@ -66,7 +66,7 @@ export default function SmartMatchingHub({ leads = [], properties = [], onUpdate
       return;
     }
     // The client's message carries the listing and its own plan, never our internal match score
-    const text = generateWhatsAppMessage('new_unit', { name: row.name }, property);
+    const text = generateWhatsAppMessage('new_unit', { name: row.name, id: lead?.id }, property);
     window.open(`https://wa.me/${formatWhatsAppPhone(digits)}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
     if (lead && onUpdateLead) {
       const nowIso = new Date().toISOString();
