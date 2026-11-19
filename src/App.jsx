@@ -1,4 +1,3 @@
-import { canPrefetch, PREFETCH_DELAY_MS } from './utils/prefetchPolicy';
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { forSite } from './utils/siteReady';
 import { siteProjects } from './utils/projectFacts';
@@ -218,18 +217,15 @@ function AppContent() {
   const location = useLocation();
 
   // Scroll to top on page navigation & Track Visitor Intelligence
-  // Warm the on-demand overlays once the page has loaded and gone quiet, and only on a connection that
-  // can spare the bytes (never on data-saver / 2G / 3G: they load when opened instead)
+  // Warm the on-demand overlays after first paint so opening one never waits on the network
   useEffect(() => {
-    if (typeof window === 'undefined' || !canPrefetch(navigator.connection)) return undefined;
-    let timer;
-    const start = () => { timer = setTimeout(() => {
-      if ('requestIdleCallback' in window) window.requestIdleCallback(prefetchOverlays, { timeout: 5000 });
-      else prefetchOverlays();
-    }, PREFETCH_DELAY_MS); };
-    if (document.readyState === 'complete') start();
-    else window.addEventListener('load', start, { once: true });
-    return () => { clearTimeout(timer); window.removeEventListener('load', start); };
+    if (typeof window === 'undefined') return undefined;
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(prefetchOverlays, { timeout: 5000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(prefetchOverlays, 3000);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
