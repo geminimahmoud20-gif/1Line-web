@@ -1,5 +1,6 @@
 // Emits sitemap.xml, robots.txt, 404.html and prerendered HTML shells into dist/ after `vite build`.
 import fs from 'node:fs';
+import { SignJWT, importPKCS8 } from 'jose';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO } from '../src/config/routeSeo.js';
@@ -47,6 +48,33 @@ export function routeShellConfigs(staticRoutes, existing = [], routeSeo = ROUTE_
 const FIRESTORE_PROJECT = 'line-c9601';
 const FIRESTORE_KEY = 'AIzaSyDPgFF3temb0pgQfSbycUj3DMkZdzcNGRs';
 
+// The build reads as the service account when FIREBASE_SERVICE_ACCOUNT is set for builds, so it keeps working once App
+// Check is enforced on Firestore (an anonymous read has no token). Without it, it reads as a visitor with the web key.
+let serviceToken = null;
+async function authFor() {
+  if (serviceToken === null) {
+    serviceToken = '';
+    try {
+      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '');
+      if (sa?.private_key && sa?.client_email) {
+        const key = await importPKCS8(sa.private_key, 'RS256');
+        const now = Math.floor(Date.now() / 1000);
+        const assertion = await new SignJWT({ scope: 'https://www.googleapis.com/auth/datastore' })
+          .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+          .setIssuer(sa.client_email).setAudience('https://oauth2.googleapis.com/token')
+          .setIssuedAt(now).setExpirationTime(now + 600).sign(key);
+        const res = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion })
+        });
+        if (res.ok) serviceToken = (await res.json()).access_token || '';
+      }
+    } catch { /* no usable service account: read as a visitor */ }
+  }
+  return serviceToken ? { headers: { authorization: `Bearer ${serviceToken}` }, key: '' } : { headers: {}, key: `?key=${FIRESTORE_KEY}` };
+}
+
 const fromFirestoreValue = (v) => {
   if (!v || typeof v !== 'object') return undefined;
   if ('stringValue' in v) return v.stringValue;
@@ -74,22 +102,23 @@ async function fetchCollection(name) {
   if (!READ_LIVE) return out;
   let pageToken = '';
   try {
-    // A build reads as a visitor: firestore.rules allow only the listings on the site, so ask for those
+    const auth = await authFor();
+    // Listings ask for the ones on the site (the query a visitor's rules allow), whoever reads
     if (name === 'properties') {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 15000);
-      const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents:runQuery?key=${FIRESTORE_KEY}`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(siteListingsQuery()), signal: ctrl.signal
+      const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents:runQuery${auth.key}`, {
+        method: 'POST', headers: { 'content-type': 'application/json', ...auth.headers }, body: JSON.stringify(siteListingsQuery()), signal: ctrl.signal
       });
       clearTimeout(timer);
       if (!res.ok) { console.warn(`postbuild-seo: Firestore ${name} unavailable (${res.status})`); return out; }
       return queryDocuments(await res.json()).map(toItem);
     }
     for (let page = 0; page < 10; page++) {
-      const url = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents/${name}?pageSize=300&key=${FIRESTORE_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
+      const url = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents/${name}?pageSize=300${auth.key ? `&key=${FIRESTORE_KEY}` : ''}${pageToken ? `&pageToken=${pageToken}` : ''}`;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 15000);
-      const res = await fetch(url, { signal: ctrl.signal });
+      const res = await fetch(url, { headers: auth.headers, signal: ctrl.signal });
       clearTimeout(timer);
       if (!res.ok) { console.warn(`postbuild-seo: Firestore ${name} unavailable (${res.status})`); break; }
       const data = await res.json();
