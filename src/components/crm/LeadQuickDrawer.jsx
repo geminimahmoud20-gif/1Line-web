@@ -37,6 +37,7 @@ import { brokerUnits, brokerDemands } from '../../utils/brokerFile';
 import { userDisplayName } from '../../utils/assignees';
 import LeadTeamPanel from './lead-profile/LeadTeamPanel';
 import useTeamMembers from '../../hooks/useTeamMembers';
+import PhoneText from './PhoneText';
 
 export default function LeadQuickDrawer({
   lead,
@@ -390,7 +391,7 @@ export default function LeadQuickDrawer({
         <div className="crm-ld" data-stage={lead.status || 'new'}>
           <section className="crm-ld__summary" aria-label={isAr ? 'ملخص العميل' : 'Client summary'}>
             <div className="crm-ld__contact">
-              <span className="crm-ld__phone"><Phone size={14} aria-hidden="true" /><bdi dir="ltr">{phoneText}</bdi></span>
+              <span className="crm-ld__phone"><Phone size={14} aria-hidden="true" /><PhoneText leadId={lead.id} value={phoneText === '—' ? '' : phoneText} surface="drawer" isAr={isAr} /></span>
               <Badge tone={score.score >= LEAD_SCORE_HIGH ? 'success' : 'warning'} title={score.reasons.join(' • ')}>
                 {isAr ? `اهتمام ${score.score}%` : `Score ${score.score}%`}
               </Badge>

@@ -19,6 +19,7 @@ import './kanban-redesign.css';
 import './kanban-mobile.css';
 import './client-card.css';
 import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
+import PhoneText from './PhoneText';
 
 const CARDS_PER_STAGE = 5;
 
@@ -868,7 +869,7 @@ export default function KanbanPipeline({
                           ) : (
                             <span className="kb-value-empty">{pipelineKind(lead) === 'seller' ? (isAr ? 'السعر المطلوب: —' : 'Asking price: —') : (isAr ? 'الميزانية: —' : 'Budget: —')}</span>
                           )}
-                          <bdi dir="ltr" className="kb-phone">{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
+                          <PhoneText leadId={lead.id} value={formatPhoneNumber(lead.whatsapp || lead.phone)} surface="kanban" isAr={isAr} className="kb-phone" />
                         </div>
 
                         {isOverdue && (

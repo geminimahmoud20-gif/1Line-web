@@ -7,6 +7,7 @@ import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { countPhrase } from '../../utils/arabicCount';
 import './smart-matching.css';
 import { outcomeEntry, outcomePatchFor } from '../../utils/stageGate';
+import PhoneText from './PhoneText';
 
 const DISMISS_KEY = 'crm_match_dismissed';
 const IDEAL = 85;
@@ -109,7 +110,7 @@ export default function SmartMatchingHub({ leads = [], properties = [], onUpdate
               <div className="smh__buyer-head">
                 <div className="smh__who">
                   <button type="button" className="smh__name" onClick={() => row.lead && onOpenLead?.(row.lead)} disabled={!row.lead}>{row.name}</button>
-                  <bdi dir="ltr" className="smh__phone">{formatPhoneNumber(row.phone) || '—'}</bdi>
+                  <PhoneText leadId={row.lead?.id} value={formatPhoneNumber(row.phone)} surface="matching" isAr={isAr} className="smh__phone" />
                 </div>
                 {row.missing?.length > 0 && (
                   <button type="button" className="smh__missing" onClick={() => row.lead && onOpenLead?.(row.lead)} title={isAr ? 'افتح ملف العميل وكمّل طلبه' : 'Open the client to complete the request'}>
