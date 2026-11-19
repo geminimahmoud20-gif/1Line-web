@@ -169,9 +169,9 @@ export default function HomePage({
     // 🌐 Update Homepage SEO & Organization Schema
     updatePageSeo({
       // «عقارات سوهاج» is what people search for; the title and description lead with it
-      title: lang === 'ar' ? 'عقارات سوهاج للبيع | شقق وفيلات ومحلات وأراضي في سوهاج الجديدة' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
+      title: lang === 'ar' ? 'عقارات سوهاج للبيع | شقق وفيلات وأراضي' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
       description: lang === 'ar'
-        ? 'عقارات سوهاج للبيع: شقق وفيلات ومحلات ومكاتب وأراضي في سوهاج وسوهاج الجديدة بأسعار حقيقية من العروض الحالية، ومستندات مراجعة قانونياً قبل التعاقد. 1Line للاستشارات والتسويق العقاري.'
+        ? 'عقارات سوهاج للبيع: شقق وفيلات ومحلات وأراضي في سوهاج وسوهاج الجديدة بأسعار حقيقية ومستندات مراجعة قانونياً. 1Line للتسويق العقاري.'
         : '1Line Solutions: buying, selling and valuing high-value land and property in Sohag and Greater Cairo, with legal document review before contract, led by Dr. Mahmoud Elbaz.',
       url: '/',
       type: 'website',
