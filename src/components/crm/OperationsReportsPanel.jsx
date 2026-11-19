@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { portfolioReport, demandsReport, intakeReport } from '../../utils/operationsReport';
+import { loadExclusiveMap } from '../../services/propertyPrivate';
+import { exclusiveSummary, todayKey } from '../../utils/exclusivity';
 import './performance-report.css';
 
 const num = (n) => Number(n || 0).toLocaleString('en-US');
@@ -51,6 +53,18 @@ export default function OperationsReportsPanel({ part = 'portfolio', properties 
   const dem = useMemo(() => demandsReport(demands, opts), [demands, range, prevRange, now, areaNames]); // eslint-disable-line react-hooks/exhaustive-deps
   const req = useMemo(() => intakeReport(intake, opts), [intake, range, prevRange, now]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Exclusive listings (property_private, staff only): read once, only for the portfolio part
+  const [exclusiveMap, setExclusiveMap] = useState(null);
+  useEffect(() => {
+    if (part !== 'portfolio') return undefined;
+    let alive = true;
+    loadExclusiveMap().then((m) => { if (alive) setExclusiveMap(m); });
+    return () => { alive = false; };
+  }, [part]);
+  const [exToday] = useState(() => todayKey());
+  const ex = useMemo(() => (exclusiveMap ? exclusiveSummary(properties, exclusiveMap, exToday) : null), [properties, exclusiveMap, exToday]);
+  const titleOf = (p) => String(p.title_ar || p.title_en || p.id).slice(0, 60);
+
   if (part === 'portfolio') {
     const live = portfolio.byStatus.published;
     return (
@@ -64,6 +78,35 @@ export default function OperationsReportsPanel({ part = 'portfolio', properties 
           <Card label={L('اتضافت في الفترة', 'Added in the period')} value={num(portfolio.added.cur)}><Delta v={portfolio.added} L={L} /></Card>
           <Card label={L('ناقصة بيانات', 'Incomplete')} value={num(portfolio.incomplete)} />
         </div>
+
+        {ex && (
+          <div className="pr-block">
+            <h3>{L('العقارات الحصرية', 'Exclusive listings')} <small>({num(ex.exclusive)} {L('من', 'of')} {num(ex.live)} · {ex.share}%)</small></h3>
+            {ex.exclusive === 0 && ex.expired.length === 0 ? (
+              <p className="pr-note">{L('لسه مفيش عقار متعلّم حصري. علّم العقار من تعديل الوحدة ← صاحب الوحدة. العقار الحصري ما حدش غيرك يقدر يبيعه، وكل ما نسبته زادت كل ما ثباتك في السوق زاد.', 'No listing is marked exclusive yet. Mark it from edit → who offers it.')}</p>
+            ) : (
+              <>
+                {ex.soon.length > 0 && (
+                  <>
+                    <p className="pr-note">{L('اتفاقات بتنتهي قريب (جدّد قبل ما تضيع):', 'Ending soon (renew before they lapse):')}</p>
+                    <ul className="pr-team">
+                      {ex.soon.map((r) => <li key={r.property.id}><span className="pr-team__name">{titleOf(r.property)}</span><span>{r.daysLeft === 0 ? L('بتنتهي النهارده', 'ends today') : L(`باقي ${r.daysLeft} يوم`, `${r.daysLeft}d left`)}</span><span dir="ltr">{r.until}</span></li>)}
+                    </ul>
+                  </>
+                )}
+                {ex.expired.length > 0 && (
+                  <>
+                    <p className="pr-note">{L('انتهت ومتجددتش (العقار ممكن يبقى عند مكتب تاني):', 'Ended and not renewed:')}</p>
+                    <ul className="pr-team">
+                      {ex.expired.map((r) => <li key={r.property.id}><span className="pr-team__name">{titleOf(r.property)}</span><span>{L(`من ${-r.daysLeft} يوم`, `${-r.daysLeft}d ago`)}</span><span dir="ltr">{r.until}</span></li>)}
+                    </ul>
+                  </>
+                )}
+                {ex.open > 0 && <p className="pr-note">{L(`${num(ex.open)} عقار حصري من غير تاريخ انتهاء مكتوب، فمش هتتنبه لانتهائهم. ضيف التاريخ من تعديل الوحدة.`, `${num(ex.open)} exclusive listings have no end date.`)}</p>}
+              </>
+            )}
+          </div>
+        )}
 
         <div className="pr-block">
           <h3>{L('المعروض حسب النوع وسعر المتر', 'Listings by kind and price per m²')}</h3>

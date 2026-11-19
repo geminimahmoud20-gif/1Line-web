@@ -24,7 +24,8 @@ import ThumbBackfillCard from './ThumbBackfillCard';
 
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
-import { loadPropertyPrivate, savePropertyPrivate } from '../../services/propertyPrivate';
+import { loadPropertyPrivateFull, loadExclusiveMap, savePropertyPrivate } from '../../services/propertyPrivate';
+import { exclusiveStatus, todayKey } from '../../utils/exclusivity';
 import PropertyTableRow from './PropertyTableRow';
 import NotesModal from './NotesModal';
 import PropertyFacetFilter from './PropertyFacetFilter';
@@ -107,8 +108,11 @@ const DEFAULT_FORM_STATE = {
   listedBy: '',
   contactName: '',
   contactPhone: '',
-  // Internal notes: saved in property_private (staff only), never on the public listing
-  privateNotes: ''
+  // Internal notes and the exclusivity terms: saved in property_private (staff only), never on the public listing
+  privateNotes: '',
+  exclusive: false,
+  exclusiveFrom: '',
+  exclusiveUntil: ''
 };
 
 export default function PropertyManagerPanel({
@@ -136,6 +140,16 @@ export default function PropertyManagerPanel({
   const [typeFilter, setTypeFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  // Which listings are exclusive to us, and until when (property_private, staff only): one query, kept in step with saves
+  const [exclusiveMap, setExclusiveMap] = useState(() => new Map());
+  const [exclusiveOnly, setExclusiveOnly] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadExclusiveMap().then((m) => { if (alive && m) setExclusiveMap(m); });
+    return () => { alive = false; };
+  }, []);
+  const [exclusiveToday] = useState(() => todayKey());
+  const exclusiveOf = (prop) => exclusiveStatus(exclusiveMap.get(String(prop.id)), exclusiveToday);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState('list'); // 'list' | 'report'
   const [readiness, setReadiness] = useState('all'); // 'all' | 'ready' | 'incomplete'
@@ -249,8 +263,8 @@ export default function PropertyManagerPanel({
     });
     setShowAddModal(true);
     // the notes live in their own protected document: fill them in once loaded
-    loadPropertyPrivate(prop.id).then((text) => {
-      if (text !== null) setForm((f) => (f.id === prop.id && f.privateNotes === null ? { ...f, privateNotes: text } : f));
+    loadPropertyPrivateFull(prop.id).then((priv) => {
+      if (priv) setForm((f) => (f.id === prop.id && f.privateNotes === null ? { ...f, privateNotes: priv.notes, exclusive: priv.exclusive, exclusiveFrom: priv.exclusiveFrom, exclusiveUntil: priv.exclusiveUntil } : f));
     });
   };
 
@@ -564,7 +578,7 @@ export default function PropertyManagerPanel({
 
     // Cleanse sector-specific attributes (land, shops, offices, farms and factories have 0 bedrooms)
     const isLand = isLandType(form.type);
-    const { contactName, contactPhone, privateNotes, ...formFields } = form;
+    const { contactName, contactPhone, privateNotes, exclusive, exclusiveFrom, exclusiveUntil, ...formFields } = form;
     const cleanForm = {
       ...formFields,
       ...paymentFields(form),
@@ -591,9 +605,16 @@ export default function PropertyManagerPanel({
     }
 
     // Internal notes go to their own staff-only document, whatever happens to the public listing
-    if (privateNotes !== null && (editingPropertyId || String(privateNotes || '').trim())) {
-      savePropertyPrivate(propId, privateNotes).then((ok) => {
-        if (!ok) triggerToast(isAr ? 'الملاحظات الداخلية ما اتحفظتش. جرّب تاني من تعديل الوحدة.' : "The internal notes weren't saved. Try again from edit.", 'error');
+    if (privateNotes !== null && (editingPropertyId || String(privateNotes || '').trim() || exclusive)) {
+      const terms = { exclusive, exclusiveFrom, exclusiveUntil };
+      savePropertyPrivate(propId, privateNotes, terms).then((ok) => {
+        if (!ok) { triggerToast(isAr ? 'الملاحظات الداخلية وبيانات الحصرية ما اتحفظوش. جرّب تاني من تعديل الوحدة.' : "The internal notes and exclusivity weren't saved. Try again from edit.", 'error'); return; }
+        // The list shows the new terms at once
+        setExclusiveMap((m) => {
+          const next = new Map(m || []);
+          if (exclusive) next.set(String(propId), { exclusive: true, exclusiveFrom, exclusiveUntil }); else next.delete(String(propId));
+          return next;
+        });
       });
     }
 
@@ -662,9 +683,9 @@ export default function PropertyManagerPanel({
 
   const filters = { status: statusFilter, type: typeFilter, area: areaFilter, areaIds: areaFamily(areaFilter, areas), readiness, issue: issueFilter, ...range, q: searchQuery };
   const filteredProperties = useMemo(
-    () => sortListings(properties.filter((p) => matchesFilters(p, filters, issuesMap.get(p.id) || [])), sortKey, (p) => issuesMap.get(p.id) || []),
+    () => sortListings(properties.filter((p) => matchesFilters(p, filters, issuesMap.get(p.id) || []) && (!exclusiveOnly || exclusiveMap.has(String(p.id)))), sortKey, (p) => issuesMap.get(p.id) || []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [properties, issuesMap, statusFilter, typeFilter, areaFilter, readiness, issueFilter, range, searchQuery, sortKey]
+    [properties, issuesMap, statusFilter, typeFilter, areaFilter, readiness, issueFilter, range, searchQuery, sortKey, exclusiveOnly, exclusiveMap]
   );
 
   // Readiness counts within the current status (so "جاهز للنشر" under "للمراجعة" means hidden + complete)
@@ -919,6 +940,9 @@ export default function PropertyManagerPanel({
               </Chip>
             )}
             <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
+            {(exclusiveMap.size > 0 || exclusiveOnly) && (
+              <Chip pressed={exclusiveOnly} count={exclusiveMap.size} onClick={() => setExclusiveOnly((v) => !v)}>{isAr ? 'حصرية' : 'Exclusive'}</Chip>
+            )}
             <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'مخفية / للمراجعة' : 'Hidden / to review'}</Chip>
             <Chip className={negotiationCount === 0 ? 'is-zero' : undefined} pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
             <Chip className={soldCount === 0 ? 'is-zero' : undefined} pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
@@ -1074,6 +1098,7 @@ export default function PropertyManagerPanel({
                       key={prop.id}
                       prop={prop}
                       issues={issuesOf(prop)}
+                      exclusive={exclusiveOf(prop)}
                       selected={selected.has(prop.id)}
                       onSelect={toggleOne}
                       isAr={isAr}

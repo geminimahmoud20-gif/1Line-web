@@ -14,6 +14,7 @@ import { thumbUrl } from '../../utils/imageThumbs';
 import { typeConflict } from '../../utils/marketStats';
 import { approvalLabel, blockedByApproval, approveUpdate } from '../../utils/publishApproval';
 import { uploaderText } from '../../utils/listingMeta';
+import { exclusiveLabel } from '../../utils/exclusivity';
 
 const STATUS_OPTIONS = [
   { value: 'published', ar: 'معروض', en: 'Live' },
@@ -92,6 +93,7 @@ export default function PropertyTableRow({
   inlineProgress = null,
   canApprove = false,
   meta = null,
+  exclusive = null,
   onRequestReject
 }) {
   const [busy, setBusy] = useState(false);
@@ -159,6 +161,7 @@ export default function PropertyTableRow({
           <span className="crm-prow__meta">
             <bdi className="crm-prow__code">{String(prop.id).toUpperCase()}</bdi>
             <span>{typeName}{areaName ? ` · ${areaName}` : ''}</span>
+            {exclusive && exclusive.status !== 'none' && <span className={`crm-prow__ex is-${exclusive.status}`} title={isAr ? 'عقار حصري لـ 1Line (اتفاق مع المالك)' : 'Exclusive to 1Line (agreement with the owner)'}>{exclusiveLabel(exclusive, isAr)}</span>}
             {uploaderText(meta, isAr) && <span className="crm-prow__by" title={isAr ? 'مين أضاف العقار ده' : 'Who added this listing'}>{uploaderText(meta, isAr)}</span>}
           </span>
           <span className="crm-prow__tags">

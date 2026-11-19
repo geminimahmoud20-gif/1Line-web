@@ -907,6 +907,25 @@ test('property_private: internal notes of a listing are staff-only, written by t
   await assertSucceeds(deleteDoc(doc(as('property_manager'), 'property_private/p1')));
 });
 
+test('property_private: exclusivity terms are staff-only, with real dates and a true/false flag', async () => {
+  const pm = as('property_manager');
+  const terms = { exclusive: true, exclusiveFrom: '2026-10-01', exclusiveUntil: '2026-12-31', updatedAt: 1, updatedBy: 'Mona' };
+  await assertSucceeds(setDoc(doc(pm, 'property_private/x1'), terms));
+  await assertSucceeds(setDoc(doc(pm, 'property_private/x2'), { ...terms, notes: 'مفتاح مع البواب' }));
+  await assertSucceeds(setDoc(doc(pm, 'property_private/x3'), { exclusive: false, updatedAt: 1, updatedBy: 'Mona' }));
+  // a day is YYYY-MM-DD or empty, the flag is a bool, and nothing else rides along
+  await assertSucceeds(setDoc(doc(pm, 'property_private/x4'), { ...terms, exclusiveUntil: '' }));
+  await assertFails(setDoc(doc(pm, 'property_private/x5'), { ...terms, exclusiveUntil: '31/12/2026' }));
+  await assertFails(setDoc(doc(pm, 'property_private/x6'), { ...terms, exclusiveFrom: 20261001 }));
+  await assertFails(setDoc(doc(pm, 'property_private/x7'), { ...terms, exclusive: 'yes' }));
+  await assertFails(setDoc(doc(pm, 'property_private/x8'), { ...terms, ownerPhone: '01012345678' }));
+  // staff list the exclusive ones in one query; the public never reads them, and cannot write them
+  await assertSucceeds(getDocs(query(collection(as('sales_agent'), 'property_private'), where('exclusive', '==', true))));
+  await assertFails(getDocs(query(collection(guest(), 'property_private'), where('exclusive', '==', true))));
+  await assertFails(setDoc(doc(guest(), 'property_private/x9'), terms));
+  await assertFails(setDoc(doc(as('sales_agent'), 'property_private/x10'), terms));
+});
+
 test('chats: a private conversation is read and written by its members only, not by the admin or the rest of the team', async () => {
   const agent = as('sales_agent'); // uid u-sales_agent
   const mgr = as('sales_manager');

@@ -308,11 +308,19 @@ service cloud.firestore {
 
     // 🔒 Internal details of a listing (what the owner told us, the lowest price he takes, where the keys are).
     // /properties is public, so these live in their own document with the same id, readable by staff only.
+    // The same document holds the exclusivity terms (is the listing exclusive to us, and from/until when, as
+    // 'YYYY-MM-DD' days): the date an agreement ends is not for the site either.
     match /property_private/{propId} {
+      function dayField(data, field) {
+        return !(field in data) || (data[field] is string && (data[field].size() == 0 || data[field].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')));
+      }
       allow read: if isStaff();
       allow create, update: if canEditListings()
-        && request.resource.data.keys().hasOnly(['notes', 'updatedAt', 'updatedBy'])
-        && request.resource.data.notes is string && request.resource.data.notes.size() <= 3000
+        && request.resource.data.keys().hasOnly(['notes', 'updatedAt', 'updatedBy', 'exclusive', 'exclusiveFrom', 'exclusiveUntil'])
+        && (!('notes' in request.resource.data) || (request.resource.data.notes is string && request.resource.data.notes.size() <= 3000))
+        && (!('exclusive' in request.resource.data) || request.resource.data.exclusive is bool)
+        && dayField(request.resource.data, 'exclusiveFrom')
+        && dayField(request.resource.data, 'exclusiveUntil')
         && boundedText(request.resource.data, 'updatedBy', 80)
         && request.resource.data.get('updatedAt', 0) is int;
       allow delete: if canEditListings();
