@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
-import { BarChart3, Users, Building, Zap, Target, UserMinus, PhoneCall, Activity, Megaphone, Trophy, Calculator, ChevronLeft } from 'lucide-react';
+import { BarChart3, Users, Building, Zap, Target, UserMinus, PhoneCall, Activity, Megaphone, Trophy, Calculator, ChevronLeft, Banknote } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import PerformanceReportPanel from './PerformanceReportPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
 import CallsReportPanel from './CallsReportPanel';
+import MoneyReportPanel from './MoneyReportPanel';
 import ReportControls from './ReportControls';
 import './performance-report.css';
 
 const TABS = [
   { id: 'sales', icon: Users, ar: 'العملاء والمبيعات', en: 'Clients & sales' },
+  { id: 'money', icon: Banknote, ar: 'القمع والفلوس', en: 'Funnel & money' },
   { id: 'portfolio', icon: Building, ar: 'العقارات', en: 'Portfolio' },
   { id: 'demand', icon: Zap, ar: 'الطلبات والخدمات', en: 'Demands & services' },
   { id: 'calls', icon: PhoneCall, ar: 'الاتصالات', en: 'Calls' },
@@ -59,9 +61,10 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         })}
       </div>
 
-      {tab !== 'goals' && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
+      {tab !== 'goals' && tab !== 'money' && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
 
       {tab === 'sales' && <PerformanceReportPanel leads={leads} lang={lang} range={range} prevRange={prevRange} now={now} />}
+      {tab === 'money' && <MoneyReportPanel leads={leads} lang={lang} onOpenTab={onOpenTab} />}
       {tab === 'portfolio' && <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
       {tab === 'demand' && <OperationsReportsPanel part="demand" demands={demands} intake={intake} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
 
