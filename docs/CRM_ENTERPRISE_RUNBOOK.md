@@ -156,6 +156,7 @@ npm run build
    ```
    السكربت بينقل أرقام العملاء والطلبات والمغتربين والبدل. جلسات المدير في الـ CRM بتنقل اللي بتحمّله تلقائياً كمان، لكن السكربت بيغطي الكل.
 4. **App Check:** مفتاح reCAPTCHA Enterprise (Google Cloud → Security → reCAPTCHA، نوع Website، بدون checkbox) ← تسجيله في Firebase App Check تبويب reCAPTCHA Enterprise ← `VITE_RECAPTCHA_SITE_KEY` في Vercel ← بعد ما الطلبات تظهر "verified" فعّل Enforce على Firestore.
+5. **Cloudflare Turnstile (حماية فورمات الزوار من السبام، مجاني):** Cloudflare Dashboard ← Turnstile ← Add widget (النطاق `www.1lineestate.com`، النوع Managed) ← `VITE_TURNSTILE_SITE_KEY` (الـ site key) و`TURNSTILE_SECRET_KEY` (الـ secret) في Vercel ← إعادة نشر. الطلبات بتعدّي على `/api/lead` اللي بيتحقق من الزائر وبيحدّ العدد لكل عنوان ويكتب الطلب من السيرفر. من غير المفتاحين الموقع بيشتغل عادي (من غير فحص Turnstile)، ولو `/api/lead` وقع بيرجع الحفظ المباشر القديم فمفيش طلب بيضيع. **مهم:** الحماية الكاملة مش بتشتغل إلا بعد الخطوة الجاية (قفل إنشاء الـ leads المباشر في `firestore.rules`) لأن القواعد لسه بتسمح بالكتابة المباشرة.
 
 ---
 
