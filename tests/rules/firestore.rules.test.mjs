@@ -1017,3 +1017,24 @@ test('crm_notes: a note may carry up to four photos or PDFs (https link, allowed
   await assertFails(setDoc(doc(mgr, 'crm_notes/f8'), noteDoc('u-sales_manager', { attachments: [{ ...file(), extra: 1 }] })));
   await assertFails(setDoc(doc(mgr, 'crm_notes/f9'), noteDoc('u-sales_manager', { attachments: 'x' })));
 });
+
+test('property_meta: whoever adds a listing stamps their own name once; only a publisher records why it was sent back', async () => {
+  const editor = withPerms('u-ed', ['inv.listings']);
+  const pub = withPerms('u-pub', ['inv.publish']);
+  const stamp = (uid) => ({ submittedByUid: uid, submittedByName: 'محمود', submittedAt: '2026-11-18T10:00:00.000Z' });
+  await assertSucceeds(setDoc(doc(editor, 'property_meta/m1'), stamp('u-ed')));
+  // not in someone else's name, not twice, not with a rejection
+  await assertFails(setDoc(doc(editor, 'property_meta/m2'), stamp('u-someone')));
+  await assertFails(setDoc(doc(editor, 'property_meta/m1'), { ...stamp('u-ed'), submittedByName: 'تاني' }));
+  await assertFails(setDoc(doc(editor, 'property_meta/m3'), { ...stamp('u-ed'), rejection: { reason: 'x', byName: 'a', byUid: 'u-ed', at: 't' } }));
+  const why = (over = {}) => ({ rejection: { reason: 'الصور ناقصة', byName: 'المدير', byUid: 'u-pub', at: '2026-11-18T10:05:00.000Z', ...over } });
+  await assertSucceeds(setDoc(doc(pub, 'property_meta/m1'), why(), { merge: true }));
+  await assertSucceeds(setDoc(doc(pub, 'property_meta/m4'), why())); // an older listing with no stamp
+  // the editor cannot write or change it; a publisher cannot sign as someone else or leave the reason empty
+  await assertFails(setDoc(doc(editor, 'property_meta/m1'), why({ byUid: 'u-ed' }), { merge: true }));
+  await assertFails(setDoc(doc(pub, 'property_meta/m1'), why({ byUid: 'u-other' }), { merge: true }));
+  await assertFails(setDoc(doc(pub, 'property_meta/m1'), why({ reason: '' }), { merge: true }));
+  // staff read, visitors do not
+  await assertSucceeds(getDoc(doc(as('viewer'), 'property_meta/m1')));
+  await assertFails(getDoc(doc(guest(), 'property_meta/m1')));
+});

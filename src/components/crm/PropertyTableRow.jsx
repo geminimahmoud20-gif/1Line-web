@@ -12,7 +12,8 @@ import { propertyTypeLabel } from '../../utils/placeLabels';
 import { sizeLabel, isLandType, isAgriculturalType, isIndustrialType } from '../../utils/propertyKinds';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { typeConflict } from '../../utils/marketStats';
-import { approvalLabel, blockedByApproval, approveUpdate, rejectUpdate } from '../../utils/publishApproval';
+import { approvalLabel, blockedByApproval, approveUpdate } from '../../utils/publishApproval';
+import { uploaderText } from '../../utils/listingMeta';
 
 const STATUS_OPTIONS = [
   { value: 'published', ar: 'معروض', en: 'Live' },
@@ -89,7 +90,9 @@ export default function PropertyTableRow({
   onDiscardLocal,
   onUploadInline,
   inlineProgress = null,
-  canApprove = false
+  canApprove = false,
+  meta = null,
+  onRequestReject
 }) {
   const [busy, setBusy] = useState(false);
   const [brochureError, setBrochureError] = useState(false);
@@ -156,6 +159,7 @@ export default function PropertyTableRow({
           <span className="crm-prow__meta">
             <bdi className="crm-prow__code">{String(prop.id).toUpperCase()}</bdi>
             <span>{typeName}{areaName ? ` · ${areaName}` : ''}</span>
+            {uploaderText(meta, isAr) && <span className="crm-prow__by" title={isAr ? 'مين أضاف العقار ده' : 'Who added this listing'}>{uploaderText(meta, isAr)}</span>}
           </span>
           <span className="crm-prow__tags">
             {!isTrash && (ready
@@ -186,12 +190,17 @@ export default function PropertyTableRow({
                   <Button size="sm" onClick={() => { if (onUpdateProperty(prop.id, approveUpdate()) !== false) triggerToast(isAr ? 'اتوافق عليها وهتظهر على الموقع' : 'Approved; it is now on the site', 'success'); }}>
                     <Check size={14} aria-hidden="true" /> {isAr ? 'موافقة ونشر' : 'Approve'}
                   </Button>
-                  {prop.approval === 'pending' && (
-                    <Button size="sm" variant="ghost" onClick={() => { if (onUpdateProperty(prop.id, rejectUpdate()) !== false) triggerToast(isAr ? 'اترفضت ومش هتظهر على الموقع' : 'Rejected; kept off the site', 'info'); }}>
+                  {prop.approval === 'pending' && onRequestReject && (
+                    <Button size="sm" variant="ghost" onClick={() => onRequestReject(prop)}>
                       {isAr ? 'رفض' : 'Reject'}
                     </Button>
                   )}
                 </>
+              )}
+              {prop.approval === 'rejected' && meta?.rejection?.reason && (
+                <small className="crm-prow__why" title={meta.rejection.byName ? `${isAr ? 'رفضها' : 'By'} ${meta.rejection.byName}` : undefined}>
+                  {isAr ? 'السبب: ' : 'Reason: '}{meta.rejection.reason}
+                </small>
               )}
             </span>
           )}

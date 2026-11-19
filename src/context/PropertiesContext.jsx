@@ -24,6 +24,7 @@ import {
   deleteDemandDoc,
   subscribeToCatalog,
   upsertCatalogItem,
+  stampSubmitter,
   upsertCatalogItems,
   currentApprover,
   currentLeadManager,
@@ -192,6 +193,8 @@ export function PropertiesProvider({ children }) {
     setProperties(updated);
     persistProperties(updated);
     reportCatalogSync(upsertCatalogItem('properties', newProp), newProp.id);
+    // Who added it (staff-only document: the listing itself is public)
+    stampSubmitter(newProp.id);
   }, [reportCatalogSync]);
 
   const handleUpdateProperty = useCallback((id, updatedData) => {
