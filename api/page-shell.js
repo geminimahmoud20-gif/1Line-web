@@ -12,11 +12,7 @@
 import { buildPropertyShell, buildProjectShell, buildDemandShell, buildLandingShell, buildGuideShell, isPublicListing, isPublicProject } from '../src/utils/seoShell.js';
 import { parseLanding, landingListings } from '../src/utils/seoLanding.js';
 import { parseGuide, guideRows } from '../src/utils/seoGuides.js';
-import { decodeFields } from './_catalog-core.js';
 
-// public_demands is readable by anyone (firestore.rules): the site's own web key reads one request
-const FIRESTORE_DOC = 'https://firestore.googleapis.com/v1/projects/line-c9601/databases/(default)/documents';
-const WEB_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDPgFF3temb0pgQfSbycUj3DMkZdzcNGRs';
 
 const SITE_URL = (process.env.SITE_URL || 'https://www.1lineestate.com').replace(/\/$/, '');
 const html = (body, cache) => new Response(body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': cache } });
@@ -71,11 +67,12 @@ export async function GET(request) {
 
   if (kind === 'demand') {
     try {
-      const res = await fetch(`${FIRESTORE_DOC}/public_demands/${encodeURIComponent(id)}?key=${WEB_KEY}`);
+      // From the cached catalog, not a direct Firestore read: an anonymous read would stop working once App Check is enforced
+      const res = await fetch(`${url.origin}/api/catalog`);
       if (!res.ok) return plain();
-      const doc = await res.json();
-      const demand = { ...decodeFields(doc.fields), id };
-      if ((demand.status || 'published') !== 'published') return plain();
+      const data = await res.json();
+      const demand = (Array.isArray(data.demands) ? data.demands : []).find((d) => String(d?.id) === id);
+      if (!demand || (demand.status || 'published') !== 'published') return plain();
       return html(buildDemandShell(template, demand, SITE_URL), 'public, s-maxage=600, stale-while-revalidate=86400');
     } catch (err) {
       console.error('page-shell demand failed:', err?.message || err);
