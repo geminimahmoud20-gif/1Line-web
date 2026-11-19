@@ -44,6 +44,8 @@ import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { nextImageAttempt } from '../../utils/imageRetry';
+import { reportImageFailure } from '../../utils/errorReporter';
 import { paymentTerms, planSummary } from '../../utils/paymentTerms';
 
 const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
@@ -115,6 +117,8 @@ export default function PropertyCard({
   onQuickView
 }) {
   const [loadedSrc, setLoadedSrc] = useState(() => new Set());
+  // Photos that failed every attempt: the card says so instead of showing the generic placeholder
+  const [missingSrc, setMissingSrc] = useState(() => new Set());
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const touchStartX = useRef(null);
   const swiped = useRef(false);
@@ -262,13 +266,21 @@ export default function PropertyCard({
       loading="lazy"
       decoding="async"
       onLoad={() => setLoadedSrc((s) => (s.has(currentSrc) ? s : new Set(s).add(currentSrc)))}
+      data-img-guard="1"
       onError={(e) => {
         const el = e.currentTarget;
-        // A missing small copy falls back to the full photo before the placeholder
-        if (!el.dataset.thumbFallback && thumbUrl(currentSrc) !== currentSrc) {
-          el.dataset.thumbFallback = '1';
-          el.src = currentSrc;
+        const stage = Number(el.dataset.stage || 0);
+        const plan = nextImageAttempt(stage, currentSrc, thumbUrl(currentSrc));
+        if (plan) {
+          el.dataset.stage = String(stage + 1);
+          if (plan.delay) setTimeout(() => { if (el.isConnected) el.src = plan.src; }, plan.delay);
+          else el.src = plan.src;
           return;
+        }
+        // Nothing worked: say so (and tell the CRM) rather than pass off the placeholder as the photo
+        if (currentSrc !== FALLBACK_PROPERTY_IMG) {
+          reportImageFailure(currentSrc);
+          setMissingSrc((m) => new Set(m).add(currentSrc));
         }
         el.src = FALLBACK_PROPERTY_IMG;
         setLoadedSrc((s) => new Set(s).add(currentSrc));
@@ -314,6 +326,10 @@ export default function PropertyCard({
           >
             {img}
           </Link>
+        )}
+
+        {missingSrc.has(currentSrc) && (
+          <span className="pcx-photo-missing" role="status">{isAr ? 'الصورة مش متاحة دلوقتي، حدّث الصفحة' : 'Photo unavailable right now, refresh the page'}</span>
         )}
 
         <span className="pcx-scrim" aria-hidden="true" />

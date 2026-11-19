@@ -576,3 +576,19 @@ html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; 
 .pcx-price-tag--plan { color: #1E40AF; background: #EFF6FF; }
 .dark-theme .pcx-price-tag--plan, :root[data-theme="dark"] .pcx-price-tag--plan { color: #93C5FD; background: rgba(59, 130, 246, 0.14); }
 .pcx-plan { display: block; margin-top: -4px; font-size: 0.8rem; font-weight: 700; line-height: 1.6; color: var(--text-secondary, #475569); }
+
+/* A photo that failed every attempt: a plain line over the placeholder, so it is not mistaken for the real picture */
+.pcx-photo-missing {
+  position: absolute;
+  inset-inline: var(--ui-s-3, 12px);
+  bottom: 64px;
+  z-index: 2;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ui-text, #fff);
+  background: var(--ui-surface-2, rgba(255, 255, 255, 0.16));
+  pointer-events: none;
+}

@@ -8,6 +8,7 @@
 // =============================================================
 
 import { reportClientError } from '../firebaseLazy.js';
+import { imageFailureReport } from './imageRetry.js';
 
 const MAX_PER_PAGE = 8;
 const seen = new Set();
@@ -38,6 +39,18 @@ export function reportError(kind, { message, source = '', line = 0, col = 0, sta
     path: clip(window.location.pathname, 200),
     ua: clip(navigator.userAgent, 300)
   }).catch(() => {});
+}
+
+// A listing photo that never loaded (after its retries). At most a few per page so a store-wide outage
+// shows up in the list without using up the room real errors need. Rules only allow the usual kinds,
+// so it is logged as an «error» whose message names the photo's host.
+const MAX_IMAGE_REPORTS = 3;
+let imageReports = 0;
+export function reportImageFailure(url) {
+  const r = imageFailureReport(url);
+  if (!r || imageReports >= MAX_IMAGE_REPORTS) return;
+  imageReports++;
+  reportError('error', { message: r.message, source: r.source });
 }
 
 let installed = false;

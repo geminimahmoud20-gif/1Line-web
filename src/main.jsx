@@ -46,7 +46,8 @@ const IMAGE_FALLBACK = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
 );
 window.addEventListener('error', (event) => {
   const img = event.target;
-  if (!(img instanceof HTMLImageElement) || img.dataset.fallbackApplied) return;
+  // Images that run their own retry / placeholder logic (data-img-guard) are left alone
+  if (!(img instanceof HTMLImageElement) || img.dataset.fallbackApplied || img.dataset.imgGuard) return;
   img.dataset.fallbackApplied = '1';
   img.srcset = '';
   img.src = IMAGE_FALLBACK;
