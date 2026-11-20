@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react';
-import { BarChart3, Users, Building, Zap, Target, UserMinus, PhoneCall, Activity, Megaphone, Trophy, Calculator, ChevronLeft, Banknote } from 'lucide-react';
+import { Users, Building, Zap, Target, UserMinus, PhoneCall, Activity, Megaphone, Trophy, Calculator, ChevronLeft, Banknote, LayoutDashboard } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import PerformanceReportPanel from './PerformanceReportPanel';
+import ExecutiveSummaryPanel from './ExecutiveSummaryPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
 import CallsReportPanel from './CallsReportPanel';
 import MoneyReportPanel from './MoneyReportPanel';
 import ReportControls from './ReportControls';
+import { PageHeader } from '../ui';
 import './performance-report.css';
 
 const TABS = [
+  { id: 'summary', icon: LayoutDashboard, ar: 'الملخص التنفيذي', en: 'Summary' },
   { id: 'sales', icon: Users, ar: 'العملاء والمبيعات', en: 'Clients & sales' },
   { id: 'money', icon: Banknote, ar: 'القمع والفلوس', en: 'Funnel & money' },
   { id: 'portfolio', icon: Building, ar: 'العقارات', en: 'Portfolio' },
@@ -33,7 +36,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const [now] = useState(() => Date.now());
-  const [tab, setTab] = useState('sales');
+  const [tab, setTab] = useState('summary');
   const [preset, setPreset] = useState('30');
   const [custom, setCustom] = useState({ from: '', to: '' });
   const [mode, setMode] = useState('previous');
@@ -43,12 +46,10 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
 
   return (
     <section className="pr-panel pr-hub" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="pr-head">
-        <div>
-          <h2><BarChart3 size={22} aria-hidden="true" /> {L('مركز التقارير', 'Reports')}</h2>
-          <p>{L('اختار الفترة وقارنها، وبدّل بين الأقسام، وتابع أهداف الشهر.', 'Pick the period, compare it, switch sections, and follow the monthly goals.')}</p>
-        </div>
-      </header>
+      <PageHeader
+        title={L('مركز التقارير', 'Reports')}
+        description={L('اختار الفترة وقارنها. اضغط على أي رقم تشوف العملاء اللي وراه.', 'Pick a period and compare it. Tap any number to see the clients behind it.')}
+      />
 
       <div className="pr-tabs" role="tablist" aria-label={L('أقسام التقارير', 'Report sections')}>
         {TABS.map((t) => {
@@ -63,6 +64,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
 
       {tab !== 'goals' && tab !== 'money' && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
 
+      {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'sales' && <PerformanceReportPanel leads={leads} lang={lang} range={range} prevRange={prevRange} now={now} />}
       {tab === 'money' && <MoneyReportPanel leads={leads} lang={lang} onOpenTab={onOpenTab} />}
       {tab === 'portfolio' && <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}

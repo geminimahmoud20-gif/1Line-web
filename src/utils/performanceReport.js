@@ -220,3 +220,29 @@ export function insights({ metrics, prev, funnel, sources = [], sellers = [], le
   const rank = { warn: 0, good: 1, info: 2 };
   return out.sort((a, b) => rank[a.tone] - rank[b.tone]).slice(0, 8);
 }
+
+/** The clients behind one headline number of periodMetrics, so a manager can open the list behind it */
+export function metricLeads(leads = [], range, id) {
+  const all = live(leads);
+  switch (id) {
+    case 'newLeads': return all.filter((l) => createdIn(l, range));
+    case 'replied': return all.filter((l) => inRange(toMs(l.firstContactedAt), range) && repliedAfterCreate(l) >= 0);
+    case 'late': return all.filter((l) => inRange(toMs(l.firstContactedAt), range) && repliedAfterCreate(l) > responseSlaMs(l));
+    case 'viewings': return all.filter((l) => enteredIn(l, [...VISITED], range));
+    case 'closed': return all.filter((l) => enteredIn(l, ['closed'], range));
+    case 'lost': return all.filter((l) => enteredIn(l, ['lost'], range));
+    default: return [];
+  }
+}
+
+/** The funnel step where the most clients fall out (needs 5+ clients at the step before), or null */
+export function biggestDrop(funnel) {
+  const rows = funnel?.rows || [];
+  let best = null;
+  for (let i = 1; i < rows.length; i += 1) {
+    if (rows[i - 1].reached < 5) continue;
+    const lostHere = rows[i - 1].reached - rows[i].reached;
+    if (!best || rows[i].ofPrevious < best.ofPrevious) best = { id: rows[i].id, from: rows[i - 1].id, ofPrevious: rows[i].ofPrevious, lostHere };
+  }
+  return best;
+}

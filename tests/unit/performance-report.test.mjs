@@ -110,3 +110,27 @@ test('campaign report adds won / expected commission and the return per pound sp
   assert.equal(row.expectedCommission, 10000);
   assert.equal(row.returnPerEgp, 2);
 });
+
+import { metricLeads, biggestDrop } from '../../src/utils/performanceReport.js';
+test('metricLeads lists the clients behind a headline number', () => {
+  const range = { from: '2026-06-01', to: '2026-06-30' };
+  const leads = [
+    { id: 'a', createdAt: '2026-06-03T10:00:00Z', firstContactedAt: '2026-06-03T10:05:00Z' },
+    { id: 'b', createdAt: '2026-05-03T10:00:00Z', status: 'closed', stageHistory: [{ s: 'closed', at: '2026-06-10T10:00:00Z' }] },
+    { id: 'c', createdAt: '2026-06-05T10:00:00Z', isArchived: true }
+  ];
+  assert.deepEqual(metricLeads(leads, range, 'newLeads').map((l) => l.id), ['a']);
+  assert.deepEqual(metricLeads(leads, range, 'closed').map((l) => l.id), ['b']);
+  assert.deepEqual(metricLeads(leads, range, 'nope'), []);
+});
+test('biggestDrop finds the weakest step with enough clients', () => {
+  const funnel = { rows: [
+    { id: 'new', reached: 40, ofPrevious: 100 }, { id: 'contacted', reached: 30, ofPrevious: 75 },
+    { id: 'site_visit', reached: 6, ofPrevious: 20 }, { id: 'negotiating', reached: 3, ofPrevious: 50 },
+    { id: 'closing', reached: 0, ofPrevious: 0 }
+  ] };
+  const d = biggestDrop(funnel);
+  assert.equal(d.id, 'site_visit');
+  assert.equal(d.lostHere, 24);
+  assert.equal(biggestDrop({ rows: [{ id: 'new', reached: 2 }, { id: 'contacted', reached: 0, ofPrevious: 0 }] }), null);
+});

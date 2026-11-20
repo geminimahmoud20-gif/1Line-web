@@ -79,3 +79,10 @@
 .pr-lost__meta { display: flex; flex-wrap: wrap; gap: var(--ui-s-1); }
 .pr-pill { padding: 1px var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); color: var(--ui-text-2); font-size: var(--ui-fs-1); }
 .pr-pill.is-warn { background: var(--ui-danger-tint); color: var(--ui-danger); font-weight: var(--ui-fw-semibold); }
+
+/* Reports hub controls, compact like the dashboard: period chips and the comparison on one line when it fits */
+.pr-hub .pr-controls { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.pr-hub .pr-controls > .pr-custom, .pr-hub .pr-controls > .pr-range { grid-column: 1 / -1; }
+.pr-hub .pr-compare { grid-auto-flow: column; align-items: center; gap: var(--ui-s-2); }
+.pr-hub .pr-compare select { min-height: 36px; }
+@media (max-width: 640px) { .pr-hub .pr-controls { grid-template-columns: minmax(0, 1fr); } }
