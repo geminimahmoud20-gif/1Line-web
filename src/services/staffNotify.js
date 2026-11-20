@@ -23,6 +23,9 @@ export const notifyStaff = (kind, id) => {
   } catch { /* never affects the form */ }
 };
 
+/** A signed-in team member (CRM role); a client's own account has no role claim */
+export const isStaffClaims = (claims) => Boolean(claims && (claims.role || claims.admin));
+
 /**
  * Ask api/assign.js to give a client who just arrived from the website to a salesperson (the
  * person on the client's team with the fewest open clients). The lead is written to Firestore in
@@ -31,7 +34,7 @@ export const notifyStaff = (kind, id) => {
  */
 export const requestAutoAssign = (id) => {
   try {
-    if (!id || typeof window === 'undefined' || window.location.protocol !== 'https:' || auth?.currentUser) return;
+    if (!id || typeof window === 'undefined' || window.location.protocol !== 'https:') return;
     const send = (retry) => fetch('/api/assign', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -40,7 +43,12 @@ export const requestAutoAssign = (id) => {
     }).then((res) => {
       if (res.status === 404 && retry) setTimeout(() => send(false), 8000);
     }).catch(() => {});
-    setTimeout(() => send(true), 2500);
+    const go = () => setTimeout(() => send(true), 2500);
+    const user = auth?.currentUser;
+    // A client signed in to their account asks too (they used to be skipped, so their second form stayed a separate
+    // card); a team member adding a client by hand does not: the server leaves a client someone already owns alone
+    if (!user) { go(); return; }
+    user.getIdTokenResult().then((r) => { if (!isStaffClaims(r?.claims)) go(); }).catch(() => {});
   } catch { /* never affects the form */ }
 };
 
