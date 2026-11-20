@@ -331,3 +331,21 @@ export function assignmentPayload(task) {
     url: '/crm?tab=tasks'
   };
 }
+
+/** The few tasks to do first: everything late (oldest first), then today's by urgency */
+export function focusTasks(tasks = [], now = Date.now(), limit = 3) {
+  const g = groupTasks(tasks, now);
+  return [...g.overdue, ...g.today].slice(0, limit);
+}
+
+/** Tasks this person finished in the last 7 days (no uid: the whole list) */
+export function doneThisWeek(tasks = [], uid, now = Date.now()) {
+  const from = now - 7 * DAY;
+  let n = 0;
+  for (const t of tasks) {
+    if (t.status !== 'done' || (uid && t.assigneeUid !== uid)) continue;
+    const at = Date.parse(t.doneAt || '');
+    if (Number.isFinite(at) && at >= from && at <= now) n += 1;
+  }
+  return n;
+}
