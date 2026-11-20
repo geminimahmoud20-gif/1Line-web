@@ -4,7 +4,9 @@ import { useTasks } from '../../hooks/useTasks';
 import { periodMetrics, compareMetrics, dailySeries, cohortReports, sellerPerformance, insights, STAGE_LABELS } from '../../utils/performanceReport';
 import { dateText, rangeText } from '../../utils/reportPeriods';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
-import { EmptyState } from '../ui';
+import { EmptyState, AreaChart } from '../ui';
+import { biggestDrop } from '../../utils/performanceReport';
+import './executive-summary.css';
 import './performance-report.css';
 
 const num = (n) => Number(n || 0).toLocaleString('en-US');
@@ -43,37 +45,6 @@ function delta(m, v, compared) {
   return { text: `${change > 0 ? '+' : ''}${change}%`, tone: (change > 0) !== Boolean(m.lowerBetter) ? 'good' : 'bad', up: change > 0 };
 }
 
-function Trend({ cur, prev, L }) {
-  const W = 600;
-  const H = 130;
-  const n = cur.buckets.length;
-  const max = Math.max(1, ...cur.buckets.map((b) => b.newLeads), ...(prev ? prev.buckets.map((b) => b.newLeads) : [0]));
-  const slot = W / Math.max(n, 1);
-  const bar = Math.max(2, slot * 0.6);
-  const y = (v) => H - 18 - (v / max) * (H - 30);
-  const line = prev ? prev.buckets.slice(0, n).map((b, i) => `${(i * slot + slot / 2).toFixed(1)},${y(b.newLeads).toFixed(1)}`).join(' ') : '';
-  const total = cur.buckets.reduce((s, b) => s + b.newLeads, 0);
-  return (
-    <figure className="pr-trend">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={L(`عملاء جدد: ${total} على ${n} ${cur.step === 7 ? 'أسبوع' : 'يوم'}`, `New clients: ${total}`)} preserveAspectRatio="none">
-        <line x1="0" y1={H - 18} x2={W} y2={H - 18} className="pr-trend__axis" />
-        {cur.buckets.map((b, i) => {
-          const h = (H - 18) - y(b.newLeads);
-          return <rect key={b.day} x={i * slot + (slot - bar) / 2} y={y(b.newLeads)} width={bar} height={h} rx="2" className="pr-trend__bar"><title>{`${dateText(b.day)}: ${b.newLeads}`}</title></rect>;
-        })}
-        {line && <polyline points={line} className="pr-trend__prev" fill="none" />}
-        {cur.buckets.map((b, i) => b.closed > 0 && <circle key={`c${b.day}`} cx={i * slot + slot / 2} cy={y(b.newLeads) - 6} r="4" className="pr-trend__won"><title>{`${dateText(b.day)}: ${b.closed} ${L('صفقة', 'deals')}`}</title></circle>)}
-      </svg>
-      <figcaption>
-        <span><i className="pr-dot pr-dot--bar" /> {L('عملاء جدد', 'New clients')}</span>
-        {prev && <span><i className="pr-dot pr-dot--prev" /> {L('الفترة المقارنة', 'Comparison')}</span>}
-        <span><i className="pr-dot pr-dot--won" /> {L('يوم فيه صفقة', 'Deal closed')}</span>
-        {cur.step === 7 && <span>{L('(كل عمود أسبوع)', '(one bar = a week)')}</span>}
-      </figcaption>
-    </figure>
-  );
-}
-
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 /** The sales half of the reports hub: the range and comparison come from the hub's controls (managers) */
@@ -96,6 +67,7 @@ export default function PerformanceReportPanel({ leads = [], lang = 'ar', range,
   }, [leads, tasks, range, prevRange, now]);
 
   const hasPrev = Boolean(prevRange);
+  const drop = biggestDrop(data.reports.funnel);
   const { funnel, sources } = data.reports;
   const prevSource = (id) => data.prevReports?.sources.find((s) => s.id === id);
   const reasonLabel = (id) => LOST_REASONS.find((r) => r.id === id)?.ar || id;
@@ -156,24 +128,31 @@ export default function PerformanceReportPanel({ leads = [], lang = 'ar', range,
 
       <div className="pr-block">
         <h3>{L('العملاء الجدد يوم بيوم', 'New clients over time')}</h3>
-        <Trend cur={data.trend} prev={data.prevTrend} L={L} />
+        <AreaChart
+          series={[
+            { id: 'n', label: L('عملاء جدد', 'New clients'), values: data.trend.buckets.map((b) => b.newLeads), tone: 'info' },
+            ...(data.prevTrend ? [{ id: 'p', label: L('الفترة المقارنة', 'Comparison'), values: data.prevTrend.buckets.slice(0, data.trend.buckets.length).map((b) => b.newLeads), tone: 'neutral' }] : []),
+            { id: 'c', label: L('صفقات', 'Deals'), values: data.trend.buckets.map((b) => b.closed), tone: 'success' }
+          ]}
+          labels={data.trend.buckets.map((b) => dateText(b.day))}
+          ariaLabel={L('العملاء الجدد والصفقات على الفترة، مع الفترة المقارنة', 'New clients and deals over the period, with the comparison')}
+          smooth
+        />
+        {data.trend.step === 7 && <p className="pr-note">{L('كل نقطة أسبوع', 'One point = a week')}</p>}
       </div>
 
       <div className="pr-block">
         <h3>{L('العميل بيوصل لحد فين؟', 'How far clients get')} <small>({num(funnel.total)} {L('عميل وصل في الفترة', 'arrived in the period')}{data.prevReports ? ` · ${L('قبلها', 'before')} ${num(data.prevReports.funnel.total)}` : ''})</small></h3>
         {funnel.total === 0 ? <EmptyState title={L('مفيش عملاء في الفترة دي', 'No clients in this period')} /> : (
-          <ul className="pr-funnel">
+          <ol className="xs-funnel xs-funnel--detail">
             {funnel.rows.map((r, i) => (
-              <li key={r.id}>
-                <div className="pr-funnel__top">
-                  <span>{isAr ? STAGE_LABELS[r.id].ar : STAGE_LABELS[r.id].en}</span>
-                  <b>{num(r.reached)} <small>({r.ofAll}%)</small>{data.prevReports && <small className="pr-funnel__prev"> {L('قبلها', 'before')} {num(data.prevReports.funnel.rows[i].reached)}</small>}</b>
-                </div>
-                <div className="pr-bar" aria-hidden="true"><i style={{ width: `${Math.max(r.ofAll, r.reached ? 2 : 0)}%` }} /></div>
-                <span className="pr-funnel__meta">{r.id !== 'new' && <>{r.ofPrevious}% {L('من اللي قبلها', 'of the previous')}{r.avgDays ? ` · ${L('بعد', 'after')} ${r.avgDays} ${L('يوم', 'd')}` : ''}</>}</span>
+              <li key={r.id} className={drop?.id === r.id ? 'is-drop' : ''}>
+                <span className="xs-funnel__label">{isAr ? STAGE_LABELS[r.id].ar : STAGE_LABELS[r.id].en}</span>
+                <span className="xs-funnel__bar" aria-hidden="true"><i style={{ inlineSize: `${Math.max(r.ofAll, r.reached ? 3 : 0)}%` }} /></span>
+                <b className="xs-funnel__num">{num(r.reached)}<small> · {r.ofAll}%{r.id !== 'new' ? ` · ${r.ofPrevious}% ${L('من اللي قبلها', 'of previous')}` : ''}{r.avgDays ? ` · ${r.avgDays} ${L('يوم', 'd')}` : ''}{data.prevReports ? ` · ${L('قبلها', 'before')} ${num(data.prevReports.funnel.rows[i].reached)}` : ''}</small></b>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
         {funnel.lost > 0 && <p className="pr-note">{L('خسرنا', 'Lost')} {num(funnel.lost)} {L('عميل', 'clients')}{funnel.topLostReason ? ` — ${L('أكتر سبب', 'main reason')}: ${reasonLabel(funnel.topLostReason.id)} (${funnel.topLostReason.count})` : ''}</p>}
       </div>

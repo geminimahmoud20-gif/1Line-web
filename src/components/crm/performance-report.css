@@ -98,3 +98,40 @@
   body .pr-hub .ui-kpi-row { overflow: visible; flex-wrap: wrap; }
   body .pr-hub .pr-table-wrap { overflow: visible; }
 }
+
+/* ===== Reports hub on the dashboard's look (one style for every tab) =====
+   The older report panels keep their markup; inside the hub their cards, boxes and findings take
+   the same surface, shadow, type scale and colours as KpiTile / the dashboard cards. */
+.pr-hub .pr-cards { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--ui-s-3); }
+.pr-hub .pr-card {
+  gap: var(--ui-s-2); padding: var(--ui-s-4); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-1);
+  transition: box-shadow var(--ui-dur-2) var(--ui-ease-out);
+}
+.pr-hub .pr-card:hover { box-shadow: var(--ui-sh-2); }
+.pr-hub .pr-card__label { font-weight: var(--ui-fw-semibold); }
+.pr-hub .pr-card__value { font-size: var(--ui-fs-7); font-weight: var(--ui-fw-bold); line-height: 1.1; color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.pr-hub .pr-card__delta { font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); }
+.pr-hub .pr-card__delta small { font-weight: var(--ui-fw-regular); }
+.pr-hub .pr-block { box-shadow: var(--ui-sh-1); }
+.pr-hub .pr-block h3 { font-size: var(--ui-fs-4); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.pr-hub .pr-panel { display: grid; gap: var(--ui-s-4); }
+.pr-hub .pr-findings li { border: 0; border-radius: var(--ui-r-md); background: var(--ui-surface-2); padding: var(--ui-s-2) var(--ui-s-3); font-size: var(--ui-fs-3); }
+.pr-hub .pr-findings li.is-warn { background: var(--ui-warning-tint); }
+.pr-hub .pr-findings li.is-warn svg { color: var(--ui-warning); }
+.pr-hub .pr-findings li.is-good { background: var(--ui-success-tint); }
+.pr-hub .pr-findings li.is-info svg { color: var(--ui-info); }
+.pr-hub .pr-table thead th { font-size: var(--ui-fs-2); background: var(--ui-surface-2); }
+.pr-hub .pr-table tbody tr:hover { background: var(--ui-surface-hover); }
+.pr-hub .pr-table td.is-bad, .pr-hub .pr-table .is-bad { color: var(--ui-danger); font-weight: var(--ui-fw-semibold); }
+.pr-hub .pr-tabs { gap: var(--ui-s-1); scrollbar-width: none; }
+.pr-hub .pr-tabs button { border-radius: var(--ui-r-md) var(--ui-r-md) 0 0; transition: background var(--ui-dur-1), color var(--ui-dur-1); }
+.pr-hub .pr-tabs button:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.pr-hub .pr-tabs button:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.pr-hub .pr-links button { box-shadow: var(--ui-sh-1); }
+.pr-hub .pr-links button:hover { background: var(--ui-surface-hover); }
+.pr-hub .pr-export { min-height: 36px; }
+.pr-hub .pr-toolbar { display: flex; justify-content: flex-end; }
+.pr-hub .pr-bar { block-size: 8px; border-radius: var(--ui-r-full); background: var(--ui-surface-2); }
+.pr-hub .pr-bar i { border-radius: var(--ui-r-full); background: var(--ui-info); }
+/* The hub's «تصدير» covers every tab, so the sales panel's own CSV button stays out of the hub */
+.pr-hub .pr-toolbar { display: none; }
