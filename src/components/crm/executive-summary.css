@@ -34,3 +34,25 @@
 .xs-list span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .xs-list b { font-size: var(--ui-fs-3); color: var(--ui-text); }
 .xs-list small { font-size: var(--ui-fs-1); color: var(--ui-text-2); }
+
+/* Team report */
+.tm-table .tm-avg { background: var(--ui-surface-2); font-weight: var(--ui-fw-semibold); }
+.tm-table tr.is-flagged th { color: var(--ui-danger); }
+.tm-table td.is-good { color: var(--ui-success); font-weight: var(--ui-fw-semibold); }
+.tm-table td small { color: var(--ui-text-3); }
+.tm-flag { display: inline-block; margin: 2px; padding: 1px var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-danger-tint); color: var(--ui-danger); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); white-space: nowrap; }
+.tm-ok { color: var(--ui-success); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); }
+.xs-note { margin: var(--ui-s-3) 0 0; font-size: var(--ui-fs-2); color: var(--ui-text-2); line-height: 1.6; }
+.xs-card .pr-panel { padding: 0; border: 0; box-shadow: none; background: transparent; }
+
+/* Saved views */
+.rv { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
+.rv__label { font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.rv__chip { display: inline-flex; align-items: center; border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-full); background: var(--ui-surface); overflow: hidden; }
+.rv__chip button { min-height: 32px; padding: 0 var(--ui-s-3); border: 0; background: none; color: var(--ui-text-2); font: inherit; font-size: var(--ui-fs-2); cursor: pointer; }
+.rv__chip button + button { padding: 0 var(--ui-s-2); color: var(--ui-text-3); border-inline-start: 1px solid var(--ui-line); }
+.rv__chip button:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.rv__chip button:focus-visible, .rv__add:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.rv__add { min-height: 32px; padding: 0 var(--ui-s-3); border: 1px dashed var(--ui-line-strong); border-radius: var(--ui-r-full); background: none; color: var(--ui-info); font: inherit; font-size: var(--ui-fs-2); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.rv__form { display: inline-flex; gap: var(--ui-s-1); }
+.rv__form input { min-height: 32px; padding: 0 var(--ui-s-2); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text); font: inherit; font-size: var(--ui-fs-2); }

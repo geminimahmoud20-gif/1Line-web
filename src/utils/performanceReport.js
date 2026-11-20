@@ -246,3 +246,26 @@ export function biggestDrop(funnel) {
   }
   return best;
 }
+
+/**
+ * The team against its own average: { avg: { inTimePct, closePct, medianReplyMs }, rows: [{ ...seller, closePct, flags }] }.
+ * A flag says where someone needs help, only with enough clients behind it to mean something.
+ */
+export function teamComparison(sellers = []) {
+  const people = sellers.filter((s) => s.leads > 0 || s.tasksOpen > 0 || s.tasksDone > 0);
+  const replied = people.reduce((a, s) => a + s.replied, 0);
+  const inTime = people.reduce((a, s) => a + Math.round((s.inTimePct / 100) * s.replied), 0);
+  const leads = people.reduce((a, s) => a + s.leads, 0);
+  const closed = people.reduce((a, s) => a + s.closed, 0);
+  const replyTimes = people.filter((s) => s.medianReplyMs > 0).map((s) => s.medianReplyMs);
+  const avg = { inTimePct: pct(inTime, replied), closePct: pct(closed, leads), medianReplyMs: median(replyTimes) };
+  const rows = people.map((s) => {
+    const closePct = pct(s.closed, s.leads);
+    const flags = [];
+    if (s.replied >= 3 && s.inTimePct < avg.inTimePct - 15) flags.push('slow_reply');
+    if (s.leads >= 8 && s.closed === 0 && avg.closePct > 0) flags.push('no_close');
+    if (s.tasksOverdue >= 3) flags.push('late_tasks');
+    return { ...s, closePct, flags };
+  });
+  return { avg, rows };
+}

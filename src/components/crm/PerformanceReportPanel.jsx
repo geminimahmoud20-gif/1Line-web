@@ -77,7 +77,7 @@ function Trend({ cur, prev, L }) {
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 /** The sales half of the reports hub: the range and comparison come from the hub's controls (managers) */
-export default function PerformanceReportPanel({ leads = [], lang = 'ar', range, prevRange = null, now }) {
+export default function PerformanceReportPanel({ leads = [], lang = 'ar', range, prevRange = null, now, hide = [] }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const { tasks } = useTasks();
@@ -178,7 +178,7 @@ export default function PerformanceReportPanel({ leads = [], lang = 'ar', range,
         {funnel.lost > 0 && <p className="pr-note">{L('خسرنا', 'Lost')} {num(funnel.lost)} {L('عميل', 'clients')}{funnel.topLostReason ? ` — ${L('أكتر سبب', 'main reason')}: ${reasonLabel(funnel.topLostReason.id)} (${funnel.topLostReason.count})` : ''}</p>}
       </div>
 
-      <div className="pr-block">
+      {!hide.includes('sources') && <div className="pr-block">
         <h3>{L('كل مصدر عامل إيه؟', 'How each source does')}</h3>
         {sources.length === 0 ? <EmptyState title={L('مفيش عملاء في الفترة دي', 'No clients in this period')} /> : (
           <div className="pr-table-wrap">
@@ -198,9 +198,9 @@ export default function PerformanceReportPanel({ leads = [], lang = 'ar', range,
             </table>
           </div>
         )}
-      </div>
+      </div>}
 
-      <div className="pr-block">
+      {!hide.includes('team') && <div className="pr-block">
         <h3>{L('أداء الفريق', 'Team performance')}</h3>
         {data.sellers.length === 0 ? <EmptyState title={L('مفيش عملاء أو مهام متوزعة في الفترة دي', 'No assigned clients or tasks in this period')} /> : (
           <div className="pr-table-wrap">
@@ -220,7 +220,7 @@ export default function PerformanceReportPanel({ leads = [], lang = 'ar', range,
             </table>
           </div>
         )}
-      </div>
+      </div>}
     </section>
   );
 }
