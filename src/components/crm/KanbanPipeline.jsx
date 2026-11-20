@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Building2, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus } from 'lucide-react';
+import { Building2, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
@@ -17,9 +17,11 @@ import { PageHeader, KpiRow, KpiTile, Chip, useConfirm } from '../ui';
 import { archivePrompt } from '../../utils/deleteConfirm';
 import './kanban-redesign.css';
 import './kanban-mobile.css';
+import './kanban-decision.css';
 import './client-card.css';
-import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
+import { stageSinceMs, isStalled, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
 import PhoneText from './PhoneText';
+import { attentionOf, decisionList, attentionSummary, sortByAttention, BIG_DEAL } from '../../utils/dealSignals';
 
 const CARDS_PER_STAGE = 5;
 
@@ -107,6 +109,8 @@ export default function KanbanPipeline({
   const PIPELINE_STAGES = filterType === 'seller' ? SELLER_COLUMNS : BASE_STAGES;
   const phoneStageId = PIPELINE_STAGES.some((st) => st.id === phoneStage) ? phoneStage : PIPELINE_STAGES[0].id;
   const [searchQuery, setSearchQuery] = useState('');
+  // «محتاج قرار»: show only the deals that need a person today
+  const [onlyAttention, setOnlyAttention] = useState(false);
   const [collapsedStages, setCollapsedStages] = useState(() => {
     try {
       const saved = localStorage.getItem('oneline_kanban_collapsed_stages');
@@ -281,6 +285,17 @@ export default function KanbanPipeline({
     });
   }, [leads, filterType, searchQuery]);
 
+  // Clock for overdue calculations
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Which deals need a decision today, and the money sitting in them
+  const attention = useMemo(() => attentionSummary(filteredLeads.filter(isOpenLead), { now, worth: getLeadBudget, columnOf: (l) => boardColumnOf(l.status) }), [filteredLeads, now]);
+  const decisions = useMemo(() => decisionList(filteredLeads.filter(isOpenLead), { now, worth: getLeadBudget, limit: 5 }), [filteredLeads, now]);
+
   // Pre-grouped leads & metrics by stage in a single O(N) pass
   const { leadsByStage, stageStatsMap } = useMemo(() => {
     const groups = {};
@@ -290,6 +305,7 @@ export default function KanbanPipeline({
       stats[s.id] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
     });
     filteredLeads.forEach((l) => {
+      if (onlyAttention && !attentionOf(l, { now, value: getLeadBudget(l) })) return;
       const st = boardColumnOf(l.status);
       if (!groups[st]) {
         groups[st] = [];
@@ -305,22 +321,16 @@ export default function KanbanPipeline({
         stats[st].unbudgetedCount += 1;
       }
     });
+    // Urgent deals lead each column, so the first five cards are the ones to act on
+    Object.keys(groups).forEach((k) => { groups[k] = sortByAttention(groups[k], { now, worth: getLeadBudget }); });
     return { leadsByStage: groups, stageStatsMap: stats };
-  }, [filteredLeads, PIPELINE_STAGES]);
-
-  // Clock for overdue calculations
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(t);
-  }, []);
+  }, [filteredLeads, PIPELINE_STAGES, onlyAttention, now]);
 
   // Executive pipeline metrics overview
   const pipelineOverview = useMemo(() => {
     let totalVol = 0;
     let supplyVol = 0;
     let highValue = 0;
-    let overdue = 0;
     // Open deals only (not won, lost or archived), counted the same way as the dashboard:
     // the board also shows the won/lost columns, which made its total look bigger than the dashboard's
     const open = filteredLeads.filter(isOpenLead);
@@ -329,16 +339,14 @@ export default function KanbanPipeline({
       // Buyers' budgets and owners' asking prices are counted apart
       if (isSellerLead(l)) supplyVol += b; else totalVol += b;
       if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
-      if (isNewOverdue(l, now)) overdue++;
     });
     return {
       totalVol,
       supplyVol,
       highValue,
-      overdue,
       activeCount: open.length
     };
-  }, [filteredLeads, now]);
+  }, [filteredLeads]);
 
   // Drag & Drop Handlers
   const handleDragStart = (e, leadId) => {
@@ -572,6 +580,7 @@ export default function KanbanPipeline({
         <KpiTile
           label={isAr ? 'صفقات مفتوحة' : 'Open deals'}
           value={pipelineOverview.activeCount}
+          tone="info"
           icon={<Users size={16} />}
         />
         {filterType === 'seller' ? (
@@ -581,6 +590,7 @@ export default function KanbanPipeline({
           digits={1}
           unit={isAr ? 'مليون ج.م' : 'M EGP'}
           emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
+          tone="primary"
           icon={<Building2 size={16} />}
         />
         ) : (
@@ -590,21 +600,57 @@ export default function KanbanPipeline({
           digits={1}
           unit={isAr ? 'مليون ج.م' : 'M EGP'}
           emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
+          tone="primary"
           icon={<TrendingUp size={16} />}
         />
         )}
         <KpiTile
-          label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
-          value={pipelineOverview.highValue}
-          icon={<ShieldAlert size={16} />}
+          label={isAr ? 'محتاج قرار النهارده' : 'Needs a decision'}
+          value={attention.count}
+          tone={attention.danger > 0 ? 'danger' : attention.count > 0 ? 'warning' : 'success'}
+          hint={attention.count > 0
+            ? (attention.value > 0 ? (isAr ? `${shortMoney(attention.value, true)} ج.م معرّضة للضياع` : `${shortMoney(attention.value, false)} EGP at risk`) : (isAr ? 'اضغط تشوفهم' : 'Tap to see them'))
+            : (isAr ? 'مفيش صفقة متأخرة' : 'Nothing is late')}
+          icon={<AlertTriangle size={16} />}
+          onClick={attention.count > 0 || onlyAttention ? () => setOnlyAttention((v) => !v) : undefined}
         />
         <KpiTile
-          label={isAr ? 'جديدة من غير رد +24 ساعة' : 'New, no reply 24h+'}
-          value={pipelineOverview.overdue}
-          className={pipelineOverview.overdue > 0 ? 'crm-kanban__kpi-alert' : undefined}
-          icon={<AlertTriangle size={16} />}
+          label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
+          value={pipelineOverview.highValue}
+          tone="accent"
+          icon={<ShieldAlert size={16} />}
         />
       </KpiRow>
+
+      {/* The few deals to act on first, most urgent on top */}
+      {decisions.length > 0 && !onlyAttention && (
+        <section className="kb-decide" aria-label={isAr ? 'قرارات النهارده' : 'Decisions for today'}>
+          <h2 className="kb-decide__title"><Zap size={15} aria-hidden="true" />{isAr ? 'ابدأ بيهم النهارده' : 'Start with these today'}
+            {attention.count > decisions.length && (
+              <button type="button" className="kb-decide__all" onClick={() => setOnlyAttention(true)}>
+                {isAr ? `عرض الكل (${attention.count})` : `All ${attention.count}`}
+              </button>
+            )}
+          </h2>
+          <ul className="kb-decide__list">
+            {decisions.map(({ lead, value, signal }) => (
+              <li key={lead.id} className={`kb-decide__row is-${signal.tone}`}>
+                <button type="button" className="kb-decide__main" onClick={() => (onOpenLead ? onOpenLead(lead) : onOpenEditLead?.(lead))}>
+                  <span className="kb-decide__dot" aria-hidden="true" />
+                  <span className="kb-decide__text">
+                    <strong>{lead.name?.trim() || (isAr ? 'عميل بدون اسم' : 'Unnamed lead')}{value > 0 && <small> · <bdi>{shortMoney(value, isAr)}</bdi></small>}</strong>
+                    <span>{signal.label}{signal.days ? (isAr ? ` (${signal.days} يوم)` : ` (${signal.days}d)`) : ''} · {signal.next}</span>
+                  </span>
+                  {isAr ? <ArrowLeft size={15} aria-hidden="true" /> : <ArrowRight size={15} aria-hidden="true" />}
+                </button>
+                <button type="button" className="kb-decide__wa" onClick={() => onWhatsAppClick(lead)} aria-label={isAr ? `واتساب ${lead.name || ''}` : `WhatsApp ${lead.name || ''}`} title={isAr ? 'واتساب' : 'WhatsApp'}>
+                  <MessageSquare size={15} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="crm-kanban__toolbar">
         <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
@@ -613,6 +659,7 @@ export default function KanbanPipeline({
           <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
         </div>
         <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
+          <Chip pressed={onlyAttention} count={attention.count} onClick={() => setOnlyAttention((v) => !v)} icon={<AlertTriangle size={14} aria-hidden="true" />}>{isAr ? 'محتاج قرار بس' : 'Needs a decision'}</Chip>
           <Chip pressed={compact} onClick={toggleCompact} icon={<Rows3 size={14} aria-hidden="true" />}>{isAr ? 'عرض مضغوط' : 'Compact'}</Chip>
           {collapsedStages.length < PIPELINE_STAGES.length ? (
             <Chip onClick={collapseAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'طي كل الأعمدة' : 'Collapse all'}</Chip>
@@ -756,6 +803,12 @@ export default function KanbanPipeline({
                       </span>
                     )}
                   </span>
+                  {attention.byStage[stage.id]?.count > 0 && (
+                    <button type="button" className="kb-colrisk" onClick={() => setOnlyAttention(true)} title={isAr ? 'اعرض اللي محتاج قرار بس' : 'Show only deals that need a decision'}>
+                      <AlertTriangle size={11} aria-hidden="true" />
+                      {isAr ? `${attention.byStage[stage.id].count} محتاج قرار` : `${attention.byStage[stage.id].count} need action`}
+                    </button>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span className="kanban-stage-count-pill">
@@ -793,8 +846,9 @@ export default function KanbanPipeline({
                     const sinceMs = stageSinceMs(lead);
                     const inStage = Number.isFinite(sinceMs) ? daysLabel(now - sinceMs, isAr) : '';
                     const stalled = isStalled(lead, now);
-                    // New request nobody called within 24 hours (createdAt or timestamp, whichever it has)
-                    const isOverdue = isNewOverdue(lead, now);
+                    // One reason per deal, with the next step; replaces the separate overdue/stalled boxes
+                    const signal = attentionOf(lead, { now, value: budget });
+                    const isOverdue = signal?.tone === 'danger';
 
                     const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
                     const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
@@ -808,11 +862,11 @@ export default function KanbanPipeline({
                         draggable
                         onDragStart={(e) => handleDragStart(e, lead.id)}
                         data-stage={stage.id}
-                        className={`kb-card animate-fadeIn ${isOverdue ? 'is-overdue' : ''}`}
+                        className={`kb-card animate-fadeIn ${isOverdue ? 'is-overdue' : ''}${signal ? ` has-signal is-${signal.tone}` : ''}`}
                         aria-label={`${leadName} — ${isAr ? stage.title_ar : stage.title_en}`}
                       >
                         <div className="kb-card-top">
-                          <span className="kb-type">{typeBadge.label}</span>
+                          {filterType === 'investor' && <span className="kb-type">{typeBadge.label}</span>}
                           {(sameNumber.has(lead.id) || lead.returningClient) && (
                             <span className="kb-dup" title={isAr ? (lead.returningClient ? 'عميل راجع: اتحوّل لنفس الموظف اللي كان معاه طلبه القديم.' : 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.') : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
                               <CopyPlus size={11} aria-hidden="true" />
@@ -821,7 +875,7 @@ export default function KanbanPipeline({
                                 : (isAr ? `نفس الرقم · ${sameNumber.get(lead.id).length + 1} طلبات` : `Same number · ${sameNumber.get(lead.id).length + 1}`)}
                             </span>
                           )}
-                          {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
+                          {budget >= BIG_DEAL && (
                             <span
                               className="kb-high-value-pill"
                               title={isAr ? 'صفقة كبرى (≥ 5 مليون ج) تتطلب اعتماد المؤسس' : 'High value (5M+) requires Founder sign-off'}
@@ -830,7 +884,7 @@ export default function KanbanPipeline({
                               {isAr ? 'صفقة كبرى +5 مليون' : '5M+ deal'}
                             </span>
                           )}
-                          {inStage && (
+                          {inStage && !signal && (
                             <span
                               className={`kb-time${stalled ? ' is-stalled' : ''}`}
                               title={isAr ? `في المرحلة دي ${inStage}${STALE_DAYS[stage.id] ? ` (الحد ${STALE_DAYS[stage.id]} أيام)` : ''}` : `In this stage ${inStage}`}
@@ -872,11 +926,11 @@ export default function KanbanPipeline({
                           <PhoneText leadId={lead.id} value={formatPhoneNumber(lead.whatsapp || lead.phone)} surface="kanban" isAr={isAr} className="kb-phone" />
                         </div>
 
-                        {isOverdue && (
-                          <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'محدش كلّمه من أكتر من 24 ساعة' : 'Not contacted for 24h+'}</p>
-                        )}
-                        {stalled && (
-                          <p className="kb-flag kb-flag--warn"><Hourglass size={13} aria-hidden="true" />{isAr ? `راكدة: أكتر من ${STALE_DAYS[stage.id]} أيام في المرحلة` : `Stalled: over ${STALE_DAYS[stage.id]} days in stage`}</p>
+                        {signal && (
+                          <p className={`kb-reason is-${signal.tone}`}>
+                            <span className="kb-reason__why">{stalled && signal.id === 'stalled' ? <Hourglass size={12} aria-hidden="true" /> : <AlertTriangle size={12} aria-hidden="true" />}{signal.label}{signal.days ? (isAr ? ` · ${signal.days} يوم` : ` · ${signal.days}d`) : ''}</span>
+                            <span className="kb-reason__next">{signal.next}</span>
+                          </p>
                         )}
                         {lead.nextFollowUpAt && (
                           <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
