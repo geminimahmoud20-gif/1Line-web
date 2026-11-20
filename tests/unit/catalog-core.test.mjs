@@ -27,14 +27,17 @@ test('catalog items keep their own id, and tombstones carry nothing but the id',
   assert.deepEqual(items[2], { id: 'old', deleted: true, updatedAt: null });
 });
 
-test('the site falls back to the live listener when the catalog route is missing or wrong', async () => {
+test('the site falls back to the live listener only when the catalog route is missing; a failing route is not a reason', async () => {
   const { fetchPublicCatalog } = await import('../../src/utils/publicCatalog.js');
-  const reply = (status, type, body) => async () => ({ ok: status === 200, headers: { get: () => type }, json: async () => body });
+  const reply = (status, type, body) => async () => ({ ok: status === 200, status, headers: { get: () => type }, json: async () => body });
   assert.equal(await fetchPublicCatalog(reply(404, 'text/html', null)), null);
   // A preview server answering every path with index.html
   assert.equal(await fetchPublicCatalog(reply(200, 'text/html', null)), null);
-  assert.equal(await fetchPublicCatalog(reply(200, 'application/json', { ok: false })), null);
-  assert.equal(await fetchPublicCatalog(async () => { throw new Error('offline'); }), null);
+  // The route answered but could not serve the catalog (Firestore quota used up, network): reading the database per
+  // visitor instead multiplied the reads by the number of visitors, so the caller keeps what it has and retries
+  assert.deepEqual(await fetchPublicCatalog(reply(200, 'application/json', { ok: false })), { failed: true });
+  assert.deepEqual(await fetchPublicCatalog(reply(502, 'application/json', { ok: false })), { failed: true });
+  assert.deepEqual(await fetchPublicCatalog(async () => { throw new Error('offline'); }), { failed: true });
   assert.deepEqual(
     await fetchPublicCatalog(reply(200, 'application/json; charset=utf-8', { ok: true, properties: [{ id: 1 }], projects: [] })),
     { properties: [{ id: 1 }], projects: [], site: null, developers: null, demands: null }

@@ -14,11 +14,20 @@
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
 import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems, decodeFields, siteListingsQuery, queryDocuments } from './_catalog-core.js';
+import { saveLastGood, readLastGood } from './_catalog-backup.js';
+
+// The Blob store (BLOB_STORE_ID or BLOB_READ_WRITE_TOKEN); null when the project has none or the SDK fails to load
+const blobApi = async () => {
+  if (!process.env.BLOB_STORE_ID && !process.env.BLOB_READ_WRITE_TOKEN) return null;
+  try { return await import('@vercel/blob'); } catch { return null; }
+};
 
 // Each refresh reads every listing and project document, so it is kept to about every 15 minutes
 // (the free Firestore plan allows 50,000 reads a day); a stale copy may be served up to a day.
 const FRESH_SECONDS = 900;
 const STALE_SECONDS = 86400;
+// While Firestore cannot answer, the saved copy is shared from the CDN and the database is asked again every 5 minutes
+const BACKUP_FRESH_SECONDS = 300;
 
 const json = (status, body, cache = 'no-store') => new Response(JSON.stringify(body), {
   status,
@@ -114,10 +123,17 @@ export async function GET() {
       readPublicDemands(base, docRoot, headers)
     ]);
     const developers = Array.isArray(devs?.list) ? devs.list : [];
-    return json(200, { ok: true, at: new Date().toISOString(), properties, projects, site, developers, demands },
-      `public, max-age=0, s-maxage=${FRESH_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`);
+    const body = { ok: true, at: new Date().toISOString(), properties, projects, site, developers, demands };
+    if (!emulator) await saveLastGood(body, { put: (await blobApi())?.put });
+    return json(200, body, `public, max-age=0, s-maxage=${FRESH_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`);
   } catch (err) {
     console.error('catalog failed:', err?.message || err);
+    // Firestore unavailable (e.g. the daily read quota used up): the last good copy, cached briefly by the CDN
+    const backup = emulator ? null : await readLastGood({ head: (await blobApi())?.head });
+    if (backup) {
+      console.error('catalog: serving the saved copy from', backup.at);
+      return json(200, backup, `public, max-age=0, s-maxage=${BACKUP_FRESH_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`);
+    }
     return json(502, { ok: false });
   }
 }

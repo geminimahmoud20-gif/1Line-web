@@ -43,7 +43,7 @@ import { normalizeAreaKey } from '../utils/areasData';
 import { statusStamp } from '../utils/propertyStatus';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
-import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
+import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS, PUBLIC_CATALOG_RETRY_MS } from '../utils/publicCatalog';
 import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
 import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
@@ -370,8 +370,15 @@ export function PropertiesProvider({ children }) {
       return () => unsubs.forEach((u) => u?.());
     }
     let cancelled = false;
+    let retry = null;
     const load = () => fetchPublicCatalog().then((res) => {
       if (cancelled || unsubs.length) return;
+      // The catalog could not answer: keep what this device already shows (its saved copy) and ask once more
+      // in a minute. No direct database reads per visitor (see utils/publicCatalog).
+      if (res?.failed) {
+        if (!retry) retry = setTimeout(() => { retry = null; load(); }, PUBLIC_CATALOG_RETRY_MS);
+        return;
+      }
       if (!res) {
         goLive(true);
         // No cached copy to take the demands from: a visitor listens to the published ones directly
@@ -389,7 +396,7 @@ export function PropertiesProvider({ children }) {
     const timer = setInterval(() => {
       if (!unsubs.length && document.visibilityState === 'visible') load();
     }, PUBLIC_CATALOG_REFRESH_MS);
-    return () => { cancelled = true; clearInterval(timer); unsubs.forEach((u) => u?.()); };
+    return () => { cancelled = true; clearInterval(timer); clearTimeout(retry); unsubs.forEach((u) => u?.()); };
   }, [liveCatalog]);
 
   // Favorites State
