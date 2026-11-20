@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import { loadViews, saveView, removeView } from '../../utils/reportViews';
 import PerformanceReportPanel from './PerformanceReportPanel';
@@ -11,7 +11,10 @@ import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
 import MoneyReportPanel from './MoneyReportPanel';
 import ReportControls from './ReportControls';
-import { PageHeader } from '../ui';
+import ExportMenu from './ExportMenu';
+import { collectReport, row } from '../../utils/reportExport';
+import { rangeText } from '../../utils/reportPeriods';
+import { PageHeader, Button } from '../ui';
 import './performance-report.css';
 import './executive-summary.css';
 
@@ -49,6 +52,12 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
   const ctl = { preset, setPreset, custom, setCustom, mode, setMode };
   const current = TABS.find((t) => t.id === tab) || TABS[0];
   const Go = isAr ? ChevronLeft : ChevronRight;
+  // Export / print whatever the open tab shows (its numbers, findings, bars and tables)
+  const bodyRef = useRef(null);
+  const exportRowsNow = () => [
+    row('التقرير', isAr ? current.ar : current.en, NO_RANGE.has(tab) ? '' : rangeText(range), prevRange && !NO_RANGE.has(tab) ? `مقابل ${rangeText(prevRange)}` : ''),
+    ...collectReport(bodyRef.current, isAr ? current.ar : current.en)
+  ];
 
   // Saved views: this period + comparison + tab under a name, on this device
   const [views, setViews] = useState(() => loadViews());
@@ -74,6 +83,13 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       <PageHeader
         title={L('مركز التقارير', 'Reports')}
         description={L(`${current.q_ar} اضغط على أي رقم تشوف العملاء اللي وراه.`, 'Tap any number to see the clients behind it.')}
+        actions={(
+          <div className="pr-hub__actions">
+            <ExportMenu getRows={exportRowsNow} baseName={`1Line_Report_${tab}`} sheetName="Report" label={L('تصدير', 'Export')}
+              onDone={(f, ok) => triggerToast?.(ok ? L('اتصدّر التقرير', 'Exported') : L('التصدير ما نجحش', 'Export failed'), ok ? 'success' : 'error')} />
+            <Button variant="secondary" icon={<Printer size={16} aria-hidden="true" />} onClick={() => window.print()}>{L('طباعة / PDF', 'Print / PDF')}</Button>
+          </div>
+        )}
       />
 
       <div className="pr-tabs" role="tablist" aria-label={L('أقسام التقارير', 'Report sections')}>
@@ -108,6 +124,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         )}
       </div>
 
+      <div ref={bodyRef} className="pr-hub__body">
       {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'sales' && (
         <>
@@ -128,6 +145,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       )}
       {tab === 'risk' && <LostReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'goals' && <GoalsPanel leads={leads} members={members} me={me} canManage={canManage} lang={lang} triggerToast={triggerToast} />}
+      </div>
 
       {onOpenTab && (
         <div className="pr-block">
