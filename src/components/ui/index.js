@@ -15,6 +15,7 @@ export { default as Table } from './Table';
 export { EmptyState, ErrorState, Skeleton } from './States';
 export { KpiTile, KpiRow, AnimatedNumber, Sparkline } from './KpiTile';
 export { Avatar, Tooltip } from './Avatar';
+export { AreaChart, Donut, BarList } from './Charts';
 export { default as PageHeader } from './PageHeader';
 export { default as MotionRoot } from './MotionRoot';
 export * as motionPresets from './motionPresets';

@@ -12,3 +12,5 @@
 .ui-kit__lead-name { font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
 .ui-kit__muted { color: var(--ui-text-3); font-size: var(--ui-fs-2); }
 @media (max-width: 639px) { .ui-kit { padding: var(--ui-s-3); } }
+
+.ui-kit__charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ui-s-5); margin-top: var(--ui-s-4); align-items: start; }
