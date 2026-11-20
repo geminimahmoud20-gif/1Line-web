@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { reportError } from '../../utils/errorReporter';
 import { showsTechnicalDetails } from '../../utils/errorDetails';
+import { hardReload, canHardRecover, browserEnv } from '../../utils/hardReload';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -30,13 +31,20 @@ export default class ErrorBoundary extends React.Component {
         window.location.reload();
         return;
       }
+      // The plain reload did not clear it: drop the service worker and caches that keep asking for removed
+      // files, once a minute at most (a real outage must not loop)
+      if (canHardRecover(sessionStorage)) {
+        hardReload(browserEnv());
+        return;
+      }
     }
     // A crash that shows the fallback screen to a visitor (stale chunks after a deploy reload above)
     reportError('crash', { message: msg, stack: `${error?.stack || ''}\n--- component stack ---${errorInfo?.componentStack || ''}` });
   }
 
+  // «تحديث الآن»: from scratch, not an ordinary refresh (see utils/hardReload)
   handleReload = () => {
-    window.location.reload();
+    hardReload(browserEnv());
   };
 
   handleGoHome = () => {
