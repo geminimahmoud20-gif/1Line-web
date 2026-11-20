@@ -1,6 +1,6 @@
 import {
   Download, Trash2, Clock, Plus, UserPlus, SlidersHorizontal, Search, X, RotateCcw, ChevronDown,
-  Copy, Upload, Columns3, Timer, CopyPlus, Plane, Ban, CalendarClock,
+  Copy, Upload, Columns3, Rows3, Timer, CopyPlus, Plane, Ban, CalendarClock,
   Megaphone, Globe, MessageCircle, Users, Share2, FileUp, PenLine, CircleHelp
 } from 'lucide-react';
 import { formatFollowUp, formatBudget, campaignLabel } from '../../utils/crmLabels';
@@ -171,6 +171,14 @@ export default function LeadsTab({
   });
 
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+  // Compact rows (about 8 clients a screen instead of 3) are the default on a big screen; the choice is remembered
+  const [compact, setCompact] = useState(() => {
+    try { const v = localStorage.getItem('oneline_leads_density'); return v ? v === 'compact' : true; } catch { return true; }
+  });
+  const toggleDensity = () => setCompact((c) => {
+    try { localStorage.setItem('oneline_leads_density', c ? 'comfortable' : 'compact'); } catch { /* storage blocked */ }
+    return !c;
+  });
   const columnPickerRef = useRef(null);
 
   const toggleColumn = (key) => {
@@ -433,7 +441,7 @@ export default function LeadsTab({
   };
 
   return (
-    <div className="crm-table-container crm-leads">
+    <div className={cx('crm-table-container crm-leads', compact && 'is-compact')}>
       {lostFor && (
         <LostReasonModal
           lead={lostFor}
@@ -640,6 +648,9 @@ export default function LeadsTab({
             options={LEAD_SORTS.map((o) => ({ value: o.id, label: isAr ? `ترتيب: ${o.ar}` : `Sort: ${o.en}` }))}
           />
         )}
+        <Button variant="secondary" className="crm-leads__density" icon={<Rows3 size={16} aria-hidden="true" />} aria-pressed={compact} onClick={toggleDensity} title={isAr ? 'صفوف مضغوطة: عملاء أكتر في الشاشة' : 'Compact rows: more clients per screen'}>
+          {compact ? (isAr ? 'مضغوط' : 'Compact') : (isAr ? 'مريح' : 'Comfortable')}
+        </Button>
         <div className="crm-leads__cols" ref={columnPickerRef}>
           <Button variant="secondary" icon={<Columns3 size={16} aria-hidden="true" />} aria-expanded={showColumnPicker} onClick={() => setShowColumnPicker((v) => !v)}>
             {isAr ? 'الأعمدة' : 'Columns'}
@@ -940,9 +951,9 @@ export default function LeadsTab({
                           {waited >= FIVE_MIN && (
                             <span
                               className={`crm-lead-chip ${escalationLevel(l, now) === 2 ? 'is-late is-escalated' : waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
-                              title={isAr ? (responseSlaMs(l) < 3600000 ? 'وقت من غير أول رد. عميل إعلان: المطلوب خلال ١٥ دقيقة' : 'وقت من غير أول رد') : 'Time without a first reply'}
+                              title={(compact ? `${escalationLevel(l, now) === 2 ? (isAr ? 'متصعّد · ' : 'Escalated · ') : ''}${isAr ? 'بدون رد ' : 'No reply '}${fmtWait(waited)}. ` : '') + (isAr ? (responseSlaMs(l) < 3600000 ? 'وقت من غير أول رد. عميل إعلان: المطلوب خلال ١٥ دقيقة' : 'وقت من غير أول رد') : 'Time without a first reply')}
                             >
-                              <Timer size={12} aria-hidden="true" />{isAr ? `${escalationLevel(l, now) === 2 ? 'متصعّد · ' : ''}بدون رد ${fmtWait(waited)}` : `${escalationLevel(l, now) === 2 ? 'Escalated · ' : ''}No reply ${fmtWait(waited)}`}
+                              <Timer size={12} aria-hidden="true" /><span className="crm-lead-chip__long">{isAr ? `${escalationLevel(l, now) === 2 ? 'متصعّد · ' : ''}بدون رد ${fmtWait(waited)}` : `${escalationLevel(l, now) === 2 ? 'Escalated · ' : ''}No reply ${fmtWait(waited)}`}</span><span className="crm-lead-chip__short">{fmtWait(waited)}</span>
                             </span>
                           )}
                           {dupCount > 0 && (

@@ -466,3 +466,45 @@
 .crm-situation.is-warn { background: var(--ui-warning-tint); color: var(--ui-warning); }
 .crm-situation.is-info { background: var(--ui-primary-tint); color: var(--ui-primary-text); }
 .crm-situation.is-none { background: transparent; color: var(--ui-text-3); padding-inline: 0; font-weight: var(--ui-fw-regular, 400); }
+
+/* The short form of the late-reply chip (just the time) exists only in compact rows on a big screen */
+.crm-layout .crm-leads .crm-lead-chip__short { display: none; }
+
+/* ── Compact rows (big screens): a client takes one line of about 64px, so about 8 fit a screen instead of 3.
+      Name and phone sit side by side, the source is a small chip next to them, and the long «متصعّد · بدون رد …»
+      pill becomes just the time with the full words in its tooltip. Phones keep the card layout (rules above). ── */
+@media (min-width: 1024px) {
+  .crm-layout .crm-leads.is-compact .crm-table { border-spacing: 0 4px; }
+  .crm-layout .crm-leads.is-compact .crm-table tbody tr.crm-lead-row > td { padding: var(--ui-s-2) var(--ui-s-3); vertical-align: middle; }
+  .crm-layout .crm-leads.is-compact .crm-table tbody tr.crm-lead-row > td:first-child { border-start-start-radius: var(--ui-r-lg); border-end-start-radius: var(--ui-r-lg); }
+  .crm-layout .crm-leads.is-compact .crm-table tbody tr.crm-lead-row > td:last-child { border-start-end-radius: var(--ui-r-lg); border-end-end-radius: var(--ui-r-lg); }
+  .crm-layout .crm-leads.is-compact .crm-client-identity-wrap { align-items: center; }
+  .crm-layout .crm-leads.is-compact .crm-client-identity-meta { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px var(--ui-s-3); min-width: 0; }
+  .crm-layout .crm-leads.is-compact .crm-client-identity-meta > .crm-client-identity-row { flex: 0 1 auto; min-width: 0; }
+  .crm-layout .crm-leads.is-compact .crm-lead-source { flex-direction: row; align-items: center; margin: 0; }
+  .crm-layout .crm-leads.is-compact .crm-lead-chip__long { display: none; }
+  .crm-layout .crm-leads.is-compact .crm-lead-chip__short { display: inline; }
+  .crm-layout .crm-leads.is-compact .crm-lead-campaign,
+  .crm-layout .crm-leads.is-compact .crm-lead-age,
+  .crm-layout .crm-leads.is-compact .crm-lead-chip.is-tag,
+  .crm-layout .crm-leads.is-compact .crm-situation { display: none; }
+  .crm-layout .crm-leads.is-compact .crm-lead-meta { margin: 0; flex-wrap: nowrap; }
+  .crm-layout .crm-leads.is-compact .crm-lead-req-cell { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--ui-s-2); }
+  .crm-layout .crm-leads.is-compact .crm-leads__score { flex-direction: row; align-items: center; gap: var(--ui-s-2); }
+}
+
+@media (min-width: 1024px) {
+  /* Less chrome above the list: the four summary tiles shrink to one slim line each */
+  .crm-layout .crm-leads.is-compact .crm-leads__kpis { gap: var(--ui-s-2); }
+  .crm-layout .crm-leads.is-compact .crm-kpi { padding: var(--ui-s-2) var(--ui-s-3); min-height: 0; gap: 0; }
+  .crm-layout .crm-leads.is-compact .crm-kpi small { display: none; }
+  .crm-layout .crm-leads.is-compact .crm-kpi__value { font-size: var(--ui-fs-6); line-height: 1.2; }
+  /* Smaller controls inside a row */
+  .crm-layout .crm-leads.is-compact .crm-client-identity-wrap { min-width: 230px; }
+  .crm-layout .crm-leads.is-compact .crm-phone-copy-btn { display: none; }
+  .crm-layout .crm-leads.is-compact tr.crm-lead-row:hover .crm-phone-copy-btn { display: inline-flex; }
+  .crm-layout .crm-leads.is-compact .crm-status-select-wrap { min-height: 28px; }
+  .crm-layout .crm-leads.is-compact .crm-table .crm-status-select { height: 26px; min-height: 26px; font-size: var(--ui-fs-2); }
+  .crm-layout .crm-leads.is-compact .crm-table tbody tr.crm-lead-row > td:last-child .ui-icon-btn,
+  .crm-layout .crm-leads.is-compact .crm-table tbody tr.crm-lead-row > td:last-child button { width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
+}
