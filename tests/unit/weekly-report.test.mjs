@@ -79,3 +79,18 @@ test('the report shows the month\'s goals against the pace and who is behind', (
   assert.match(r.text, /متأخرين عن هدفهم: Ali/);
   assert.ok(!/🎯/.test(buildWeeklyReport({ leads: [], tasks: [] }, { now: NOW }).text)); // no goals set: no section
 });
+
+test('the weekly report names the biggest funnel drop and who needs support', () => {
+  const DAY = 86400000;
+  const at = (d) => new Date(NOW - d * DAY).toISOString();
+  const leads = [];
+  for (let i = 0; i < 12; i += 1) {
+    const s = [{ s: 'new', at: at(3) }, ...(i < 10 ? [{ s: 'contacted', at: at(2) }] : []), ...(i < 1 ? [{ s: 'site_visit', at: at(2) }] : [])];
+    leads.push({ createdAt: at(3), status: s[s.length - 1].s, stageHistory: s, ownerUid: i % 2 ? 'a' : 'b', ownerName: i % 2 ? 'سامي' : 'هالة',
+      firstContactedAt: i % 2 ? new Date(NOW - 3 * DAY + 5 * 60000).toISOString() : new Date(NOW - 3 * DAY + 30 * 3600000).toISOString() });
+  }
+  const r = buildWeeklyReport({ leads, tasks: [] }, { now: NOW });
+  assert.match(r.text, /🚧 أكبر تسرّب: 9 عميل وقفوا قبل/);
+  assert.match(r.text, /🤝 محتاجين دعم: هالة \(ردّه أبطأ من الفريق/);
+  assert.ok(!/NaN|undefined/.test(r.text));
+});

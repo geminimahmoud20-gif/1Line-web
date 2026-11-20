@@ -5,7 +5,7 @@
 //  Counts, source names and staff names only: never a client's name or phone.
 //  Pure: the route reads Firestore and hands the records in.
 // =============================================================
-import { periodMetrics, compareMetrics, cohortReports, sellerPerformance, insights } from '../src/utils/performanceReport.js';
+import { periodMetrics, compareMetrics, cohortReports, sellerPerformance, insights, biggestDrop, teamComparison, STAGE_LABELS } from '../src/utils/performanceReport.js';
 import { comparisonRange, addDays } from '../src/utils/reportPeriods.js';
 import { goalProgress, GOAL_KEYS } from '../src/utils/goals.js';
 import { cairoDay, splitMessage } from './_daily-report-core.js';
@@ -59,6 +59,13 @@ export function buildWeeklyReport(data, { now = Date.now(), siteUrl = 'https://w
   const top = sellers.find((s) => s.name && s.closed > 0);
   if (top) lines.push(`🏆 أكتر صفقات: ${top.name} (${top.closed})`);
 
+  // Where clients fall out of the funnel, and who on the team needs support (same rules as the reports center)
+  const drop = biggestDrop(funnel);
+  if (drop && drop.ofPrevious < 60) lines.push('', `🚧 أكبر تسرّب: ${num(drop.lostHere)} عميل وقفوا قبل «${STAGE_LABELS[drop.id].ar}» (${drop.ofPrevious}% بس كمّلوا)`);
+  const FLAG = { slow_reply: 'ردّه أبطأ من الفريق', no_close: 'مفيش إقفال', late_tasks: 'مهام متأخرة' };
+  const support = teamComparison(sellers).rows.filter((r) => r.name && r.flags.length);
+  if (support.length) lines.push(`🤝 محتاجين دعم: ${support.slice(0, 4).map((r) => `${r.name} (${r.flags.map((f) => FLAG[f]).join('، ')})`).join(' · ')}`);
+
   // The month's goals against the pace: each team goal that is set, and who is behind
   const goalsNow = goalProgress(leads, data.goals, now);
   if (goalsNow.team.length) {
@@ -76,7 +83,7 @@ export function buildWeeklyReport(data, { now = Date.now(), siteUrl = 'https://w
     lines.push('', '💡 ملاحظات');
     for (const f of findings.slice(0, 5)) lines.push(`${f.tone === 'warn' ? '⚠️' : f.tone === 'good' ? '✅' : '•'} ${f.text}`);
   }
-  lines.push('', `التفاصيل بالتواريخ والمقارنة: ${siteUrl}/crm`);
+  lines.push('', `التفاصيل بالتواريخ والمقارنة (مركز التقارير): ${siteUrl}/crm`);
   return { week: range.to, text: lines.join('\n'), numbers: { ...cur } };
 }
 
