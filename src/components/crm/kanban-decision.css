@@ -1,0 +1,79 @@
+/* Pipeline v2: decisions first. Uses the dashboard's tokens only (no raw colours). */
+
+/* "Start with these today" strip */
+.kb-decide {
+  margin-bottom: var(--ui-s-4); padding: var(--ui-s-3) var(--ui-s-4);
+  background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-1);
+}
+.kb-decide__title {
+  display: flex; align-items: center; gap: var(--ui-s-2); margin: 0 0 var(--ui-s-2);
+  font: var(--ui-fw-bold) var(--ui-fs-3) / var(--ui-lh-tight) var(--ui-font); color: var(--ui-text);
+}
+.kb-decide__title svg { color: var(--ui-warning); }
+.kb-decide__all {
+  margin-inline-start: auto; background: none; border: 0; cursor: pointer; padding: var(--ui-s-1) var(--ui-s-2);
+  font: var(--ui-fw-semibold) var(--ui-fs-1) / 1 var(--ui-font); color: var(--ui-info); border-radius: var(--ui-r-sm);
+}
+.kb-decide__all:hover { background: var(--ui-info-tint); }
+.kb-decide__all:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.kb-decide__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--ui-s-2); }
+.kb-decide__row { display: flex; align-items: stretch; gap: var(--ui-s-1); }
+.kb-decide__main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--ui-s-3); text-align: start; cursor: pointer;
+  min-height: var(--ui-touch); padding: var(--ui-s-2) var(--ui-s-3);
+  background: var(--ui-surface-2); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); color: var(--ui-text-3);
+  font-family: var(--ui-font); transition: background var(--ui-dur-1), border-color var(--ui-dur-1);
+}
+.kb-decide__main:hover { background: var(--ui-surface-hover); border-color: var(--ui-line-strong); }
+.kb-decide__main:focus-visible, .kb-decide__wa:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.kb-decide__dot { width: 8px; height: 8px; border-radius: var(--ui-r-full); background: var(--ui-warning); flex-shrink: 0; }
+.kb-decide__row.is-danger .kb-decide__dot { background: var(--ui-danger); }
+.kb-decide__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kb-decide__text strong { font-size: var(--ui-fs-3); color: var(--ui-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-decide__text small { font-size: var(--ui-fs-1); font-weight: var(--ui-fw-medium); color: var(--ui-text-2); }
+.kb-decide__text > span { font-size: var(--ui-fs-1); color: var(--ui-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-decide__wa {
+  flex-shrink: 0; width: var(--ui-touch); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  background: var(--ui-green-tint); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); color: var(--ui-success);
+}
+.kb-decide__wa:hover { border-color: var(--ui-success); }
+
+/* Column header: how many deals in it need action */
+.kb-colrisk {
+  display: inline-flex; align-items: center; gap: var(--ui-s-1); margin-top: var(--ui-s-1); cursor: pointer;
+  padding: 2px var(--ui-s-2); border: 0; border-radius: var(--ui-r-full);
+  background: var(--ui-danger-tint); color: var(--ui-danger);
+  font: var(--ui-fw-semibold) var(--ui-fs-1) / 1.4 var(--ui-font);
+}
+.kb-colrisk:hover { filter: brightness(0.97); }
+.kb-colrisk:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+
+/* Card: one reason and one next step instead of several warning boxes */
+.kb-card.has-signal.is-warn { border-inline-start: 3px solid var(--ui-warning); }
+.kb-card.has-signal.is-danger { border-inline-start: 3px solid var(--ui-danger); }
+.kb-reason { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: var(--ui-s-2); border-radius: var(--ui-r-sm); background: var(--ui-warning-tint); }
+.kb-reason.is-danger { background: var(--ui-danger-tint); }
+.kb-reason__why { display: inline-flex; align-items: center; gap: var(--ui-s-1); font: var(--ui-fw-bold) var(--ui-fs-1) / 1.4 var(--ui-font); color: var(--ui-warning); }
+.kb-reason.is-danger .kb-reason__why { color: var(--ui-danger); }
+.kb-reason__next { font: var(--ui-fw-medium) var(--ui-fs-1) / 1.4 var(--ui-font); color: var(--ui-text-2); }
+
+/* Quiet cards: actions appear on hover or focus (always there on touch screens and on cards that need action) */
+@media (hover: hover) and (pointer: fine) {
+  .kb-card:not(.has-signal) .kb-actions {
+    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; padding-top: 0; border-top-color: transparent;
+    transition: max-height var(--ui-dur-2) var(--ui-ease-out), opacity var(--ui-dur-2) var(--ui-ease-out), margin var(--ui-dur-2), padding var(--ui-dur-2);
+  }
+  .kb-card:not(.has-signal):hover .kb-actions,
+  .kb-card:not(.has-signal):focus-within .kb-actions,
+  .kb-card:not(.has-signal):has(.kb-more[open]) .kb-actions {
+    max-height: 56px; opacity: 1; overflow: visible; margin-top: 6px; padding-top: 8px; border-top-color: var(--ui-line);
+  }
+}
+
+@media (max-width: 639px) {
+  .kb-decide { padding: var(--ui-s-3); }
+  .kb-decide__list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-card .kb-actions { transition: none; }
+}
