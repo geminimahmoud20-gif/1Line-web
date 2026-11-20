@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
+import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, AlertTriangle, CircleCheckBig } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { areaNameOf } from '../../utils/areaLookup';
@@ -14,7 +14,7 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
-import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch, leadBudget, isOpenLead } from '../../utils/crmLeadViews';
 import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { useAuth } from '../../context/AuthContext';
 import { scheduleNextAttempt } from '../../utils/retryCall';
@@ -38,6 +38,8 @@ import { userDisplayName } from '../../utils/assignees';
 import LeadTeamPanel from './lead-profile/LeadTeamPanel';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import PhoneText from './PhoneText';
+import { attentionOf, NEXT_STEP } from '../../utils/dealSignals';
+import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineCards';
 
 export default function LeadQuickDrawer({
   lead,
@@ -127,6 +129,8 @@ export default function LeadQuickDrawer({
   const showBrokerFile = Boolean(lead) && (lead.type === 'broker' || brokerCount > 0);
 
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
+  // Clock for the decision banner, fixed when the drawer opens
+  const [nowMs] = useState(() => Date.now());
   if (!lead) return null;
 
   // Next / Prev lead navigation index
@@ -345,6 +349,17 @@ export default function LeadQuickDrawer({
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
   const headerLine = [sourceText(lead.source), holder ? (isAr ? `مع ${holder}` : `With ${holder}`) : null, lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null].filter(Boolean).join(' · ');
   const historyCount = buildTimeline(lead).events.length;
+  // The decision first: what is wrong with this deal, and the one thing to do next
+  const dealValue = leadBudget(lead);
+  const signal = isOpenLead(lead) ? attentionOf(lead, { now: nowMs, value: dealValue }) : null;
+  const nextLine = isOpenLead(lead) ? NEXT_STEP[lead.status || 'new'] : '';
+  const sinceMs = stageSinceMs(lead);
+  const touchedMs = toMs(lead.lastContactedAt);
+  const facts = [
+    Number.isFinite(sinceMs) ? (isAr ? `في المرحلة ${daysLabel(nowMs - sinceMs, true)}` : `In stage ${daysLabel(nowMs - sinceMs, false)}`) : null,
+    Number.isFinite(touchedMs) ? (isAr ? `آخر تواصل ${daysLabel(nowMs - touchedMs, true)}` : `Last contact ${daysLabel(nowMs - touchedMs, false)}`) : (isAr ? 'لسه ما اتكلمش معاه' : 'Not contacted yet'),
+    dealValue > 0 ? (isAr ? `${shortMoney(dealValue, true)} ج.م` : `${shortMoney(dealValue, false)} EGP`) : null
+  ].filter(Boolean);
 
   return (
     <>
@@ -389,6 +404,16 @@ export default function LeadQuickDrawer({
         )}
       >
         <div className="crm-ld" data-stage={lead.status || 'new'}>
+          {nextLine && (
+            <section className={`crm-ld__decide${signal ? ` is-${signal.tone}` : ''}`} aria-label={isAr ? 'القرار المطلوب' : 'Next decision'}>
+              <span className="crm-ld__decide-icon" aria-hidden="true">{signal ? <AlertTriangle size={18} /> : <CircleCheckBig size={18} />}</span>
+              <div className="crm-ld__decide-text">
+                <strong>{signal ? `${signal.label}${signal.days ? (isAr ? ` · ${signal.days} يوم` : ` · ${signal.days}d`) : ''}` : (isAr ? 'ماشي في معاده' : 'On track')}</strong>
+                <span>{isAr ? 'الخطوة الجاية: ' : 'Next: '}{nextLine}</span>
+                <small>{facts.join(' · ')}</small>
+              </div>
+            </section>
+          )}
           <section className="crm-ld__summary" aria-label={isAr ? 'ملخص العميل' : 'Client summary'}>
             <div className="crm-ld__contact">
               <span className="crm-ld__phone"><Phone size={14} aria-hidden="true" /><PhoneText leadId={lead.id} value={phoneText === '—' ? '' : phoneText} surface="drawer" isAr={isAr} /></span>

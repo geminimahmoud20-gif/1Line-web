@@ -185,3 +185,18 @@
 .crm-ld__req > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .crm-ld__req small { color: var(--ui-text-2); overflow-wrap: anywhere; }
 .crm-ld__req.is-archived { opacity: 0.65; }
+
+/* The decision banner: why this deal needs attention and the one next step */
+.crm-ld__decide {
+  display: flex; align-items: flex-start; gap: var(--ui-s-3); padding: var(--ui-s-3) var(--ui-s-4); margin-bottom: var(--ui-s-3);
+  background: var(--ui-success-tint); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md);
+}
+.crm-ld__decide.is-warn { background: var(--ui-warning-tint); }
+.crm-ld__decide.is-danger { background: var(--ui-danger-tint); }
+.crm-ld__decide-icon { display: inline-flex; margin-top: 2px; color: var(--ui-success); }
+.crm-ld__decide.is-warn .crm-ld__decide-icon { color: var(--ui-warning); }
+.crm-ld__decide.is-danger .crm-ld__decide-icon { color: var(--ui-danger); }
+.crm-ld__decide-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.crm-ld__decide-text strong { font: var(--ui-fw-bold) var(--ui-fs-3) / var(--ui-lh-tight) var(--ui-font); color: var(--ui-text); }
+.crm-ld__decide-text span { font: var(--ui-fw-medium) var(--ui-fs-2) / 1.5 var(--ui-font); color: var(--ui-text); }
+.crm-ld__decide-text small { font: var(--ui-fw-regular) var(--ui-fs-1) / 1.5 var(--ui-font); color: var(--ui-text-2); }
