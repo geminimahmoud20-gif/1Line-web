@@ -22,6 +22,17 @@
 .crm-dash__alert-text strong { font-size: var(--ui-fs-3); color: var(--ui-text); }
 .crm-dash__alert-text span { font-size: var(--ui-fs-1); }
 
+.crm-dash__attention { display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.crm-dash__attention-title { margin: 0; display: inline-flex; align-items: center; gap: var(--ui-s-2); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-warning); }
+.crm-dash__attention .crm-dash__alerts { margin: 0; }
+.crm-dash__charts { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--ui-s-4); align-items: stretch; }
+.crm-dash__trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--ui-s-4); align-items: start; }
+.crm-dash__bottom { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--ui-s-4); align-items: start; }
+.crm-dash .ui-card > .ui-chart, .crm-dash .ui-card > .ui-donut, .crm-dash .ui-card > .ui-bars { margin-top: var(--ui-s-4); }
+.crm-dash__note { margin: var(--ui-s-3) 0 0; padding: var(--ui-s-3); border-radius: var(--ui-r-md); background: var(--ui-surface-2); color: var(--ui-text-3); font-size: var(--ui-fs-2); line-height: var(--ui-lh); }
+.crm-dash__note--ok { display: flex; align-items: center; gap: var(--ui-s-2); background: var(--ui-success-tint); color: var(--ui-success); }
+.crm-dash__foot { margin: var(--ui-s-4) 0 0; font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.crm-dash .gl-card { padding: var(--ui-s-3) var(--ui-s-4); }
 .crm-dash__split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--ui-s-4); align-items: start; }
 .crm-dash__list { list-style: none; margin: var(--ui-s-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--ui-s-1); }
 .crm-dash__row { display: flex; align-items: center; gap: var(--ui-s-2); }
@@ -42,6 +53,6 @@
 .crm-dash__tools { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
 
 @media (max-width: 1023px) {
-  .crm-dash__split { grid-template-columns: 1fr; }
+  .crm-dash__split, .crm-dash__charts { grid-template-columns: 1fr; }
 }
 .crm-dash__stats dd small { font-size: var(--ui-fs-1); font-weight: var(--ui-fw-regular, 400); color: var(--ui-text-3); }

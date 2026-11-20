@@ -233,7 +233,9 @@
 .ui-kpi__icon { color: var(--ui-accent); display: inline-flex; }
 .ui-kpi__value { display: block; font-size: var(--ui-fs-7); font-weight: var(--ui-fw-bold); color: var(--ui-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .ui-kpi__unit { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-3); margin-inline-start: var(--ui-s-1); }
-.ui-kpi__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.ui-kpi__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-1) var(--ui-s-2); font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.ui-kpi__foot > span:first-child { min-width: 0; }
+.ui-kpi__delta { white-space: nowrap; }
 .ui-kpi__delta { font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
 .ui-kpi__delta--up { color: var(--ui-success); }
 .ui-kpi__delta--down { color: var(--ui-danger); }
@@ -298,3 +300,54 @@
 .ui-chip[aria-pressed='true'] .ui-count { background: color-mix(in srgb, var(--ui-on-primary) 20%, transparent); color: var(--ui-on-primary); }
 .ui-chip:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
 @media (pointer: coarse) { .ui-chip { min-height: 36px; } }
+
+/* ── Tones: one colour per series, KPI icon or bar (tokens only) ── */
+.ui-tone-info { --tone: var(--ui-info); --tone-tint: var(--ui-info-tint); }
+.ui-tone-accent { --tone: var(--ui-accent); --tone-tint: var(--ui-accent-tint); }
+.ui-tone-success { --tone: var(--ui-success); --tone-tint: var(--ui-success-tint); }
+.ui-tone-warning { --tone: var(--ui-warning); --tone-tint: var(--ui-warning-tint); }
+.ui-tone-danger { --tone: var(--ui-danger); --tone-tint: var(--ui-danger-tint); }
+.ui-tone-primary { --tone: var(--ui-primary-text); --tone-tint: var(--ui-primary-tint); }
+.ui-tone-neutral { --tone: var(--ui-text-3); --tone-tint: var(--ui-surface-2); }
+
+/* ── Charts ── */
+.ui-chart, .ui-donut { margin: 0; display: flex; flex-direction: column; gap: var(--ui-s-3); min-width: 0; }
+.ui-chart__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--ui-s-2) var(--ui-s-4); font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.ui-chart__legend li, .ui-donut__legend li { display: inline-flex; align-items: center; gap: var(--ui-s-2); }
+.ui-chart__legend strong, .ui-donut__legend strong { color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.ui-chart__swatch { width: 10px; height: 10px; border-radius: var(--ui-r-full); background: var(--tone); flex: none; }
+.ui-chart__plot { position: relative; padding-inline-start: 0; }
+.ui-chart__plot svg { display: block; width: 100%; overflow: visible; }
+.ui-chart__grid { stroke: var(--ui-line); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 4; }
+.ui-chart__line { fill: none; stroke: var(--tone); stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ui-chart__area { fill: var(--tone); opacity: 0.12; }
+.ui-chart__ymax { position: absolute; top: -2px; inset-inline-start: 0; font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; pointer-events: none; }
+.ui-chart__x { display: flex; justify-content: space-between; margin-top: var(--ui-s-2); font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+
+.ui-donut { flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--ui-s-4); }
+.ui-donut__ring { position: relative; flex: none; }
+.ui-donut__track { fill: none; stroke: var(--ui-surface-2); stroke-width: 16; }
+.ui-donut__slice { fill: none; stroke: var(--tone); stroke-width: 16; }
+.ui-donut__center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; pointer-events: none; }
+.ui-donut__center strong { font-size: var(--ui-fs-6); font-weight: var(--ui-fw-bold); color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.ui-donut__center span { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.ui-donut__legend { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-s-2); flex: 1; min-width: 140px; font-size: var(--ui-fs-2); color: var(--ui-text-2); }
+.ui-donut__legend li { justify-content: flex-start; }
+.ui-donut__legend small { color: var(--ui-text-3); font-variant-numeric: tabular-nums; margin-inline-start: auto; }
+.ui-chart__legend-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ui-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-s-2); }
+.ui-bars__row { display: grid; grid-template-columns: 1fr auto; gap: var(--ui-s-1) var(--ui-s-3); align-items: baseline; font-size: var(--ui-fs-2); }
+.ui-bars__head { display: flex; align-items: baseline; gap: var(--ui-s-2); min-width: 0; }
+.ui-bars__label { color: var(--ui-text-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-bars__value { color: var(--ui-text); font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+.ui-bars__track { grid-column: 1 / -1; height: 8px; border-radius: var(--ui-r-full); background: var(--ui-surface-2); overflow: hidden; }
+.ui-bars__fill { display: block; height: 100%; border-radius: var(--ui-r-full); background: var(--tone); transition: width var(--ui-dur-3) var(--ui-ease-out); }
+.ui-bars__note { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ── KPI tile: a tinted icon chip in the tile's tone, and a trend line in the same tone ── */
+.ui-kpi__icon { width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: var(--ui-r-md); background: var(--tone-tint, var(--ui-accent-tint)); color: var(--tone, var(--ui-accent)); flex: none; }
+.ui-kpi .ui-spark { color: var(--tone, var(--ui-accent)); }
+.ui-kpi__delta--bad { color: var(--ui-danger); }
+.ui-kpi__delta--good { color: var(--ui-success); }
+.ui-kpi__delta--flat { color: var(--ui-text-3); }

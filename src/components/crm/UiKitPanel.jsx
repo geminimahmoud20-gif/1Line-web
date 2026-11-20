@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { m } from 'motion/react';
 import { Bell, Download, Filter, Phone, Plus, Search, Trash2, TrendingUp, Users } from 'lucide-react';
 import {
-  Avatar, Badge, Button, Card, CardHeader, Chip, ConfirmProvider, Drawer, EmptyState, ErrorState, IconButton, Input,
+  Avatar, AreaChart, Badge, BarList, Button, Card, CardHeader, Chip, Donut, ConfirmProvider, Drawer, EmptyState, ErrorState, IconButton, Input,
   KpiRow, KpiTile, Modal, MotionRoot, PageHeader, SegmentedControl, Select, Skeleton, Table, Tabs, Textarea, Tooltip, useConfirm,
   motionPresets
 } from '../ui';
@@ -88,6 +88,19 @@ function Kit() {
         <KpiTile label="قيمة الصفقات المفتوحة" value={15.5} digits={1} unit="مليون ج.م" delta={-2} deltaLabel="عن الأسبوع اللي فات" />
         <KpiTile label="العمولات المستحقة" value={null} hint="لسه مفيش صفقات اتقفلت" />
       </KpiRow>
+
+      <Card>
+        <CardHeader title="الرسوم" description="منحنى ودونات وأعمدة من الـ tokens، من غير مكتبة. اللون من tone (info, accent, success, warning, neutral)." />
+        <div className="ui-kit__charts">
+          <AreaChart
+            labels={['1/11', '4/11', '7/11', '10/11', '14/11']}
+            series={[{ id: 'a', label: 'عملاء جدد', values: [3, 5, 4, 8, 6, 9, 7], tone: 'info' }, { id: 'b', label: 'صفقات', values: [0, 1, 0, 2, 1, 1, 3], tone: 'success' }]}
+            ariaLabel="مثال: عملاء جدد وصفقات"
+          />
+          <Donut items={[{ id: 'a', label: 'إعلانات', value: 12, pct: 40 }, { id: 'b', label: 'الموقع', value: 9, pct: 30 }, { id: 'c', label: 'واتساب', value: 9, pct: 30 }]} centerLabel="عميل" ariaLabel="مثال: مصادر العملاء" />
+          <BarList items={[{ id: 'a', label: 'عميل محتمل', value: 30 }, { id: 'b', label: 'مؤهل', value: 18, note: '60%' }, { id: 'c', label: 'إغلاق', value: 4, note: '22%', tone: 'success' }]} ariaLabel="مثال: قمع" />
+        </div>
+      </Card>
 
       <Card>
         <CardHeader title="الألوان" description="24 لون بس في النهاري، ولكل واحد نسخة في الليلي." />
