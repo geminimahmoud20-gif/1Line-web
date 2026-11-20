@@ -207,3 +207,19 @@ test('the counts of a list with no person are the whole list (the team view)', a
   assert.deepEqual(taskCounts(list, undefined, NOW), { overdue: 1, today: 1, open: 2, due: 2 });
   assert.deepEqual(taskCounts(list, 'b', NOW), { overdue: 0, today: 1, open: 1, due: 1 });
 });
+
+import { focusTasks, doneThisWeek } from '../../src/utils/tasks.js';
+test('focus: late first, then today, limited', () => {
+  const now = Date.parse('2026-06-15T12:00:00');
+  const mk = (id, dueAt, extra = {}) => ({ id, title: id, status: 'open', dueAt, assigneeUid: 'u', ...extra });
+  const tasks = [mk('t1', '2026-06-15'), mk('late', '2026-06-10'), mk('later', '2026-07-01'), mk('t2', '2026-06-15')];
+  const f = focusTasks(tasks, now, 2);
+  assert.equal(f[0].id, 'late');
+  assert.equal(f.length, 2);
+  assert.ok(!f.some((t) => t.id === 'later'));
+});
+test('done this week counts only the last 7 days for that person', () => {
+  const now = Date.parse('2026-06-15T12:00:00Z');
+  const d = (days, uid = 'u') => ({ status: 'done', assigneeUid: uid, doneAt: new Date(now - days * 86400000).toISOString() });
+  assert.equal(doneThisWeek([d(1), d(6), d(9), d(2, 'x')], 'u', now), 2);
+});

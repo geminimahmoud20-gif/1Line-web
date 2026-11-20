@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { addTask, updateTask, removeTask } from '../../firebaseLazy';
 import {
   PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
   dueFromPreset, snoozed, pushAllPatch, completion, reopening, dueLabel,
-  workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch
+  workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch, focusTasks, doneThisWeek, daysLate
 } from '../../utils/tasks';
 import { firstContactPatch } from '../../utils/crmLeadViews';
 import { auditContactUse } from '../../utils/contactAudit';
 import { MyGoals } from './GoalsPanel';
 import SilentLeads from './SilentLeads';
 import TaskDoneFlow from './TaskDoneFlow';
+import { PageHeader, KpiRow, KpiTile } from '../ui';
 import './tasks-panel.css';
 
 const SECTIONS = [
@@ -226,20 +227,6 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAss
   );
 }
 
-/** A ring: how many of today's tasks are done */
-function Ring({ done, total }) {
-  const R = 22;
-  const C = 2 * Math.PI * R;
-  const pct = total ? done / total : 0;
-  return (
-    <svg className="tk-ring" viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
-      <circle cx="28" cy="28" r={R} className="tk-ring__bg" />
-      <circle cx="28" cy="28" r={R} className="tk-ring__fg" strokeDasharray={`${(pct * C).toFixed(1)} ${C.toFixed(1)}`} transform="rotate(-90 28 28)" />
-      <text x="28" y="33" textAnchor="middle" className="tk-ring__txt">{total ? Math.round(pct * 100) : 0}%</text>
-    </svg>
-  );
-}
-
 /**
  * «مهامي»: today's work in one list across all clients: late first, then today by urgency, then what's coming.
  * Search and filter it, call or WhatsApp the client from a task, move or edit it; a manager can switch to the whole
@@ -304,31 +291,28 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
   const visibleSections = SECTIONS.filter((s) => (!focus || focus === s.id) && groups[s.id].length > 0);
   const empty = SECTIONS.every((s) => groups[s.id].length === 0);
   const rowProps = { isAr, team: view !== 'mine', me, onTick: tick, onMove: move, onSave: save, onDelete: remove, onOpenLead: openLead, onCall: call, onWhatsApp: whatsapp, canDelete, now };
-  const stat = (id, label, n, tone) => (
-    <button type="button" className={`tk-stat is-${tone} ${focus === id ? 'is-on' : ''}`} aria-pressed={focus === id} onClick={() => setFocus(focus === id ? '' : id)}>
-      <b>{n}</b><span>{label}</span>
-    </button>
-  );
   const upcomingCount = groupTasks(mine, now).upcoming.length;
+  const weekDone = doneThisWeek(mine, scopeUid, now);
+  const focusList = useMemo(() => focusTasks(mine, now, 3), [mine, now]);
 
   return (
     <div className="crm-table-container tk-panel">
       {flowTask && leadById.get(String(flowTask.leadId)) && (
         <TaskDoneFlow key={flowTask.id} task={flowTask} lead={leadById.get(String(flowTask.leadId))} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />
       )}
-      <header className="tk-head">
-        <div>
-          <h2><ListChecks size={20} aria-hidden="true" /> {view === 'team' ? (isAr ? 'مهام الفريق' : 'Team tasks') : view === 'assigned' ? (isAr ? 'اللي كلّفت بيه' : 'Tasks I gave') : (isAr ? 'مهامي' : 'My tasks')}</h2>
-          <p>{isAr ? `${counts.open} مفتوحة` : `${counts.open} open`}</p>
-        </div>
-        {canManage && (
+      <PageHeader
+        title={view === 'team' ? (isAr ? 'مهام الفريق' : 'Team tasks') : view === 'assigned' ? (isAr ? 'اللي كلّفت بيه' : 'Tasks I gave') : (isAr ? 'مهامي' : 'My tasks')}
+        description={counts.overdue > 0
+          ? (isAr ? `عندك ${counts.overdue} متأخرة. ابدأ بيها.` : `${counts.overdue} overdue. Start there.`)
+          : counts.today > 0 ? (isAr ? `${counts.today} مهمة النهارده.` : `${counts.today} tasks today.`) : (isAr ? 'مفيش حاجة مستعجلة النهارده.' : 'Nothing urgent today.')}
+        actions={canManage ? (
           <div className="tk-seg" role="group" aria-label={isAr ? 'العرض' : 'View'}>
             <button type="button" className={view === 'mine' ? 'is-on' : ''} aria-pressed={view === 'mine'} onClick={() => { setView('mine'); setPerson(''); }}>{isAr ? 'مهامي' : 'Mine'}</button>
             <button type="button" className={view === 'assigned' ? 'is-on' : ''} aria-pressed={view === 'assigned'} onClick={() => { setView('assigned'); setPerson(''); }}><Send size={14} aria-hidden="true" /> {isAr ? 'كلّفت بيها' : 'I assigned'}</button>
             <button type="button" className={view === 'team' ? 'is-on' : ''} aria-pressed={view === 'team'} onClick={() => setView('team')}><Users size={14} aria-hidden="true" /> {isAr ? 'كل الفريق' : 'Team'}</button>
           </div>
-        )}
-      </header>
+        ) : null}
+      />
 
       {view !== 'mine' && people.length > 0 && (
         <section className="tk-load" aria-label={isAr ? 'حمل الفريق' : 'Team workload'}>
@@ -347,17 +331,73 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
         </section>
       )}
 
-      <div className="tk-summary">
-        <div className="tk-progress">
-          <Ring done={progress.done} total={progress.total} />
-          <p><b>{progress.done}</b> {isAr ? 'من' : 'of'} <b>{progress.total}</b> {isAr ? 'خلصت النهارده' : 'done today'}</p>
-        </div>
-        <div className="tk-stats">
-          {stat('overdue', isAr ? 'متأخرة' : 'Overdue', counts.overdue, 'danger')}
-          {stat('today', isAr ? 'النهارده' : 'Today', counts.today, 'primary')}
-          {stat('upcoming', isAr ? 'جاية' : 'Upcoming', upcomingCount, 'neutral')}
-        </div>
-      </div>
+      <KpiRow label={isAr ? 'ملخص المهام' : 'Task summary'}>
+        <KpiTile
+          label={isAr ? 'متأخرة' : 'Overdue'}
+          value={counts.overdue}
+          tone={counts.overdue > 0 ? 'danger' : 'success'}
+          hint={counts.overdue > 0 ? (isAr ? 'اضغط تشوفها' : 'Tap to see') : (isAr ? 'مفيش تأخير' : 'None late')}
+          icon={<Clock size={16} />}
+          onClick={() => setFocus(focus === 'overdue' ? '' : 'overdue')}
+          className={focus === 'overdue' ? 'is-picked' : undefined}
+        />
+        <KpiTile
+          label={isAr ? 'النهارده' : 'Today'}
+          value={counts.today}
+          tone="info"
+          icon={<CalendarClock size={16} />}
+          onClick={() => setFocus(focus === 'today' ? '' : 'today')}
+          className={focus === 'today' ? 'is-picked' : undefined}
+        />
+        <KpiTile
+          label={isAr ? 'جاية' : 'Upcoming'}
+          value={upcomingCount}
+          tone="neutral"
+          icon={<ListChecks size={16} />}
+          onClick={() => setFocus(focus === 'upcoming' ? '' : 'upcoming')}
+          className={focus === 'upcoming' ? 'is-picked' : undefined}
+        />
+        <KpiTile
+          label={isAr ? 'خلصت النهارده' : 'Done today'}
+          value={progress.done}
+          tone="success"
+          hint={progress.total ? (isAr ? `من ${progress.total} مطلوبة` : `of ${progress.total} due`) : (isAr ? 'لسه ما خلصتش حاجة' : 'Nothing yet')}
+          icon={<CheckCircle2 size={16} />}
+        />
+        <KpiTile
+          label={isAr ? 'خلصت الأسبوع ده' : 'Done this week'}
+          value={weekDone}
+          tone="primary"
+          icon={<ListChecks size={16} />}
+        />
+      </KpiRow>
+
+      {/* The few to do first: late ones, then today's most urgent */}
+      {focusList.length > 0 && !focus && !filtering && (
+        <section className="tk-focus" aria-label={isAr ? 'ابدأ بيها' : 'Start with these'}>
+          <h2 className="tk-focus__title"><Zap size={15} aria-hidden="true" />{isAr ? 'ابدأ بيها دلوقتي' : 'Start with these'}</h2>
+          <ul className="tk-focus__list">
+            {focusList.map((t) => {
+              const lead = t.leadId ? leadById.get(String(t.leadId)) : null;
+              const late = daysLate(t, now);
+              return (
+                <li key={t.id} className={`tk-focus__row${late ? ' is-late' : ''}`}>
+                  <button type="button" className="tk-tick" onClick={() => tick(t)} aria-label={isAr ? 'تمّت' : 'Done'}><Circle size={22} aria-hidden="true" /></button>
+                  <span className="tk-focus__text">
+                    <strong>{t.title}</strong>
+                    <span>{late ? (isAr ? `متأخرة ${late === 1 ? 'يوم' : `${late} يوم`}` : `${late}d late`) : dueLabel(t, isAr, now)}{t.leadName ? ` · ${t.leadName}` : ''}</span>
+                  </span>
+                  {lead && (lead.phone || lead.whatsapp) && (
+                    <a className="tk-q tk-q--call" href={`tel:${String(lead.phone || lead.whatsapp).replace(/[^0-9+]/g, '')}`} onClick={() => call(lead)} aria-label={isAr ? `اتصل بـ ${t.leadName || 'العميل'}` : 'Call'}>
+                      <Phone size={16} aria-hidden="true" />{isAr ? 'اتصل' : 'Call'}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <MyGoals leads={leads} uid={me?.uid} lang={lang} />
       <SilentLeads leads={leads} tasks={tasks} uid={view === 'mine' ? me?.uid : ''} me={me} isAr={isAr} onCall={call} onWhatsApp={whatsapp} onOpenLead={onOpenLead} triggerToast={triggerToast} />
