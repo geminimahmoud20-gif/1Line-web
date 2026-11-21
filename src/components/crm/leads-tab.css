@@ -90,8 +90,10 @@
   border: 1px solid var(--ui-line); border-radius: var(--ui-r-full); background: var(--ui-surface);
   font: var(--ui-fw-medium) var(--ui-fs-1) / 1 var(--ui-font); color: var(--ui-text-2); cursor: pointer; white-space: nowrap;
 }
-.crm-layout .crm-leads .crm-leads__temp:hover:not(:disabled) { border-color: var(--ui-text-3); }
-.crm-layout .crm-leads .crm-leads__temp:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.crm-layout .crm-leads .crm-leads__temp:hover:not(:has(select:disabled)) { border-color: var(--ui-text-3); }
+.crm-layout .crm-leads .crm-leads__temp:focus-within { outline: none; box-shadow: var(--ui-sh-focus); }
+.crm-layout .crm-leads .crm-leads__temp-select { appearance: none; border: 0; background: transparent; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; outline: none; }
+.crm-layout .crm-leads .crm-leads__temp-select:disabled { cursor: default; }
 .crm-leads__temp-dot { width: 8px; height: 8px; border-radius: var(--ui-r-full); background: var(--ui-line-strong); }
 .crm-leads__temp.is-hot .crm-leads__temp-dot { background: var(--ui-danger); }
 .crm-leads__temp.is-warm .crm-leads__temp-dot { background: var(--ui-warning); }
