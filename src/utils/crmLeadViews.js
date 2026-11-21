@@ -82,15 +82,31 @@ export function phoneKey(phone) {
 
 /** Why a deal was lost. Required when a lead moves to 'lost' so the reasons can be counted. */
 export const LOST_REASONS = [
-  { id: 'price', ar: 'السعر / الميزانية مش مناسبة', en: 'Price / budget mismatch' },
-  { id: 'bought_elsewhere', ar: 'اشترى أو أجّر من مكان تاني', en: 'Bought elsewhere' },
-  { id: 'financing', ar: 'مشكلة تمويل أو سيولة', en: 'Financing issue' },
+  // buyers
+  { id: 'price', ar: 'السعر / الميزانية مش مناسبة', en: 'Price / budget mismatch', side: 'buyer' },
+  { id: 'bought_elsewhere', ar: 'اشترى أو أجّر من مكان تاني', en: 'Bought elsewhere', side: 'buyer' },
+  { id: 'financing', ar: 'مشكلة تمويل أو سيولة', en: 'Financing issue', side: 'buyer' },
+  { id: 'no_match', ar: 'مفيش عقار مناسب عندنا', en: 'No matching property', side: 'buyer' },
+  // owners selling a property
+  { id: 'not_owner', ar: 'مش مالك العقار (سمسار أو وسيط)', en: 'Not the owner', side: 'seller' },
+  { id: 'not_selling', ar: 'العقار مش للبيع دلوقتي', en: 'Not for sale right now', side: 'seller' },
+  { id: 'price_too_high', ar: 'السعر المطلوب أعلى من السوق ومش مستعد يتفاوض', en: 'Asking price above market', side: 'seller' },
+  { id: 'refused_terms', ar: 'رفض العقد الحصري أو الأتعاب', en: 'Refused exclusivity or fees', side: 'seller' },
+  { id: 'docs_issue', ar: 'مستندات الملكية ناقصة أو فيها مشكلة', en: 'Ownership documents issue', side: 'seller' },
+  { id: 'sold_elsewhere', ar: 'باع من مكان تاني أو مع وسيط تاني', en: 'Sold elsewhere', side: 'seller' },
+  { id: 'out_of_scope', ar: 'العقار خارج نطاق شغلنا (منطقة أو نوع)', en: 'Outside our scope', side: 'seller' },
+  // both
   { id: 'no_response', ar: 'مش بيرد', en: 'No response' },
   { id: 'changed_mind', ar: 'أجّل أو غيّر رأيه', en: 'Postponed / changed mind' },
-  { id: 'no_match', ar: 'مفيش عقار مناسب عندنا', en: 'No matching property' },
   { id: 'not_serious', ar: 'غير جاد / بيانات غلط', en: 'Not serious / bad data' },
   { id: 'other', ar: 'سبب آخر', en: 'Other' }
 ];
+
+/** The reasons that make sense for this client: an owner selling is not asked about budget or financing */
+export const lostReasonsFor = (lead) => {
+  const side = isSellerLead(lead || {}) ? 'seller' : 'buyer';
+  return LOST_REASONS.filter((r) => !r.side || r.side === side);
+};
 
 /** Where a lead came from, in a few buckets the team can filter and count by */
 export const LEAD_SOURCES = [

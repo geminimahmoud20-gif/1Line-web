@@ -19,7 +19,7 @@ import { PROPERTY_TYPES } from '../../../data/propertiesData';
 import { getAreas } from '../../../utils/areasData';
 import { areaNameOf } from '../../../utils/areaLookup';
 import { OUTCOMES, STAGE_RULES, attemptsOf, outcomesOf, outcomeById, FOLLOW_UP_ACTIONS } from '../../../utils/stageGate';
-import { LOST_REASONS } from '../../../utils/crmLeadViews';
+import { lostReasonsFor } from '../../../utils/crmLeadViews';
 import { useSiteSettings } from '../../../utils/siteSettings';
 import ReviewRequestCard from './ReviewRequestCard';
 import ClientRequestsCard from './ClientRequestsCard';
@@ -263,7 +263,7 @@ export default function LeadDrawerOverview({
               value={negReason}
               onChange={(e) => setNegReason(e.target.value)}
               placeholder={L('اختار السبب', 'Choose a reason')}
-              options={LOST_REASONS.map((r) => ({ value: r.id, label: r.ar }))}
+              options={lostReasonsFor(lead).map((r) => ({ value: r.id, label: r.ar }))}
             />
             <div className="crm-ld__row">
               <Button type="submit" size="sm" disabled={!negReason}>{L('سجّل', 'Log')}</Button>

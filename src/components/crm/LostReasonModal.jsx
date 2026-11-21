@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { LOST_REASONS } from '../../utils/crmLeadViews';
+import { lostReasonsFor } from '../../utils/crmLeadViews';
 import { Modal, Button, Textarea } from '../ui';
 
 /** Asks why a deal was lost before the lead moves to 'lost'; onConfirm({ lostReason, lostNote }) */
@@ -33,7 +33,7 @@ export default function LostReasonModal({ lead, isAr, onConfirm, onCancel }) {
     >
       <form id={formId} onSubmit={submit}>
         <div className="crm-lost-reasons" role="radiogroup" aria-label={isAr ? 'سبب الخسارة' : 'Lost reason'}>
-          {LOST_REASONS.map((r) => (
+          {lostReasonsFor(lead).map((r) => (
             <label key={r.id} className={`crm-lost-reason ${reason === r.id ? 'is-active' : ''}`}>
               <input type="radio" name="lost-reason" value={r.id} checked={reason === r.id} onChange={() => setReason(r.id)} />
               <span>{isAr ? r.ar : r.en}</span>

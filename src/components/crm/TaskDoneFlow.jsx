@@ -5,7 +5,7 @@ import { updateTask } from '../../firebaseLazy';
 import { completion } from '../../utils/tasks';
 import { suggestNextStep, SKIP_LOG } from '../../utils/nextStep';
 import { OUTCOMES, STAGE_RULES, outcomeEntry, outcomeSave, outcomeById } from '../../utils/stageGate';
-import { LOST_REASONS } from '../../utils/crmLeadViews';
+import { lostReasonsFor } from '../../utils/crmLeadViews';
 import { scheduleNextAttempt } from '../../utils/retryCall';
 import NextStepSheet from './NextStepSheet';
 
@@ -94,7 +94,7 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
       {negative && (
         <form className="crm-ld__form" onSubmit={(e) => { e.preventDefault(); if (reason) finish(negative, { reason }); }}>
           <Select label={`${outcomeById(negative)?.ar}: ${isAr ? 'السبب' : 'reason'}`} required value={reason} onChange={(e) => setReason(e.target.value)}
-            placeholder={isAr ? 'اختار السبب' : 'Choose a reason'} options={LOST_REASONS.map((r) => ({ value: r.id, label: r.ar }))} />
+            placeholder={isAr ? 'اختار السبب' : 'Choose a reason'} options={lostReasonsFor(lead).map((r) => ({ value: r.id, label: r.ar }))} />
           <Button type="submit" size="sm" disabled={!reason || busy}>{isAr ? 'سجّل وأقفل المهمة' : 'Log and complete'}</Button>
         </form>
       )}
