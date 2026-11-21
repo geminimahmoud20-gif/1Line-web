@@ -200,7 +200,7 @@ export default function LeadQuickDrawer({
   };
 
   // Activity outcome (utils/stageGate): one tap logs what happened. The stage lock reads it, a negative one carries
-  // its reason, «لم يرد» counts the attempts, and a positive one moves a brand-new client to «مؤهل».
+  // its reason, «لم يرد» counts the attempts, and only a qualifying one (interested, viewing booked) moves a brand-new client to «مؤهل».
   const handleLogCall = (outcomeId, extra = {}) => {
     if (!onUpdateLead) return;
     const me = { uid: currentUser?.uid, name: userDisplayName(currentUser) };

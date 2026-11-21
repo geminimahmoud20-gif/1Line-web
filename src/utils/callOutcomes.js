@@ -5,7 +5,7 @@
 // =============================================================
 import { toMs } from './crmLeadViews.js';
 import { dayOf, inRange } from './reportPeriods.js';
-import { OUTCOME_OF_CALL, outcomePatchFor, isPositiveOutcome } from './stageGate.js';
+import { OUTCOME_OF_CALL, outcomePatchFor, qualifiesClient } from './stageGate.js';
 
 export const OUTCOMES = [
   { id: 'answered', ar: 'ردّ وكلّمته', en: 'Answered' },
@@ -38,7 +38,7 @@ export function outcomePatch(lead, entry) {
     lastOutcomeAt: unified.lastOutcomeAt,
     outcomeAttempts: unified.outcomeAttempts,
     ...(unified.lastContactedAt ? { lastContactedAt: unified.lastContactedAt } : {}),
-    ...((lead?.status || 'new') === 'new' && isPositiveOutcome(unified.lastOutcome) ? { status: 'contacted' } : {}),
+    ...((lead?.status || 'new') === 'new' && qualifiesClient(unified.lastOutcome) ? { status: 'contacted' } : {}),
     lastActivityAt: entry.at,
     activityLogs: [{ timestamp: entry.at, action: `مكالمة: ${label}` }, ...(lead?.activityLogs || [])]
   };

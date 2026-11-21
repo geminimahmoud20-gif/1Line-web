@@ -114,7 +114,7 @@ test('a call answer saved both ways is counted once', async () => {
   assert.equal(attemptsOf(l), 2);
   assert.equal(l.outcomeAttempts, 2);
   const a = { ...l, ...outcomePatch(l, callEntry('answered', { uid: 'u' }, T0 + 5 * 60000)) };
-  assert.equal(a.status, 'contacted');
+  assert.equal(a.status, 'new'); // reached is not qualified: the team moves the client by hand
   assert.equal(attemptsOf(a), 0);
 });
 
@@ -128,5 +128,17 @@ test('a negative outcome can close the deal as lost in the same save', async () 
   assert.equal(lose.lostReason, 'weak_marketing');
   assert.equal(check(lead, lose).ok, true);
   // a positive outcome is never turned into a loss
-  assert.equal(save(lead, entryOf('reached', {}, {}), { lose: true }).status, 'contacted');
+  assert.equal(save(lead, entryOf('reached', {}, {}), { lose: true }).status, undefined);
+});
+
+test('only a qualifying outcome moves a new client to «مؤهل» by itself; «تم التواصل» does not', async () => {
+  const { outcomeEntry: entryOf, outcomeSave: save, qualifiesClient, checkStageChange: check } = await import('../../src/utils/stageGate.js');
+  const lead = { id: 'x', status: 'new' };
+  const reached = save(lead, entryOf('reached', {}, {}));
+  assert.equal(reached.status, undefined);
+  assert.equal(save(lead, entryOf('callback', {}, {})).status, undefined);
+  for (const id of ['interested', 'viewing_set']) assert.equal(save(lead, entryOf(id, {}, {})).status, 'contacted', id);
+  assert.equal(qualifiesClient('reached'), false);
+  // the team can still move a reached client to «مؤهل» by hand
+  assert.equal(check({ ...lead, ...reached }, { status: 'contacted' }).ok, true);
 });
