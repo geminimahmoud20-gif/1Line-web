@@ -117,3 +117,16 @@ test('a call answer saved both ways is counted once', async () => {
   assert.equal(a.status, 'contacted');
   assert.equal(attemptsOf(a), 0);
 });
+
+test('a negative outcome can close the deal as lost in the same save', async () => {
+  const { outcomeEntry: entryOf, outcomeSave: save, checkStageChange: check } = await import('../../src/utils/stageGate.js');
+  const lead = { id: 'x', status: 'new' };
+  const e = entryOf('not_fit', {}, { reason: 'weak_marketing' });
+  assert.equal(save(lead, e).status, undefined); // logging alone keeps the stage
+  const lose = save(lead, e, { lose: true });
+  assert.equal(lose.status, 'lost');
+  assert.equal(lose.lostReason, 'weak_marketing');
+  assert.equal(check(lead, lose).ok, true);
+  // a positive outcome is never turned into a loss
+  assert.equal(save(lead, entryOf('reached', {}, {}), { lose: true }).status, 'contacted');
+});

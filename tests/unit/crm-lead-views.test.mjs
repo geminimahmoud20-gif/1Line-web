@@ -301,6 +301,17 @@ test('a contact saved from a unit added in the CRM is a seller, even an older on
   assert.equal(isSellerLead({ type: 'broker', details: { listingIds: ['p1'] } }), false, 'a link without who offers it is not enough');
 });
 
+test('lost reasons fit the client: owners are not asked about budget or financing', async () => {
+  const { lostReasonsFor, LOST_REASONS } = await import('../../src/utils/crmLeadViews.js');
+  const ownerIds = lostReasonsFor({ type: 'seller' }).map((r) => r.id);
+  const buyerIds = lostReasonsFor({ type: 'buyer' }).map((r) => r.id);
+  assert.ok(ownerIds.includes('not_selling') && ownerIds.includes('refused_terms') && ownerIds.includes('other'));
+  assert.ok(!ownerIds.includes('price') && !ownerIds.includes('financing') && !ownerIds.includes('bought_elsewhere'));
+  assert.ok(buyerIds.includes('price') && buyerIds.includes('financing') && !buyerIds.includes('not_selling'));
+  // every reason id is unique so reports can still label old and new records
+  assert.equal(new Set(LOST_REASONS.map((r) => r.id)).size, LOST_REASONS.length);
+});
+
 test('«غير مناسب» lists every client it counts, the lost ones too; «الكل» still hides lost', () => {
   const rows = [
     { id: 'a', name: 'A', phone: '01011111111', status: 'new' },
