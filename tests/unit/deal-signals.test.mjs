@@ -69,3 +69,13 @@ test('an account-only client is asked what they want, a typed one gets the norma
   assert.equal(attentionOf(lead, { now }).next, NEXT_STEP_ACCOUNT);
   assert.notEqual(attentionOf({ ...lead, type: 'buyer' }, { now }).next, NEXT_STEP_ACCOUNT);
 });
+
+test('an owner selling a property gets owner steps, not buyer steps', async () => {
+  const { nextStepFor, NEXT_STEP } = await import('../../src/utils/dealSignals.js');
+  const owner = { id: 'o', type: 'seller', status: 'contacted' };
+  const buyer = { id: 'b', type: 'buyer', status: 'contacted' };
+  assert.match(nextStepFor(owner), /معاينة وتقييم/);
+  assert.equal(nextStepFor(buyer), NEXT_STEP.contacted);
+  assert.match(nextStepFor({ ...owner, status: 'negotiating' }), /المشترين/);
+  assert.equal(nextStepFor({ id: 'a', type: 'account', source: 'تسجيل حساب بالموقع', status: 'new' }).includes('بيدوّر'), true);
+});

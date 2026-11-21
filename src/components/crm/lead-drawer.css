@@ -200,3 +200,9 @@
 .crm-ld__classify button { min-height: 32px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-full); background: var(--ui-surface); color: var(--ui-text); font: var(--ui-fw-semibold) var(--ui-fs-1) / 1 var(--ui-font); cursor: pointer; }
 .crm-ld__classify button:hover { background: var(--ui-info-tint); border-color: var(--ui-info); color: var(--ui-info); }
 .crm-ld__classify button:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+
+/* Who this client is: one line at the top of the file */
+.crm-ld__role { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
+.crm-ld__role-hint { font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.crm-ld__role-missing { border: 1px solid var(--ui-warning); background: var(--ui-warning-tint); color: var(--ui-text); border-radius: var(--ui-r-full); padding: 2px var(--ui-s-3); font: var(--ui-fw-medium) var(--ui-fs-1) / 1.6 var(--ui-font); cursor: pointer; }
+.crm-ld__role-missing:hover { border-color: var(--ui-text-3); }
