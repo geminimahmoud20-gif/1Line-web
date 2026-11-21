@@ -1012,7 +1012,7 @@ export default function LeadsTab({
                         <span className={`crm-leads__temp is-${temp || 'unset'}`}>
                           <span className="crm-leads__temp-dot" aria-hidden="true" />
                           <select
-                            className="crm-leads__temp-select"
+                            className="ui-select crm-leads__temp-select"
                             value={temp}
                             disabled={!canEdit}
                             onClick={(e) => e.stopPropagation()}
