@@ -56,3 +56,6 @@
 .rv__add { min-height: 32px; padding: 0 var(--ui-s-3); border: 1px dashed var(--ui-line-strong); border-radius: var(--ui-r-full); background: none; color: var(--ui-info); font: inherit; font-size: var(--ui-fs-2); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
 .rv__form { display: inline-flex; gap: var(--ui-s-1); }
 .rv__form input { min-height: 32px; padding: 0 var(--ui-s-2); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text); font: inherit; font-size: var(--ui-fs-2); }
+/* The sales tab's funnel carries more per step (vs previous, days, the comparison): numbers under the bar */
+.xs-funnel--detail li { grid-template-columns: minmax(90px, 9rem) minmax(0, 1fr); row-gap: 2px; }
+.xs-funnel--detail .xs-funnel__num { grid-column: 2; white-space: normal; }
