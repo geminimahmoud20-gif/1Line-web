@@ -301,6 +301,19 @@ test('a contact saved from a unit added in the CRM is a seller, even an older on
   assert.equal(isSellerLead({ type: 'broker', details: { listingIds: ['p1'] } }), false, 'a link without who offers it is not enough');
 });
 
+test('«غير مناسب» lists every client it counts, the lost ones too; «الكل» still hides lost', () => {
+  const rows = [
+    { id: 'a', name: 'A', phone: '01011111111', status: 'new' },
+    { id: 'b', name: 'B', phone: '01022222222', status: 'lost' },
+    { id: 'c', name: 'C', phone: '01033333333', status: 'lost' },
+    { id: 'd', name: 'D', phone: '01044444444', status: 'new' }
+  ];
+  const situationById = new Map([['a', 'not_fit'], ['b', 'not_fit'], ['c', 'no_answer'], ['d', 'converted']]);
+  assert.deepEqual(ids(filterLeads(rows, { leadFilter: 'not_fit', situationById })), ['a', 'b']);
+  assert.deepEqual(ids(filterLeads(rows, { leadFilter: 'all', situationById })), ['a', 'd']);
+  assert.deepEqual(ids(filterLeads(rows, { leadFilter: 'lost', situationById })), ['b', 'c']);
+});
+
 import { isAccountLead } from '../../src/utils/crmLeadViews.js';
 test('a client who only registered an account is in neither pipeline; saying what they want makes them a real lead', () => {
   const acct = { id: 'a', status: 'new', type: 'account', source: 'تسجيل حساب بالموقع', createdAt: Date.now() };
