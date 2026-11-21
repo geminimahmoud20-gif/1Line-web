@@ -23,6 +23,13 @@ export const OUTCOMES = [
 export const outcomeById = (id) => OUTCOMES.find((o) => o.id === id) || null;
 export const isNegativeOutcome = (id) => outcomeById(id)?.kind === 'negative';
 export const isPositiveOutcome = (id) => outcomeById(id)?.kind === 'positive';
+/**
+ * Only an outcome that says the client is really a prospect moves a brand-new client to «مؤهل» by itself.
+ * «تم التواصل» alone does not: the client may have been reached and still not qualify, so the team moves
+ * that one by hand.
+ */
+const QUALIFYING = new Set(['interested', 'viewing_set', 'viewing_done', 'offer', 'agreed']);
+export const qualifiesClient = (id) => QUALIFYING.has(id);
 
 /** The call prompt's answers (utils/callOutcomes) as outcomes */
 export const OUTCOME_OF_CALL = { answered: 'reached', no_answer: 'no_answer', busy: 'callback', wrong: 'wrong_number' };
@@ -34,7 +41,7 @@ export const MAX_ATTEMPTS = 3;
 // client in. «entry» empty = nothing is needed (the first stage). Ids are the stored statuses.
 export const STAGE_RULES = [
   { id: 'new', ar: 'عميل محتمل', activity: 'أول اتصال خلال 15 دقيقة', outcomes: ['no_answer', 'callback', 'reached', 'not_fit', 'wrong_number'], entry: [] },
-  { id: 'contacted', ar: 'مؤهل (تم التواصل)', activity: 'الكلام مع العميل وتحديد الميزانية والمنطقة والغرض', outcomes: ['reached', 'interested', 'callback', 'no_answer', 'viewing_set', 'not_fit'], entry: ['reached', 'interested', 'viewing_set', 'viewing_done', 'offer', 'agreed'] },
+  { id: 'contacted', ar: 'مؤهل', activity: 'الكلام مع العميل وتحديد الميزانية والمنطقة والغرض', outcomes: ['reached', 'interested', 'callback', 'no_answer', 'viewing_set', 'not_fit'], entry: ['reached', 'interested', 'viewing_set', 'viewing_done', 'offer', 'agreed'] },
   { id: 'site_visit', ar: 'اجتماع / معاينة', activity: 'تحديد موعد المعاينة وتنفيذها', outcomes: ['viewing_set', 'viewing_done', 'callback', 'no_answer', 'not_fit'], entry: ['viewing_set', 'viewing_done', 'offer', 'agreed'] },
   { id: 'negotiating', ar: 'تفاوض', activity: 'تقديم العرض والتفاوض على السعر', outcomes: ['offer', 'agreed', 'callback', 'no_answer', 'not_fit'], entry: ['viewing_done', 'offer', 'agreed'] },
   { id: 'closing', ar: 'إغلاق (توقيع وحجز)', activity: 'الحجز وتجهيز العقد', outcomes: ['agreed', 'offer', 'callback'], entry: ['offer', 'agreed'] },
@@ -169,11 +176,11 @@ export function checkStageChange(lead, patch = {}, opts = {}) {
   return positive.some((e) => allowed.includes(e.id)) ? { ok: true } : need(allowed);
 }
 
-/** A positive outcome on a brand-new client moves it to «مؤهل» in the same save; { lose } closes it as lost for a negative one (the lock accepts it: the outcome is in the patch) */
+/** A qualifying outcome (interested, viewing booked…) on a brand-new client moves it to «مؤهل» in the same save; { lose } closes it as lost for a negative one (the lock accepts it: the outcome is in the patch) */
 export function outcomeSave(lead = {}, entry, { lose = false } = {}) {
   const patch = outcomePatchFor(lead, entry);
   if (!patch) return null;
-  if ((lead.status || 'new') === 'new' && isPositiveOutcome(entry.id)) patch.status = 'contacted';
+  if ((lead.status || 'new') === 'new' && qualifiesClient(entry.id)) patch.status = 'contacted';
   // «غير مناسب» / «رقم غلط» can close the deal in the same tap: the stage becomes خسارة with the same reason
   if (lose && isNegativeOutcome(entry.id) && entry.reason) {
     patch.status = 'lost';
