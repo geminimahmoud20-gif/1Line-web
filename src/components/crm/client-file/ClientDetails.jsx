@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import useTeamMembers from '../../../hooks/useTeamMembers';
 import { assigneeValue, assignmentUpdates } from '../../../utils/assignees';
+import { isSellerLead } from '../../../utils/crmLeadViews';
+import { askingPriceOf } from '../../../utils/leadPipeline';
 import { isValidPhoneNumber } from '../../../utils/securityShield';
 import { phoneProblem } from '../../../utils/contactValidation';
 import CustomerOverviewTab from '../lead-profile/CustomerOverviewTab';
@@ -15,6 +17,16 @@ const AVAILABLE_TAGS = [
   { id: 'negotiator', name_ar: 'مفاوض جاد', name_en: 'Serious Negotiator' }
 ];
 
+// An owner selling a property gets tags that describe an owner; the stored value is the Arabic name, as before
+const OWNER_TAGS = [
+  { id: 'vip', name_ar: 'VIP', name_en: 'VIP' },
+  { id: 'expat', name_ar: 'مغترب بالخليج', name_en: 'Gulf Expat' },
+  { id: 'direct_owner', name_ar: 'مالك مباشر', name_en: 'Direct owner' },
+  { id: 'quick_sale', name_ar: 'عايز يبيع بسرعة', name_en: 'Quick sale' },
+  { id: 'installment', name_ar: 'يقبل التقسيط', name_en: 'Accepts installments' },
+  { id: 'negotiator', name_ar: 'مفاوض جاد', name_en: 'Serious Negotiator' }
+];
+
 /**
  * «التفاصيل»: the client's own data (phones, city, budget, area, temperature, owner, tags) as one form, view first,
  * edit on demand. It used to live in a separate full-profile window; the drawer is the only client screen now.
@@ -22,6 +34,7 @@ const AVAILABLE_TAGS = [
 export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerToast, userRole }) {
   const [isEditing, setIsEditing] = useState(false);
   const isSubmittingRef = useRef(false);
+  const seller = isSellerLead(lead || {});
   const teamMembers = useTeamMembers(lead ? [lead] : []);
   const [formData, setFormData] = useState({
     name: lead?.name || '',
@@ -33,7 +46,8 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
     status: lead?.status || 'new',
     temperature: lead?.temperature || '',
     assignedTo: assigneeValue(lead || {}),
-    budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
+    // An owner's «budget» is the price he asks for the property
+    budget: seller ? (askingPriceOf(lead || {}) || lead?.details?.budget || '') : (lead?.details?.budget || lead?.details?.expectedPrice || ''),
     // No saved area stays empty (it used to become 'east', saved back on the next edit)
     area: (!lead?.details?.area || lead?.details?.area === 'undefined') ? (lead?.area || '') : lead.details.area,
     propertyType: (!lead?.details?.propertyType || lead?.details?.propertyType === 'undefined') ? 'apartment' : lead.details.propertyType,
@@ -83,7 +97,9 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
         area: formData.area,
         budget: formData.budget,
         propertyType: formData.propertyType,
-        details: { ...(lead.details || {}), budget: formData.budget, expectedPrice: formData.budget, area: formData.area, propertyType: formData.propertyType }
+        // The owner's price is also saved where the sales pipeline reads the asking price
+        ...(seller && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}),
+        details: { ...(lead.details || {}), budget: formData.budget, expectedPrice: formData.budget, area: formData.area, propertyType: formData.propertyType, ...(seller && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}) }
       };
       const saved = onUpdateLead ? await onUpdateLead(lead.id, updated, lead.version) : true;
       if (saved === false) return;
@@ -96,7 +112,8 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
 
   return (
     <CustomerOverviewTab
-      AVAILABLE_TAGS={AVAILABLE_TAGS}
+      AVAILABLE_TAGS={seller ? OWNER_TAGS : AVAILABLE_TAGS}
+      isSeller={seller}
       formData={formData}
       handleSaveProfile={handleSaveProfile}
       handleToggleTag={handleToggleTag}

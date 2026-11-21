@@ -12,6 +12,7 @@ export default function CustomerOverviewTab({
   handleSaveProfile,
   handleToggleTag,
   isAr,
+  isSeller = false,
   isEditing,
   lang,
   lead,
@@ -22,7 +23,7 @@ export default function CustomerOverviewTab({
   return (
     <div>
       <div className="cp-ov__head">
-        <h4 className="cp__h">{isAr ? 'البيانات والقدرة المالية' : 'Client details & budget'}</h4>
+        <h4 className="cp__h">{isSeller ? (isAr ? 'بيانات المالك والعقار' : 'Owner & property details') : (isAr ? 'البيانات والقدرة المالية' : 'Client details & budget')}</h4>
         {canEditLead(userRole, lead) ? (
           <button type="button" className={`cp__btn ${isEditing ? 'cp__btn--primary' : ''}`} onClick={() => setIsEditing(!isEditing)}>
             <Edit3 size={14} aria-hidden="true" />
@@ -101,7 +102,7 @@ export default function CustomerOverviewTab({
 
           {/* Budget */}
           <div className="form-group-item">
-            <label>{isAr ? 'الميزانية المالية (ج.م):' : 'Budget (EGP):'}</label>
+            <label>{isSeller ? (isAr ? 'السعر المطلوب للعقار (ج.م):' : 'Asking price (EGP):') : (isAr ? 'الميزانية المالية (ج.م):' : 'Budget (EGP):')}</label>
             <input
               type="text"
               disabled={!isEditing}
@@ -112,21 +113,21 @@ export default function CustomerOverviewTab({
 
           {/* Financing Method */}
           <div className="form-group-item">
-            <label>{isAr ? 'طريقة السداد المفضلة:' : 'Payment Preference:'}</label>
+            <label>{isSeller ? (isAr ? 'طريقة السداد اللي يقبلها من المشتري:' : 'Payment he accepts:') : (isAr ? 'طريقة السداد المفضلة:' : 'Payment Preference:')}</label>
             <select
               disabled={!isEditing}
               value={formData.financing}
               onChange={(e) => setFormData({ ...formData, financing: e.target.value })}
             >
-              <option value="cash">كاش فوري (Cash)</option>
-              <option value="installments">تقسيط على أقساط مريحة</option>
-              <option value="mortgage">تمويل عقاري بنكي</option>
+              <option value="cash">{isSeller ? 'كاش فقط' : 'كاش فوري (Cash)'}</option>
+              <option value="installments">{isSeller ? 'يقبل التقسيط' : 'تقسيط على أقساط مريحة'}</option>
+              <option value="mortgage">{isSeller ? 'يقبل التمويل العقاري' : 'تمويل عقاري بنكي'}</option>
             </select>
           </div>
 
           {/* Area */}
           <div className="form-group-item">
-            <label>{isAr ? 'المنطقة المستهدفة:' : 'Target Area:'}</label>
+            <label>{isSeller ? (isAr ? 'منطقة العقار:' : 'Property area:') : (isAr ? 'المنطقة المستهدفة:' : 'Target Area:')}</label>
             <select
               disabled={!isEditing}
               value={formArea(formData.area, getAreas(), { allowAll: true })}
@@ -139,16 +140,16 @@ export default function CustomerOverviewTab({
 
           {/* Temperature */}
           <div className="form-group-item">
-            <label>{isAr ? 'درجة حرارة العميل:' : 'Lead Temperature:'}</label>
+            <label>{isSeller ? (isAr ? 'درجة جدية المالك:' : 'Owner seriousness:') : (isAr ? 'درجة حرارة العميل:' : 'Lead Temperature:')}</label>
             <select
               disabled={!isEditing}
               value={formData.temperature}
               onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
             >
               <option value="">غير محدد</option>
-              <option value="hot">ساخن جداً (Hot - شراء خلال 7 أيام)</option>
-              <option value="warm">دافئ (Warm - شراء خلال شهر)</option>
-              <option value="cold">بارد / مستكشف (Cold)</option>
+              <option value="hot">{isSeller ? 'ساخن جداً (عايز يبيع خلال 7 أيام)' : 'ساخن جداً (Hot - شراء خلال 7 أيام)'}</option>
+              <option value="warm">{isSeller ? 'دافئ (عايز يبيع خلال شهر)' : 'دافئ (Warm - شراء خلال شهر)'}</option>
+              <option value="cold">{isSeller ? 'بارد / بيسأل بس' : 'بارد / مستكشف (Cold)'}</option>
             </select>
           </div>
 

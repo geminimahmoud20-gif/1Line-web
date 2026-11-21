@@ -38,7 +38,8 @@ import { userDisplayName } from '../../utils/assignees';
 import LeadTeamPanel from './lead-profile/LeadTeamPanel';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import PhoneText from './PhoneText';
-import { attentionOf, NEXT_STEP, NEXT_STEP_ACCOUNT } from '../../utils/dealSignals';
+import { attentionOf, nextStepFor as stepFor } from '../../utils/dealSignals';
+import { clientRoleOf, missingFor } from '../../utils/clientRole';
 import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineCards';
 
 export default function LeadQuickDrawer({
@@ -353,7 +354,9 @@ export default function LeadQuickDrawer({
   const dealValue = leadBudget(lead);
   const signal = isOpenLead(lead) ? attentionOf(lead, { now: nowMs, value: dealValue }) : null;
   const accountOnly = isOpenLead(lead) && isAccountLead(lead) && !isSellerLead(lead);
-  const nextLine = isOpenLead(lead) ? (accountOnly ? NEXT_STEP_ACCOUNT : NEXT_STEP[lead.status || 'new']) : '';
+  const role = clientRoleOf(lead);
+  const missing = missingFor(lead);
+  const nextLine = isOpenLead(lead) ? (accountOnly ? stepFor(lead, 'new') : stepFor(lead)) : '';
   const setClientType = (type) => {
     const prev = lead.type || 'account';
     onUpdateLead?.(lead.id, { type, lastActivityAt: new Date().toISOString() }, lead.version);
@@ -414,6 +417,16 @@ export default function LeadQuickDrawer({
         )}
       >
         <div className="crm-ld" data-stage={lead.status || 'new'}>
+          {/* Who this client is, first of all: owner, broker, buyer, investor or a site account */}
+          <section className={`crm-ld__role is-${role.id}`} aria-label={isAr ? 'نوع العميل' : 'Client type'}>
+            <Badge tone={role.tone}>{isAr ? role.ar : role.en}</Badge>
+            {role.hint && isAr && <span className="crm-ld__role-hint">{role.hint}</span>}
+            {missing.length > 0 && (
+              <button type="button" className="crm-ld__role-missing" onClick={() => setActiveTab('client')} title={isAr ? 'افتح بيانات العميل وكمّلها' : 'Open the client details'}>
+                {isAr ? `ناقص: ${missing.map((m) => m.ar).join(' · ')}` : `Missing: ${missing.length}`}
+              </button>
+            )}
+          </section>
           {nextLine && (
             <section className={`crm-ld__decide${signal ? ` is-${signal.tone}` : ''}`} aria-label={isAr ? 'القرار المطلوب' : 'Next decision'}>
               <span className="crm-ld__decide-icon" aria-hidden="true">{signal ? <AlertTriangle size={18} /> : <CircleCheckBig size={18} />}</span>
