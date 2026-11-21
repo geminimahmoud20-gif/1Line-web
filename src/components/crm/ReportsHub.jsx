@@ -1,34 +1,38 @@
 import { useMemo, useState } from 'react';
-import { Users, Building, Zap, Target, UserMinus, PhoneCall, Activity, Megaphone, Trophy, Calculator, ChevronLeft, Banknote, LayoutDashboard } from 'lucide-react';
+import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
+import { loadViews, saveView, removeView } from '../../utils/reportViews';
 import PerformanceReportPanel from './PerformanceReportPanel';
 import ExecutiveSummaryPanel from './ExecutiveSummaryPanel';
+import TeamReportPanel from './TeamReportPanel';
+import MarketingReportPanel from './MarketingReportPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
-import CallsReportPanel from './CallsReportPanel';
 import MoneyReportPanel from './MoneyReportPanel';
 import ReportControls from './ReportControls';
 import { PageHeader } from '../ui';
 import './performance-report.css';
+import './executive-summary.css';
 
+// Grouped by the question a manager asks, not by the data behind it
 const TABS = [
-  { id: 'summary', icon: LayoutDashboard, ar: 'الملخص التنفيذي', en: 'Summary' },
-  { id: 'sales', icon: Users, ar: 'العملاء والمبيعات', en: 'Clients & sales' },
-  { id: 'money', icon: Banknote, ar: 'القمع والفلوس', en: 'Funnel & money' },
-  { id: 'portfolio', icon: Building, ar: 'العقارات', en: 'Portfolio' },
-  { id: 'demand', icon: Zap, ar: 'الطلبات والخدمات', en: 'Demands & services' },
-  { id: 'calls', icon: PhoneCall, ar: 'الاتصالات', en: 'Calls' },
-  { id: 'lost', icon: UserMinus, ar: 'ضياع العملاء', en: 'Lost clients' },
-  { id: 'goals', icon: Target, ar: 'الأهداف', en: 'Goals' }
+  { id: 'summary', icon: LayoutDashboard, ar: 'الملخص', en: 'Summary', q_ar: 'الشغل ماشي إزاي؟' },
+  { id: 'sales', icon: Banknote, ar: 'المبيعات والفلوس', en: 'Sales & money', q_ar: 'بنبيع قد إيه وبنكسب كام؟' },
+  { id: 'team', icon: Users, ar: 'الفريق', en: 'Team', q_ar: 'مين محتاج دعم؟' },
+  { id: 'marketing', icon: Megaphone, ar: 'التسويق', en: 'Marketing', q_ar: 'أنهي مصدر يستاهل فلوسه؟' },
+  { id: 'stock', icon: Building, ar: 'العقارات والطلب', en: 'Stock & demand', q_ar: 'عندنا اللي العملاء عايزينه؟' },
+  { id: 'risk', icon: ShieldAlert, ar: 'الخسارة والمخاطر', en: 'Losses & risk', q_ar: 'بنخسر عملاء ليه؟' },
+  { id: 'goals', icon: Target, ar: 'الأهداف', en: 'Goals', q_ar: 'هنوصل للهدف؟' }
 ];
+// Old tab ids (a saved view from before) open their new home
+const LEGACY = { money: 'sales', portfolio: 'stock', demand: 'stock', calls: 'team', lost: 'risk' };
+const NO_RANGE = new Set(['goals']);
 
 // The reports that live on their own screens, one tap away
 const LINKS = [
-  { tab: 'campaigns', icon: Megaphone, ar: 'تقرير الحملات', sub_ar: 'كل إعلان جاب كام عميل وكلّفك كام' },
   { tab: 'agents', icon: Trophy, ar: 'فريق المبيعات والعمولات', sub_ar: 'ترتيب البياعين وأهدافهم' },
-  { tab: 'financials', icon: Calculator, ar: 'المالية والأقساط', sub_ar: 'التحصيل والالتزامات' },
-  { tab: 'visitor_intelligence', icon: Activity, ar: 'زوار الموقع', sub_ar: 'الزيارات ومصادرها وأكتر العقارات مشاهدة' }
+  { tab: 'financials', icon: Calculator, ar: 'المالية والأقساط', sub_ar: 'التحصيل والالتزامات' }
 ];
 
 /** «مركز التقارير»: one place and one date range / comparison for every report (managers) */
@@ -43,12 +47,33 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
   const range = useMemo(() => resolveRange(preset, now, custom), [preset, now, custom]);
   const prevRange = useMemo(() => comparisonRange(range, mode), [range, mode]);
   const ctl = { preset, setPreset, custom, setCustom, mode, setMode };
+  const current = TABS.find((t) => t.id === tab) || TABS[0];
+  const Go = isAr ? ChevronLeft : ChevronRight;
+
+  // Saved views: this period + comparison + tab under a name, on this device
+  const [views, setViews] = useState(() => loadViews());
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState('');
+  const applyView = (v) => {
+    setTab(LEGACY[v.tab] || (TABS.some((t) => t.id === v.tab) ? v.tab : 'summary'));
+    setPreset(v.preset || '30');
+    setCustom(v.custom?.from ? v.custom : { from: '', to: '' });
+    setMode(v.mode || 'previous');
+  };
+  const addView = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setViews(saveView({ name, tab, preset, custom, mode }));
+    setName('');
+    setNaming(false);
+    triggerToast?.(L('اتحفظ العرض', 'View saved'), 'success');
+  };
 
   return (
     <section className="pr-panel pr-hub" dir={isAr ? 'rtl' : 'ltr'}>
       <PageHeader
         title={L('مركز التقارير', 'Reports')}
-        description={L('اختار الفترة وقارنها. اضغط على أي رقم تشوف العملاء اللي وراه.', 'Pick a period and compare it. Tap any number to see the clients behind it.')}
+        description={L(`${current.q_ar} اضغط على أي رقم تشوف العملاء اللي وراه.`, 'Tap any number to see the clients behind it.')}
       />
 
       <div className="pr-tabs" role="tablist" aria-label={L('أقسام التقارير', 'Report sections')}>
@@ -62,16 +87,46 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         })}
       </div>
 
-      {tab !== 'goals' && tab !== 'money' && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
+      {!NO_RANGE.has(tab) && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
+
+      <div className="rv" role="group" aria-label={L('العروض المحفوظة', 'Saved views')}>
+        <span className="rv__label"><Bookmark size={14} aria-hidden="true" /> {L('عروضي:', 'My views:')}</span>
+        {views.map((v) => (
+          <span key={v.id} className="rv__chip">
+            <button type="button" onClick={() => applyView(v)}>{v.name}</button>
+            <button type="button" aria-label={L(`امسح «${v.name}»`, `Remove ${v.name}`)} onClick={() => setViews(removeView(v.id))}><X size={12} aria-hidden="true" /></button>
+          </span>
+        ))}
+        {naming ? (
+          <form className="rv__form" onSubmit={addView}>
+            <input autoFocus value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder={L('اسم العرض: أداء الشهر', 'View name')} aria-label={L('اسم العرض', 'View name')} />
+            <button type="submit" className="rv__add">{L('احفظ', 'Save')}</button>
+            <button type="button" className="rv__add" onClick={() => { setNaming(false); setName(''); }}>{L('إلغاء', 'Cancel')}</button>
+          </form>
+        ) : (
+          <button type="button" className="rv__add" onClick={() => setNaming(true)}><Plus size={14} aria-hidden="true" /> {L('احفظ العرض ده', 'Save this view')}</button>
+        )}
+      </div>
 
       {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} />}
-      {tab === 'sales' && <PerformanceReportPanel leads={leads} lang={lang} range={range} prevRange={prevRange} now={now} />}
-      {tab === 'money' && <MoneyReportPanel leads={leads} lang={lang} onOpenTab={onOpenTab} />}
-      {tab === 'portfolio' && <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
-      {tab === 'demand' && <OperationsReportsPanel part="demand" demands={demands} intake={intake} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
-
-      {tab === 'calls' && <CallsReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} />}
-      {tab === 'lost' && <LostReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} onOpenLead={onOpenLead} />}
+      {tab === 'sales' && (
+        <>
+          <PerformanceReportPanel leads={leads} lang={lang} range={range} prevRange={prevRange} now={now} hide={['team', 'sources']} />
+          <section className="xs-card" aria-labelledby="hub-money">
+            <h2 id="hub-money" className="xs-h">{L('الفلوس: الإعلانات والعمولات والمتوقع', 'Money: ads, commission and forecast')} <small>{L('(كل الوقت، مش الفترة)', '(all time)')}</small></h2>
+            <MoneyReportPanel leads={leads} lang={lang} onOpenTab={onOpenTab} />
+          </section>
+        </>
+      )}
+      {tab === 'team' && <TeamReportPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} />}
+      {tab === 'marketing' && <MarketingReportPanel leads={leads} range={range} lang={lang} onOpenTab={onOpenTab} />}
+      {tab === 'stock' && (
+        <>
+          <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />
+          <OperationsReportsPanel part="demand" demands={demands} intake={intake} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />
+        </>
+      )}
+      {tab === 'risk' && <LostReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'goals' && <GoalsPanel leads={leads} members={members} me={me} canManage={canManage} lang={lang} triggerToast={triggerToast} />}
 
       {onOpenTab && (
@@ -85,7 +140,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
                   <button type="button" onClick={() => onOpenTab(l.tab)}>
                     <Icon size={18} aria-hidden="true" />
                     <span><b>{l.ar}</b><small>{l.sub_ar}</small></span>
-                    <ChevronLeft size={16} aria-hidden="true" className="pr-links__go" />
+                    <Go size={16} aria-hidden="true" className="pr-links__go" />
                   </button>
                 </li>
               );
