@@ -94,7 +94,7 @@ export default function CrmPage({
   onDeleteDemand,
   onUnpublishDemand
 }) {
-  const { isAuthInitializing, currentUser, userRole } = useAuth();
+  const { isAuthInitializing, authSlow, currentUser, userRole } = useAuth();
   const { handleImportProperties, handleImportLeads, requestLiveCatalog } = useProperties();
   // Staff edit the catalog: switch from the cached public copy to the live listener
   useEffect(() => { if (currentUser) requestLiveCatalog(); }, [currentUser, requestLiveCatalog]);
@@ -671,6 +671,18 @@ export default function CrmPage({
           <span style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', fontWeight: 'bold' }}>
             {isAr ? 'جاري فحص الجلسة المشفرة...' : 'Verifying secure session...'}
           </span>
+          {authSlow && (
+            <>
+              <span style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', maxWidth: '320px', textAlign: 'center', lineHeight: 1.7 }}>
+                {isAr
+                  ? 'الاتصال بخدمة الدخول بطيء. لو فضل كده جرّب داتا الموبايل بدل الواي فاي، أو أعد المحاولة.'
+                  : 'The sign-in service is slow to answer. Try mobile data instead of Wi-Fi, or retry.'}
+              </span>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--sm" onClick={() => window.location.reload()}>
+                {isAr ? 'أعد المحاولة' : 'Retry'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
