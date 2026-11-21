@@ -209,10 +209,10 @@ export default function LeadQuickDrawer({
       triggerToast?.(isAr ? 'النتيجة السلبية لازم يتسجّل معاها السبب.' : 'A negative outcome needs a reason.', 'error');
       return;
     }
-    const patch = outcomeSave(lead, entry);
+    const patch = outcomeSave(lead, entry, { lose: extra.lose });
     const label = outcomeById(outcomeId)?.ar || outcomeId;
     onUpdateLead(lead.id, patch, lead.version);
-    triggerToast?.(isAr ? `اتسجّلت النتيجة: ${label}` : `Outcome logged: ${label}`, 'success');
+    triggerToast?.(isAr ? `اتسجّلت النتيجة: ${label}${patch.status === 'lost' ? ' · واتنقل لخسارة' : ''}` : `Outcome logged: ${label}`, 'success');
     // «لم يرد»: the next try becomes a task, up to the third; after that the client can move to غير متفاعل
     if (outcomeId === 'no_answer') {
       const attempts = patch.outcomeAttempts;

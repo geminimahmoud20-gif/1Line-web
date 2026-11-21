@@ -169,11 +169,17 @@ export function checkStageChange(lead, patch = {}, opts = {}) {
   return positive.some((e) => allowed.includes(e.id)) ? { ok: true } : need(allowed);
 }
 
-/** A positive outcome on a brand-new client moves it to «مؤهل» in the same save (the lock accepts it: the outcome is in the patch) */
-export function outcomeSave(lead = {}, entry) {
+/** A positive outcome on a brand-new client moves it to «مؤهل» in the same save; { lose } closes it as lost for a negative one (the lock accepts it: the outcome is in the patch) */
+export function outcomeSave(lead = {}, entry, { lose = false } = {}) {
   const patch = outcomePatchFor(lead, entry);
   if (!patch) return null;
   if ((lead.status || 'new') === 'new' && isPositiveOutcome(entry.id)) patch.status = 'contacted';
+  // «غير مناسب» / «رقم غلط» can close the deal in the same tap: the stage becomes خسارة with the same reason
+  if (lose && isNegativeOutcome(entry.id) && entry.reason) {
+    patch.status = 'lost';
+    patch.lostReason = entry.reason;
+    if (entry.note) patch.lostNote = entry.note;
+  }
   return patch;
 }
 

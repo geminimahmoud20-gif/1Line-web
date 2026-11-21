@@ -82,9 +82,6 @@
 
 /* Tidier on a phone: one-line header, one-row stage strip, folded secondary blocks */
 .crm-ld__desc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.crm-ld__stages { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--ui-s-3) * -1); padding-inline: var(--ui-s-3); }
-.crm-ld__stages::-webkit-scrollbar { display: none; }
-.crm-ld__stages > * { flex: 0 0 auto; }
 .crm-ld__fold { padding: 0; gap: 0; }
 .crm-ld__fold-sum { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-3) var(--ui-s-4); cursor: pointer; list-style: none; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); min-height: 44px; }
 .crm-ld__fold-sum::-webkit-details-marker { display: none; }
@@ -100,7 +97,6 @@
   .crm-ld__fold > :not(summary) { margin: 0 var(--ui-s-3) var(--ui-s-3); }
 }
 
-.crm-ld__stages::after { content: ''; flex: 0 0 var(--ui-s-3); }
 
 /* The client file: history, the client's own words */
 .cf-count { margin-inline-start: var(--ui-s-2); min-width: 22px; padding: 0 var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); color: var(--ui-text-2); font-size: var(--ui-fs-1); line-height: 22px; text-align: center; font-weight: var(--ui-fw-regular); }
@@ -170,9 +166,6 @@
 .crm-ld__stack { gap: var(--ui-s-3); }
 .crm-ld__stage { padding: 0; background: none; }
 .crm-ld__stage-head { margin-bottom: var(--ui-s-1); }
-.crm-ld__stages { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-.crm-ld__stages::-webkit-scrollbar { display: none; }
-.crm-ld__stages > * { flex: 0 0 auto; }
 .crm-ld__block { padding: var(--ui-s-3) var(--ui-s-4); }
 .crm-ld__tools { display: flex; flex-direction: column; padding: var(--ui-s-3) var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
 .crm-ld__tools-h { margin: 0 0 var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }

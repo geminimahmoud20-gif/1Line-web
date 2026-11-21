@@ -35,7 +35,7 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
     let patch;
     if (id) {
       const entry = outcomeEntry(id, me, extra);
-      const base = entry && outcomeSave(lead, entry);
+      const base = entry && outcomeSave(lead, entry, { lose: extra.lose });
       if (!base) { setBusy(false); return; }
       patch = { ...base, activityLogs: [taskLine, ...base.activityLogs].slice(0, 100) };
     } else {
@@ -92,10 +92,13 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
         ))}
       </div>
       {negative && (
-        <form className="crm-ld__form" onSubmit={(e) => { e.preventDefault(); if (reason) finish(negative, { reason }); }}>
+        <form className="crm-ld__form" onSubmit={(e) => { e.preventDefault(); if (reason) finish(negative, { reason, lose: true }); }}>
           <Select label={`${outcomeById(negative)?.ar}: ${isAr ? 'السبب' : 'reason'}`} required value={reason} onChange={(e) => setReason(e.target.value)}
             placeholder={isAr ? 'اختار السبب' : 'Choose a reason'} options={lostReasonsFor(lead).map((r) => ({ value: r.id, label: r.ar }))} />
-          <Button type="submit" size="sm" disabled={!reason || busy}>{isAr ? 'سجّل وأقفل المهمة' : 'Log and complete'}</Button>
+          <div className="crm-ld__row">
+            <Button type="submit" size="sm" disabled={!reason || busy}>{isAr ? 'سجّل وانقله لخسارة' : 'Log and mark as lost'}</Button>
+            <Button type="button" variant="secondary" size="sm" disabled={!reason || busy} onClick={() => finish(negative, { reason })}>{isAr ? 'سجّل وسيبه في مرحلته' : 'Log only'}</Button>
+          </div>
         </form>
       )}
     </Modal>

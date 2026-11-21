@@ -94,6 +94,7 @@ export const LOST_REASONS = [
   { id: 'refused_terms', ar: 'رفض العقد الحصري أو الأتعاب', en: 'Refused exclusivity or fees', side: 'seller' },
   { id: 'docs_issue', ar: 'مستندات الملكية ناقصة أو فيها مشكلة', en: 'Ownership documents issue', side: 'seller' },
   { id: 'sold_elsewhere', ar: 'باع من مكان تاني أو مع وسيط تاني', en: 'Sold elsewhere', side: 'seller' },
+  { id: 'weak_marketing', ar: 'الوحدة ضعيفة تسويقيًا (شارع ضيق أو من غير ميزة قوية)', en: 'Weak to market (narrow street, no strong feature)', side: 'seller' },
   { id: 'out_of_scope', ar: 'العقار خارج نطاق شغلنا (منطقة أو نوع)', en: 'Outside our scope', side: 'seller' },
   // both
   { id: 'no_response', ar: 'مش بيرد', en: 'No response' },

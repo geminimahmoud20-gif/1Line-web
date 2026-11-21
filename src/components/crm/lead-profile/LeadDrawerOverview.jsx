@@ -255,7 +255,7 @@ export default function LeadDrawerOverview({
         {pendingNeg && (
           <form
             className="crm-ld__form"
-            onSubmit={(e) => { e.preventDefault(); if (!negReason) return; handleLogCall(pendingNeg, { reason: negReason }); setPendingNeg(''); setNegReason(''); }}
+            onSubmit={(e) => { e.preventDefault(); if (!negReason) return; handleLogCall(pendingNeg, { reason: negReason, lose: true }); setPendingNeg(''); setNegReason(''); }}
           >
             <Select
               label={`${OUTCOMES.find((o) => o.id === pendingNeg)?.ar}: ${L('السبب', 'reason')}`}
@@ -266,7 +266,8 @@ export default function LeadDrawerOverview({
               options={lostReasonsFor(lead).map((r) => ({ value: r.id, label: r.ar }))}
             />
             <div className="crm-ld__row">
-              <Button type="submit" size="sm" disabled={!negReason}>{L('سجّل', 'Log')}</Button>
+              <Button type="submit" size="sm" disabled={!negReason}>{L('سجّل وانقله لخسارة', 'Log and mark as lost')}</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={!negReason} onClick={() => { handleLogCall(pendingNeg, { reason: negReason }); setPendingNeg(''); setNegReason(''); }}>{L('سجّل وسيبه في مرحلته', 'Log only')}</Button>
               <Button type="button" variant="ghost" size="sm" onClick={() => { setPendingNeg(''); setNegReason(''); }}>{L('إلغاء', 'Cancel')}</Button>
             </div>
           </form>
