@@ -6,7 +6,7 @@ import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { leadScore, isOpenLead, leadBudget, isSellerLead, duplicatesById } from '../../utils/crmLeadViews';
+import { leadScore, isOpenLead, leadBudget, isSellerLead, isAccountLead, duplicatesById } from '../../utils/crmLeadViews';
 import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
@@ -50,7 +50,9 @@ const stagesOfLead = (lead) => (pipelineKind(lead) === 'seller' ? SELLER_COLUMNS
 const matchesType = (l, type) => {
   if (type === 'all') return true;
   if (type === 'seller') return isSellerLead(l);
-  if (type === 'buyer') return !isSellerLead(l) && l.type !== 'investor';
+  // Someone who only registered an account has not said whether they buy or sell: their own list until they do
+  if (type === 'account') return !isSellerLead(l) && isAccountLead(l);
+  if (type === 'buyer') return !isSellerLead(l) && !isAccountLead(l) && l.type !== 'investor';
   return l.type === type;
 };
 
@@ -221,6 +223,8 @@ export default function KanbanPipeline({
     switch (type) {
       case 'seller':
         return { label: isAr ? 'بائع (عرض عقار)' : 'Seller', bg: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', border: 'var(--crm-warn-line)' };
+      case 'account':
+        return { label: isAr ? 'تسجيل حساب · لم يحدد' : 'Account only', bg: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', border: 'var(--crm-warn-line)' };
       case 'investor':
         return { label: isAr ? 'مستثمر' : 'Investor', bg: 'var(--crm-violet-soft)', color: 'var(--crm-violet)', border: 'var(--crm-violet-line)' };
       case 'broker':
@@ -325,6 +329,9 @@ export default function KanbanPipeline({
     Object.keys(groups).forEach((k) => { groups[k] = sortByAttention(groups[k], { now, worth: getLeadBudget }); });
     return { leadsByStage: groups, stageStatsMap: stats };
   }, [filteredLeads, PIPELINE_STAGES, onlyAttention, now]);
+
+  // Clients who only registered an account: counted apart so none is forgotten
+  const accountCount = useMemo(() => leads.filter((l) => !l.isArchived && isOpenLead(l) && matchesType(l, 'account')).length, [leads]);
 
   // Executive pipeline metrics overview
   const pipelineOverview = useMemo(() => {
@@ -549,6 +556,24 @@ export default function KanbanPipeline({
     });
   };
 
+  // One tap sets what an account-only client turned out to want; the card moves to that board
+  const CLIENT_TYPES = [
+    { id: 'buyer', ar: 'مشتري', en: 'Buyer' },
+    { id: 'seller', ar: 'بائع / مالك', en: 'Seller' },
+    { id: 'investor', ar: 'مستثمر', en: 'Investor' }
+  ];
+  const handleClassify = (lead, type) => {
+    if (!onUpdateLead) return;
+    const prev = lead.type || 'account';
+    const label = CLIENT_TYPES.find((t) => t.id === type);
+    onUpdateLead(lead.id, { type, lastActivityAt: new Date().toISOString() }, lead.version);
+    triggerToast?.(isAr ? `اتحدّد: ${label?.ar || type}` : `Set to ${label?.en || type}`, 'success', {
+      onUndo: () => onUpdateLead(lead.id, { type: prev, _undo: true, lastActivityAt: new Date().toISOString() }),
+      undoLabel: isAr ? 'تراجع' : 'Undo',
+      duration: 6000
+    });
+  };
+
   const onWhatsAppClick = (lead) => {
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     const propTitle = getLocalizedPropertyType(lead.propertyType || lead.details?.propertyType);
@@ -583,7 +608,15 @@ export default function KanbanPipeline({
           tone="info"
           icon={<Users size={16} />}
         />
-        {filterType === 'seller' ? (
+        {filterType === 'account' ? (
+        <KpiTile
+          label={isAr ? 'لسه ما حدّدوش عايزين إيه' : 'Not decided yet'}
+          value={pipelineOverview.activeCount}
+          tone="warning"
+          hint={isAr ? 'اتصل واسأل: شراء ولا بيع؟' : 'Call and ask: buy or sell?'}
+          icon={<Building2 size={16} />}
+        />
+        ) : filterType === 'seller' ? (
         <KpiTile
           label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
           value={pipelineOverview.supplyVol > 0 ? pipelineOverview.supplyVol / 1000000 : null}
@@ -657,6 +690,9 @@ export default function KanbanPipeline({
           <Chip pressed={filterType === 'buyer'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} onClick={() => setFilterType('buyer')}>{isAr ? 'طلبات (مشترين)' : 'Requests (buyers)'}</Chip>
           <Chip pressed={filterType === 'seller'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} onClick={() => setFilterType('seller')}>{isAr ? 'عروض (ملاك ووسطاء)' : 'Offers (owners, brokers)'}</Chip>
           <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
+          {(accountCount > 0 || filterType === 'account') && (
+            <Chip pressed={filterType === 'account'} count={accountCount} onClick={() => setFilterType('account')}>{isAr ? 'حسابات جديدة (لم تحدد)' : 'New accounts (undecided)'}</Chip>
+          )}
         </div>
         <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
           <Chip pressed={onlyAttention} count={attention.count} onClick={() => setOnlyAttention((v) => !v)} icon={<AlertTriangle size={14} aria-hidden="true" />}>{isAr ? 'محتاج قرار بس' : 'Needs a decision'}</Chip>
@@ -866,7 +902,7 @@ export default function KanbanPipeline({
                         aria-label={`${leadName} — ${isAr ? stage.title_ar : stage.title_en}`}
                       >
                         <div className="kb-card-top">
-                          {filterType === 'investor' && <span className="kb-type">{typeBadge.label}</span>}
+                          {(filterType === 'investor' || filterType === 'account') && <span className="kb-type">{typeBadge.label}</span>}
                           {(sameNumber.has(lead.id) || lead.returningClient) && (
                             <span className="kb-dup" title={isAr ? (lead.returningClient ? 'عميل راجع: اتحوّل لنفس الموظف اللي كان معاه طلبه القديم.' : 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.') : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
                               <CopyPlus size={11} aria-hidden="true" />
@@ -937,6 +973,15 @@ export default function KanbanPipeline({
                         )}
                         {lead.siteVisit && (
                           <p className="kb-flag"><Car size={13} aria-hidden="true" />{isAr ? 'معاينة:' : 'Visit:'} {lead.siteVisit.visitDate} ({lead.siteVisit.visitTime})</p>
+                        )}
+
+                        {isAccountLead(lead) && onUpdateLead && (
+                          <div className="kb-classify" role="group" aria-label={isAr ? 'حدّد نوع العميل' : 'Set the client type'}>
+                            <span>{isAr ? 'عايز إيه؟' : 'Wants to:'}</span>
+                            {CLIENT_TYPES.map((t) => (
+                              <button key={t.id} type="button" onClick={() => handleClassify(lead, t.id)}>{isAr ? t.ar : t.en}</button>
+                            ))}
+                          </div>
                         )}
 
                         <div className="kb-actions">

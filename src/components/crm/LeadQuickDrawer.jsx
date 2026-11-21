@@ -14,7 +14,7 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
-import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch, leadBudget, isOpenLead } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead, isAccountLead, firstContactPatch, leadBudget, isOpenLead } from '../../utils/crmLeadViews';
 import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { useAuth } from '../../context/AuthContext';
 import { scheduleNextAttempt } from '../../utils/retryCall';
@@ -38,7 +38,7 @@ import { userDisplayName } from '../../utils/assignees';
 import LeadTeamPanel from './lead-profile/LeadTeamPanel';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import PhoneText from './PhoneText';
-import { attentionOf, NEXT_STEP } from '../../utils/dealSignals';
+import { attentionOf, NEXT_STEP, NEXT_STEP_ACCOUNT } from '../../utils/dealSignals';
 import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineCards';
 
 export default function LeadQuickDrawer({
@@ -352,7 +352,17 @@ export default function LeadQuickDrawer({
   // The decision first: what is wrong with this deal, and the one thing to do next
   const dealValue = leadBudget(lead);
   const signal = isOpenLead(lead) ? attentionOf(lead, { now: nowMs, value: dealValue }) : null;
-  const nextLine = isOpenLead(lead) ? NEXT_STEP[lead.status || 'new'] : '';
+  const accountOnly = isOpenLead(lead) && isAccountLead(lead) && !isSellerLead(lead);
+  const nextLine = isOpenLead(lead) ? (accountOnly ? NEXT_STEP_ACCOUNT : NEXT_STEP[lead.status || 'new']) : '';
+  const setClientType = (type) => {
+    const prev = lead.type || 'account';
+    onUpdateLead?.(lead.id, { type, lastActivityAt: new Date().toISOString() }, lead.version);
+    triggerToast?.(isAr ? 'اتحدّد نوع العميل' : 'Client type set', 'success', {
+      onUndo: () => onUpdateLead?.(lead.id, { type: prev, _undo: true, lastActivityAt: new Date().toISOString() }),
+      undoLabel: isAr ? 'تراجع' : 'Undo',
+      duration: 6000
+    });
+  };
   const sinceMs = stageSinceMs(lead);
   const touchedMs = toMs(lead.lastContactedAt);
   const facts = [
@@ -411,6 +421,14 @@ export default function LeadQuickDrawer({
                 <strong>{signal ? `${signal.label}${signal.days ? (isAr ? ` · ${signal.days} يوم` : ` · ${signal.days}d`) : ''}` : (isAr ? 'ماشي في معاده' : 'On track')}</strong>
                 <span>{isAr ? 'الخطوة الجاية: ' : 'Next: '}{nextLine}</span>
                 <small>{facts.join(' · ')}</small>
+                {accountOnly && onUpdateLead && (
+                  <div className="crm-ld__classify" role="group" aria-label={isAr ? 'حدّد نوع العميل' : 'Set the client type'}>
+                    <span>{isAr ? 'عايز إيه؟' : 'Wants to:'}</span>
+                    <button type="button" onClick={() => setClientType('buyer')}>{isAr ? 'مشتري' : 'Buyer'}</button>
+                    <button type="button" onClick={() => setClientType('seller')}>{isAr ? 'بائع / مالك' : 'Seller'}</button>
+                    <button type="button" onClick={() => setClientType('investor')}>{isAr ? 'مستثمر' : 'Investor'}</button>
+                  </div>
+                )}
               </div>
             </section>
           )}
