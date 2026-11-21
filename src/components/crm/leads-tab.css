@@ -84,7 +84,7 @@
 .crm-layout .crm-leads .crm-lead-budget-val { color: var(--ui-text); font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
 .crm-layout .crm-leads .crm-lead-spec-sub { color: var(--ui-text-3); font-size: var(--ui-fs-1); }
 
-.crm-leads__score { display: flex; align-items: center; gap: var(--ui-s-2); flex-wrap: wrap; }
+.crm-leads__score { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-s-1); }
 .crm-layout .crm-leads .crm-leads__temp {
   display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 var(--ui-s-2);
   border: 1px solid var(--ui-line); border-radius: var(--ui-r-full); background: var(--ui-surface);
@@ -92,7 +92,11 @@
 }
 .crm-layout .crm-leads .crm-leads__temp:hover:not(:has(select:disabled)) { border-color: var(--ui-text-3); }
 .crm-layout .crm-leads .crm-leads__temp:focus-within { outline: none; box-shadow: var(--ui-sh-focus); }
-.crm-layout .crm-leads .crm-leads__temp-select { appearance: none; border: 0; background: transparent; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; outline: none; }
+.crm-layout .crm-leads .crm-leads__temp-select {
+  /* the .ui-select class opts out of the global 52px field rule; the pill sizes itself */
+  width: auto; min-height: 0; height: auto; appearance: none; border: 0; border-radius: 0; background: transparent; padding: 0; margin: 0;
+  font: inherit; color: inherit; cursor: pointer; outline: none; box-shadow: none; white-space: nowrap;
+}
 .crm-layout .crm-leads .crm-leads__temp-select:disabled { cursor: default; }
 .crm-leads__temp-dot { width: 8px; height: 8px; border-radius: var(--ui-r-full); background: var(--ui-line-strong); }
 .crm-leads__temp.is-hot .crm-leads__temp-dot { background: var(--ui-danger); }
@@ -316,7 +320,7 @@
 .crm-layout .crm-leads .crm-table td { padding: var(--ui-s-3); }
 .crm-layout .crm-leads .crm-table th { padding-inline: var(--ui-s-3); white-space: nowrap; }
 .crm-layout .crm-leads .crm-leads__score { flex-direction: column; align-items: flex-start; gap: var(--ui-s-1); }
-.crm-layout .crm-leads .crm-table .crm-agent-select { max-width: 120px; }
+.crm-layout .crm-leads .crm-table .crm-agent-select { max-width: 150px; }
 .crm-layout .crm-leads .crm-status-select-wrap { min-width: 112px; }
 @media (max-width: 768px) {
   .crm-layout .crm-leads .crm-next { max-width: none; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--ui-s-2); }
@@ -329,7 +333,7 @@
 .crm-outcome strong { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
 .crm-outcome small { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
 
-.crm-layout .crm-leads .crm-lead-source { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: var(--ui-s-1); min-width: 0; }
+.crm-layout .crm-leads .crm-lead-source { display: inline-flex; align-items: center; min-width: 0; }
 .crm-lead-campaign { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ui-fs-1); color: var(--ui-text-3); }
 
 /* Desktop: the new columns keep their room (the follow-up header and its «حدد متابعة» button were cut) and the
