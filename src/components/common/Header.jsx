@@ -202,6 +202,14 @@ export default function Header({
           ]
         }
       ]
+    },
+    {
+      id: 'about',
+      type: 'link',
+      path: '/about',
+      label: isAr ? 'عن الشركة' : 'About',
+      title: isAr ? 'تعرّف على 1Line وفريقها ومؤسسها' : 'About 1Line, its team and founder',
+      icon: Info
     }
   ];
 
