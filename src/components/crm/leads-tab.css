@@ -320,7 +320,7 @@
 .crm-layout .crm-leads .crm-table td { padding: var(--ui-s-3); }
 .crm-layout .crm-leads .crm-table th { padding-inline: var(--ui-s-3); white-space: nowrap; }
 .crm-layout .crm-leads .crm-leads__score { flex-direction: column; align-items: flex-start; gap: var(--ui-s-1); }
-.crm-layout .crm-leads .crm-table .crm-agent-select { max-width: 120px; }
+.crm-layout .crm-leads .crm-table .crm-agent-select { max-width: 150px; }
 .crm-layout .crm-leads .crm-status-select-wrap { min-width: 112px; }
 @media (max-width: 768px) {
   .crm-layout .crm-leads .crm-next { max-width: none; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--ui-s-2); }
@@ -333,7 +333,7 @@
 .crm-outcome strong { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
 .crm-outcome small { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
 
-.crm-layout .crm-leads .crm-lead-source { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: var(--ui-s-1); min-width: 0; }
+.crm-layout .crm-leads .crm-lead-source { display: inline-flex; align-items: center; min-width: 0; }
 .crm-lead-campaign { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ui-fs-1); color: var(--ui-text-3); }
 
 /* Desktop: the new columns keep their room (the follow-up header and its «حدد متابعة» button were cut) and the
