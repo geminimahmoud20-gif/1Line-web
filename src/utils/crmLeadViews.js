@@ -510,7 +510,8 @@ export function filterLeads(leads = [], opts = {}) {
       return false;
     } else if (leadFilter === 'lost') {
       if (l.status !== 'lost') return false;
-    } else if (l.status === 'lost') {
+    } else if (l.status === 'lost' && leadFilter !== 'not_fit' && leadFilter !== 'converted') {
+      // «غير مناسب» / «اتحوّل لعقار» are counted over every client, so they list the lost ones too
       return false;
     } else if (leadFilter === 'won') {
       if (l.status !== 'closed') return false;
