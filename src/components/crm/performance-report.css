@@ -86,3 +86,15 @@
 .pr-hub .pr-compare { grid-auto-flow: column; align-items: center; gap: var(--ui-s-2); }
 .pr-hub .pr-compare select { min-height: 36px; }
 @media (max-width: 640px) { .pr-hub .pr-controls { grid-template-columns: minmax(0, 1fr); } }
+.pr-hub__actions { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.pr-hub__body { display: grid; gap: var(--ui-s-4); }
+
+/* Print / save as PDF: the open report only, on white, without the app around it */
+@media print {
+  body .crm-layout .crm-sidebar, body .crm-layout .crm-topbar,
+  body .pr-hub .pr-tabs, body .pr-hub .rv, body .pr-hub .pr-chips, body .pr-hub .pr-compare, body .pr-hub .pr-custom,
+  body .pr-hub .pr-hub__actions, body .pr-hub .pr-links, body .pr-hub .pr-block:has(.pr-links), body .pr-hub .pr-toolbar, body .pr-hub .ui-spark { display: none; }
+  body .pr-hub, body .pr-hub .pr-controls, body .pr-hub .xs-card, body .pr-hub .ui-kpi { box-shadow: none; break-inside: avoid; }
+  body .pr-hub .ui-kpi-row { overflow: visible; flex-wrap: wrap; }
+  body .pr-hub .pr-table-wrap { overflow: visible; }
+}
