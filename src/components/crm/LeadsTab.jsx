@@ -366,13 +366,9 @@ export default function LeadsTab({
     return { total, hot, due, unanswered, won, winRate };
   }, [leads, counts]);
 
-  const cycleTemperature = (lead, e) => {
-    e.stopPropagation();
-    if (!canEdit || !onUpdateLead) return;
-    const order = ['', 'hot', 'warm', 'cold'];
-    const current = lead.temperature || '';
-    const currentIndex = order.indexOf(current);
-    const nextTemp = order[(currentIndex + 1) % order.length];
+  // The temperature is picked from a list in the row (one tap to open, one to choose), not cycled
+  const setTemperature = (lead, nextTemp) => {
+    if (!canEdit || !onUpdateLead || nextTemp === (lead.temperature || '')) return;
     onUpdateLead(lead.id, { temperature: nextTemp, lastActivityAt: new Date().toISOString() }, lead.version);
     const tempLabels = { hot: isAr ? 'ساخن' : 'Hot', warm: isAr ? 'دافئ' : 'Warm', cold: isAr ? 'بارد' : 'Cold', '': isAr ? 'مش محددة' : 'Not set' };
     triggerToast?.(isAr ? `تم ضبط درجة الاهتمام: ${tempLabels[nextTemp]}` : `Temperature: ${tempLabels[nextTemp]}`, 'info');
@@ -1013,17 +1009,22 @@ export default function LeadsTab({
                         {(() => { const sc = leadScore(l); return (
                           <Badge tone={sc.score >= LEAD_SCORE_HIGH ? 'success' : 'neutral'} title={sc.reasons.join(' • ')}><span className="crm-leads__score-label">{isAr ? 'جدية ' : 'Score '}</span>{sc.score}%</Badge>
                         ); })()}
-                        <button
-                          type="button"
-                          className={`crm-leads__temp is-${temp || 'unset'}`}
-                          onClick={(e) => cycleTemperature(l, e)}
-                          disabled={!canEdit}
-                          title={isAr ? 'دوس علشان تغيّر درجة الاهتمام' : 'Click to change temperature'}
-                          aria-label={isAr ? `درجة اهتمام ${l.name || 'العميل'}: ${TEMPERATURES[temp]?.ar || 'مش محددة'}` : `Temperature of ${l.name || 'lead'}: ${TEMPERATURES[temp]?.en || 'not set'}`}
-                        >
+                        <span className={`crm-leads__temp is-${temp || 'unset'}`}>
                           <span className="crm-leads__temp-dot" aria-hidden="true" />
-                          {TEMPERATURES[temp] ? (isAr ? TEMPERATURES[temp].ar : TEMPERATURES[temp].en) : (isAr ? 'مش محددة' : 'Not set')}
-                        </button>
+                          <select
+                            className="crm-leads__temp-select"
+                            value={temp}
+                            disabled={!canEdit}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => setTemperature(l, e.target.value)}
+                            aria-label={isAr ? `درجة اهتمام ${l.name || 'العميل'}` : `Temperature of ${l.name || 'lead'}`}
+                          >
+                            <option value="">{isAr ? 'مش محددة' : 'Not set'}</option>
+                            <option value="hot">{isAr ? TEMPERATURES.hot.ar : TEMPERATURES.hot.en}</option>
+                            <option value="warm">{isAr ? TEMPERATURES.warm.ar : TEMPERATURES.warm.en}</option>
+                            <option value="cold">{isAr ? TEMPERATURES.cold.ar : TEMPERATURES.cold.en}</option>
+                          </select>
+                        </span>
                       </div>
                     </td>
                   )}
