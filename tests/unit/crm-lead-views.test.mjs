@@ -300,3 +300,18 @@ test('a contact saved from a unit added in the CRM is a seller, even an older on
   assert.equal(isSellerLead({ type: 'broker', source: 'بوابة الوسطاء والشركاء' }), false);
   assert.equal(isSellerLead({ type: 'broker', details: { listingIds: ['p1'] } }), false, 'a link without who offers it is not enough');
 });
+
+import { isAccountLead } from '../../src/utils/crmLeadViews.js';
+test('a client who only registered an account is in neither pipeline; saying what they want makes them a real lead', () => {
+  const acct = { id: 'a', status: 'new', type: 'account', source: 'تسجيل حساب بالموقع', createdAt: Date.now() };
+  assert.equal(isAccountLead(acct), true);
+  // the source still says «حساب», but once the type is a real one the client is no longer «just an account»
+  assert.equal(isAccountLead({ ...acct, type: 'buyer' }), false);
+  assert.equal(isAccountLead({ ...acct, type: 'seller' }), false);
+  const buyer = { id: 'b', status: 'new', type: 'buyer', budget: '2000000', createdAt: Date.now() };
+  const m = dashMetrics([acct, buyer], []);
+  assert.equal(m.openBuyers, 1);
+  assert.equal(m.budgetedBuyers, 1);
+  assert.equal(m.openAccounts, 1);
+  assert.equal(m.openCount, 2); // nobody is dropped from the open total
+});

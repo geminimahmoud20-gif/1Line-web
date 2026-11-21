@@ -4,6 +4,7 @@
 //  archived, pointing at it. Pure rules, tests/unit/merge-request.test.mjs. api/assign.js does the writes.
 // =============================================================
 import { splitNotes } from '../src/utils/inboxView.js';
+import { isAccountLead } from '../src/utils/crmLeadViews.js';
 
 const MAX_LOGS = 100;
 const CLOSED = ['closed', 'lost', 'inactive'];
@@ -44,13 +45,31 @@ export function requestSummary(lead = {}) {
   return `طلب جديد من نفس العميل${bits.length ? ` — ${bits.join(' · ')}` : ''}${words ? ` — «${words}»` : ''}`;
 }
 
-/** The fields to write on the open lead and on the new record */
+// What a request says about what the client wants: copied onto an account-only record that had none of it
+const REQUEST_FIELDS = ['details', 'budget', 'area', 'propertyType', 'location'];
+const has = (v) => v !== undefined && v !== null && v !== '' && !(typeof v === 'object' && !Object.keys(v).length);
+
+/**
+ * The fields to write on the open lead and on the new record. A client who only registered an account has said
+ * nothing about buying or selling; when they then send a real request, their one record becomes that request
+ * (its type and details), and the account stays noted. The other way round, an account registration under a
+ * client who already has a request only adds «hasAccount» to it.
+ */
 export function mergeFields(primary, incoming, incomingId, nowIso = new Date().toISOString()) {
   const logs = Array.isArray(primary.data.activityLogs) ? primary.data.activityLogs : [];
   const entry = { timestamp: nowIso, action: requestSummary(incoming), kind: 'request', requestId: String(incomingId) };
   const from = Array.isArray(primary.data.mergedFrom) ? primary.data.mergedFrom : [];
+  const upgrade = {};
+  if (isAccountLead(primary.data) && !isAccountLead(incoming)) {
+    upgrade.type = incoming.type || 'buyer';
+    upgrade.hasAccount = true;
+    for (const k of REQUEST_FIELDS) if (!has(primary.data[k]) && has(incoming[k])) upgrade[k] = incoming[k];
+  } else if (isAccountLead(incoming) && !isAccountLead(primary.data)) {
+    upgrade.hasAccount = true;
+  }
   return {
     primary: {
+      ...upgrade,
       activityLogs: [entry, ...logs].slice(0, MAX_LOGS),
       mergedFrom: [...new Set([...from, String(incomingId)])],
       requestCount: (Number(primary.data.requestCount) || 1) + 1,
