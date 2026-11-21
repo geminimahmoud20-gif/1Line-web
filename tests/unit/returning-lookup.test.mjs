@@ -58,3 +58,27 @@ test('an earlier request whose owner left the team is not used', async () => {
   const { fs } = fakeDb({ contacts: { old1: { phone: '01094590572' } }, leads: { old1: { ownerUid: 'gone', createdAt: '2026-11-10T10:00:00Z' } } });
   assert.equal(await lookupReturning({ fs, plain, lead: { phone: '01094590572' }, id: 'new1', sellers }), null);
 });
+
+import { withContact } from '../../api/_returning-core.js';
+test('the phone is read from lead_contacts: the lead document itself has none', async () => {
+  const contactsDb = { c1: doc({ phone: '01094590572', whatsapp: '01094590572' }) };
+  const fs = async (method, path) => {
+    const id = decodeURIComponent(path.split('/')[1]);
+    return path.startsWith('lead_contacts/') && contactsDb[id] ? { ok: true, json: async () => contactsDb[id] } : { ok: false, json: async () => ({}) };
+  };
+  const lead = { name: 'x', status: 'new' };
+  const full = await withContact({ fs, plain, id: 'c1', lead });
+  assert.equal(full.phone, '01094590572');
+  assert.equal(full.name, 'x');
+  assert.deepEqual(await withContact({ fs, plain, id: 'none', lead }), lead);              // no contact doc: unchanged
+  assert.equal((await withContact({ fs: async () => { throw new Error('down'); }, plain, id: 'c1', lead })).phone, undefined); // failure: unchanged
+  assert.equal((await withContact({ fs, plain, id: 'c1', lead: { phone: '0100' } })).phone, '0100'); // already has one: untouched
+});
+
+import { isStaffClaims } from '../../src/services/staffNotify.js';
+test('a client account is not staff; a CRM role is', () => {
+  assert.equal(isStaffClaims({}), false);
+  assert.equal(isStaffClaims(null), false);
+  assert.equal(isStaffClaims({ role: 'sales_agent' }), true);
+  assert.equal(isStaffClaims({ admin: true }), true);
+});
