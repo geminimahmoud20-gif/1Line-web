@@ -78,6 +78,11 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
         nextActionDate: formData.nextActionDate,
         nextActionNote: formData.nextActionNote,
         followUp: formData.nextActionNote,
+        // The clients table, filters and reports read the top-level area / budget / property type first, so an edit
+        // is written there too, not only inside details (it used to leave the old area showing in the table)
+        area: formData.area,
+        budget: formData.budget,
+        propertyType: formData.propertyType,
         details: { ...(lead.details || {}), budget: formData.budget, expectedPrice: formData.budget, area: formData.area, propertyType: formData.propertyType }
       };
       const saved = onUpdateLead ? await onUpdateLead(lead.id, updated, lead.version) : true;
