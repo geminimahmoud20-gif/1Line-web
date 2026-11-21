@@ -1,6 +1,7 @@
 // Pipeline decisions: which deals need a person today, why, and what to do next.
 // Pure helpers (no React), unit-tested in tests/unit/deal-signals.test.mjs.
 import { toMs, createdMs, stageSinceMs, isStalled, isNewOverdue } from './pipelineCards.js';
+import { isAccountLead } from './crmLeadViews.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 export const BIG_DEAL = 5_000_000;
@@ -16,6 +17,9 @@ export const NEXT_STEP = {
   negotiating: 'قدّم العرض واقفل على سعر',
   closing: 'جهّز الحجز والعقد'
 };
+
+/** Someone who only registered an account: the first call finds out what they want */
+export const NEXT_STEP_ACCOUNT = 'اتصل واسأله: بيدوّر على شراء ولا عنده عقار للبيع؟';
 
 const REASONS = {
   new_overdue: { tone: 'danger', label: 'محدش كلّمه +24 ساعة', weight: 100 },
@@ -62,7 +66,7 @@ export function attentionOf(lead, { now = Date.now(), value = 0 } = {}) {
   const r = REASONS[id];
   // Money breaks ties inside one reason: up to +9 for 10M and above
   const money = Math.min(9, Math.floor((Number(value) || 0) / 1_000_000 * 0.9));
-  return { id, tone: r.tone, label: r.label, next: NEXT_STEP[status], score: r.weight + money, ...(days ? { days } : {}) };
+  return { id, tone: r.tone, label: r.label, next: (status === 'new' || status === 'contacted') && isAccountLead(lead) ? NEXT_STEP_ACCOUNT : NEXT_STEP[status], score: r.weight + money, ...(days ? { days } : {}) };
 }
 
 /** Deals that need attention, most urgent first: [{ lead, value, signal }] */

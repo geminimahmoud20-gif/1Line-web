@@ -62,3 +62,10 @@ test('sorting keeps the original order among deals with the same urgency', () =>
   ];
   assert.deepEqual(sortByAttention(leads, { now }).map((l) => l.id), ['hot', 'ok1', 'ok2']);
 });
+
+import { NEXT_STEP_ACCOUNT } from '../../src/utils/dealSignals.js';
+test('an account-only client is asked what they want, a typed one gets the normal step', () => {
+  const lead = { status: 'new', createdAt: ago(2), type: 'account', source: 'تسجيل حساب بالموقع' };
+  assert.equal(attentionOf(lead, { now }).next, NEXT_STEP_ACCOUNT);
+  assert.notEqual(attentionOf({ ...lead, type: 'buyer' }, { now }).next, NEXT_STEP_ACCOUNT);
+});

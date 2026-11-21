@@ -200,3 +200,10 @@
 .crm-ld__decide-text strong { font: var(--ui-fw-bold) var(--ui-fs-3) / var(--ui-lh-tight) var(--ui-font); color: var(--ui-text); }
 .crm-ld__decide-text span { font: var(--ui-fw-medium) var(--ui-fs-2) / 1.5 var(--ui-font); color: var(--ui-text); }
 .crm-ld__decide-text small { font: var(--ui-fw-regular) var(--ui-fs-1) / 1.5 var(--ui-font); color: var(--ui-text-2); }
+
+/* An account-only client: say what they want in one tap */
+.crm-ld__classify { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-1); margin-top: var(--ui-s-2); }
+.crm-ld__classify span { font: var(--ui-fw-semibold) var(--ui-fs-1) / 1.4 var(--ui-font); color: var(--ui-text-2); margin-inline-end: var(--ui-s-1); }
+.crm-ld__classify button { min-height: 32px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-full); background: var(--ui-surface); color: var(--ui-text); font: var(--ui-fw-semibold) var(--ui-fs-1) / 1 var(--ui-font); cursor: pointer; }
+.crm-ld__classify button:hover { background: var(--ui-info-tint); border-color: var(--ui-info); color: var(--ui-info); }
+.crm-ld__classify button:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
