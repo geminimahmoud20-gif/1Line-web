@@ -13,8 +13,8 @@
 import { SignJWT, importPKCS8 } from 'jose';
 import { teamStore, staffRegistry, accessStore } from './_team-core.js';
 import { eligible, sellersOf, chooseSeller, ownerFields, loadOf, OPEN_STAGES, MAX_OPEN_COUNT } from './_assign-core.js';
-import { lookupReturning, findEarlier } from './_returning-core.js';
-import { pickPrimary, mergeFields, toFirestore } from './_merge-core.js';
+import { lookupReturning, withContact } from './_returning-core.js';
+import { mergeIntoOpen, plain } from './_merge-run.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
 import { cadenceTasks } from '../src/utils/followUpCadence.js';
 
@@ -52,20 +52,6 @@ async function accessToken(sa) {
   return token;
 }
 
-const fromValue = (v) => {
-  if (!v || typeof v !== 'object') return null;
-  if ('stringValue' in v) return v.stringValue;
-  if ('integerValue' in v) return Number(v.integerValue);
-  if ('doubleValue' in v) return v.doubleValue;
-  if ('booleanValue' in v) return v.booleanValue;
-  if ('timestampValue' in v) return v.timestampValue;
-  if ('nullValue' in v) return null;
-  if ('arrayValue' in v) return (v.arrayValue.values || []).map(fromValue);
-  if ('mapValue' in v) return Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, x]) => [k, fromValue(x)]));
-  return null;
-};
-const plain = (doc) => Object.fromEntries(Object.entries(doc?.fields || {}).map(([k, v]) => [k, fromValue(v)]));
-
 const toValue = (v) => (typeof v === 'boolean' ? { booleanValue: v } : { stringValue: String(v) });
 
 // Only this site's pages may ask
@@ -80,40 +66,6 @@ const sameSite = (request) => {
     return false;
   }
 };
-
-/** Writes the merge; returns the open lead's id, or null when there is nothing to merge into (or a write failed) */
-async function mergeIntoOpen({ fs, id, lead, doc }) {
-  try {
-    const earlier = await findEarlier({ fs, plain, lead, id });
-    const primary = pickPrimary(earlier, lead);
-    if (!primary) return null;
-    const nowIso = new Date().toISOString();
-    const fields = mergeFields(primary, lead, id, nowIso);
-    const patch = (docId, f, updateTime) => fs('PATCH', `leads/${encodeURIComponent(docId)}?${Object.keys(f).map((k) => `updateMask.fieldPaths=${k}`).join('&')}&currentDocument.updateTime=${encodeURIComponent(updateTime)}`, {
-      fields: Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toFirestore(v)]))
-    });
-    // The open client first: if that fails nothing has changed. Then this record; if that fails the client has the
-    // entry and the CRM's duplicate view still shows the leftover.
-    const a = await patch(primary.id, fields.primary, primary.updateTime);
-    if (!a.ok) return null;
-    const b = await patch(id, fields.incoming, doc.updateTime);
-    if (!b.ok) console.error('assign: merged record not archived', b.status);
-    const log = await fs('POST', 'audit_logs', {
-      fields: {
-        actorId: { stringValue: 'system' }, actorUid: { stringValue: 'system' }, actorEmail: { stringValue: 'auto-merge' },
-        action: { stringValue: 'LEAD_REQUEST_MERGED' }, type: { stringValue: 'LEAD_REQUEST_MERGED' }, actionType: { stringValue: 'LEAD_REQUEST_MERGED' },
-        entityType: { stringValue: 'leads' }, targetCollection: { stringValue: 'leads' }, entityId: { stringValue: primary.id }, targetId: { stringValue: primary.id },
-        createdAt: { stringValue: nowIso }, timestamp: { timestampValue: nowIso },
-        details: { mapValue: { fields: { from: { stringValue: id } } } }
-      }
-    });
-    if (!log.ok) console.error('assign: merge audit entry not written', log.status);
-    return primary.id;
-  } catch (e) {
-    console.error('assign: merge failed:', e?.message || e);
-    return null;
-  }
-}
 
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
 
@@ -160,7 +112,7 @@ export async function POST(request) {
     // The same person filling a second form while their first request is still open: the new request goes into
     // that client's timeline and this record is archived (never deleted). Any failure falls through to a normal lead.
     if (mergeOn) {
-      const merged = await mergeIntoOpen({ fs, id, lead, doc });
+      const merged = await mergeIntoOpen({ fs, id, lead: await withContact({ fs, plain, id, lead }), doc });
       if (merged) return json(200, { assigned: false, merged: true, into: merged });
     }
     if (!assignOn) return json(200, { assigned: false, reason: 'off' });
@@ -215,7 +167,7 @@ export async function POST(request) {
 
     // A client who already asked before (same phone) goes back to their owner, and the new request is linked to the
     // earlier one. Any failure here just falls back to the fewest-clients rule.
-    const returning = await lookupReturning({ fs, plain, lead, id, sellers });
+    const returning = await lookupReturning({ fs, plain, lead: await withContact({ fs, plain, id, lead }), id, sellers });
 
     const seller = returning?.seller || chooseSeller(lead, sellers, counts, config?.teams || []);
     if (!seller) return json(200, { assigned: false, reason: 'no-match' });
