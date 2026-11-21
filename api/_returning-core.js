@@ -54,3 +54,21 @@ export async function findEarlier({ fs, plain, lead, id }) {
     return [];
   }
 }
+
+/**
+ * The lead with its phone and WhatsApp number added. A client's contact details live in lead_contacts/{id}, not on the
+ * lead document, so a lookup by phone must read them first (without this, no earlier request was ever found).
+ * Any failure returns the lead as it was.
+ */
+export async function withContact({ fs, plain, id, lead }) {
+  try {
+    if (lead?.phone || lead?.whatsapp) return lead;
+    const r = await fs('GET', `lead_contacts/${encodeURIComponent(id)}`);
+    if (!r.ok) return lead;
+    const c = plain(await r.json());
+    return { ...lead, ...(c.phone ? { phone: c.phone } : {}), ...(c.whatsapp ? { whatsapp: c.whatsapp } : {}) };
+  } catch (e) {
+    console.error('assign: contact read failed:', e?.message || e);
+    return lead;
+  }
+}
