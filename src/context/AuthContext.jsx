@@ -5,6 +5,9 @@ import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
 const AuthContext = createContext(null);
+/** After this long the check says it is slow; after this long the sign-in screen opens (ms) */
+export const AUTH_SLOW_MS = 6000;
+export const AUTH_GIVE_UP_MS = 15000;
 
 export function AuthProvider({ children }) {
   const [crmAuthenticated, setCrmAuthenticated] = useState(() => {
@@ -38,6 +41,10 @@ export function AuthProvider({ children }) {
       return true;
     }
   });
+  // The sign-in check waits on Firebase (its code, then a fresh token from Google when the old one expired).
+  // On a slow or blocked connection that never answers: say so after a few seconds, and after a while show the
+  // sign-in screen instead of a spinner with no way out. A late answer still signs the person in.
+  const [authSlow, setAuthSlow] = useState(false);
   const navigate = useNavigate();
   const { lang } = usePreferences();
   const { triggerToast } = useUIModal();
@@ -63,6 +70,13 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isAuthInitializing) return undefined;
+    const slow = setTimeout(() => setAuthSlow(true), AUTH_SLOW_MS);
+    const giveUp = setTimeout(() => setIsAuthInitializing(false), AUTH_GIVE_UP_MS);
+    return () => { clearTimeout(slow); clearTimeout(giveUp); };
+  }, [isAuthInitializing]);
+
   const handleCrmLogout = useCallback(async () => {
     try {
       sessionStorage.removeItem('crm_auth');
@@ -83,6 +97,7 @@ export function AuthProvider({ children }) {
     currentUser,
     userRole: currentUser?.role || 'guest',
     isAuthInitializing,
+    authSlow,
     handleCrmLogout
   };
 
