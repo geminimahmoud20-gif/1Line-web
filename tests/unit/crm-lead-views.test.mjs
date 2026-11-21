@@ -311,3 +311,31 @@ test('lost reasons fit the client: owners are not asked about budget or financin
   // every reason id is unique so reports can still label old and new records
   assert.equal(new Set(LOST_REASONS.map((r) => r.id)).size, LOST_REASONS.length);
 });
+
+test('«غير مناسب» lists every client it counts, the lost ones too; «الكل» still hides lost', () => {
+  const rows = [
+    { id: 'a', name: 'A', phone: '01011111111', status: 'new' },
+    { id: 'b', name: 'B', phone: '01022222222', status: 'lost' },
+    { id: 'c', name: 'C', phone: '01033333333', status: 'lost' },
+    { id: 'd', name: 'D', phone: '01044444444', status: 'new' }
+  ];
+  const situationById = new Map([['a', 'not_fit'], ['b', 'not_fit'], ['c', 'no_answer'], ['d', 'converted']]);
+  assert.deepEqual(ids(filterLeads(rows, { leadFilter: 'not_fit', situationById })), ['a', 'b']);
+  assert.deepEqual(ids(filterLeads(rows, { leadFilter: 'all', situationById })), ['a', 'd']);
+  assert.deepEqual(ids(filterLeads(rows, { leadFilter: 'lost', situationById })), ['b', 'c']);
+});
+
+import { isAccountLead } from '../../src/utils/crmLeadViews.js';
+test('a client who only registered an account is in neither pipeline; saying what they want makes them a real lead', () => {
+  const acct = { id: 'a', status: 'new', type: 'account', source: 'تسجيل حساب بالموقع', createdAt: Date.now() };
+  assert.equal(isAccountLead(acct), true);
+  // the source still says «حساب», but once the type is a real one the client is no longer «just an account»
+  assert.equal(isAccountLead({ ...acct, type: 'buyer' }), false);
+  assert.equal(isAccountLead({ ...acct, type: 'seller' }), false);
+  const buyer = { id: 'b', status: 'new', type: 'buyer', budget: '2000000', createdAt: Date.now() };
+  const m = dashMetrics([acct, buyer], []);
+  assert.equal(m.openBuyers, 1);
+  assert.equal(m.budgetedBuyers, 1);
+  assert.equal(m.openAccounts, 1);
+  assert.equal(m.openCount, 2); // nobody is dropped from the open total
+});

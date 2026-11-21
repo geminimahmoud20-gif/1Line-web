@@ -237,9 +237,17 @@ export function isBuyerLead(l = {}) {
   return !isSellerLead(l) && !isViewingLead(l) && !isAccountLead(l);
 }
 
+// A client who said what they want (buy, sell, invest…) is no longer «just an account», whatever the source says
+const REAL_TYPES = ['buyer', 'request', 'seller', 'seller_instant', 'valuation', 'investor', 'broker', 'rent', 'tenant', 'landlord'];
+
+/**
+ * Someone who only registered an account on the site: they have not said they want to buy or sell, so they belong to
+ * neither pipeline until someone asks them. Once the type is set to a real one it stops being an account lead.
+ */
 export function isAccountLead(l = {}) {
   const type = (l.type || '').toLowerCase();
   const source = (l.source || '').toLowerCase();
+  if (REAL_TYPES.includes(type)) return false;
   return (
     type === 'account' ||
     type === 'client_registration' ||
@@ -323,7 +331,9 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
   const leads = scopeDesk ? allLeads.filter((l) => l.assignedTo === scopeDesk) : allLeads;
   const open = leads.filter(isOpenLead);
   // A buyer's budget and an owner's asking price are different money: they are never added together
-  const pipelineValue = open.filter((l) => !isSellerLead(l)).reduce((sum, l) => sum + leadBudget(l), 0);
+  // (a client who only registered an account is in neither: nobody knows yet whether they buy or sell)
+  const buyerSide = (l) => !isSellerLead(l) && !isAccountLead(l);
+  const pipelineValue = open.filter(buyerSide).reduce((sum, l) => sum + leadBudget(l), 0);
   const supplyValue = open.filter(isSellerLead).reduce((sum, l) => sum + leadBudget(l), 0);
   const liveDemands = scopeDesk ? [] : demands.filter((d) => !d.isArchived && d.status !== 'archived' && d.status !== 'rejected');
   const purchasingPower = liveDemands.reduce((sum, d) => sum + parseMoney(d.budget), 0);
@@ -341,9 +351,10 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
     expectedCommission: pipelineValue * commissionRate,
     openCount: open.length,
     // The open buyers (what the budgets add up) and how many of them carry a budget; owners' listings are counted apart
-    openBuyers: open.filter((l) => !isSellerLead(l)).length,
-    budgetedBuyers: open.filter((l) => !isSellerLead(l) && leadBudget(l) > 0).length,
+    openBuyers: open.filter(buyerSide).length,
+    budgetedBuyers: open.filter((l) => buyerSide(l) && leadBudget(l) > 0).length,
     openSellers: open.filter(isSellerLead).length,
+    openAccounts: open.filter((l) => !isSellerLead(l) && isAccountLead(l)).length,
     liveDemandsCount: liveDemands.length,
     createdTodayCount: open.filter((l) => localDayKey(leadCreatedMs(l)) === todayKey).length,
     newCount: open.filter((l) => !l.status || l.status === 'new').length,
@@ -527,7 +538,8 @@ export function filterLeads(leads = [], opts = {}) {
       return false;
     } else if (leadFilter === 'lost') {
       if (l.status !== 'lost') return false;
-    } else if (l.status === 'lost') {
+    } else if (l.status === 'lost' && leadFilter !== 'not_fit' && leadFilter !== 'converted') {
+      // «غير مناسب» / «اتحوّل لعقار» are counted over every client, so they list the lost ones too
       return false;
     } else if (leadFilter === 'won') {
       if (l.status !== 'closed') return false;

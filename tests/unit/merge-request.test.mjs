@@ -59,3 +59,24 @@ test('values encode for the Firestore REST API', () => {
   assert.deepEqual(toFirestore(['a']), { arrayValue: { values: [{ stringValue: 'a' }] } });
   assert.deepEqual(toFirestore({ k: 'v' }), { mapValue: { fields: { k: { stringValue: 'v' } } } });
 });
+
+test('a real request turns an account-only record into that request; an account under a real request only gets a note', () => {
+  const placeholder = { id: 'acc', data: { type: 'account', source: 'تسجيل حساب بالموقع', status: 'new' } };
+  const buyForm = { type: 'buyer', budget: '3000000', area: 'new_sohag', details: { rooms: 3 }, source: 'form' };
+  const f = mergeFields(placeholder, buyForm, 'req1', 'now');
+  assert.equal(f.primary.type, 'buyer');
+  assert.equal(f.primary.budget, '3000000');
+  assert.deepEqual(f.primary.details, { rooms: 3 });
+  assert.equal(f.primary.hasAccount, true);
+  assert.equal(f.incoming.mergedInto, 'acc');
+
+  // fields the record already had are kept
+  const kept = mergeFields({ id: 'acc', data: { ...placeholder.data, budget: '1000000' } }, buyForm, 'req1', 'now');
+  assert.equal(kept.primary.budget, undefined); // not in the patch: the record's own value stays
+
+  // the account arrives after the request: the request keeps its type
+  const real = { id: 'r', data: { type: 'seller', status: 'contacted' } };
+  const g = mergeFields(real, { type: 'account', source: 'تسجيل حساب بالموقع' }, 'acc2', 'now');
+  assert.equal(g.primary.type, undefined);
+  assert.equal(g.primary.hasAccount, true);
+});

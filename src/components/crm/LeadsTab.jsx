@@ -982,13 +982,13 @@ export default function LeadsTab({
                   {visibleColumns.requirements && (
                     <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
                       <div className="crm-lead-req-cell">
-                        {(l.budget || l.details?.budget || l.details?.expectedPrice) ? (
+                        {(l.details?.budget || l.details?.expectedPrice || l.budget) ? (
                           <strong className="crm-lead-budget-val">
-                            <bdi>{formatBudget(l.budget || l.details?.budget || l.details?.expectedPrice, isAr)}</bdi>
+                            <bdi>{formatBudget(l.details?.budget || l.details?.expectedPrice || l.budget, isAr)}</bdi>
                           </strong>
                         ) : null}
                         <span className="crm-lead-spec-sub">
-                          {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || '')}
+                          {getLocalizedPropertyType(l.details?.propertyType || l.propertyType || l.type)} • {getLocalizedArea(l.details?.area || l.area || l.details?.district || '')}
                         </span>
                         {leadFilter !== 'viewing_request' && isViewingLead(l) && (
                           <div style={{ marginTop: '5px' }}>
