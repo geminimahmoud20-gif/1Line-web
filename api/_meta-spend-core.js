@@ -40,6 +40,39 @@ export const fetchAdInsights = ({ accountId, token, fetchImpl }) => fetchInsight
   params: { level: 'ad', fields: 'campaign_id,campaign_name,ad_name,spend,account_currency', date_preset: 'maximum', limit: '500' }
 });
 
+/** First day of the month `back` months before `now`, and today, as Meta's {since, until} (YYYY-MM-DD) */
+export function monthsRange(back = 12, now = new Date()) {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (back - 1), 1));
+  const iso = (x) => x.toISOString().slice(0, 10);
+  return { since: iso(d), until: iso(now) };
+}
+
+/** The whole ad account's spend per calendar month, for the last `months` months (oldest first) */
+export const fetchMonthlyInsights = ({ accountId, token, months = 12, now, fetchImpl }) => fetchInsights({
+  accountId, token, fetchImpl,
+  params: {
+    level: 'account',
+    fields: 'spend,account_currency',
+    time_increment: 'monthly',
+    time_range: JSON.stringify(monthsRange(Math.min(Math.max(Number(months) || 12, 1), 24), now)),
+    limit: '50'
+  }
+});
+
+/** { currency, months: { 'YYYY-MM': EGP } } from monthly account rows (date_start gives the month) */
+export function monthlyFromInsights(rows = []) {
+  const months = {};
+  const currencies = new Set();
+  for (const r of rows) {
+    const month = String(r?.date_start || '').slice(0, 7);
+    const spend = Number(r?.spend);
+    if (!/^\d{4}-\d{2}$/.test(month) || !(spend >= 0)) continue;
+    if (r.account_currency) currencies.add(String(r.account_currency).toUpperCase());
+    months[month] = (months[month] || 0) + Math.round(spend);
+  }
+  return { currency: currencies.size === 1 ? [...currencies][0] : (currencies.size ? 'MIXED' : ''), months };
+}
+
 export const PERF_PRESETS = ['last_7d', 'last_30d', 'maximum'];
 
 /** One row per campaign for a period: spend, reach, clicks and the results Meta counted (leads, messages) */
