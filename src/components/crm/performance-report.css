@@ -135,29 +135,3 @@
 .pr-hub .pr-bar i { border-radius: var(--ui-r-full); background: var(--ui-info); }
 /* The hub's «تصدير» covers every tab, so the sales panel's own CSV button stays out of the hub */
 .pr-hub .pr-toolbar { display: none; }
-
-/* «التسويق بالشهر»: the pull button above the table, and the small amount box inside a row */
-.pr-actions { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-.pr-table .pr-input { width: 96px; min-height: 36px; padding: 4px 8px; font-size: var(--ui-fs-2, 14px); text-align: center; }
-
-/* «الهيكل والسعة» */
-.org-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-.org-person { border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); padding: 10px 12px; background: var(--ui-surface); }
-.org-person__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.org-person__load { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; font-size: var(--ui-fs-2); color: var(--ui-text-2); }
-.org-person__duties { margin: 8px 0 0; padding-inline-start: 18px; font-size: var(--ui-fs-1); color: var(--ui-text-2); line-height: 1.6; }
-.org-person__cap { display: inline-flex; align-items: center; gap: 6px; font-size: var(--ui-fs-2); }
-.org-input { width: 72px; min-height: 36px; padding: 4px 8px; font-size: var(--ui-fs-2); text-align: center; }
-.pr-pill.is-good { color: var(--ui-success); }
-.pr-pill.is-bad { color: var(--ui-danger); }
-
-/* «المؤشرات»: a coloured edge says where each number stands against its target */
-.kpi-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; color: var(--ui-text-2); font-size: var(--ui-fs-2); }
-.kpi-card { border-inline-start: 4px solid var(--ui-line); display: flex; flex-direction: column; gap: 4px; }
-.kpi-card--good { border-inline-start-color: var(--ui-success); }
-.kpi-card--ok { border-inline-start-color: var(--ui-warning); }
-.kpi-card--bad { border-inline-start-color: var(--ui-danger); }
-.kpi-card .pr-pill { align-self: flex-start; }
-.pr-pill.is-ok { color: var(--ui-warning); background: var(--ui-warning-tint); }
-.kpi-summary .pr-pill.is-good, .kpi-card .pr-pill.is-good { background: var(--ui-success-tint); }
-.kpi-summary .pr-pill.is-bad, .kpi-card .pr-pill.is-bad { background: var(--ui-danger-tint); }

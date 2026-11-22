@@ -148,10 +148,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       {tab === 'team' && <TeamReportPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} />}
       {tab === 'marketing' && (
         <>
-          <section className="xs-card" aria-labelledby="hub-mk-month">
-            <h2 id="hub-mk-month" className="xs-h">{L('صرفنا كام وجه كام؟ (بالشهر)', 'Spend vs clients, by month')}</h2>
-            <MarketingMonthlyPanel leads={leads} lang={lang} canManage={canManage} triggerToast={triggerToast} />
-          </section>
+          <MarketingMonthlyPanel leads={leads} lang={lang} canManage={canManage} triggerToast={triggerToast} />
           <MarketingReportPanel leads={leads} range={range} lang={lang} onOpenTab={onOpenTab} />
         </>
       )}
