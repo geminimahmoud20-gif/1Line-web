@@ -16,6 +16,27 @@
     <!-- X-Frame-Options / X-Content-Type-Options are ignored in <meta> (and XFO logs a console error).
          They are sent as real HTTP headers from vercel.json. Do not re-add them here. -->
 
+    <!-- Some browsers refuse localStorage / sessionStorage outright (the access itself throws): in-app browsers, Chrome
+         with cookies blocked, some private modes. The app reads them at start, so the page stayed blank. Replace a
+         blocked one with an in-memory copy before anything else runs; nothing is saved across visits there. -->
+    <script>
+      (function () {
+        ['localStorage', 'sessionStorage'].forEach(function (name) {
+          try { window[name].getItem('__probe'); return; } catch (e) {}
+          var data = {};
+          var shim = {
+            getItem: function (k) { return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },
+            setItem: function (k, v) { data[k] = String(v); },
+            removeItem: function (k) { delete data[k]; },
+            clear: function () { data = {}; },
+            key: function (i) { return Object.keys(data)[i] || null; },
+            get length() { return Object.keys(data).length; }
+          };
+          try { Object.defineProperty(window, name, { value: shim, configurable: true }); } catch (e2) {}
+        });
+      })();
+    </script>
+
     <!-- Theme pre-hydration (prevents flash of wrong theme) -->
     <script>
       (function() {
