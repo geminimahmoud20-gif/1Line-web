@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Trophy, Award, DollarSign, Target } from 'lucide-react';
-import { parseMoney } from '../../utils/crmLeadViews';
+import { leadCommission, dealValue, BUYER_COMMISSION_PCT, SELLER_COMMISSION_PCT, LEGAL_FEE_PER_MILLION } from '../../utils/commission';
 import { getLiveLeadDesks, UNASSIGNED_DESK } from '../../utils/rbacRules';
 import { getActiveAccessConfig } from '../../services/accessConfig';
 import { loadSettings, saveSettings } from '../../firebaseLazy';
@@ -10,14 +10,6 @@ export default function AgentCommissionLeaderboard({
   lang = 'ar'
 }) {
   const isAr = lang === 'ar';
-  // 2% unless this device picked another rate (kept, so it doesn't reset every visit)
-  const [commissionRate, setCommissionRate] = useState(() => {
-    try { const v = parseFloat(localStorage.getItem('crm_commission_rate')); return [1, 1.5, 2, 2.5, 3].includes(v) ? v : 2; } catch { return 2; }
-  });
-  const pickRate = (v) => {
-    setCommissionRate(v);
-    try { localStorage.setItem('crm_commission_rate', String(v)); } catch { /* private mode: this visit only */ }
-  };
 
   // Desks come from the team settings (CRM → إدارة المنظومة → الفرق), not a fixed list.
   // Targets are only known for the original desks; a new team shows no target bar.
@@ -62,7 +54,7 @@ export default function AgentCommissionLeaderboard({
 
   // Volumes use the amount actually recorded on the lead. A deal with no amount counts as 0 and is
   // flagged, instead of being assumed to be 3–3.5M (which inflated sales and commissions).
-  const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
+  const amountOf = dealValue; // the agreed value, else the owner's asking price, else the budget (utils/commission)
   const agentStats = agentsList.map((agent) => {
     const assignedLeads = leads.filter((l) => agent.belongs(l));
     const closedLeads = assignedLeads.filter(l => l.status === 'closed');
@@ -73,7 +65,8 @@ export default function AgentCommissionLeaderboard({
       .filter(l => l.status === 'negotiating' || l.status === 'closing')
       .reduce((acc, l) => acc + amountOf(l), 0);
 
-    const earnedCommission = Math.round(closedVolume * (commissionRate / 100));
+    // The company's rates (utils/commissionRates.js): owner 2.5%, buyer 1.5%, plus 500 EGP per million legal review
+    const earnedCommission = closedLeads.reduce((acc, l) => acc + leadCommission(l).gross, 0);
     const targetPercent = agent.target ? Math.min(100, Math.round((closedVolume / agent.target) * 100)) : null;
 
     return {
@@ -129,23 +122,9 @@ export default function AgentCommissionLeaderboard({
           <span style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>
             {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
           </span>
-          <select
-            value={commissionRate.toFixed(1)}
-            onChange={(e) => pickRate(parseFloat(e.target.value))}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--crm-ink)',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="1.0">1.0%</option>
-            <option value="1.5">1.5%</option>
-            <option value="2.0">2.0% (الافتراضي)</option>
-            <option value="2.5">2.5%</option>
-            <option value="3.0">3.0%</option>
-          </select>
+          <span style={{ color: 'var(--crm-ink)', fontWeight: 'bold' }}>
+            {isAr ? `مشتري ${BUYER_COMMISSION_PCT}% · مالك ${SELLER_COMMISSION_PCT}% + ${LEGAL_FEE_PER_MILLION} ج لكل مليون مراجعة قانونية` : `Buyer ${BUYER_COMMISSION_PCT}% · Owner ${SELLER_COMMISSION_PCT}% + ${LEGAL_FEE_PER_MILLION} EGP/M legal`}
+          </span>
         </div>
       </div>
 
@@ -248,7 +227,7 @@ export default function AgentCommissionLeaderboard({
                   textAlign: isAr ? 'left' : 'right'
                 }}>
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', display: 'block', fontWeight: 'bold' }}>
-                    {isAr ? 'العمولة المستحقة (' + commissionRate + '%):' : 'Earned Commission:'}
+                    {isAr ? 'العمولة المستحقة:' : 'Earned Commission:'}
                   </span>
                   <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-accent-text)' }}>
                     {agent.earnedCommission.toLocaleString('en-US')} ج.م

@@ -31,7 +31,7 @@ test('periodMetrics counts each event on its own day, with reply speed and commi
   assert.equal(m.inTimePct, 50);
   assert.equal(m.medianReplyMs, Math.round((600_000 + 3 * 3600_000) / 2));
   assert.equal(m.closed, 1);
-  assert.equal(m.commission, 20000);
+  assert.equal(m.commission, 20500); // 2% of 1M + 500 legal review
   assert.equal(m.lost, 1);
   assert.equal(m.tasksDone, 1);
 });
@@ -83,7 +83,7 @@ test('sellerPerformance groups by owner, with reply speed, closings and task act
   const tasks = [{ assigneeUid: 'a', status: 'done', doneAt: iso(1) }, { assigneeUid: 'b', assigneeName: 'Mona', status: 'open', dueAt: '2020-01-01' }];
   const rows = sellerPerformance(leads, tasks, week, NOW);
   const ali = rows.find((r) => r.uid === 'a');
-  assert.deepEqual([ali.leads, ali.replied, ali.closed, ali.commission, ali.tasksDone], [2, 1, 1, 20000, 1]);
+  assert.deepEqual([ali.leads, ali.replied, ali.closed, ali.commission, ali.tasksDone], [2, 1, 1, 20500, 1]);
   assert.equal(rows[0].uid, 'a');
   assert.equal(rows.find((r) => r.uid === 'b').tasksOverdue, 1);
 });
@@ -106,9 +106,9 @@ test('campaign report adds won / expected commission and the return per pound sp
   const won = lead({ status: 'closed', utmCampaign: 'x', dealValue: 1_000_000, commissionPct: 2, stageHistory: [{ s: 'closed', at: iso(1) }] });
   const open = lead({ status: 'negotiating', utmCampaign: 'x', dealValue: 1_000_000, commissionPct: 2 });
   const [row] = campaignReport([won, open], { spend: { x: 10000 } });
-  assert.equal(row.wonCommission, 20000);
-  assert.equal(row.expectedCommission, 10000);
-  assert.equal(row.returnPerEgp, 2);
+  assert.equal(row.wonCommission, 20500);
+  assert.equal(row.expectedCommission, 10250);
+  assert.equal(row.returnPerEgp, 2.05);
 });
 
 import { metricLeads, biggestDrop } from '../../src/utils/performanceReport.js';

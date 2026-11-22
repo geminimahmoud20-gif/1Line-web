@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Coins } from 'lucide-react';
 import { Button, Input } from '../../ui';
-import { leadCommission, DEFAULT_COMMISSION_PCT } from '../../../utils/commission';
+import { leadCommission, defaultPctFor, LEGAL_FEE_PER_MILLION, SELLER_COMMISSION_PCT } from '../../../utils/commission';
 import { toLatinDigits } from '../../../utils/latinDigits';
 
 const money = (n) => Number(n || 0).toLocaleString('en-US');
@@ -11,6 +11,7 @@ const digits = (v) => toLatinDigits(String(v ?? '')).replace(/[^\d.]/g, '');
 export default function LeadCommissionBox({ lead, isAr, onUpdateLead }) {
   const L = (ar, en) => (isAr ? ar : en);
   const c = leadCommission(lead);
+  const sidePct = defaultPctFor(lead);
   const [value, setValue] = useState(lead.dealValue ? String(lead.dealValue) : '');
   const [pct, setPct] = useState(lead.commissionPct ? String(lead.commissionPct) : '');
   const dirty = value !== (lead.dealValue ? String(lead.dealValue) : '') || pct !== (lead.commissionPct ? String(lead.commissionPct) : '');
@@ -27,7 +28,9 @@ export default function LeadCommissionBox({ lead, isAr, onUpdateLead }) {
       <summary className="crm-ld__fold-sum"><Coins size={16} aria-hidden="true" />{L('العمولة', 'Commission')}{c.gross ? <small className="crm-ld__fold-hint">{`${money(c.gross)} ${L('ج.م', 'EGP')}`}</small> : null}</summary>
       <dl className="crm-ld__facts">
         <div><dt>{L('قيمة الصفقة', 'Deal value')}</dt><dd>{c.value ? `${money(c.value)} ${L('ج.م', 'EGP')}` : '—'}</dd></div>
-        <div><dt>{L('لو اتقفلت', 'If it closes')}</dt><dd>{c.gross ? `${money(c.gross)} ${L('ج.م', 'EGP')}` : '—'} <small>({c.pct}%)</small></dd></div>
+        <div><dt>{L('العمولة', 'Commission')}</dt><dd>{c.commission ? `${money(c.commission)} ${L('ج.م', 'EGP')}` : '—'} <small>({c.pct}%)</small></dd></div>
+        <div><dt>{L('المراجعة القانونية', 'Legal review')}</dt><dd>{c.legal ? `${money(c.legal)} ${L('ج.م', 'EGP')}` : '—'} <small>({L(`${LEGAL_FEE_PER_MILLION} ج لكل مليون`, `${LEGAL_FEE_PER_MILLION} per million`)})</small></dd></div>
+        <div><dt>{L('لو اتقفلت', 'If it closes')}</dt><dd>{c.gross ? `${money(c.gross)} ${L('ج.م', 'EGP')}` : '—'}</dd></div>
         <div><dt>{L('المتوقع بالمرحلة', 'Weighted by stage')}</dt><dd>{c.weighted ? `${money(c.weighted)} ${L('ج.م', 'EGP')}` : '—'} <small>({Math.round(c.probability * 100)}%)</small></dd></div>
       </dl>
       {onUpdateLead && (
@@ -41,7 +44,7 @@ export default function LeadCommissionBox({ lead, isAr, onUpdateLead }) {
           />
           <Input
             label={L('نسبة العمولة %', 'Commission %')}
-            hint={L(`فاضي = ${DEFAULT_COMMISSION_PCT}%`, `Empty = ${DEFAULT_COMMISSION_PCT}%`)}
+            hint={L(`فاضي = ${sidePct}% (${sidePct === SELLER_COMMISSION_PCT ? 'مالك' : 'مشتري'})`, `Empty = ${sidePct}%`)}
             error={pctBad ? L('من 0.1 لـ 20', '0.1 to 20') : undefined}
             inputMode="decimal"
             value={pct}
