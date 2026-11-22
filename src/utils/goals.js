@@ -32,10 +32,13 @@ const num = (v) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 
+/** How many open clients a person can hold at once (utils/orgReport). Saved beside the goals, not a goal itself. */
+export const CAPACITY_KEY = 'capacity';
+
 /** Only known keys, positive whole numbers; empty ones dropped */
 export function cleanTargets(raw = {}) {
   const out = {};
-  for (const { id } of GOAL_KEYS) if (num(raw?.[id]) > 0) out[id] = num(raw[id]);
+  for (const id of [...GOAL_KEYS.map((k) => k.id), CAPACITY_KEY]) if (num(raw?.[id]) > 0) out[id] = num(raw[id]);
   return out;
 }
 export function normalizeGoals(raw) {
@@ -94,7 +97,7 @@ export function goalProgress(leads, goals, now = Date.now()) {
   return {
     win,
     team: rowsOf(g.team, act.team, win),
-    people: Object.entries(g.people).map(([uid, t]) => ({ uid, name: act.people[uid]?.name || '', rows: rowsOf(t, act.people[uid], win) }))
+    people: Object.entries(g.people).map(([uid, t]) => ({ uid, name: act.people[uid]?.name || '', rows: rowsOf(t, act.people[uid], win) })).filter((p) => p.rows.length)
   };
 }
 
