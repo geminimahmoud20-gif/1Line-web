@@ -1,0 +1,30 @@
+/* Public buyer-requests page (components/DemandsPortal): the category pills, the sort row, the filter note and the empty state */
+.demands-pills { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scroll-margin-top: 96px; scrollbar-width: none; }
+.demands-pills::-webkit-scrollbar { display: none; }
+.demands-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 24px; white-space: nowrap; cursor: pointer;
+  border: 1px solid var(--border-color, #e2e8f0); background: var(--bg-card, #fff); color: var(--text-primary, #334155);
+  font-size: 0.84rem; font-weight: 700; transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.demands-pill.is-on { border-color: var(--primary, #0d48a1); background: var(--primary, #0d48a1); color: #fff; box-shadow: 0 2px 8px rgba(13, 72, 161, 0.2); }
+.demands-pill__count { font-size: 0.74rem; padding: 2px 7px; border-radius: 12px; background: var(--bg-muted, #f1f5f9); color: var(--text-secondary, #64748b); font-weight: 800; }
+.demands-pill.is-on .demands-pill__count { background: rgba(255, 255, 255, 0.25); color: #fff; }
+
+.demands-sort { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 0.84rem; color: var(--text-secondary, #64748b); }
+.demands-sort button {
+  padding: 4px 12px; border-radius: 16px; cursor: pointer; font: inherit; font-weight: 700;
+  border: 1px solid var(--border-color, #e2e8f0); background: transparent; color: var(--text-primary, #334155);
+}
+.demands-sort button.is-on { border-color: var(--primary, #0d48a1); color: var(--primary, #0d48a1); background: rgba(13, 72, 161, 0.08); }
+
+.demands-filter-note {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; margin-bottom: 20px;
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; font-size: 0.86rem;
+}
+.demands-filter-note span { color: #1e40af; font-weight: 700; }
+.demands-filter-note button { background: none; border: 0; color: #dc2626; font-weight: 800; cursor: pointer; font-size: 0.84rem; }
+
+.demands-empty { text-align: center; padding: 48px 24px; background: var(--bg-card, #fff); border-radius: 16px; border: 1px dashed #cbd5e1; }
+.demands-empty svg { display: block; margin: 0 auto 12px; color: #d97706; }
+.demands-empty h4 { font-weight: 800; color: var(--text-primary, #1e293b); margin-bottom: 8px; }
+.demands-empty p { color: var(--text-secondary, #64748b); font-size: 0.9rem; margin-bottom: 16px; }

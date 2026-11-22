@@ -13,6 +13,8 @@ import OwnerMatchSearch from './demands/OwnerMatchSearch';
 import { DEMAND_CATEGORIES, inDemandCategory } from './demands/demandCategories';
 import { siteLink } from '../config/siteConfig';
 import { contactProblem } from '../utils/contactValidation';
+import { parseMoney } from '../utils/crmLeadViews';
+import '../styles/demands-portal.css';
 import { demandShareText } from '../utils/demandShareCard';
 import ShareMenu from './common/ShareMenu';
 
@@ -76,6 +78,7 @@ export const DemandsPortal = ({
 
   // «عندك عقار للبيع؟»: nothing picked means any type / any area
   const [search, setSearch] = useState({ type: '', area: '' });
+  const [sortBy, setSortBy] = useState('newest');
   const runOwnerSearch = () => {
     const matched = allPublished.filter(d => inDemandCategory(d.type, search.type) && recordInArea(d, search.area, areas));
     setOwnerMatchesFound(matched.length);
@@ -122,7 +125,7 @@ export const DemandsPortal = ({
 
   // Filtered Demands to display in the grid
   const displayedDemands = useMemo(() => {
-    return allPublished.filter(d => {
+    const shown = allPublished.filter(d => {
       // Category filter (same groups as the pills and the owner search)
       if (!inDemandCategory(d.type, selectedCategory)) return false;
       // Area filter
@@ -133,7 +136,9 @@ export const DemandsPortal = ({
       }
       return true;
     });
-  }, [allPublished, selectedCategory, activeAreaFilter, areas]);
+    // allPublished is already newest first; «الميزانية الأعلى» reorders a copy by the stated budget
+    return sortBy === 'budget' ? [...shown].sort((a, b) => parseMoney(b.budget) - parseMoney(a.budget)) : shown;
+  }, [allPublished, selectedCategory, activeAreaFilter, areas, sortBy]);
 
   // Helper for crisp property type tag with clear icons and 100% contrast
   const getPropertyTypeBadge = (type) => {
@@ -271,16 +276,6 @@ export const DemandsPortal = ({
         </div>
       )}
 
-      {/* 🔁 Trade-in entry: owners who want to swap rather than sell */}
-      <Link to="/trade-in" className="xs-trade-banner">
-        <span className="xs-trade-banner-icon"><Repeat2 size={22} aria-hidden="true" /></span>
-        <span className="xs-trade-banner-text">
-          <strong>{isAr ? 'مش عايز تبيع؟ بدّل عقارك' : 'Rather swap than sell?'}</strong>
-          <small>{isAr ? 'شقتك بفيلا، أرضك بعمارة للعيلة — نطابقك مع عروض بدل حقيقية بفرق كاش أو رأس برأس.' : 'Your apartment for a villa, land for a family building — matched with real swap offers.'}</small>
-        </span>
-        <span className="xs-trade-banner-cta">{isAr ? 'ابدأ البدل ←' : 'Start →'}</span>
-      </Link>
-
       {/* «عندك عقار للبيع؟»: matching published requests for an owner's property */}
       <OwnerMatchSearch
         isAr={isAr}
@@ -297,14 +292,7 @@ export const DemandsPortal = ({
       />
 
       {/* 🏷️ Quick Category Navigation Pills with Live Counts */}
-      <div id="demand-results" style={{ scrollMarginTop: '96px', 
-        display: 'flex', 
-        gap: '8px', 
-        overflowX: 'auto', 
-        paddingBottom: '8px', 
-        marginBottom: '16px',
-        scrollbarWidth: 'none'
-      }}>
+      <div id="demand-results" className="demands-pills">
         {[
           { id: 'all', label_ar: 'كل الطلبات', label_en: 'All requests', count: allPublished.length },
           ...DEMAND_CATEGORIES.map((c) => ({ ...c, count: allPublished.filter(d => c.test(d.type)).length }))
@@ -314,59 +302,32 @@ export const DemandsPortal = ({
             <button
               key={cat.id}
               type="button"
+              className={`demands-pill${isActive ? ' is-on' : ''}`}
               onClick={() => {
                 setSelectedCategory(cat.id);
                 setActiveAreaFilter('all');
                 setIsFilterActive(cat.id !== 'all');
                 if (ownerMatchesFound !== null) setOwnerMatchesFound(null);
               }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                borderRadius: '24px',
-                border: isActive ? '1.5px solid var(--primary, #0d48a1)' : '1px solid #e2e8f0',
-                background: isActive ? 'var(--primary, #0d48a1)' : '#ffffff',
-                color: isActive ? '#ffffff' : '#334155',
-                fontSize: '0.84rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease',
-                boxShadow: isActive ? '0 2px 8px rgba(13, 72, 161, 0.2)' : 'none'
-              }}
             >
               <span>{isAr ? cat.label_ar : cat.label_en}</span>
-              <span style={{
-                fontSize: '0.74rem',
-                padding: '2px 7px',
-                borderRadius: '12px',
-                background: isActive ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
-                color: isActive ? '#ffffff' : '#64748b',
-                fontWeight: '800'
-              }}>
-                {cat.count}
-              </span>
+              <span className="demands-pill__count">{cat.count}</span>
             </button>
           );
         })}
       </div>
 
+      {/* Order: newest first, or the biggest budget first (the cards no longer show a date) */}
+      <div className="demands-sort" role="group" aria-label={isAr ? 'ترتيب الطلبات' : 'Sort requests'}>
+        <span>{isAr ? 'رتّب:' : 'Sort:'}</span>
+        <button type="button" className={sortBy === 'newest' ? 'is-on' : ''} aria-pressed={sortBy === 'newest'} onClick={() => setSortBy('newest')}>{isAr ? 'الأحدث' : 'Newest'}</button>
+        <button type="button" className={sortBy === 'budget' ? 'is-on' : ''} aria-pressed={sortBy === 'budget'} onClick={() => setSortBy('budget')}>{isAr ? 'الميزانية الأعلى' : 'Highest budget'}</button>
+      </div>
+
       {/* Active Filter Notice */}
       {isFilterActive && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 16px',
-          background: '#eff6ff',
-          border: '1px solid #bfdbfe',
-          borderRadius: '12px',
-          marginBottom: '20px',
-          fontSize: '0.86rem'
-        }}>
-          <span style={{ color: '#1e40af', fontWeight: '700' }}>
+        <div className="demands-filter-note">
+          <span>
             🔍 {isAr ? `نتائج التصفية الحالية: يعرض ${displayedDemands.length} طلب مطابق` : `Active filter: showing ${displayedDemands.length} matching requests`}
           </span>
           <button
@@ -377,14 +338,6 @@ export const DemandsPortal = ({
               setIsFilterActive(false);
               setOwnerMatchesFound(null);
             }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#dc2626',
-              fontWeight: '800',
-              cursor: 'pointer',
-              fontSize: '0.84rem'
-            }}
           >
             ✕ {isAr ? 'إلغاء التصفية وعرض الكل' : 'Clear filter'}
           </button>
@@ -393,31 +346,31 @@ export const DemandsPortal = ({
 
       {/* Demands List Grid */}
       {displayedDemands.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '48px 24px',
-          background: '#ffffff',
-          borderRadius: '16px',
-          border: '1px dashed #cbd5e1'
-        }}>
-          <AlertCircle size={36} color="#d97706" style={{ margin: '0 auto 12px auto' }} />
-          <h4 style={{ fontWeight: '800', color: '#1e293b', marginBottom: '8px' }}>
-            {isAr ? 'مفيش طلبات بالاختيار ده دلوقتي' : 'No demands match this filter'}
+        <div className="demands-empty">
+          <AlertCircle size={36} aria-hidden="true" />
+          <h4>
+            {allPublished.length === 0
+              ? (isAr ? 'مفيش طلبات منشورة دلوقتي' : 'No published requests right now')
+              : (isAr ? 'مفيش طلبات بالاختيار ده دلوقتي' : 'No demands match this filter')}
           </h4>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '16px' }}>
-            {isAr ? 'شوف كل الطلبات، أو لو بتدوّر على عقار اكتب طلبك مجاناً.' : 'Clear filter to see all demands or submit your request.'}
+          <p>
+            {allPublished.length === 0
+              ? (isAr ? 'لو بتدوّر على عقار اكتب طلبك مجاناً، ولو عندك عقار للبيع سجّله ونبلّغك أول ما يظهر مشتري.' : 'Post your request, or list your property and we will tell you when a buyer shows up.')
+              : (isAr ? 'شوف كل الطلبات، أو لو بتدوّر على عقار اكتب طلبك مجاناً.' : 'Clear filter to see all demands or submit your request.')}
           </p>
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={() => {
-              setSelectedCategory('all');
-              setActiveAreaFilter('all');
-              setIsFilterActive(false);
-            }}
-          >
-            {isAr ? 'كل الطلبات' : 'All requests'}
-          </button>
+          {allPublished.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                setSelectedCategory('all');
+                setActiveAreaFilter('all');
+                setIsFilterActive(false);
+              }}
+            >
+              {isAr ? 'كل الطلبات' : 'All requests'}
+            </button>
+          )}
         </div>
       ) : (
         <div className="demands-grid">
@@ -525,6 +478,16 @@ export const DemandsPortal = ({
           })}
         </div>
       )}
+
+      {/* 🔁 Trade-in entry: owners who want to swap rather than sell (below the requests, which are the page) */}
+      <Link to="/trade-in" className="xs-trade-banner">
+        <span className="xs-trade-banner-icon"><Repeat2 size={22} aria-hidden="true" /></span>
+        <span className="xs-trade-banner-text">
+          <strong>{isAr ? 'مش عايز تبيع؟ بدّل عقارك' : 'Rather swap than sell?'}</strong>
+          <small>{isAr ? 'شقتك بفيلا، أرضك بعمارة للعيلة — نطابقك مع عروض بدل حقيقية بفرق كاش أو رأس برأس.' : 'Your apartment for a villa, land for a family building — matched with real swap offers.'}</small>
+        </span>
+        <span className="xs-trade-banner-cta">{isAr ? 'ابدأ البدل ←' : 'Start →'}</span>
+      </Link>
 
       {/* 🤝 Professional Refer Owner Modal (Replaces amateur window.prompt) */}
       {referringDemand && (
