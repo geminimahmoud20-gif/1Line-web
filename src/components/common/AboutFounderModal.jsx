@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Building, ShieldCheck, CheckCircle2, Quote, MessageSquare, Phone, MapPin, TrendingUp, FileCheck, Users, Briefcase, ExternalLink } from 'lucide-react';
 
 import { getFounderSettings, cleanWhatsAppNumber, cleanPhoneNumber, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
+import './AboutFounderModal.app.css';
 
 export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
   const isAr = lang === 'ar';

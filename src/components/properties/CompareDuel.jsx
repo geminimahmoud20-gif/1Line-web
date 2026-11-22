@@ -1,4 +1,5 @@
 import { Calendar, Scale } from 'lucide-react';
+import './CompareDuel.app.css';
 
 export default function CompareDuel({
   dualDiff,

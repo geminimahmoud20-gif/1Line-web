@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle2, Copy, Check, MessageSquare, X, Calendar, MapPin, Building, Video, Phone, Printer } from 'lucide-react';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { VIEWING_SLOTS } from '../../config/siteConfig';
+import './BookingConfirmationModal.app.css';
 
 const SLOT_AR = { morning: VIEWING_SLOTS.morning.ar, evening: VIEWING_SLOTS.evening.ar };
 const SLOT_EN = { morning: VIEWING_SLOTS.morning.en, evening: VIEWING_SLOTS.evening.en };

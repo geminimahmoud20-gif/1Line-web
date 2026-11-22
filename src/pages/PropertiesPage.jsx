@@ -28,6 +28,7 @@ import '../styles/light-headers.css';
 import LandingLinks from '../components/properties/LandingLinks';
 import { inArea } from '../utils/areaLookup';
 import { blockedByApproval } from '../utils/publishApproval';
+import './PropertiesPage.app.css';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
 const areaCenterOf = (key) => {

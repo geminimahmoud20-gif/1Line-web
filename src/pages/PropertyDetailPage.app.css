@@ -1,0 +1,62 @@
+/* Moved out of App.css: used only by PropertyDetailPage (loaded with it, not on every page) */
+.property-detail-page-wrapper {
+  background: var(--bg-slate);
+  padding-bottom: 80px;
+}
+.agent-avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+.green-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--emerald);
+}
+.booking-success-box {
+  text-align: center;
+  padding: 20px;
+  background: var(--emerald-bg);
+  border-radius: var(--radius-md);
+}
+.booking-success-box h4 {
+  font-size: 1.1rem;
+  color: var(--emerald);
+  margin: 10px 0 6px;
+}
+.booking-success-box p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.mobile-sticky-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-deposit-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.booking-time-slot-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}

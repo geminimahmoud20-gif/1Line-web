@@ -1,0 +1,132 @@
+/* Moved out of App.css: used only by PropertyFilters (loaded with it, not on every page) */
+.properties-filters-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.filter-title-text-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+}
+.compact-active-chips {
+  margin-top: 8px;
+  padding-top: 6px;
+  gap: 6px;
+}
+.compact-active-chip {
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  border-radius: 999px;
+}
+.luxury-filters-container {
+  background: var(--bg-card);
+  border: 1px solid rgba(2, 132, 199, 0.18);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  box-shadow: 0 8px 24px -5px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 202, 40, 0.08);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.luxury-filters-container:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 12px 32px -6px rgba(2, 132, 199, 0.12), 0 0 0 1px rgba(255, 202, 40, 0.12);
+}
+.filter-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.adv-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+}
+.filter-clear-input-btn {
+  position: absolute;
+  left: 10px;
+  background: rgba(148, 163, 184, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+[dir="ltr"] .filter-clear-input-btn {
+  left: auto;
+  right: 10px;
+}
+.filter-clear-input-btn:hover {
+  background: var(--rose);
+  color: #ffffff;
+}
+.tag-check {
+  color: #081226;
+}
+.filter-active-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+.active-chips-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.active-chips-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  color: var(--primary-dark);
+  font-size: 0.76rem;
+  font-weight: 700;
+  animation: chipIn 0.2s ease-out;
+}
+[data-theme="dark"] .active-filter-chip {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #7dd3fc;
+}
+.chip-remove-btn {
+  background: none;
+  border: none;
+  color: currentColor;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.chip-remove-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}

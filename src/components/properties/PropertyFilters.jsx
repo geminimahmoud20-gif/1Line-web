@@ -6,6 +6,7 @@ import { getAreas } from '../../utils/areasData';
 import './property-filters-mobile.css';
 import { countLabel } from '../../utils/arabicCount';
 import AreaOptions from '../common/AreaOptions';
+import './PropertyFilters.app.css';
 
 // "Any price" is the page's cap (PropertiesPage MAX_PRICE_CAP): no upper limit
 const ANY_PRICE = 15000000;

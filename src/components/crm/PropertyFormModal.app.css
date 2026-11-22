@@ -1,0 +1,13 @@
+/* Moved out of App.css: used only by PropertyFormModal (loaded with it, not on every page) */
+.uploader-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.hidden-file-input {
+  display: none;
+}

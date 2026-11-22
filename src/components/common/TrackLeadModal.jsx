@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Search, Clock, AlertCircle } from 'lucide-react';
 import { formatFollowUp } from '../../utils/crmLabels';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import './TrackLeadModal.app.css';
 
 export default function TrackLeadModal({ isOpen, onClose, leads = [], lang }) {
   const [searchPhone, setSearchPhone] = useState('');

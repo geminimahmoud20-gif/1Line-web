@@ -21,6 +21,7 @@ import VirtualTourViewer from './VirtualTourViewer';
 import PhotoTour from './PhotoTour';
 import './property-gallery.css';
 import { thumbUrl, thumbFallback } from '../../utils/imageThumbs';
+import './PropertyGallery.app.css';
 
 export default function PropertyGallery({
   images: rawImages = [],

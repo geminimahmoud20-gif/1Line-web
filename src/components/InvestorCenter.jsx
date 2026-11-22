@@ -6,6 +6,7 @@ import { getAreas } from '../utils/areasData';
 import useClientDownload from '../hooks/useClientDownload';
 import AreaOptions from './common/AreaOptions';
 import { contactProblem } from '../utils/contactValidation';
+import './InvestorCenter.app.css';
 
 // Dynamic ROI Yields based on property type in Sohag
 const YIELD_RATES = {

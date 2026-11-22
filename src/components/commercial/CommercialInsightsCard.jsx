@@ -1,5 +1,5 @@
 import { Activity, Route, ParkingSquare, TrainFront, Bus, Milestone, Building2, Stethoscope } from 'lucide-react';
-import { getCommercialInsights, isCommercialAsset } from '../../utils/propertyInsights';
+import { getCommercialInsights, isCommercialAsset, sensibleRentPerSqm } from '../../utils/propertyInsights';
 import RentalYieldCalculator from './RentalYieldCalculator';
 import '../../styles/expat-suite.css';
 
@@ -70,7 +70,7 @@ export default function CommercialInsightsCard({ property, lang = 'ar', currency
 
       <div className="xs-com-calc">
         <h4>{L('حاسبة العائد الإيجاري للمتر التجاري', 'Commercial rent yield calculator')}</h4>
-        <RentalYieldCalculator property={property} defaultRentPerSqm={ins?.rentPerSqm || 0} lang={lang} currency={currency} />
+        <RentalYieldCalculator property={property} defaultRentPerSqm={sensibleRentPerSqm(property)} lang={lang} currency={currency} />
       </div>
     </section>
   );

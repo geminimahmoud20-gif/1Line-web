@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Copy, Check, Send, Wand2 } from 'lucide-react';
 import { getDynamicPhone, getWhatsAppUrl, openWhatsAppSafely } from '../../utils/founderCmsData';
-import { computeRentalYield } from '../../utils/propertyInsights';
+import { computeRentalYield, sensibleRentPerSqm } from '../../utils/propertyInsights';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 // Arabic room counter grammar (قواعد تمييز العدد في اللغة العربية)
@@ -80,7 +80,7 @@ export default function AICopywriterModal({
   const legalLineEn = legal
     ? [legal.ownershipType_en || legal.ownershipType_ar, legal.licenseStatus_en].filter(Boolean).join(' • ')
     : 'Documents reviewed with you before contract';
-  const rentPerSqm = Number(selectedProp.commercial?.rentPerSqm) || 0;
+  const rentPerSqm = sensibleRentPerSqm(selectedProp); // an unbelievable stored rent is left out of the ad
   const yieldStudy = rentPerSqm ? computeRentalYield({ price: selectedProp.price, size: selectedProp.size, rentPerSqm }) : null;
   const roomsAr = formatRoomsAr(propRooms);
 

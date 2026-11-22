@@ -8,6 +8,7 @@ import { DemandsPortal } from '../components/DemandsPortal';
 import { ReferralPortal } from '../components/ReferralPortal';
 import { SpecialRequests } from '../components/SpecialRequests';
 import '../styles/light-headers.css';
+import './PortalsPage.app.css';
 
 export default function PortalsPage({
   portalType,

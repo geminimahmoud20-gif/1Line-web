@@ -14,6 +14,7 @@ import AccountCompareTab from '../components/account/AccountCompareTab';
 import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
 import '../styles/client-auth-modes.css';
 import { siteLink } from '../config/siteConfig';
+import './ClientAccountPage.app.css';
 
 /**
  * Lead Stages & Color Scheme

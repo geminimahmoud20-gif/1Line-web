@@ -1,5 +1,6 @@
 
 import LogoEmblem from '../LogoEmblem';
+import './BrandWatermark.app.css';
 
 /**
  * BrandWatermark Component

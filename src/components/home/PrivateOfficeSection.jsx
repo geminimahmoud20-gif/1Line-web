@@ -1,6 +1,7 @@
 
 import { ShieldCheck, Lock, EyeOff, Award, MessageSquare } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import './PrivateOfficeSection.app.css';
 
 export default function PrivateOfficeSection({ lang = 'ar', asPage = false }) {
   const isAr = lang === 'ar';

@@ -6,6 +6,7 @@ import {
 import { getAreaById } from '../../utils/areasData';
 import { amenityCategory, categoriesIn } from '../../utils/amenityCategories';
 import { amenityMetrics, namedAmenities } from '../../utils/amenityDistance';
+import './NearbyAmenities.app.css';
 
 const ICONS = { School, Baby, Hospital, Pill, ShoppingCart, ShoppingBag, UtensilsCrossed, Landmark, Banknote, Building2, Shield, Train, Route, Fuel, Trees, Dumbbell, Hotel, MapPin };
 const iconFor = (category) => ICONS[amenityCategory(category).icon] || MapPin;

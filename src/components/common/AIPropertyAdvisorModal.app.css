@@ -1,0 +1,122 @@
+/* Moved out of App.css: used only by AIPropertyAdvisorModal (loaded with it, not on every page) */
+.ai-advisor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #0A192F 0%, #050E1F 100%);
+  border-bottom: 1.5px solid rgba(212, 175, 55, 0.3);
+  color: #ffffff;
+}
+.ai-bot-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1.5px solid var(--brand-gold-warm, #D4AF37);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-gold-warm, #D4AF37);
+}
+.ai-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+}
+.ai-status-sub {
+  font-size: 0.74rem;
+  color: rgba(212, 175, 55, 0.85);
+  display: block;
+}
+.ai-message-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 88%;
+}
+.ai-message-row.user-side {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.ai-message-row.bot-side {
+  align-self: flex-start;
+}
+.msg-bot-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.user-bubble {
+  background: var(--primary);
+  color: #ffffff;
+  border-bottom-left-radius: 4px;
+}
+[dir="rtl"] .user-bubble {
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 4px;
+}
+.msg-text-content strong {
+  color: var(--primary);
+}
+.user-bubble .msg-text-content strong {
+  color: var(--accent-gold);
+}
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 14px 18px;
+}
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: typingBounce 1s infinite alternate;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+.ai-input-form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0A192F 0%, #050E1F 100%);
+  color: #ECC880;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(10, 25, 47, 0.25);
+  transition: all 0.2s;
+}
+.ai-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.ai-send-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ECC880 0%, #C5A059 100%);
+  color: #060D1A;
+  border-color: #ECC880;
+  transform: scale(1.06);
+}

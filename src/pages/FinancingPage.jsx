@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, Landmark, ShieldCheck, Clock, Percent, MessageSq
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import './FinancingPage.app.css';
 
 export default function FinancingPage({ lang = 'ar' }) {
   const isAr = lang === 'ar';

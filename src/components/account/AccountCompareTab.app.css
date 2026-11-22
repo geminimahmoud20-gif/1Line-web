@@ -1,0 +1,39 @@
+/* Moved out of App.css: used only by AccountCompareTab (loaded with it, not on every page) */
+.compare-table-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 14px 0;
+}
+.compare-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+.table-prop-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 800;
+  transition: color 0.2s;
+}
+.table-prop-link:hover {
+  color: #0b4ea2;
+}
+.row-label {
+  color: var(--text-muted);
+  font-weight: 700;
+  white-space: nowrap;
+  width: 160px;
+}
+.legal-check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #047857;
+}

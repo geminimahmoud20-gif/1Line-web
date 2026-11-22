@@ -54,6 +54,7 @@ import { getActorName } from '../utils/actorName';
 import { checkStageChange } from '../utils/stageGate';
 import { assignmentEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
+import { tidyListing } from '../utils/listingSpelling';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
 // The cache keeps only what this device created (a visitor's own requests, offline drafts).
@@ -335,7 +336,8 @@ export function PropertiesProvider({ children }) {
           : prev;
         const byId = new Map(base.map((p) => [String(p.id), p]));
         const fresh = [];
-        for (const docItem of cloudDocs) {
+        for (const raw of cloudDocs) {
+          const docItem = tidyListing(raw); // spelling slips in titles fixed for every screen (utils/listingSpelling)
           const key = String(docItem.id);
           if (docItem.deleted) { byId.delete(key); continue; }
           // A record that exists in the database is real, even if it shares a demo id
@@ -771,7 +773,7 @@ export function PropertiesProvider({ children }) {
   useEffect(() => {
     applyPublicDemandsRef.current = (list) => {
       if (staffDemandsLive.current) return;
-      const valid = list.filter((d) => d && typeof d === 'object');
+      const valid = list.filter((d) => d && typeof d === 'object').map(tidyListing);
       const time = (d) => new Date(d?.approvedAt || d?.createdAt || d?.timestamp || 0).getTime();
       setDemands(valid.length ? [...valid].sort((a, b) => time(b) - time(a)) : DEMO_DEMANDS);
     };
@@ -788,7 +790,7 @@ export function PropertiesProvider({ children }) {
           return;
         }
         if (cloudDemands && cloudDemands.length > 0) {
-          const valid = cloudDemands.filter(d => d && typeof d === 'object');
+          const valid = cloudDemands.filter(d => d && typeof d === 'object').map(tidyListing);
           if (meta?.fromCache) {
             // Cache-only snapshot: add/refresh, never shrink the list to this device's pending writes
             setDemands((prev) => {

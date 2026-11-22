@@ -1,0 +1,6 @@
+/* Moved out of App.css: used only by CrmAdminPanel (loaded with it, not on every page) */
+.enterprise-crm-hub {
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+  color: var(--crm-ink);
+}

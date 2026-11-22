@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Scale, ShieldCheck, FileText, Trash2 } from 'lucide-react';
 import PropertyCard from '../properties/PropertyCard';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
+import './AccountCompareTab.app.css';
 
 export default function AccountCompareTab({
   compareList,

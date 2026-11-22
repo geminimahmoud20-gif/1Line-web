@@ -3,6 +3,7 @@ import { RotateCcw, Sparkles, SearchX, CheckCircle2, Send } from 'lucide-react';
 import PropertyCard from './PropertyCard';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { phoneProblem } from '../../utils/contactValidation';
+import './ZeroResultsFallback.app.css';
 
 export default function ZeroResultsFallback({
   lang = 'ar',

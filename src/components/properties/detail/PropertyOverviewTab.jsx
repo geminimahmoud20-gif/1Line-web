@@ -7,6 +7,7 @@ import SunlightCompassWidget from '../SunlightCompassWidget';
 import FinancialBreakdown from '../FinancialBreakdown';
 import FamilyCostSplitter from '../../family/FamilyCostSplitter';
 import CommercialInsightsCard from '../../commercial/CommercialInsightsCard';
+import './PropertyOverviewTab.app.css';
 
 // Orientation data recorded in the CRM (the compass card shows nothing without a facing)
 const hasOrientation = (p) => Boolean(p?.orientation?.direction_ar || p?.orientation?.direction_en);

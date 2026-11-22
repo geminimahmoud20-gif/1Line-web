@@ -3,6 +3,7 @@ import { Rotate3d, Compass, Maximize2, Minimize2, Play, Pause, Info, Sparkles } 
 import BrandWatermark from '../common/BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import { trackEvent } from '../../utils/visitorTracker';
+import './VirtualTourViewer.app.css';
 
 /**
  * VirtualTourViewer Component

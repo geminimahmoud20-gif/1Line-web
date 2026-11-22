@@ -1,0 +1,6 @@
+/* Moved out of App.css: used only by AdCampaignsPanel (loaded with it, not on every page) */
+.panel-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}

@@ -59,6 +59,7 @@ import { userDisplayName } from '../utils/assignees';
 import { deletePrompt } from '../utils/deleteConfirm';
 import { defaultLeadFilter } from '../utils/crmLeadViews';
 import { setPhonePolicy } from '../utils/phoneReveal';
+import './CrmAdminPanel.app.css';
 
 export const CrmAdminPanel = ({
   lang = 'ar',

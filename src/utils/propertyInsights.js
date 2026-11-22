@@ -112,6 +112,18 @@ export function yieldSanity(r) {
   return null;
 }
 
+/**
+ * The listing's stored rent per m², only when it gives a believable yield for its own price and size.
+ * A rent typed for the wrong unit (e.g. 45,000 per m², the sale price) would show visitors a 1,000%+
+ * yield and a one-month payback; such a value is dropped (0) and the calculator starts empty.
+ */
+export function sensibleRentPerSqm(property) {
+  const rentPerSqm = num(property?.commercial?.rentPerSqm);
+  if (!rentPerSqm) return 0;
+  const r = computeRentalYield({ price: property?.price, size: property?.size, rentPerSqm });
+  return r && !yieldSanity(r) ? rentPerSqm : 0;
+}
+
 // ── Transparent financial breakdown ────────────────────────────
 /**
  * Everything the buyer pays, from the listing's own numbers.

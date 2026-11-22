@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Receipt, Users, Stethoscope, ChevronDown, Scale, Zap, Compass } from 'lucide-react';
-import { FAMILY_KINDS, FOOT_TRAFFIC_TAGS, ACCESS_POINTS, PARKING_OPTIONS } from '../../utils/propertyInsights';
+import { FAMILY_KINDS, FOOT_TRAFFIC_TAGS, ACCESS_POINTS, PARKING_OPTIONS, computeRentalYield, yieldSanity } from '../../utils/propertyInsights';
 import './property-extras.css';
 
 const toNum = (v) => (v === '' || v === null || v === undefined ? '' : Math.max(0, Number(v) || 0));
@@ -76,6 +76,14 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
 
   const L = (ar, en) => (isAr ? ar : en);
   const EGP = L('ج.م', 'EGP');
+
+  // Live check: the rent per m² against this listing's price and size (a wrong unit shows absurd yields)
+  const rentCheck = (() => {
+    const rentPerSqm = Number(form.commercial?.rentPerSqm) || 0;
+    const r = computeRentalYield({ price: form.price, size: form.size, rentPerSqm });
+    if (!r) return null;
+    return { unitRent: Math.round(rentPerSqm * (Number(form.size) || 0)), pct: Math.round(r.grossYieldPct * 10) / 10, sanity: yieldSanity(r) };
+  })();
 
   // Live check: does down + installments + handover add up to the listed price?
   const planCheck = (() => {
@@ -219,6 +227,20 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
           <div className="pxe-grid">
             <NumField label={L('الإيجار الشهري المتوقع للمتر', 'Expected monthly rent per m²')} value={commercial.rentPerSqm} onChange={(v) => setCommercial('rentPerSqm', v)} placeholder={L('من إيجارات فعلية في نفس الشارع', 'From real rents on the same street')} suffix={`${EGP}/م²`} />
           </div>
+          {rentCheck && (
+            <div className={`pxe-check ${rentCheck.sanity ? 'is-warn' : 'is-ok'}`} role="status">
+              <strong>{L('مراجعة الإيجار:', 'Rent check:')}</strong>{' '}
+              {L(
+                `${rentCheck.unitRent.toLocaleString('en-US')} ج.م في الشهر للوحدة كلها = عائد ${rentCheck.pct}% في السنة`,
+                `${rentCheck.unitRent.toLocaleString('en-US')} EGP a month for the unit = ${rentCheck.pct}% a year`
+              )}
+              {rentCheck.sanity && (
+                <span> — {rentCheck.sanity === 'high'
+                  ? L('ده كتير جداً (الطبيعي 6–15%). غالباً اتكتب إيجار الوحدة كلها أو سعر المتر بدل إيجار المتر. مش هيظهر للعميل لحد ما يتصلّح.', 'Far too high (usual 6–15%): probably the whole-unit rent or the sale price per m². Hidden from visitors until fixed.')
+                  : L('ده قليل جداً (الطبيعي 6–15%). اتأكد من الرقم. مش هيظهر للعميل لحد ما يتصلّح.', 'Far too low (usual 6–15%). Hidden from visitors until fixed.')}</span>
+              )}
+            </div>
+          )}
         </Section>
       )}
     </div>

@@ -1,0 +1,144 @@
+/* Moved out of App.css: used only by SocialStoryCardModal (loaded with it, not on every page) */
+.story-modal-card-wrap {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  max-width: 440px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: var(--shadow-lg);
+  animation: zoomInModal 0.25s ease;
+}
+.story-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.story-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.story-title-row h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0;
+}
+.story-canvas-frame {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  margin-bottom: 16px;
+}
+.story-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: #ffffff;
+}
+.story-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.story-overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%);
+}
+.story-top-brand {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+.story-brand-pill {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.story-city-tag {
+  background: var(--accent-gold);
+  color: #0d2c54;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+.story-bottom-content {
+  position: absolute;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+}
+.story-badge-pill {
+  display: inline-block;
+  background: var(--accent-gold);
+  color: #0d2c54;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.story-prop-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.3;
+  margin-bottom: 6px;
+  color: #ffffff;
+}
+.story-location-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 12px;
+}
+.story-price-box {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.story-price-lbl {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.story-price-num {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+}
+.story-specs-pill-row {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 10px;
+}
+.story-legal-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #4ade80;
+  font-weight: 700;
+}

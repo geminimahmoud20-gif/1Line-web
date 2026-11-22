@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Download, Sparkles, ShieldCheck, MapPin } from 'lucide-react';
 import useClientDownload from '../../hooks/useClientDownload';
+import './SocialStoryCardModal.app.css';
 
 export default function SocialStoryCardModal({ isOpen, onClose, property, lang = 'ar', triggerToast }) {
   const [downloading, setDownloading] = useState(false);
