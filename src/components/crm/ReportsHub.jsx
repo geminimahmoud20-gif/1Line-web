@@ -46,7 +46,7 @@ const LINKS = [
 ];
 
 /** «مركز التقارير»: one place and one date range / comparison for every report (managers) */
-export default function ReportsHub({ leads = [], properties = [], demands = [], intake = [], members = [], me, canManage = false, areaNames = {}, lang = 'ar', onOpenTab, onOpenLead, triggerToast }) {
+export default function ReportsHub({ leads = [], coverage = null, properties = [], demands = [], intake = [], members = [], me, canManage = false, areaNames = {}, lang = 'ar', onOpenTab, onOpenLead, triggerToast }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const [now] = useState(() => Date.now());
@@ -110,6 +110,15 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         })}
       </div>
 
+      {coverage && (
+        <p className={`pr-coverage ${coverage.complete && !coverage.loading && !coverage.failed ? '' : 'is-partial'}`} role="status">
+          {coverage.loading
+            ? L('بيتحسب من كل العملاء…', 'Computing over all leads…')
+            : coverage.complete && !coverage.failed
+              ? L(`التقارير محسوبة من كل العملاء (${coverage.count.toLocaleString('en-US')})`, `Covers all ${coverage.count.toLocaleString('en-US')} leads`)
+              : L(`التقارير من ${coverage.count.toLocaleString('en-US')} عميل بس، مش كل العملاء: الأرقام ممكن تكون أقل من الحقيقة`, `Covers ${coverage.count.toLocaleString('en-US')} leads only`)}
+        </p>
+      )}
       {!NO_RANGE.has(tab) && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
 
       <div className="rv" role="group" aria-label={L('العروض المحفوظة', 'Saved views')}>

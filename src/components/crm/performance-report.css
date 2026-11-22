@@ -135,3 +135,7 @@
 .pr-hub .pr-bar i { border-radius: var(--ui-r-full); background: var(--ui-info); }
 /* The hub's «تصدير» covers every tab, so the sales panel's own CSV button stays out of the hub */
 .pr-hub .pr-toolbar { display: none; }
+
+/* Which clients the reports were computed from (all of them, or only the newest window when the full read failed) */
+.pr-coverage { margin: 0 0 var(--ui-s-2); font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.pr-coverage.is-partial { color: var(--ui-warning); font-weight: var(--ui-fw-semibold); }

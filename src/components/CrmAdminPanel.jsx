@@ -166,9 +166,9 @@ export const CrmAdminPanel = ({
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
   const adminTab = propAdminTab || localAdminTab;
-  // Dashboard numbers cover every lead this account may read, not only the newest 150 loaded live
+  // Dashboard and reports numbers cover every lead this account may read, not only the newest 150 loaded live
   const { leadsHasMore } = useProperties();
-  const fullStats = useFullLeadStats(allLeads, { enabled: adminTab === 'dashboard', hasMore: leadsHasMore });
+  const fullStats = useFullLeadStats(allLeads, { enabled: adminTab === 'dashboard' || adminTab === 'performance', hasMore: leadsHasMore });
   const dashboardLeads = useMemo(() => (fullStats.leads === allLeads ? leads : scopeLeadsForAccess(fullStats.leads, { role: activeRole, perms, desk: myDesk })), [fullStats.leads, allLeads, leads, activeRole, perms, myDesk]);
   const setAdminTab = useCallback((tab) => {
     setLocalAdminTab(tab);
@@ -986,7 +986,8 @@ export const CrmAdminPanel = ({
       {adminTab === 'performance' && (
         (isSuperRole || perms.includes('ld.manage')) ? (
           <ReportsHub
-            leads={leads}
+            leads={dashboardLeads}
+            coverage={fullStats.coverage}
             properties={properties}
             demands={demands}
             intake={intake}
