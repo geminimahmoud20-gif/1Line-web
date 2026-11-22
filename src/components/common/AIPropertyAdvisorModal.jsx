@@ -3,6 +3,7 @@ import { Building, Sparkles, X, Send, PhoneCall, ArrowRight, ArrowLeft } from 'l
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { getAreas } from '../../utils/areasData';
 import { areaMarketStats, budgetMatches } from '../../utils/marketStats';
+import './AIPropertyAdvisorModal.app.css';
 
 // Questions with fixed, honest answers. Price and budget answers are computed from the listings
 // published right now (utils/marketStats), never typed-in market figures.

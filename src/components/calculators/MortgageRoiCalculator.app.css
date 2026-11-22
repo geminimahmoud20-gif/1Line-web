@@ -1,0 +1,147 @@
+/* Moved out of App.css: used only by MortgageRoiCalculator (loaded with it, not on every page) */
+.calc-tab-switcher-centered {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.calc-inputs-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.calc-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.calc-field-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.calc-dual-inputs-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.direct-curr-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+[dir="ltr"] .direct-curr-tag {
+  margin-right: 0;
+  margin-left: 4px;
+}
+.calc-slider-track-wrap {
+  direction: ltr !important;
+  width: 100%;
+  margin: 6px 0;
+}
+.calc-programs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+@media (max-width: 600px) {
+  .calc-programs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.prog-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.calc-results-card {
+  background: linear-gradient(145deg, #081a30 0%, #0c2d54 60%, #051426 100%);
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: 0 20px 40px -10px rgba(7, 18, 36, 0.45), 0 0 25px rgba(2, 132, 199, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.result-highlight-box {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.result-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  display: block;
+}
+.result-center-gold-line {
+  width: 50px;
+  height: 3px;
+  background: var(--accent-gold);
+  border-radius: var(--radius-pill);
+  margin: 10px auto 0;
+}
+.calc-visual-allocation-wrap {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+.allocation-bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 6px;
+}
+.multi-segment-bar {
+  display: flex;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.seg-downpayment {
+  background: var(--accent-gold);
+  transition: width 0.4s ease;
+}
+.seg-principal {
+  background: #38bdf8;
+  transition: width 0.4s ease;
+}
+.allocation-legend-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 700;
+}
+.text-blue-light {
+  color: #93c5fd !important;
+}
+.calc-cta-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  font-weight: 900;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.calc-cta-btn:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+  transform: translateY(-1px);
+}

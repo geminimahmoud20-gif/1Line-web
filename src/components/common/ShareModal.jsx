@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Check, Copy, MessageSquare, Share2 } from 'lucide-react';
 import { siteLink } from '../../config/siteConfig';
+import './ShareModal.app.css';
 
 export default function ShareModal({ isOpen, onClose, lang = 'ar', triggerToast, shareData }) {
   const [copied, setCopied] = useState(false);

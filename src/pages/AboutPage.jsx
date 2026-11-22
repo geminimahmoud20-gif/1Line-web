@@ -10,6 +10,7 @@ import { readablePhone } from '../utils/phoneDisplay';
 import { sectionOn, visibleCompanyFacts } from '../utils/aboutProfile';
 import { AboutCompanyFacts, AboutTeam, AboutGallery } from '../components/about/AboutProfileSections';
 import AboutShareCard from '../components/about/AboutShareCard';
+import './AboutPage.app.css';
 
 // The questions (by category, with FAQPage schema) live here rather than on the long homepage
 const FaqSection = lazy(() => import('../components/home/FaqSection'));

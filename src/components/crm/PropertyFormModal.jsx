@@ -15,6 +15,7 @@ import './property-amenities.css';
 import AreaOptions from '../common/AreaOptions';
 import { useConfirm } from '../ui';
 import { isPlanType, planPrice } from '../../utils/paymentTerms';
+import './PropertyFormModal.app.css';
 
 export default function PropertyFormModal({
   areas,

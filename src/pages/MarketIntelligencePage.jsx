@@ -10,6 +10,7 @@ import { mainAreas, areaPathName } from '../utils/areaLookup';
 import '../components/market/market-page.css';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { countPhrase } from '../utils/arabicCount';
+import './MarketIntelligencePage.app.css';
 
 export default function MarketIntelligencePage({ lang = 'ar', properties = [], projects = [] }) {
   const navigate = useNavigate();

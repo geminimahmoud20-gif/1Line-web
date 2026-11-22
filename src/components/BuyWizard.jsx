@@ -26,6 +26,7 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 import AreaOptions from './common/AreaOptions';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
+import './BuyWizard.app.css';
 
 export const BuyWizard = ({ 
   lang = 'ar', 

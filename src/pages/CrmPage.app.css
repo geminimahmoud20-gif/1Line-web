@@ -1,0 +1,82 @@
+/* Moved out of App.css: used only by CrmPage (loaded with it, not on every page) */
+.crm-login-fullscreen {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: radial-gradient(circle at center, #0d48a1 0%, #091a33 70%, #061124 100%);
+}
+.crm-lock-emblem {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(13, 72, 161, 0.08);
+  border: 2px solid var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+.crm-login-title-wrap h2 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.crm-login-title-wrap p {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+.crm-login-form-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: right;
+}
+[dir="ltr"] .crm-login-form-box {
+  text-align: left;
+}
+.crm-input-group label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 6px;
+}
+.input-icon-left {
+  position: absolute;
+  right: 14px;
+  color: var(--text-muted);
+}
+[dir="ltr"] .input-icon-left {
+  right: auto;
+  left: 14px;
+}
+.crm-auth-error-alert {
+  background: rgba(229, 36, 39, 0.08);
+  border: 1px solid rgba(229, 36, 39, 0.25);
+  color: var(--rose);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+.crm-submit-btn {
+  padding: 13px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  margin-top: 4px;
+}
+.crm-login-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}

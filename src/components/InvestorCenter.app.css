@@ -1,0 +1,78 @@
+/* Moved out of App.css: used only by InvestorCenter (loaded with it, not on every page) */
+.input-with-tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-with-tag input[type="number"]::-webkit-outer-spin-button,
+.input-with-tag input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-with-tag input[type="number"] {
+  -moz-appearance: textfield;
+  padding-left: 42px !important;
+  text-align: right;
+  direction: ltr;
+}
+[dir="ltr"] .input-with-tag input[type="number"] {
+  padding-left: 14px !important;
+  padding-right: 42px !important;
+  text-align: left;
+}
+.input-tag {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-muted, #64748b);
+  pointer-events: none;
+  user-select: none;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+  line-height: 1;
+}
+[dir="ltr"] .input-tag {
+  left: auto;
+  right: 14px;
+}
+.prospectus-download-bar {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-download-prospectus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #fdcb42 0%, #e6a817 100%);
+  color: #051937;
+  border: none;
+  border-radius: 9px;
+  padding: 9px 18px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(253, 203, 66, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-download-prospectus:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(253, 203, 66, 0.5);
+  background: linear-gradient(135deg, #ffe082 0%, #fdcb42 100%);
+}
+.btn-download-prospectus:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+.meeting-format-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}

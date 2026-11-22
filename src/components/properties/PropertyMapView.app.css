@@ -1,0 +1,332 @@
+/* Moved out of App.css: used only by PropertyMapView (loaded with it, not on every page) */
+.property-map-view-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.fullscreen-map-active {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+}
+.interactive-leaflet-map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.map-pill-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-color);
+  margin: 0 2px;
+}
+.map-districts-quick-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+.property-map-view-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+.property-map-view-wrapper.fullscreen-map-active {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 3500 !important;
+  border-radius: 0 !important;
+}
+.map-pill-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  align-self: center;
+}
+.btn-fullscreen-toggle {
+  color: #ffffff !important;
+  font-weight: 800;
+}
+.custom-leaflet-property-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.pin-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+.pin-price-label {
+  letter-spacing: 0.3px;
+  font-size: 0.85rem;
+}
+.pin-pulse-radar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.4);
+  animation: pinRadarPulse 2s infinite ease-out;
+  pointer-events: none;
+}
+.luxury-map-popup-card {
+  width: 100%;
+}
+.popup-thumb-wrap {
+  position: relative;
+  height: 120px;
+  width: 100%;
+}
+.popup-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.popup-badge-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.popup-details-body {
+  padding: 12px 14px;
+}
+.popup-property-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.popup-loc-row {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.popup-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--primary);
+}
+.popup-size {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--secondary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.map-type-quick-chips {
+  position: absolute;
+  top: 68px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1000;
+  background: rgba(8, 18, 38, 0.88);
+  backdrop-filter: blur(12px);
+  padding: 5px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 202, 40, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+[dir="ltr"] .map-type-quick-chips {
+  right: auto;
+  left: 18px;
+}
+.custom-landmark-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.landmark-map-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.landmark-map-pin:hover {
+  transform: scale(1.25);
+}
+.landmark-halo {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(168, 85, 247, 0) 70%);
+  animation: landmarkPulse 2.4s infinite ease-out;
+}
+.landmark-icon-badge {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border: 2px solid #a855f7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.landmark-leaflet-tooltip {
+  background: #ffffff !important;
+  border: 1px solid #c084fc !important;
+  border-radius: 8px !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
+}
+.district-intelligence-hud-card {
+  position: absolute;
+  bottom: 24px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(8, 18, 38, 0.94);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 202, 40, 0.45);
+  border-radius: 16px;
+  padding: 16px 20px;
+  max-width: 330px;
+  width: calc(100% - 40px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55), 0 0 20px rgba(255, 202, 40, 0.15);
+  color: #ffffff;
+  animation: hudFadeSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[dir="ltr"] .district-intelligence-hud-card {
+  right: auto;
+  left: 20px;
+}
+.hud-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+.hud-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-header-title strong {
+  font-size: 1.02rem;
+  color: #ffca28;
+  letter-spacing: 0.2px;
+}
+.hud-close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.hud-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+.hud-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.hud-metric-box {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 7px 10px;
+  border-radius: 10px;
+}
+.hud-metric-label {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  display: block;
+  margin-bottom: 2px;
+}
+.hud-metric-val {
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+.growth-box {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.growth-val {
+  color: #34d399 !important;
+}
+.hud-demand-note {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+.hud-filter-action-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--gradient-gold);
+  color: #081226;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hud-filter-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+.district-polygon-leaflet-tooltip {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(13, 72, 161, 0.25) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15) !important;
+  padding: 4px 8px !important;
+}
+.district-polygon-leaflet-tooltip::before {
+  border-top-color: rgba(255, 255, 255, 0.98) !important;
+}
+.district-intelligence-hud-card {
+  animation: hudSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

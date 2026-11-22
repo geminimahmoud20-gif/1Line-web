@@ -15,6 +15,7 @@ import { thumbUrl } from '../../utils/imageThumbs';
 import { siteLink } from '../../config/siteConfig';
 import { blockedByApproval } from '../../utils/publishApproval';
 import { paymentTerms, planSummary } from '../../utils/paymentTerms';
+import './PropertyCompareDrawer.app.css';
 
 export default function PropertyCompareDrawer({
   isOpen,

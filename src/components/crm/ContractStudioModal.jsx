@@ -4,6 +4,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import { getDynamicPhone, openWhatsAppSafely } from '../../utils/founderCmsData';
 import { BRAND } from '../../config/siteConfig';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import './ContractStudioModal.app.css';
 
 /**
  * ContractStudioModal Component

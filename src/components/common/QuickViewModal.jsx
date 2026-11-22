@@ -20,6 +20,7 @@ import { cardFeatures } from '../../utils/buildingFeatures';
 import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import './quickview.css';
 import { siteLink } from '../../config/siteConfig';
+import './QuickViewModal.app.css';
 
 export default function QuickViewModal({ 
   property, 

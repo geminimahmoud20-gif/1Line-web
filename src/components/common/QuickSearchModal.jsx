@@ -5,6 +5,7 @@ import { getAreas } from '../../utils/areasData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { areaPrice } from '../../utils/areaPricing.js';
 import { thumbUrl } from '../../utils/imageThumbs';
+import './QuickSearchModal.app.css';
 
 export default function QuickSearchModal({
   isOpen,

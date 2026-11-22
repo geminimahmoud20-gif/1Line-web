@@ -1,0 +1,62 @@
+/* Moved out of App.css: used only by PropertiesPage (loaded with it, not on every page) */
+.compact-trust-strip {
+  padding: 5px 24px;
+}
+.properties-main-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 20px 48px;
+}
+.grid-view-container {
+  width: 100%;
+  animation: luxuryGridFade 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.split-view-container {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 24px;
+  align-items: start;
+  animation: luxuryGridFade 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.properties-grid-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+  gap: 18px;
+}
+@media (max-width: 1200px) {
+  .split-view-container {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 1200px) {
+  .split-map-column {
+    height: 420px;
+    margin-bottom: 20px;
+    order: -1;
+  }
+}
+@media (max-width: 1200px) {
+  .properties-grid-split {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 660px) {
+  .properties-grid-split {
+    grid-template-columns: 1fr;
+  }
+}
+.split-map-column {
+  position: sticky;
+  top: 90px;
+  height: calc(100vh - 120px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+@media (max-width: 1024px) {
+  .split-view-container { grid-template-columns: 1fr; }
+}
+@media (max-width: 1024px) {
+  .split-map-column { position: relative; top: 0; height: 350px; margin-top: 24px; }
+}

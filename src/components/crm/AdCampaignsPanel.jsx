@@ -14,6 +14,7 @@ import { subscribeToAdStats } from '../../firebaseLazy';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import './homepage-slots.css';
 import ImageUploadField from './ImageUploadField';
+import './AdCampaignsPanel.app.css';
 
 const PLACEMENTS = {
   hero: { ar: 'خلفية الصفحة الرئيسية', en: 'Homepage hero', hint_ar: 'صورة 1920×1080 للكمبيوتر + 900×1200 للموبايل، أقل من 400KB. العنوان والبحث يبقيان فوقها.' },

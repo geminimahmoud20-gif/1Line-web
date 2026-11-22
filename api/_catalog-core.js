@@ -2,6 +2,7 @@
 //  Pure helpers for api/catalog.js (no network), unit-tested in tests/unit/catalog-core.test.mjs.
 // =============================================================
 
+import { tidyListing } from '../src/utils/listingSpelling.js';
 export const CATALOG_COLLECTIONS = ['properties', 'projects'];
 export const PAGE_SIZE = 300;
 export const MAX_DOCS = 5000;
@@ -65,6 +66,7 @@ export function toCatalogItems(documents = []) {
     const id = data.id ?? docId;
     const offSite = data.deleted || data.approval === 'pending' || data.approval === 'rejected'
       || OFF_SITE_STATUSES.includes(data.status);
-    return offSite ? { id, deleted: true, updatedAt: data.updatedAt || null } : { ...data, id };
+    // Spelling slips in titles/descriptions are fixed here, so pages, Google and WhatsApp previews get the right text
+    return offSite ? { id, deleted: true, updatedAt: data.updatedAt || null } : tidyListing({ ...data, id });
   });
 }

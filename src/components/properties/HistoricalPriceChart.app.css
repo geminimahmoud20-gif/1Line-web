@@ -1,0 +1,66 @@
+/* Moved out of App.css: used only by HistoricalPriceChart (loaded with it, not on every page) */
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.chart-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chart-icon-glow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+.chart-title-wrap h4 {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.chart-title-wrap p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.growth-summary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+.chart-svg-container {
+  width: 100%;
+  margin: 10px 0;
+  overflow-x: auto;
+}
+.price-trends-svg {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+}
+.chart-footer-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}

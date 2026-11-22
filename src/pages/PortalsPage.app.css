@@ -1,0 +1,19 @@
+/* Moved out of App.css: used only by PortalsPage (loaded with it, not on every page) */
+.portal-page-wrapper {
+  background: var(--bg-slate);
+  min-height: 80vh;
+  padding-bottom: 80px;
+}
+.portal-page-wrapper {
+  padding-bottom: 80px;
+  background: var(--bg-slate);
+  min-height: 100vh;
+}
+.portal-hero-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.portal-main-container {
+  max-width: 900px;
+  margin: 0 auto;
+}

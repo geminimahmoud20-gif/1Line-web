@@ -66,6 +66,7 @@ import { getAreas } from '../utils/areasData';
 import { formArea } from '../utils/areaLookup';
 import { userDisplayName } from '../utils/assignees';
 import { setActorName } from '../utils/actorName';
+import './CrmPage.app.css';
 
 // Sections a link can open directly: /crm?tab=… (desktop-app shortcuts, WhatsApp alerts, tapped notifications)
 const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'properties', 'demands', 'projects', 'expat', 'trade_ins', 'chat'];

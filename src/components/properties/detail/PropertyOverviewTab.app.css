@@ -1,0 +1,13 @@
+/* Moved out of App.css: used only by PropertyOverviewTab (loaded with it, not on every page) */
+.features-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.feature-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}

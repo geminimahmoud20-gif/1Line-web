@@ -42,6 +42,7 @@ import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
 import { blockedByApproval } from '../utils/publishApproval';
 import { reportLinkOpen } from '../utils/linkOpen';
+import './PropertyDetailPage.app.css';
 
 const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 

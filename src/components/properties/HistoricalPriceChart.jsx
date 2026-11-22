@@ -1,4 +1,5 @@
 import { TrendingUp, Award, ArrowUpRight } from 'lucide-react';
+import './HistoricalPriceChart.app.css';
 
 export default function HistoricalPriceChart({ customPoints = null, lang = 'ar' }) {
   const isAr = lang === 'ar';

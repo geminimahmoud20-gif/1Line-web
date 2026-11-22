@@ -5,6 +5,7 @@ import { getAreaById, getAreas } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
 import { areaReferencePrice } from '../../utils/areaPricing';
 import { assetClass } from '../../utils/marketStats';
+import './PriceBenchmarkIndicator.app.css';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
   const isAr = lang === 'ar';

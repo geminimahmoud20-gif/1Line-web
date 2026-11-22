@@ -6,6 +6,7 @@ import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { readAccounts } from '../../utils/clientAccounts';
 import '../../styles/client-auth-modes.css';
 import { nameProblem, phoneProblem } from '../../utils/contactValidation';
+import './ClientAuthModal.app.css';
 
 export default function ClientAuthModal({ lang = 'ar' }) {
   const isAr = lang === 'ar';

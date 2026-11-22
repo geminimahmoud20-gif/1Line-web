@@ -6,6 +6,7 @@ import { getWhatsAppUrl } from '../../utils/founderCmsData.js';
 import { trackEvent } from '../../utils/visitorTracker.js';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { siteLink } from '../../config/siteConfig';
+import './FavoritesDrawer.app.css';
 
 export default function FavoritesDrawer({
   isOpen,

@@ -1,6 +1,7 @@
 import { LEAD_TYPE_NAMES, PROPERTY_TYPE_NAMES, STAGE_CONFIG, getAreaDisplayName } from '../../pages/ClientAccountPageData';
 import { Link } from 'react-router-dom';
 import { Building, Sparkles, FileText, MapPin, ExternalLink, MessageSquare, Calendar, Clock, Car, Tag } from 'lucide-react';
+import './AccountInquiriesTab.app.css';
 
 export default function AccountInquiriesTab({
   clientDemands,

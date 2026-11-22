@@ -49,6 +49,7 @@ import { useProperties } from '../../context/PropertiesContext';
 import { paymentTerms, paymentFields, paymentProblem, planPrice } from '../../utils/paymentTerms';
 import { areaFamily } from '../../utils/areaLookup';
 import { linkedContactLead, leadWithPhone, listingContactProblem, listingContactLead } from '../../utils/listingContact';
+import { tidyListing } from '../../utils/listingSpelling';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -582,6 +583,7 @@ export default function PropertyManagerPanel({
     const cleanForm = {
       ...formFields,
       ...paymentFields(form),
+      ...tidyListing({ title_ar: formFields.title_ar, description_ar: formFields.description_ar }),
       price: listPrice,
       category: categoryOfType(form.type),
       bedrooms: hasNoRooms(form.type) ? 0 : (parseInt(form.bedrooms) || 0),

@@ -10,6 +10,7 @@ import { mapLayout, pinPriceLabel, escapeHtml } from '../../utils/mapPins';
 import { sizeLabel } from '../../utils/propertyKinds';
 import { getAreas } from '../../utils/areasData';
 import { thumbUrl } from '../../utils/imageThumbs';
+import './PropertyMapView.app.css';
 
 // Area centre from the areas the CRM manages ({ lat, lng }), used for the area bubbles
 const areaCenterOf = (key) => {

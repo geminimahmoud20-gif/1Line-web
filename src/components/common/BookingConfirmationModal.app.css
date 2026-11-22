@@ -1,0 +1,290 @@
+/* Moved out of App.css: used only by BookingConfirmationModal (loaded with it, not on every page) */
+.booking-receipt-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  max-width: 580px;
+  width: 100%;
+  padding: 34px 28px;
+  position: relative;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 30px rgba(16, 185, 129, 0.15);
+  animation: receiptPopIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--text-primary);
+  text-align: center;
+  box-sizing: border-box;
+}
+@media (max-width: 640px) {
+  .booking-receipt-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 28px 18px !important;
+    border-radius: 20px !important;
+  }
+}
+@media (max-width: 640px) {
+  .receipt-main-title {
+    font-size: 1.35rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 8px !important;
+  }
+}
+@media (max-width: 640px) {
+  .receipt-subtitle {
+    font-size: 0.94rem !important;
+    line-height: 1.6 !important;
+    margin-bottom: 18px !important;
+  }
+}
+@media (max-width: 640px) {
+  .receipt-serial-badge-box {
+    padding: 14px 16px !important;
+    margin-bottom: 16px !important;
+  }
+}
+@media (max-width: 640px) {
+  .copy-serial-btn {
+    padding: 6px 12px !important;
+    font-size: 0.82rem !important;
+  }
+}
+@media (max-width: 640px) {
+  .receipt-details-list {
+    font-size: 0.92rem !important;
+    gap: 10px !important;
+    padding: 14px 14px !important;
+  }
+}
+@media (max-width: 640px) {
+  .btn-whatsapp-confirm {
+    padding: 14px 18px !important;
+    font-size: 0.95rem !important;
+    min-height: 48px !important;
+    border-radius: 12px !important;
+  }
+}
+.close-receipt-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+[dir="ltr"] .close-receipt-btn {
+  left: auto;
+  right: 18px;
+}
+.close-receipt-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+.receipt-success-icon-wrap {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 185, 129, 0.12);
+  border-radius: 50%;
+}
+.receipt-check-icon {
+  color: #10b981;
+  position: relative;
+  z-index: 2;
+}
+.receipt-pulse-ring {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.35);
+  animation: receiptPulseRing 2.5s infinite;
+}
+.receipt-main-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  margin: 0 0 6px;
+  color: var(--text-primary);
+}
+.receipt-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+.receipt-serial-badge-box {
+  background: var(--bg-card-hover, #f8fafc);
+  border: 1.5px dashed var(--accent-gold-border, rgba(245, 158, 11, 0.4));
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+}
+.serial-label {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.serial-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.copy-serial-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.copy-serial-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--brand-gold-warm);
+}
+.receipt-details-list {
+  background: var(--bg-card-hover, #f8fafc);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  text-align: right;
+  font-size: 0.86rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+[dir="ltr"] .receipt-details-list {
+  text-align: left;
+}
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.r-label {
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.r-val {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+.receipt-actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.btn-whatsapp-confirm {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  padding: 13px 20px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+  transition: all 0.25s ease;
+}
+.btn-whatsapp-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.4);
+}
+.btn-call-desk {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 11px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.btn-call-desk:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--brand-navy-light);
+}
+.receipt-sub-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.btn-print-ticket {
+  background: var(--bg-card-hover, #f1f5f9);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-print-ticket:hover {
+  background: var(--bg-card);
+  border-color: var(--brand-gold-warm, #d97706);
+  color: var(--brand-gold-warm, #d97706);
+}
+@media print {
+  .booking-receipt-card,
+  .booking-receipt-card * {
+    visibility: visible;
+  }
+}
+@media print {
+  .booking-receipt-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    width: 100% !important;
+    max-width: 600px !important;
+    padding: 24px !important;
+  }
+}
+@media print {
+  .close-receipt-btn,
+  .receipt-actions-grid {
+    display: none !important;
+  }
+}

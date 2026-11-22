@@ -1,0 +1,292 @@
+/* Moved out of App.css: used only by QuickSearchModal (loaded with it, not on every page) */
+.omnisearch-backdrop {
+  align-items: flex-start !important;
+  padding-top: 10vh !important;
+}
+.omnisearch-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 22px;
+  width: 92%;
+  max-width: 680px;
+  box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.45), 0 0 35px rgba(217, 119, 6, 0.12);
+  overflow: hidden;
+  animation: omnisearchSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+.omnisearch-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+.omnisearch-icon {
+  color: var(--brand-gold-warm, #d97706);
+  flex-shrink: 0;
+}
+.omnisearch-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.omnisearch-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.omnisearch-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.omnisearch-clear-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+.omnisearch-esc-pill {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border-color);
+  padding: 2px 7px;
+  border-radius: 6px;
+  line-height: 1.2;
+}
+.omnisearch-popular-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 22px;
+  background: var(--bg-card-hover);
+  border-bottom: 1px solid var(--border-color);
+}
+.tags-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+.tags-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.search-tag-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.search-tag-chip:hover {
+  border-color: var(--brand-gold-warm);
+  color: var(--brand-gold-warm);
+  transform: translateY(-1px);
+}
+.omnisearch-results-scroll {
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.omnisearch-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.section-title-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--brand-gold-warm, #d97706);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+}
+.results-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.item-thumb-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+}
+.area-icon-box {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+.project-icon-box {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--brand-gold-warm, #d97706);
+}
+.tool-icon-box {
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+}
+.item-text-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  text-align: right;
+}
+[dir="ltr"] .item-text-info {
+  text-align: left;
+}
+.item-main-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-sub-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-end-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+[dir="ltr"] .item-end-price {
+  align-items: flex-start;
+}
+.item-price-val {
+  font-size: 0.86rem;
+  color: var(--brand-gold-warm, #d97706);
+  font-weight: 800;
+}
+.item-badge-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+.area-meter-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.area-meter-val {
+  font-size: 0.84rem;
+  color: #10b981;
+  font-weight: 800;
+}
+.project-status-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.1);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.omnisearch-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  gap: 8px;
+}
+.omnisearch-empty-state h4 {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+.omnisearch-empty-state p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  max-width: 380px;
+  margin: 0 0 12px 0;
+}
+.omnisearch-footer-hints {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+.hint-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hint-pill kbd {
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border-color);
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+.enter-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 640px) {
+  .omnisearch-backdrop {
+    padding-top: 4vh !important;
+  }
+}
+@media (max-width: 640px) {
+  .omnisearch-card {
+    border-radius: 18px;
+  }
+}
+@media (max-width: 640px) {
+  .omnisearch-footer-hints {
+    display: none;
+  }
+}

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { countLabel } from '../../utils/arabicCount';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { floorSpec } from '../../utils/propertyKinds';
+import './CompareColumn.app.css';
 
 // One property's column in the comparison matrix.
 export default function CompareColumn({ prop, isAr, lang, currency, verdicts, customDownPercent, onRemoveFromCompare, activeTab, setCustomDownPercent, onClose }) {

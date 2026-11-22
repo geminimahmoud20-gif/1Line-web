@@ -1,0 +1,13 @@
+/* Moved out of App.css: used only by BrandWatermark (loaded with it, not on every page) */
+.watermark-text-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.watermark-brand-sub {
+  font-size: 0.48rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 1px;
+  margin-top: 1px;
+}

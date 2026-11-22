@@ -1,0 +1,33 @@
+/* Moved out of App.css: used only by BuyWizard (loaded with it, not on every page) */
+.phase-text {
+  display: flex;
+  flex-direction: column;
+}
+.phase-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.phase-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+.phase-line {
+  flex-grow: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 16px;
+}
+.cert-perk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-next-phase {
+  padding: 13px 28px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+@media (max-width: 768px) {
+  .phase-line { display: none; }
+}

@@ -5,6 +5,7 @@ import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import '../../styles/roi-years.css';
 import { roiPlan } from '../../utils/roiPlan';
+import './MortgageRoiCalculator.app.css';
 
 // Big amounts read as 3,500,000 while typing; the field takes digits only
 const groupDigits = (n) => (Number(n) > 0 ? Number(n).toLocaleString('en-US') : '');
