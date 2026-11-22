@@ -3,10 +3,10 @@
 //  The oldest open request with an owner stays; the other requests are written into its history and
 //  archived (never deleted) with mergedInto pointing at it. Pure: tests/unit/dedupe-plan.test.mjs.
 // =============================================================
+import { STAGE_RANK } from './stages.js';
 import { findDuplicateGroups, buildMergedLead, leadCreatedMs, leadSourceKey, LEAD_SOURCES } from './crmLeadViews.js';
 
 const CLOSED = ['closed', 'lost', 'inactive'];
-const STAGE_RANK = { new: 0, contacted: 1, site_visit: 2, negotiating: 3, closing: 4 };
 const TYPE_AR = { buyer: 'شراء', seller: 'بيع', investor: 'استثمار', rent: 'إيجار', tenant: 'إيجار', landlord: 'تأجير', broker: 'وسيط', valuation: 'تقييم عقار' };
 const hasOwner = (l) => Boolean(l.ownerUid || l.ownerName || l.claimedBy);
 

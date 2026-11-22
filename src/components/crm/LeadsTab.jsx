@@ -1,3 +1,4 @@
+import { ALL_STATUSES, STAGE_NAMES } from '../../utils/stages';
 import {
   Download, Trash2, Clock, Plus, UserPlus, SlidersHorizontal, Search, X, RotateCcw, ChevronDown,
   Copy, Upload, Columns3, Rows3, Timer, CopyPlus, Plane, Ban, CalendarClock,
@@ -43,16 +44,7 @@ const COLUMN_OPTIONS = [
   { key: 'agent', ar: 'المسؤول', en: 'Owner' }
 ];
 
-const STAGE_OPTIONS = [
-  { value: 'new', ar: 'عميل محتمل', en: 'Lead' },
-  { value: 'contacted', ar: 'مؤهل', en: 'Qualified' },
-  { value: 'site_visit', ar: 'اجتماع / معاينة', en: 'Meeting / viewing' },
-  { value: 'negotiating', ar: 'تفاوض', en: 'Negotiation' },
-  { value: 'closing', ar: 'إغلاق (توقيع وحجز)', en: 'Closing (signing & deposit)' },
-  { value: 'closed', ar: 'إغلاق', en: 'Closed' },
-  { value: 'inactive', ar: 'غير متفاعل', en: 'Unresponsive' },
-  { value: 'lost', ar: 'خسارة', en: 'Lost' }
-];
+const STAGE_OPTIONS = ALL_STATUSES.map((value) => ({ value, ...STAGE_NAMES[value] }));
 
 const TEMPERATURES = {
   hot: { ar: 'ساخن', en: 'Hot', tone: 'danger' },

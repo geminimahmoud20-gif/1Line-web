@@ -5,18 +5,13 @@
 //  clients, how many are late and how many nobody touched for two days. Pure: tests/unit/flow-report.test.mjs
 // =============================================================
 import { isSellerLead, leadCreatedMs, toMs } from './crmLeadViews.js';
+import { STAGE_LIMIT_HOURS, OPEN_STAGES } from './stages.js';
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
 
-/**
- * How long a client may stay in each stage before he counts as stuck. From the company playbook's stage
- * deliverables (stateMachineEngine STAGE_DEFINITIONS): a new client is qualified or turned away within a day,
- * a qualified one gets his nominations and a viewing booked within three days (24h + 48h), a viewing round
- * takes a week, an offer three days and signing two.
- */
-export const STAGE_LIMIT_HOURS = { new: 24, contacted: 72, site_visit: 168, negotiating: 72, closing: 48 };
-export const OPEN_STAGES = Object.keys(STAGE_LIMIT_HOURS);
+// The stage order and how long a client may stay in each stage live in utils/stages.js (one source for every screen)
+export { STAGE_LIMIT_HOURS, OPEN_STAGES };
 export const IDLE_HOURS = 48;
 
 const isOpen = (l) => l && !l.isArchived && OPEN_STAGES.includes(l.status || 'new');

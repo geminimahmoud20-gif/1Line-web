@@ -5,6 +5,7 @@
 //  a stage (CRM → PropertiesContext.handleUpdateLead, the board, the drawer, the clients table).
 //  The table STAGE_RULES says, per stage, the activity and the outcomes. Pure: tests/unit/stage-gate.test.mjs
 // =============================================================
+import { PIPELINE } from './stages.js';
 import { toMs, leadCreatedMs, LOST_REASONS } from './crmLeadViews.js';
 
 export const OUTCOMES = [
@@ -51,8 +52,7 @@ export const STAGE_RULES = [
 ];
 export const stageRule = (id) => STAGE_RULES.find((s) => s.id === id) || null;
 
-const ORDER = ['new', 'contacted', 'site_visit', 'negotiating', 'closing', 'closed'];
-const rankOf = (s) => ORDER.indexOf(s || 'new');
+const rankOf = (s) => PIPELINE.indexOf(s || 'new');
 const SIDE = ['inactive', 'lost'];
 
 /** The roles that may move a client back */

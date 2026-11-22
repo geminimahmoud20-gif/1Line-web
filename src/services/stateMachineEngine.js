@@ -15,7 +15,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'جديد (طلب وارد)',
     title_en: 'New Inquiry',
     ownerDept: 'ops',
-    slaHours: 0.25, // 15 mins during business hours
     requiredDeliverable: 'تسجيل المصدر وموافقة العميل (قانون 151/2020)',
     handoffTo: 1
   },
@@ -24,7 +23,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'معاينة (مجدولة / منفذة)',
     title_en: 'Site Visit',
     ownerDept: 'sales',
-    slaHours: 168, // 7 days
     requiredDeliverable: 'تقرير معاينة مكتوب وتغذية راجعة من العميل',
     handoffTo: null
   },
@@ -33,7 +31,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'عرض وتفاوض',
     title_en: 'Negotiation & Offer',
     ownerDept: 'sales',
-    slaHours: 72,
     requiredDeliverable: 'عرض شراء مكتوب واستيفاء بنود البوابة 2',
     handoffTo: 7
   },
@@ -42,7 +39,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'حجز وعقود (البوابة 3)',
     title_en: 'Contract & Gate 3',
     ownerDept: 'founder',
-    slaHours: 48,
     requiredDeliverable: 'قائمة تدقيق البوابة 3 موثقة من المؤسس والمحامي',
     handoffTo: 8
   },
@@ -51,7 +47,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'صفقة مغلقة وتحصيل',
     title_en: 'Closed Won',
     ownerDept: 'founder',
-    slaHours: 24,
     requiredDeliverable: 'تسجيل السعر المنفذ وفاتورة العمولة وجدول التحصيل',
     handoffTo: 9
   },
@@ -60,7 +55,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'غير متفاعل',
     title_en: 'Unresponsive',
     ownerDept: 'sales',
-    slaHours: null,
     requiredDeliverable: null,
     handoffTo: null
   },
@@ -69,7 +63,6 @@ export const STAGE_DEFINITIONS = {
     title_ar: 'صفقة خاسرة / مغلقة',
     title_en: 'Closed Lost',
     ownerDept: 'sales',
-    slaHours: null,
     requiredDeliverable: 'سبب الخسارة الإلزامي وملاحظات التحليل',
     handoffTo: null
   }

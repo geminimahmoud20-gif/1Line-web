@@ -3,6 +3,7 @@
 //  Pure functions over the leads already on the screen, so the clients list can show it for
 //  whoever is picked in the owner filter (and a table of everyone).
 // =============================================================
+import { OPEN_STAGES } from './stages.js';
 import { assigneeValue } from './assignees.js';
 import { outcomeById, OUTCOME_OF_CALL } from './stageGate.js';
 import { periodMetrics, compareMetrics } from './performanceReport.js';
@@ -11,7 +12,7 @@ import { toMs, leadCreatedMs, isOverdue, isStale, localDayKey, waitingMs, respon
 export { OWNER_ALL, OWNER_NONE, matchesOwner } from './crmLeadViews.js';
 import { OWNER_NONE } from './crmLeadViews.js';
 
-const STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
+const STAGES = OPEN_STAGES;
 
 /**
  * The picture of one person's clients: how many in each stage, how many are waiting for a first
