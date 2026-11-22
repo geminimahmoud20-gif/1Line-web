@@ -4,7 +4,7 @@ import { SHARE_PAGES, sharePagesFor, sharePageMessage } from '../../src/utils/sh
 
 test('every page has a path, a label and a message', () => {
   for (const p of SHARE_PAGES) {
-    assert.match(p.path, /^\/[a-z-]+$/);
+    assert.match(p.path, /^\/[a-z-]+(\?[a-z0-9=&]+)?$/);
     assert.ok(p.ar && p.msg);
   }
 });
@@ -21,4 +21,12 @@ test('the message greets the client and links the page with the CRM tag', () => 
   assert.match(msg, /^أهلاً أستاذ محمود، /);
   assert.match(msg, /https:\/\/www\.1lineestate\.com\/match\?utm_source=crm_whatsapp&utm_medium=staff_share$/);
   assert.match(sharePageMessage(page, { siteUrl: 'https://x.com' }), /^أهلاً بحضرتك، /);
+});
+
+test('the buyer request form has its own link, which opens the form', () => {
+  const page = SHARE_PAGES.find((p) => p.ar === 'نموذج طلب مشتري');
+  assert.equal(page.path, '/demands?new=1');
+  const text = sharePageMessage(page, { name: 'محمد علي', siteUrl: 'https://www.1lineestate.com' });
+  assert.match(text, /https:\/\/www\.1lineestate\.com\/demands\?new=1&utm_source=crm_whatsapp/);
+  assert.match(text, /^أهلاً أستاذ محمد/);
 });
