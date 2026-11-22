@@ -240,6 +240,18 @@ function AppContent() {
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
 
+  // /demands?new=1 is the buyer request form itself, to share on WhatsApp: it opens the form, then drops the flag so
+  // closing it (or a refresh) does not open it again
+  useEffect(() => {
+    if (location.pathname !== '/demands') return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('new') !== '1') return;
+    setAddDemandModalOpen(true);
+    params.delete('new');
+    const rest = params.toString();
+    navigate({ pathname: location.pathname, search: rest ? `?${rest}` : '', hash: location.hash }, { replace: true });
+  }, [location.pathname, location.search, location.hash, navigate, setAddDemandModalOpen]);
+
   // Titles/descriptions for routes whose page components don't manage their own SEO
   useEffect(() => {
     const seo = ROUTE_SEO[location.pathname];
