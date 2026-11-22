@@ -73,6 +73,23 @@
             box.appendChild(d);
           }
           document.body.appendChild(box);
+          // Which files the page asked for never answered (a stalled or blocked download) or answered with an error status
+          try {
+            var seen = {};
+            (performance.getEntriesByType('resource') || []).forEach(function (r) { seen[r.name] = r; });
+            var bad = [];
+            Array.prototype.forEach.call(document.querySelectorAll('script[type="module"][src],link[rel="modulepreload"],link[rel="stylesheet"]'), function (el) {
+              var u = el.src || el.href; if (!u) return;
+              var e = seen[u], n = u.split('/').pop();
+              if (!e) bad.push('no answer: ' + n);
+              else if (e.responseStatus >= 400 || (e.responseStatus === 0 && !e.transferSize && !e.decodedBodySize)) bad.push((e.responseStatus || 'failed') + ': ' + n);
+            });
+            if (bad.length) {
+              var f = document.createElement('small'); f.style.cssText = 'opacity:.6;direction:ltr;max-width:90vw;overflow-wrap:anywhere';
+              f.textContent = bad.slice(0, 4).join(' | ') + (bad.length > 4 ? ' (+' + (bad.length - 4) + ')' : '');
+              box.appendChild(f);
+            }
+          } catch (x) { /* diagnostics only */ }
           // Probe the app's own entry script so the screenshot says what the server returned for it
           var ms = document.querySelector('script[type="module"][src]');
           if (ms && window.fetch) {
