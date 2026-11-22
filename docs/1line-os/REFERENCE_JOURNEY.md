@@ -1,5 +1,7 @@
 # 1Line OS - End-to-End Reference Customer Journey (دليل رحلة العميل المرجعية)
 
+> **تحديث (نوفمبر 2026):** `src/services/referenceCustomerJourney.js` (المحاكاة المرجعية) واختباراتها اتشالوا من الكود لأنهم ما كانوش متوصلين بالتطبيق، والأمثلة اللي تحت بتشاور على ملف مش موجود. قواعد المراحل الفعلية في `src/utils/stageGate.js` و`src/services/stateMachineEngine.js`.
+
 ## نظرة عامة
 تحدد هذه الوثيقة الرحلة المرجعية الرسمية للعميل المشتري (Buyer Customer Journey) في نظام **1Line OS** لقطاع العقارات بسوهاج والقاهرة، استناداً إلى كتاب قواعد الشركة (Company Playbook) المعتمد من د. محمود الباز.
 
