@@ -150,3 +150,14 @@
 .org-input { width: 72px; min-height: 36px; padding: 4px 8px; font-size: var(--ui-fs-2); text-align: center; }
 .pr-pill.is-good { color: var(--ui-success); }
 .pr-pill.is-bad { color: var(--ui-danger); }
+
+/* «المؤشرات»: a coloured edge says where each number stands against its target */
+.kpi-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; color: var(--ui-text-2); font-size: var(--ui-fs-2); }
+.kpi-card { border-inline-start: 4px solid var(--ui-line); display: flex; flex-direction: column; gap: 4px; }
+.kpi-card--good { border-inline-start-color: var(--ui-success); }
+.kpi-card--ok { border-inline-start-color: var(--ui-warning); }
+.kpi-card--bad { border-inline-start-color: var(--ui-danger); }
+.kpi-card .pr-pill { align-self: flex-start; }
+.pr-pill.is-ok { color: var(--ui-warning); background: var(--ui-warning-tint); }
+.kpi-summary .pr-pill.is-good, .kpi-card .pr-pill.is-good { background: var(--ui-success-tint); }
+.kpi-summary .pr-pill.is-bad, .kpi-card .pr-pill.is-bad { background: var(--ui-danger-tint); }
