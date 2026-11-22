@@ -35,6 +35,7 @@ import TaskReminders from '../components/crm/TaskReminders';
 import MessagesHub from '../components/crm/MessagesHub';
 import { useCampaignNames } from '../utils/campaignNames';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
+import LeadsLoadError from '../components/crm/LeadsLoadError';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
 import { BRAND } from '../config/siteConfig';
 import '../components/crm/CrmLayout.css';
@@ -970,6 +971,7 @@ export default function CrmPage({
           <MessagesHub uid={currentUser?.uid} lang={lang} hidden={activeTab === 'chat'} onOpenMention={openMention} />
           {/* The setup notices share one card instead of stacking as separate boxes above every page */}
           <div className="crm-notices">
+            <LeadsLoadError />
             {can.editLeads && (
               <PushReminderPrompt manager={Boolean(can.campaigns)} name={userDisplayName(currentUser)} />
             )}

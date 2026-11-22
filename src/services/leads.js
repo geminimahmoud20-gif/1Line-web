@@ -247,14 +247,15 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
       followLeadIds();
       emit();
     }, (err) => {
-      // Guests and non-CRM accounts have no lead access — expected, stay quiet
-      if (err && err.code === 'permission-denied') return;
       if (desk && deskOrdered && err?.code === 'failed-precondition') {
         deskOrdered = false;
         start();
         return;
       }
-      console.warn('Firebase subscribeToLeads snapshot warning:', err);
+      // Guests and site accounts are refused too (expected). The CRM decides whether to show it: a team member who
+      // gets no clients at all used to see empty pages and zeros with no reason (App Check, quota, rules).
+      if (err?.code !== 'permission-denied') console.warn('Firebase subscribeToLeads snapshot warning:', err);
+      callback(null, { error: err?.code || 'unknown' });
     }); };
     start();
     return () => { unsubLeads(); stopContacts(); };

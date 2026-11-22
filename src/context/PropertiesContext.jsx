@@ -816,14 +816,18 @@ export function PropertiesProvider({ children }) {
   // when the live window refreshes.
   const [leadsWindow, setLeadsWindow] = useState(LEADS_PAGE);
   const [leadsHasMore, setLeadsHasMore] = useState(false);
+  const [leadsError, setLeadsError] = useState('');
   useEffect(() => {
     if (!isFirebaseActive()) return undefined;
       const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
+        if (meta?.error) { setLeadsError(meta.error); return; }
         if (meta?.signedOut) {
           // Signed out: drop every CRM lead from memory, keep only this device's own requests
+          setLeadsError('');
           setLeads((prev) => prev.filter((l) => !isCloudLead(l)));
           return;
         }
+        if (!meta?.fromCache) setLeadsError('');
         // A server snapshot is the full list for this role — empty included (an agent's empty queue)
         if (cloudLeads && (cloudLeads.length > 0 || !meta?.fromCache)) {
           const valid = cloudLeads.filter(l => l && typeof l === 'object').map((l) => ({ ...l, _cloud: true }));
@@ -1035,6 +1039,7 @@ export function PropertiesProvider({ children }) {
     leads,
     setLeads,
     leadsHasMore,
+    leadsError,
     loadMoreLeads,
     searchAllLeads,
     handleAddNewLead,
