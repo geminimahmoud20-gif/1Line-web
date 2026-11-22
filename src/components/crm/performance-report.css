@@ -135,3 +135,7 @@
 .pr-hub .pr-bar i { border-radius: var(--ui-r-full); background: var(--ui-info); }
 /* The hub's «تصدير» covers every tab, so the sales panel's own CSV button stays out of the hub */
 .pr-hub .pr-toolbar { display: none; }
+
+/* «التسويق بالشهر»: the pull button above the table, and the small amount box inside a row */
+.pr-actions { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.pr-table .pr-input { width: 96px; min-height: 36px; padding: 4px 8px; font-size: var(--ui-fs-2, 14px); text-align: center; }

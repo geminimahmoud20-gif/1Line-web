@@ -6,6 +6,7 @@ import PerformanceReportPanel from './PerformanceReportPanel';
 import ExecutiveSummaryPanel from './ExecutiveSummaryPanel';
 import TeamReportPanel from './TeamReportPanel';
 import MarketingReportPanel from './MarketingReportPanel';
+import MarketingMonthlyPanel from './MarketingMonthlyPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
@@ -139,7 +140,15 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       )}
       {tab === 'flow' && <FlowReportPanel leads={leads} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'team' && <TeamReportPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} />}
-      {tab === 'marketing' && <MarketingReportPanel leads={leads} range={range} lang={lang} onOpenTab={onOpenTab} />}
+      {tab === 'marketing' && (
+        <>
+          <section className="xs-card" aria-labelledby="hub-mk-month">
+            <h2 id="hub-mk-month" className="xs-h">{L('صرفنا كام وجه كام؟ (بالشهر)', 'Spend vs clients, by month')}</h2>
+            <MarketingMonthlyPanel leads={leads} lang={lang} canManage={canManage} triggerToast={triggerToast} />
+          </section>
+          <MarketingReportPanel leads={leads} range={range} lang={lang} onOpenTab={onOpenTab} />
+        </>
+      )}
       {tab === 'stock' && (
         <>
           <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />
