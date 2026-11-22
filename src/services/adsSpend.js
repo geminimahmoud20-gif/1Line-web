@@ -7,6 +7,9 @@ export const pullMetaSpend = async () => callAds();
 /** One row per campaign for 'last_7d' | 'last_30d' | 'maximum': { ok, currency, campaigns } or { ok: false, error } */
 export const pullMetaPerformance = async (preset = 'last_30d') => callAds({ mode: 'performance', preset });
 
+/** The whole account's spend per calendar month: { ok, currency, months: {'YYYY-MM': EGP} } or { ok: false, error } */
+export const pullMetaMonthly = async (months = 12) => callAds({ mode: 'monthly', months });
+
 async function callAds(payload) {
   const user = auth?.currentUser;
   if (!user) return { ok: false, error: 'unauthenticated' };
