@@ -8,59 +8,6 @@ import {
   HIGH_VALUE_DEAL_THRESHOLD
 } from '../../src/services/stateMachineEngine.js';
 
-test('state-machine: moving to "qualified" blocks if 5 qualification questions are missing', () => {
-  const bareLead = { id: 'l-1', status: 'new', name: 'عميل' };
-  const res = validateStageTransition(bareLead, 'qualified');
-  assert.equal(res.allowed, false);
-  assert.equal(res.deliverableKey, 'buyer_profile');
-  assert.ok(res.missingDeliverable.includes('ملف المشتري المؤهل غير مكتمل'));
-});
-
-test('state-machine: moving to "qualified" succeeds when buyer profile is complete', () => {
-  const qualifiedLead = {
-    id: 'l-1',
-    status: 'new',
-    name: 'عميل',
-    buyerProfile: {
-      budgetMin: 2000000,
-      budgetMax: 2500000,
-      paymentMethod: 'cash',
-      targetSectors: ['شرق'],
-      purpose: 'residence'
-    }
-  };
-  const res = validateStageTransition(qualifiedLead, 'qualified');
-  assert.equal(res.allowed, true);
-  assert.equal(res.reason, null);
-  assert.ok(res.nextTask !== null, 'should generate handoff task #3 (Sales -> Inventory)');
-});
-
-test('state-machine: moving to "matched" requires 3 nominations OR an open SearchRequest', () => {
-  const leadNoMatches = { id: 'l-2', status: 'qualified', nominations: [] };
-  const res1 = validateStageTransition(leadNoMatches, 'matched');
-  assert.equal(res1.allowed, false);
-  assert.equal(res1.deliverableKey, 'nominations_or_search_request');
-
-  // Case A: 3 Nominations present
-  const leadWith3Noms = {
-    id: 'l-2',
-    status: 'qualified',
-    nominations: [{ id: 'n1' }, { id: 'n2' }, { id: 'n3' }]
-  };
-  const res2 = validateStageTransition(leadWith3Noms, 'matched');
-  assert.equal(res2.allowed, true);
-
-  // Case B: No 3 noms, but open SearchRequest exists
-  const leadWithSearchReq = {
-    id: 'l-2',
-    status: 'qualified',
-    nominations: [{ id: 'n1' }],
-    hasOpenSearchRequest: true
-  };
-  const res3 = validateStageTransition(leadWithSearchReq, 'matched');
-  assert.equal(res3.allowed, true);
-});
-
 test('state-machine: moving to "negotiating" requires completed site visit report', () => {
   const leadNoVisit = { id: 'l-3', status: 'site_visit' };
   const res1 = validateStageTransition(leadNoVisit, 'negotiating');

@@ -2,10 +2,6 @@
 // 1Line OS Enterprise Real Estate Schema & Data Model
 // Conforms to Dr. Mahmoud Elbaz / 1Line Official Company Playbook (Sohag Resale & Cairo Developer Hub)
 
-/**
- * 1. PERSON (Unified Contact: Buyer, Seller, Investor, Developer, Broker, Partner)
- */
-export const PERSON_TYPES = ['buyer', 'seller', 'investor', 'developer', 'broker', 'partner'];
 export const LEAD_SOURCES = [
   'website',
   'whatsapp',
@@ -16,21 +12,6 @@ export const LEAD_SOURCES = [
   'signage',
   'broker_network'
 ];
-
-export function validatePerson(data) {
-  const errors = [];
-  if (!data.name || typeof data.name !== 'string' || data.name.trim().length < 2) {
-    errors.push('Name is required and must be at least 2 characters');
-  }
-  if (!data.source || !LEAD_SOURCES.includes(data.source)) {
-    errors.push(`Source is required and must be one of: ${LEAD_SOURCES.join(', ')}`);
-  }
-  // Egyptian Personal Data Protection Law 151/2020 Compliance
-  if (data.consent !== true) {
-    errors.push('Explicit marketing communication consent is mandatory under Egyptian Law 151/2020');
-  }
-  return { valid: errors.length === 0, errors };
-}
 
 export function createPersonDraft(overrides = {}) {
   const now = new Date().toISOString();
@@ -53,22 +34,6 @@ export function createPersonDraft(overrides = {}) {
     updatedAt: now,
     ...overrides
   };
-}
-
-/**
- * 2. BUYER PROFILE (Comprehensive 5-Question Qualification)
- */
-export function validateBuyerProfile(profile) {
-  const errors = [];
-  if (!profile.budgetMin || profile.budgetMin <= 0) errors.push('Minimum budget is required');
-  if (!profile.budgetMax || profile.budgetMax < profile.budgetMin) errors.push('Valid maximum budget is required');
-  if (!profile.paymentMethod) errors.push('Payment method (cash/installments/mortgage) is required');
-  if (!profile.targetSectors || !Array.isArray(profile.targetSectors) || profile.targetSectors.length === 0) {
-    errors.push('At least one target sector/city is required');
-  }
-  if (!profile.purpose) errors.push('Purpose (residence/investment/clinic/commercial) is required');
-  if (!profile.decisionTimeline) errors.push('Decision timeline is required');
-  return { valid: errors.length === 0, errors };
 }
 
 export function createBuyerProfileDraft(overrides = {}) {
@@ -95,120 +60,11 @@ export function createBuyerProfileDraft(overrides = {}) {
   };
 }
 
-/**
- * 3. PROPERTY & GATES (Sohag Resale Checklist & Comparative Valuation)
- */
-export const PROPERTY_GRADES = ['A', 'B', 'C', 'D'];
-
 export function generatePropertyCode(city = 'SOH', sector = 'E', sequenceNumber = 1) {
   const seqStr = String(sequenceNumber).padStart(3, '0');
   const sectorCode = sector.toUpperCase().slice(0, 2);
   return `${city}-${sectorCode}-${seqStr}`;
 }
-
-export function validateGate1Checklist(gate1) {
-  const requiredChecks = [
-    'sellerIdentityMatchesDeed',
-    'contractChainContinuous',
-    'areaSurveyMatches'
-  ];
-
-  const errors = [];
-  for (const field of requiredChecks) {
-    if (gate1[field] !== true) {
-      errors.push(`Gate 1 Check Failed: ${field} must be verified`);
-    }
-  }
-
-  const validDeeds = ['registered', 'signature_validity', 'validity_and_enforceability', 'preliminary'];
-  if (!validDeeds.includes(gate1.deedType)) {
-    errors.push('Gate 1 Check Failed: Deed type must be valid');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-    allPassed: errors.length === 0
-  };
-}
-
-export function validateGate2Checklist(gate2) {
-  const errors = [];
-  if (gate2.priceAndAvailabilityReconfirmed !== true) errors.push('Price and availability must be reconfirmed');
-  if (gate2.negativeCertificateObtained !== true) errors.push('Negative certificate must be obtained');
-  if (gate2.propertyMemoReady !== true) errors.push('Property memorandum must be prepared');
-  if (gate2.buyerInformedInWritingOfTitleType !== true) errors.push('Buyer must be informed in writing of title type');
-  return { valid: errors.length === 0, errors, allPassed: errors.length === 0 };
-}
-
-export function validateGate3Checklist(gate3) {
-  const errors = [];
-  if (gate3.originalDocumentsInspectedByLawyer !== true) errors.push('Original documents must be inspected by lawyer');
-  if (gate3.contractDraftedByCompanyLawyer !== true) errors.push('Contract must be drafted by company lawyer');
-  if (gate3.paymentMethodVerified !== true) errors.push('Documented payment method must be verified');
-  if (gate3.commissionAgreementSigned !== true) errors.push('Commission agreement must be signed');
-  if (!gate3.executedPrice || gate3.executedPrice <= 0) errors.push('Executed price must be recorded');
-  return { valid: errors.length === 0, errors, allPassed: errors.length === 0 };
-}
-
-export function calculateComparativeValuation(comparables = []) {
-  if (!Array.isArray(comparables) || comparables.length < 3) {
-    return { valid: false, error: 'Comparative valuation requires at least 3-5 comparable properties' };
-  }
-  const sumPricePerMeter = comparables.reduce((acc, c) => acc + (c.price / c.area), 0);
-  const avgPricePerMeter = Math.round(sumPricePerMeter / comparables.length);
-  return {
-    valid: true,
-    avgPricePerMeter,
-    minValuationPerMeter: Math.round(avgPricePerMeter * 0.95), // -5%
-    maxValuationPerMeter: Math.round(avgPricePerMeter * 1.05), // +5%
-    spread: 0.10
-  };
-}
-
-/**
- * 4. DEVELOPER SCORECARD & EXCLUSION (Cairo Developers Hub)
- */
-export function evaluateDeveloperScorecard(criteria, exclusion) {
-  const isExcluded = (
-    exclusion.licensed !== true ||
-    exclusion.deliveredAtLeastOnePriorProject !== true ||
-    exclusion.writtenCommissionAgreement !== true ||
-    exclusion.noMaterialPriceEscalationClause !== true ||
-    exclusion.noCashbackGimmicks !== true
-  );
-
-  if (isExcluded) {
-    return {
-      status: 'rejected',
-      totalScore: 0,
-      reason: 'Exclusion criteria triggered (unlicensed, no past delivery, cashback gimmick, or price variation clause)'
-    };
-  }
-
-  const delivery = (criteria.deliveryTrackRecord || 1) * 0.30;
-  const construction = (criteria.constructionVsSchedule || 1) * 0.20;
-  const sohagFit = (criteria.sohagClientFit || 1) * 0.20;
-  const commission = (criteria.commissionRegularity || 1) * 0.15;
-  const reputation = (criteria.reputation || 1) * 0.15;
-
-  const totalScore = Number((delivery + construction + sohagFit + commission + reputation).toFixed(2));
-
-  let status = 'rejected';
-  if (totalScore >= 3.5) status = 'trial_6m';
-  else if (totalScore >= 2.5) status = 'review_3m';
-
-  return {
-    status,
-    totalScore,
-    isApproved: status === 'trial_6m'
-  };
-}
-
-/**
- * 5. NOMINATIONS & 3-TIER PACK (Closest, Value, Challenge)
- */
-export const NOMINATION_ROLES = ['closest', 'value', 'challenge'];
 
 export function createNominationPack(personId, closestProperty, valueProperty, challengeProperty) {
   const now = new Date().toISOString();
@@ -300,30 +156,3 @@ export function createHandoffTask(handoffNumber, relatedEntityId, assignee = nul
   };
 }
 
-/**
- * 8. FINANCIAL DEAL & COMMISSION INCENTIVE MODEL
- * Rule: Sales agent incentive = 5,000 EGP per 1,000,000 EGP upon COLLECTED amount only!
- */
-export function calculateDealFinances(executedPrice, buyerCommissionRate = 0.025, sellerCommissionRate = 0, expenses = 0, partnerShareRate = 0) {
-  const buyerCommission = Math.round(executedPrice * buyerCommissionRate);
-  const sellerCommission = Math.round(executedPrice * sellerCommissionRate);
-  const totalCommission = buyerCommission + sellerCommission;
-  const netBeforePartner = totalCommission - expenses;
-  const partnerShare = Math.round(netBeforePartner * partnerShareRate);
-  const companyGrossShare = netBeforePartner - partnerShare;
-
-  return {
-    executedPrice,
-    buyerCommission,
-    sellerCommission,
-    totalCommission,
-    expenses,
-    partnerShare,
-    companyGrossShare
-  };
-}
-
-export function calculateAgentIncentiveOnCollection(collectedAmount) {
-  if (!collectedAmount || collectedAmount <= 0) return 0;
-  return Math.round((collectedAmount / 1_000_000) * 5_000);
-}
