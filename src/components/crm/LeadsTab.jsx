@@ -928,18 +928,16 @@ export default function LeadsTab({
                               <Copy size={14} />
                             </button>
                           )}
+                          {/* The source badge sits on the phone line: one line for who and where from */}
+                          <span className="crm-lead-source">{renderSource(l)}</span>
                         </div>
 
-                        {/* One source badge, and under it the campaign and the ad's name */}
-                        <div className="crm-lead-source">
-                          {renderSource(l)}
+                        <div className="crm-lead-meta">
                           {(() => {
                             const c = leadCampaign(l);
                             const text = c ? [campaignLabel(c.campaign), c.ad].filter(Boolean).join(' · ') : '';
                             return text ? <span className="crm-lead-campaign" title={text}>{text}</span> : null;
                           })()}
-                        </div>
-                        <div className="crm-lead-meta">
                           {leadCreatedMs(l) > 0 && now - leadCreatedMs(l) > 60000 && (
                             <span className="crm-lead-age" title={isAr ? 'من إمتى العميل اتضاف' : 'When the client was added'}>{isAr ? `من ${fmtWait(now - leadCreatedMs(l))}` : `${fmtWait(now - leadCreatedMs(l))} ago`}</span>
                           )}
@@ -1012,7 +1010,7 @@ export default function LeadsTab({
                         <span className={`crm-leads__temp is-${temp || 'unset'}`}>
                           <span className="crm-leads__temp-dot" aria-hidden="true" />
                           <select
-                            className="crm-leads__temp-select"
+                            className="ui-select crm-leads__temp-select"
                             value={temp}
                             disabled={!canEdit}
                             onClick={(e) => e.stopPropagation()}
@@ -1066,7 +1064,7 @@ export default function LeadsTab({
                               );
                             }
                           }}
-                          className="crm-status-select"
+                          className="ui-select crm-status-select"
                           title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
                         >
                           {STAGE_OPTIONS.map((st) => (
@@ -1176,7 +1174,7 @@ export default function LeadsTab({
                               );
                             }
                           }}
-                          className="crm-agent-select"
+                          className="ui-select crm-agent-select"
                           title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
                         >
                           <DeskOptions role={activeRole} current={assigneeValue(l)} lang={lang} people={teamMembers} />

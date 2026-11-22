@@ -30,6 +30,8 @@ export const LEAD_EXPORT_HEADERS = {
 export function makeLeadFormatters(isAr, t = {}) {
   const getLocalizedPropertyType = (typeKey) => {
     if (!typeKey || typeKey === 'undefined' || typeKey === 'null') return isAr ? 'عقار غير محدد' : 'N/A';
+    // Someone who only registered an account has no property type yet: say so instead of showing the raw word
+    if (typeKey === 'account') return isAr ? 'حساب (لم يحدد)' : 'Account (undecided)';
     const found = PROPERTY_TYPES.find(t => t.id === typeKey);
     if (found) return isAr ? found.name_ar : found.name_en;
     const fallbackMap = {
