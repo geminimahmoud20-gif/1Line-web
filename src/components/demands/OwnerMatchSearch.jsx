@@ -65,7 +65,9 @@ export default function OwnerMatchSearch({ isAr, areas, search, onChange, result
               <span>
                 {result > 0
                   ? L(`لقينا ${requestsCountAr(result)}`, `${result} matching request${result > 1 ? 's' : ''} below`)
-                  : L('مفيش طلبات مطابقة دلوقتي', 'No matching requests right now')}
+                  : (search.type || search.area
+                    ? L('مفيش طلبات مطابقة دلوقتي', 'No matching requests right now')
+                    : L('مفيش طلبات منشورة دلوقتي', 'No published requests right now'))}
               </span>
             </strong>
             <span className="oms-result-what">{what}</span>

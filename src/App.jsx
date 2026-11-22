@@ -502,7 +502,7 @@ function AppContent() {
   };
 
   // Demands Match State
-  const [ownerMatchesFound, setOwnerMatchesFound] = useState([]);
+  const [ownerMatchesFound, setOwnerMatchesFound] = useState(null);
 
   return (
     <div 
