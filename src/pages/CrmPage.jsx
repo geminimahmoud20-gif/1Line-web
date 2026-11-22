@@ -35,6 +35,7 @@ import TaskReminders from '../components/crm/TaskReminders';
 import MessagesHub from '../components/crm/MessagesHub';
 import { useCampaignNames } from '../utils/campaignNames';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
+import SectionBoundary from '../components/common/SectionBoundary';
 import LeadsLoadError from '../components/crm/LeadsLoadError';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
 import { BRAND } from '../config/siteConfig';
@@ -979,6 +980,7 @@ export default function CrmPage({
               <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />
             )}
           </div>
+          <SectionBoundary name={`tab:${activeTab}`} resetKey={activeTab} isAr={isAr}>
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               shareRef={currentUser?.email || ''}
@@ -1142,6 +1144,7 @@ export default function CrmPage({
               onSwitchToCorporate={() => setActiveTab('corporate')}
             />
           )}
+          </SectionBoundary>
         </div>
 
         {/* 4. Footer: just the company and year (it claimed "v2.4 Enterprise" and "TLS 1.3 • AES-256") */}

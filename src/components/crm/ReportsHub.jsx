@@ -11,6 +11,7 @@ import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
 import MoneyReportPanel from './MoneyReportPanel';
 import ReportControls from './ReportControls';
+import SectionBoundary from '../common/SectionBoundary';
 import ExportMenu from './ExportMenu';
 import { collectReport, row } from '../../utils/reportExport';
 import { rangeText } from '../../utils/reportPeriods';
@@ -125,6 +126,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       </div>
 
       <div ref={bodyRef} className="pr-hub__body">
+      <SectionBoundary name={`report:${tab}`} resetKey={tab} isAr={isAr}>
       {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'sales' && (
         <>
@@ -145,6 +147,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       )}
       {tab === 'risk' && <LostReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'goals' && <GoalsPanel leads={leads} members={members} me={me} canManage={canManage} lang={lang} triggerToast={triggerToast} />}
+      </SectionBoundary>
       </div>
 
       {onOpenTab && (
