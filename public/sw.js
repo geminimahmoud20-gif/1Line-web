@@ -39,6 +39,16 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Built files (/assets/*) are cached by the browser for a year, and so is a 404 one of them answered for a moment
+// during a deploy: every later load got the same 404 and the site stayed blank on that phone. A 404 there is asked
+// again past the browser cache (cache: 'reload'), which also replaces the saved answer.
+const fetchAsset = (request) => fetch(request).then((response) => {
+  if (response && response.status === 404 && new URL(request.url).pathname.startsWith('/assets/')) {
+    return fetch(request, { cache: 'reload' }).catch(() => response);
+  }
+  return response;
+});
+
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests and skip Firebase/external APIs
   if (event.request.method !== 'GET') return;
@@ -80,7 +90,7 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      return fetch(event.request).then((networkResponse) => {
+      return fetchAsset(event.request).then((networkResponse) => {
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
         }

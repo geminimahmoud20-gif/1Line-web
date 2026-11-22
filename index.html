@@ -44,10 +44,32 @@
       (function () {
         var errors = [];
         var note = function (m) { if (errors.length < 3) errors.push(String(m).slice(0, 160)); };
+        // Right after a deploy a file the page asks for can be missing for a minute (404) or not reach the visitor yet:
+        // the app then never starts and the screen stays blank. One more load a moment later is enough, so retry twice, then give up.
+        var RETRY = '1line_boot_retry';
+        var healing = false, failed = [];
+        var heal = function () {
+          if (healing) return; // one load can report several failed files: count it once
+          healing = true;
+          try {
+            var n = Number(sessionStorage.getItem(RETRY) || 0);
+            if (n >= 2) return;
+            sessionStorage.setItem(RETRY, String(n + 1));
+            // The file URLs are cached for a year, and that includes the 404 a visitor got during the deploy: a plain
+            // reload would be served the same 404. Fetching each failed file with cache:'reload' replaces the saved answer.
+            setTimeout(function () {
+              var purge = failed.map(function (u) { return window.fetch ? fetch(u, { cache: 'reload' }).catch(function () {}) : null; });
+              Promise.all(purge).then(function () { setTimeout(function () { location.reload(); }, 1000 * (n + 1)); });
+            }, 300);
+          } catch (x) { /* no storage: do not risk a reload loop */ }
+        };
         window.addEventListener('error', function (e) {
           var t = e && e.target;
-          if (t && t !== window && (t.src || t.href)) note('load failed: ' + (t.src || t.href));
-          else note((e && e.message) || 'error');
+          if (t && t !== window && (t.src || t.href)) {
+            var u = String(t.src || t.href);
+            note('load failed: ' + u);
+            if (/\/assets\/[^?#]*\.(js|css)(\?|#|$)/.test(u)) { if (failed.indexOf(u) < 0) failed.push(u); heal(); }
+          } else note((e && e.message) || 'error');
         }, true);
         window.addEventListener('unhandledrejection', function (e) { note((e && e.reason && (e.reason.message || e.reason)) || 'rejection'); });
         var mounted = function () {
@@ -102,7 +124,7 @@
           }
         };
         setTimeout(show, 8000);
-        setInterval(function () { if (box && mounted()) { box.parentNode && box.parentNode.removeChild(box); box = null; } }, 1000);
+        setInterval(function () { if (mounted()) { try { sessionStorage.removeItem(RETRY); } catch (x) {} } if (box && mounted()) { box.parentNode && box.parentNode.removeChild(box); box = null; } }, 1000);
       })();
     </script>
 
