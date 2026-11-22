@@ -265,7 +265,7 @@ export const DemandsPortal = ({
   };
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '10px 0' }}>
+    <div className="demands-page">
       {/* Primary Call To Action */}
       {onOpenAddDemand && (
         <div className="demands-add-cta">
@@ -394,13 +394,13 @@ export const DemandsPortal = ({
                 {/* Card Header: Property Type Tag + Credible Status Pill */}
                 <div className="demand-card-header">
                   <span className="demand-type-tag">
-                    <TypeIcon size={14} style={{ color: '#ffd700', flexShrink: 0 }} />
+                    <TypeIcon size={14} className="demand-icon demand-icon--gold" />
                     <span>{typeBadge.label}</span>
                   </span>
 
                   {dem.isDemo ? (
-                    <span className="demand-urgency-pill urgent-medium" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#b45309', border: '1px solid rgba(217, 119, 6, 0.25)' }}>
-                      <Sparkles size={12} style={{ color: '#d97706', flexShrink: 0 }} />
+                    <span className="demand-urgency-pill urgent-medium demand-urgency-pill--benchmark">
+                      <Sparkles size={12} className="demand-icon demand-icon--amber" />
                       <span>{isAr ? 'طلب استرشادي معتمد' : 'Verified Benchmark'}</span>
                     </span>
                   ) : (
@@ -429,12 +429,12 @@ export const DemandsPortal = ({
                 <div>
                   <div className="demand-meta-specs-bar">
                     <div className="demand-meta-spec-item" title={isAr ? 'منطقة الطلب' : 'Location'}>
-                      <MapPin size={15} style={{ color: '#0284c7', flexShrink: 0 }} />
-                      <span style={{ fontWeight: '700' }}>{areaName}</span>
+                      <MapPin size={15} className="demand-icon demand-icon--sky" />
+                      <span className="demand-area-name">{areaName}</span>
                     </div>
 
                     <div className="demand-budget-badge" title={isAr ? 'الميزانية المرصودة' : 'Allocated Budget'}>
-                      <Coins size={14} style={{ flexShrink: 0 }} />
+                      <Coins size={14} className="demand-icon" />
                       <span>{formattedBudget} {isAr ? 'ج.م' : 'EGP'}</span>
                     </div>
 
@@ -492,53 +492,44 @@ export const DemandsPortal = ({
       {/* 🤝 Professional Refer Owner Modal (Replaces amateur window.prompt) */}
       {referringDemand && (
         <div 
-          className="track-modal-backdrop" 
+          className="track-modal-backdrop demands-refer-backdrop" 
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setReferringDemand(null);
           }} 
-          style={{ zIndex: 1200 }}
           role="dialog"
           aria-modal="true"
         >
-          <div className="track-modal-card" style={{ maxWidth: '520px' }}>
-            <div className="track-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Users size={20} color="var(--primary, #0d48a1)" />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>
+          <div className="track-modal-card demands-refer">
+            <div className="track-modal-header demands-refer__head">
+              <div className="demands-refer__title">
+                <Users size={20} aria-hidden="true" />
+                <h3>
                   {isAr ? 'ترشيح مالك عقار مطابق' : 'Refer a Matching Property Owner'}
                 </h3>
               </div>
               <button 
                 type="button" 
                 onClick={() => setReferringDemand(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}
+                className="demands-refer__close"
+                aria-label={isAr ? 'إغلاق' : 'Close'}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '10px',
-              padding: '12px 14px',
-              margin: '14px 0',
-              fontSize: '0.85rem',
-              color: '#334155',
-              lineHeight: 1.5
-            }}>
-              <span style={{ fontWeight: '700', color: '#0d48a1', display: 'block', marginBottom: '4px' }}>
+            <div className="demands-refer__target">
+              <span>
                 📌 {isAr ? 'الطلب المراد ترشيح عقار له:' : 'Target Demand:'}
               </span>
               {isAr ? referringDemand.text_ar : referringDemand.text_en}
             </div>
 
             <form onSubmit={handleReferralSubmit}>
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '6px', color: '#334155' }}>
+              <div className="demands-refer__field">
+                <label>
                   {isAr ? 'اسمك الكريم (المُوصي / الوسيط) *' : 'Your Name *'}
                 </label>
-                <div style={{ position: 'relative' }}>
+                <div className="demands-refer__input-wrap">
                   <input
                     type="text"
                     required
@@ -546,28 +537,26 @@ export const DemandsPortal = ({
                     className="form-input"
                     value={referralForm.name}
                     onChange={(e) => setReferralForm({ ...referralForm, name: e.target.value })}
-                    style={{ width: '100%', borderRadius: '8px' }}
                   />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '6px', color: '#334155' }}>
+              <div className="demands-refer__field">
+                <label>
                   {isAr ? 'رقم هاتفك للتواصل ومكافأة الإحالة *' : 'Your Phone Number *'}
                 </label>
                 <input
                   type="tel"
                   required
                   placeholder={isAr ? '010 1234 5678 أو مع كود الدولة' : 'Phone Number'}
-                  className="form-input"
+                  className={`form-input demands-refer__phone${isAr ? ' is-rtl' : ''}`}
                   value={referralForm.phone}
                   onChange={(e) => setReferralForm({ ...referralForm, phone: e.target.value })}
-                  style={{ width: '100%', borderRadius: '8px', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}
                 />
               </div>
 
-              <div style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '6px', color: '#334155' }}>
+              <div className="demands-refer__field is-last">
+                <label>
                   {isAr ? 'مواصفات العقار وبيانات المالك المقترح (اختياري)' : 'Property Details & Owner Info (Optional)'}
                 </label>
                 <textarea
@@ -576,11 +565,10 @@ export const DemandsPortal = ({
                   className="form-input"
                   value={referralForm.propertyNotes}
                   onChange={(e) => setReferralForm({ ...referralForm, propertyNotes: e.target.value })}
-                  style={{ width: '100%', borderRadius: '8px', resize: 'vertical' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <div className="demands-refer__actions">
                 <button
                   type="button"
                   className="btn btn-outline"
@@ -592,7 +580,6 @@ export const DemandsPortal = ({
                   type="submit"
                   className="btn btn-primary"
                   disabled={isSubmittingReferral}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <Send size={15} />
                   <span>{isSubmittingReferral ? (isAr ? 'جارٍ الإرسال…' : 'Sending…') : (isAr ? 'إرسال الترشيح وتأكيد المكافأة' : 'Submit Referral')}</span>

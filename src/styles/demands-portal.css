@@ -28,3 +28,33 @@
 .demands-empty svg { display: block; margin: 0 auto 12px; color: #d97706; }
 .demands-empty h4 { font-weight: 800; color: var(--text-primary, #1e293b); margin-bottom: 8px; }
 .demands-empty p { color: var(--text-secondary, #64748b); font-size: 0.9rem; margin-bottom: 16px; }
+
+/* The page and the card icons */
+.demands-page { max-width: 1280px; margin: 0 auto; padding: 10px 0; }
+.demand-icon { flex-shrink: 0; }
+.demand-icon--gold { color: #ffd700; }
+.demand-icon--amber { color: #d97706; }
+.demand-icon--sky { color: #0284c7; }
+.demand-area-name { font-weight: 700; }
+.demand-urgency-pill--benchmark { background: rgba(217, 119, 6, 0.1); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.25); }
+
+/* «ترشيح مالك عقار مطابق» window */
+.demands-refer-backdrop { z-index: 1200; }
+.demands-refer { max-width: 520px; }
+.demands-refer__head { display: flex; justify-content: space-between; align-items: center; }
+.demands-refer__title { display: flex; align-items: center; gap: 8px; }
+.demands-refer__title svg { color: var(--primary, #0d48a1); }
+.demands-refer__title h3 { margin: 0; font-size: 1.1rem; font-weight: 800; }
+.demands-refer__close { background: none; border: 0; cursor: pointer; font-size: 1.2rem; color: #64748b; }
+.demands-refer__target { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin: 14px 0; font-size: 0.85rem; color: #334155; line-height: 1.5; }
+.demands-refer__target span { font-weight: 700; color: #0d48a1; display: block; margin-bottom: 4px; }
+.demands-refer__field { margin-bottom: 14px; }
+.demands-refer__field.is-last { margin-bottom: 18px; }
+.demands-refer__field label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: #334155; }
+.demands-refer__input-wrap { position: relative; }
+.demands-refer .form-input { width: 100%; border-radius: 8px; }
+.demands-refer textarea.form-input { resize: vertical; }
+.demands-refer .demands-refer__phone { direction: ltr; text-align: left; }
+.demands-refer .demands-refer__phone.is-rtl { text-align: right; }
+.demands-refer__actions { display: flex; gap: 10px; justify-content: flex-end; }
+.demands-refer__actions .btn-primary { display: flex; align-items: center; gap: 6px; }
