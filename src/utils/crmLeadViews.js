@@ -319,7 +319,11 @@ export function isStale(l, now = Date.now(), hours = STALE_HOURS) {
 export const ACTIVE_STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
 /** An open deal: not archived, and in a working stage (not won, lost or paused). The one definition every screen counts with. */
 export const isOpenLead = (l) => Boolean(l) && !l.isArchived && ACTIVE_STAGES.includes(l.status || 'new');
-export const leadBudget = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
+export const leadBudget = (l) => {
+  // An owner's value is the price he asks, saved as askingPrice by the pipeline or as the form's budget
+  const asked = isSellerLead(l) ? (parseMoney(l.askingPrice) || parseMoney(l.details?.askingPrice)) : 0;
+  return asked || parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
+};
 
 /**
  * Dashboard numbers. The active pipeline is open deals only (not archived, won or lost).

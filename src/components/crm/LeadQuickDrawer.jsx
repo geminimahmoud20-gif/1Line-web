@@ -40,6 +40,7 @@ import useTeamMembers from '../../hooks/useTeamMembers';
 import PhoneText from './PhoneText';
 import { attentionOf, nextStepFor as stepFor } from '../../utils/dealSignals';
 import { clientRoleOf, missingFor } from '../../utils/clientRole';
+import { ownerMessages } from '../../utils/ownerMessages';
 import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineCards';
 
 export default function LeadQuickDrawer({
@@ -297,20 +298,8 @@ export default function LeadQuickDrawer({
   let whatsappTemplates;
 
   if (isSeller) {
-    whatsappTemplates = [
-      {
-        title: isAr ? 'متابعة تقييم العقار وتأكيد المعاينة' : 'Valuation & Inspection Follow-up',
-        msg: `أهلاً بك أستاذ ${lead.name}، معك استشاري الإدراج والتقييم من شركة 1Line بسوهاج. نراجع بيانات عرض بيع عقاركم في ${areaName} بمساحة ${lead.details?.size || ''}م². يسعدنا تحديد موعد لزيارة الوحدة ومعاينتها وتصويرها رسمياً لبدء تسويقها للعملاء المشترين.`
-      },
-      {
-        title: isAr ? 'إبلاغ بمطابقات مشترين جاهزين' : 'Buyer Matches Alert',
-        msg: `أستاذ ${lead.name} المحترم، لدينا مشترون مسجلون يبحثون عن ${propTypeName} في ${areaName} بميزانيات مطابقة لعقاركم المعروض. نود تأكيد تفاصيل الوحدة والسعر المطلوب لعرضها عليهم فوراً.`
-      },
-      {
-        title: isAr ? 'طلب استكمال مستندات أو صور' : 'Documents & Photos Request',
-        msg: `تحياتنا أستاذ ${lead.name}، لاستكمال ملف تسويق عقاركم ورفعه في المعرض المعتمد على منصة 1Line، هل يمكن إرسال صور إضافية واضحة للوحدة والموقف القانوني عبر واتساب؟`
-      }
-    ];
+    // Owner wording and a default that follows the stage (utils/ownerMessages)
+    whatsappTemplates = ownerMessages(lead, { areaName, propTypeName });
   } else if (isViewingRequest) {
     whatsappTemplates = [
       {
