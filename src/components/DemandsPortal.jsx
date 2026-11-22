@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Zap, Sparkles, CheckCircle2, AlertCircle, MapPin, 
-  Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, 
+  Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, 
   Repeat2, Send, Sprout, Factory
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -9,7 +9,6 @@ import { getAreas } from '../utils/areasData';
 import { recordInArea, areaFromText } from '../utils/areaLookup';
 import { isValidPhoneNumber } from '../utils/securityShield';
 import '../styles/expat-suite.css';
-import { recordTimeLabel } from '../utils/relativeTime';
 import OwnerMatchSearch from './demands/OwnerMatchSearch';
 import { DEMAND_CATEGORIES, inDemandCategory } from './demands/demandCategories';
 import { siteLink } from '../config/siteConfig';
@@ -486,16 +485,6 @@ export const DemandsPortal = ({
                       <span>{formattedBudget} {isAr ? 'ج.م' : 'EGP'}</span>
                     </div>
 
-                    {!dem.isDemo && (
-                      <div 
-                        className="demand-meta-spec-item" 
-                        style={{ fontSize: '0.78rem', color: '#64748b' }}
-                        title={isAr ? 'تاريخ النشر' : 'Published'}
-                      >
-                        <Clock size={13} style={{ flexShrink: 0 }} />
-                        <span>{recordTimeLabel(dem, isAr)}</span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Interactive Action Buttons */}

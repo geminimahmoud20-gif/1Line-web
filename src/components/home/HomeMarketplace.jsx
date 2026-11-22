@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Zap, Home, Landmark } from 'lucide-react';
 import PropertyCard from '../properties/PropertyCard';
 import ScrollReveal from '../common/ScrollReveal';
-import { recordTimeLabel } from '../../utils/relativeTime';
 
 const toBudget = (b) => (typeof b === 'number' ? b : Number(String(b ?? '').replace(/[^\d.]/g, '')) || 0);
 
@@ -207,9 +206,7 @@ export default function HomeMarketplace({
                 title={lang === 'ar' ? 'انقر للانتقال إلى بوابة طلبات المشترين' : 'Click to view in Demands Portal'}
               >
                 <div className="demand-top-row">
-                  {dem.isDemo
-                    ? <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>
-                    : <span className="demand-time-tag">{recordTimeLabel(dem, lang === 'ar')}</span>}
+                  {dem.isDemo && <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>}
                   {/* "Urgent cash" / "serious buyer" describe a real person — never on a sample */}
                   {!dem.isDemo && <span
                     className="urgency-badge"
