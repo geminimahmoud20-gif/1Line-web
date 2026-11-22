@@ -7,7 +7,9 @@ import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { leadScore, isOpenLead, leadBudget, isSellerLead, isAccountLead, duplicatesById } from '../../utils/crmLeadViews';
-import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
+import { SELLER_STAGES, pipelineKind, askingPriceOf } from '../../utils/leadPipeline';
+import { ownerMessageFor } from '../../utils/ownerMessages';
+import { clientRoleOf } from '../../utils/clientRole';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
@@ -207,6 +209,9 @@ export default function KanbanPipeline({
 
   // Extract lead budget
   const getLeadBudget = (lead) => {
+    // An owner's value is the price he asks, wherever it was saved
+    const asked = isSellerLead(lead) ? askingPriceOf(lead) : 0;
+    if (asked > 0) return asked;
     const b = lead.details?.budget || lead.budget || lead.details?.expectedPrice || lead.expectedPrice;
     if (b) {
       const num = parseInt(String(b).replace(/[^0-9]/g, ''));
@@ -578,7 +583,10 @@ export default function KanbanPipeline({
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     const propTitle = getLocalizedPropertyType(lead.propertyType || lead.details?.propertyType);
     const areaTitle = getLocalizedArea(lead.area || lead.details?.area || lead.location);
-    const text = isAr 
+    // An owner gets an owner's message for his stage (valuation, exclusive contract…), not a buyer's request wording
+    const text = isSellerLead(lead)
+      ? ownerMessageFor(lead, { areaName: areaTitle, propTypeName: propTitle }).msg
+      : isAr 
       ? `مرحباً أ. ${lead.name || 'العميل الكريم'}، معك مستشار شركة 1Line للحلول العقارية بسوهاج بخصوص طلبكم (${propTitle} في ${areaTitle}). يسعدنا تزويدك بالتفاصيل.`
       : `Hello ${lead.name}, this is 1Line Real Estate following up on your request for ${propTitle} in ${areaTitle}.`;
     window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
@@ -903,6 +911,8 @@ export default function KanbanPipeline({
                       >
                         <div className="kb-card-top">
                           {(filterType === 'investor' || filterType === 'account') && <span className="kb-type">{typeBadge.label}</span>}
+                          {/* The offers board holds owners and brokers: each card says which (owner, valuation request, broker) */}
+                          {filterType === 'seller' && <span className="kb-type">{isAr ? clientRoleOf(lead).ar : clientRoleOf(lead).en}</span>}
                           {(sameNumber.has(lead.id) || lead.returningClient) && (
                             <span className="kb-dup" title={isAr ? (lead.returningClient ? 'عميل راجع: اتحوّل لنفس الموظف اللي كان معاه طلبه القديم.' : 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.') : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
                               <CopyPlus size={11} aria-hidden="true" />

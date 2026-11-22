@@ -349,3 +349,11 @@ test('every lost reason the team can pick is accepted when a deal moves to lost'
   assert.equal(validateStageTransition({ id: 'x', status: 'new' }, 'lost', { lostReason: 'nonsense' }).allowed, false);
   assert.equal(validateStageTransition({ id: 'x', status: 'new' }, 'lost', {}).allowed, false);
 });
+
+test('an owner counts at the price he asks, wherever it was saved', async () => {
+  const { leadBudget } = await import('../../src/utils/crmLeadViews.js');
+  assert.equal(leadBudget({ type: 'seller', askingPrice: 1900000 }), 1900000);
+  assert.equal(leadBudget({ type: 'seller', details: { askingPrice: '2,500,000', budget: '1000' } }), 2500000);
+  assert.equal(leadBudget({ type: 'seller', details: { budget: '1500000' } }), 1500000);
+  assert.equal(leadBudget({ type: 'buyer', budget: '800000', askingPrice: 9 }), 800000); // a buyer never reads asking price
+});
