@@ -4,6 +4,7 @@
 
 import { createHandoffTask } from '../models/schema.js';
 import { pipelineKind, askingPriceOf } from '../utils/leadPipeline.js';
+import { LOST_REASONS } from '../utils/crmLeadViews.js';
 
 export const HIGH_VALUE_DEAL_THRESHOLD = 5_000_000; // 5 Million EGP threshold requires Founder Sign-off
 
@@ -92,12 +93,13 @@ export const STAGE_DEFINITIONS = {
   }
 };
 
+// Every reason the team can pick in the lost-reason window (utils/crmLeadViews LOST_REASONS: buyer, owner and shared),
+// plus the older ids saved on past records. The list used to be five fixed ids, so most picks were refused.
 export const VALID_LOST_REASONS = [
-  'price', // سعر
+  ...LOST_REASONS.map((r) => r.id),
   'timing', // توقيت
   'competitor', // منافس
-  'not_interested', // لم يعد مهتماً
-  'no_response' // لا يوجد رد
+  'not_interested' // لم يعد مهتماً
 ];
 
 /**
@@ -119,7 +121,7 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
       return {
         allowed: false,
         deliverableKey: 'lost_reason',
-        missingDeliverable: 'سبب الخسارة إلزامي (سعر، توقيت، منافس، لم يعد مهتماً، لا رد)',
+        missingDeliverable: 'سبب الخسارة إلزامي: اختار السبب من القايمة',
         reason: 'Missing mandatory lost reason'
       };
     }
