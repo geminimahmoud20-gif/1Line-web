@@ -339,3 +339,13 @@ test('a client who only registered an account is in neither pipeline; saying wha
   assert.equal(m.openAccounts, 1);
   assert.equal(m.openCount, 2); // nobody is dropped from the open total
 });
+
+test('every lost reason the team can pick is accepted when a deal moves to lost', async () => {
+  const { validateStageTransition } = await import('../../src/services/stateMachineEngine.js');
+  const { LOST_REASONS: reasons } = await import('../../src/utils/crmLeadViews.js');
+  for (const r of reasons) {
+    assert.equal(validateStageTransition({ id: 'x', status: 'new' }, 'lost', { lostReason: r.id }).allowed, true, r.id);
+  }
+  assert.equal(validateStageTransition({ id: 'x', status: 'new' }, 'lost', { lostReason: 'nonsense' }).allowed, false);
+  assert.equal(validateStageTransition({ id: 'x', status: 'new' }, 'lost', {}).allowed, false);
+});
