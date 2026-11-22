@@ -4,6 +4,7 @@
 //  run them directly.
 // =============================================================
 
+import { STAGE_RANK } from './stages.js';
 import { assigneeValue } from './assignees.js';
 
 export function getNormalizedPropertyStatus(prop) {
@@ -449,7 +450,6 @@ export function duplicatesById(leads = []) {
   return out;
 }
 
-const STAGE_RANK = { new: 0, contacted: 1, site_visit: 2, negotiating: 3, closing: 4, closed: 5 };
 const MAX_LOGS = 100;
 
 /**

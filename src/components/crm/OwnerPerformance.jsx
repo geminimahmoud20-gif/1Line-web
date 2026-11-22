@@ -1,3 +1,4 @@
+import { OPEN_STAGES, STAGE_NAMES } from '../../utils/stages';
 import { useMemo, useState } from 'react';
 import { BarChart3, X, ChevronDown } from 'lucide-react';
 import { ownerStats, matchesOwner, formatMins, ownersPeriodTable, recentContacts } from '../../utils/ownerPerformance';
@@ -5,13 +6,7 @@ import { PRESETS, resolveRange, comparisonRange, rangeText } from '../../utils/r
 import { cx } from '../ui/cx';
 import './owner-performance.css';
 
-const STAGES = [
-  { key: 'new', ar: 'جديد', en: 'New' },
-  { key: 'contacted', ar: 'تم التواصل', en: 'Contacted' },
-  { key: 'site_visit', ar: 'معاينة', en: 'Visit' },
-  { key: 'negotiating', ar: 'تفاوض', en: 'Negotiating' },
-  { key: 'closing', ar: 'إغلاق', en: 'Closing' }
-];
+const STAGES = OPEN_STAGES.map((key) => ({ key, ...STAGE_NAMES[key] }));
 
 const agoLabel = (ms, now, isAr) => {
   if (!ms) return '—';

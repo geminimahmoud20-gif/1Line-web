@@ -4,19 +4,18 @@
 //  Pure (tests/unit/performance-report.test.mjs); stage history (utils/stageHistory) says when each
 //  stage was reached, and a client who never recorded one counts by the stage he is in.
 // =============================================================
+import { PIPELINE, STAGE_NAMES } from './stages.js';
 import { leadCreatedMs, toMs, responseSlaMs, leadSourceKey, LEAD_SOURCES, lostReasonCounts } from './crmLeadViews.js';
 import { reachedAny, msToReach, avgDays } from './stageHistory.js';
 import { leadCommission } from './commission.js';
 import { dayOf, inRange, eachDay } from './reportPeriods.js';
 
-export const ORDER = ['new', 'contacted', 'site_visit', 'negotiating', 'closing', 'closed'];
+export const ORDER = PIPELINE;
+// Funnel steps: the shared stage names, with the viewing step said as «reached» (a client counts once he got there)
 export const STAGE_LABELS = {
-  new: { ar: 'عميل محتمل', en: 'Lead' },
-  contacted: { ar: 'مؤهل', en: 'Qualified' },
+  ...Object.fromEntries(PIPELINE.map((id) => [id, STAGE_NAMES[id]])),
   site_visit: { ar: 'وصل لاجتماع / معاينة', en: 'Reached a meeting / viewing' },
-  negotiating: { ar: 'تفاوض', en: 'Negotiating' },
   closing: { ar: 'إغلاق (توقيع وحجز)', en: 'Closing' },
-  closed: { ar: 'إغلاق ناجح', en: 'Closed won' }
 };
 const from = (i) => ORDER.slice(i); // this stage or any later one
 const VISITED = new Set(from(2));
