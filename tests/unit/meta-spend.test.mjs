@@ -73,3 +73,19 @@ test('campaigns are kept by Meta id, so Arabic names can be paired by hand and t
   const two = applyPull({ metaCampaigns: [{ id: '1', name: 'ا', spend: 10 }, { id: '2', name: 'ب', spend: 5 }] }, { campaignKeys: ['k'], links: { 1: 'k', 2: 'k' } });
   assert.deepEqual(two.amounts, { k: 15 });
 });
+
+test('monthly spend: account level, one row per month over a fixed range, summed by month', async () => {
+  const { fetchMonthlyInsights, monthlyFromInsights, monthsRange } = await import('../../api/_meta-spend-core.js');
+  assert.deepEqual(monthsRange(3, new Date('2026-11-22T10:00:00Z')), { since: '2026-09-01', until: '2026-11-22' });
+  let url = '';
+  await fetchMonthlyInsights({ accountId: '1', token: 'T', months: 3, now: new Date('2026-11-22T10:00:00Z'), fetchImpl: async (u) => { url = u; return res(200, { data: [] }); } });
+  assert.match(url, /level=account/);
+  assert.match(url, /time_increment=monthly/);
+  assert.match(decodeURIComponent(url), /"since":"2026-09-01"/);
+  const r = monthlyFromInsights([
+    { date_start: '2026-10-01', date_stop: '2026-10-31', spend: '1200.4', account_currency: 'EGP' },
+    { date_start: '2026-11-01', date_stop: '2026-11-22', spend: '300', account_currency: 'EGP' },
+    { date_start: 'bad', spend: '5' },
+  ]);
+  assert.deepEqual(r, { currency: 'EGP', months: { '2026-10': 1200, '2026-11': 300 } });
+});

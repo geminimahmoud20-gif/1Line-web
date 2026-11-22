@@ -18,22 +18,6 @@ export const STAGE_DEFINITIONS = {
     requiredDeliverable: 'تسجيل المصدر وموافقة العميل (قانون 151/2020)',
     handoffTo: 1
   },
-  qualified: {
-    id: 'qualified',
-    title_ar: 'مؤهل (ملف مشترٍ)',
-    title_en: 'Qualified',
-    ownerDept: 'sales',
-    requiredDeliverable: 'استبيان التأهيل الخماسي (الميزانية، طريقة الدفع، المنطقة، الغرض، مهلة القرار)',
-    handoffTo: 3
-  },
-  matched: {
-    id: 'matched',
-    title_ar: 'مطابق (3 ترشيحات / طلب بحث)',
-    title_en: 'Matched',
-    ownerDept: 'sales',
-    requiredDeliverable: '3 ترشيحات مكتوبة (الأقرب/القيمة/التحدي) أو فتح طلب بحث موجّه للمخزون',
-    handoffTo: 4
-  },
   site_visit: {
     id: 'site_visit',
     title_ar: 'معاينة (مجدولة / منفذة)',
@@ -100,12 +84,12 @@ export const VALID_LOST_REASONS = [
 export function validateStageTransition(lead, targetStageId, context = {}) {
   const currentStageId = lead.status || 'new';
 
-  // 1. Same stage is a no-op
+  // Same stage is a no-op
   if (currentStageId === targetStageId) {
     return { allowed: true, reason: null, nextTask: null };
   }
 
-  // 2. Transitioning to 'lost' requires mandatory lost reason
+  // Transitioning to 'lost' requires mandatory lost reason
   if (targetStageId === 'lost') {
     const lostReason = context.lostReason || lead.lostReason;
     if (!lostReason || !VALID_LOST_REASONS.includes(lostReason)) {
@@ -134,41 +118,8 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     }
   }
 
-  // 3. Transition to 'qualified' requires the 5 qualification questions (BuyerProfile)
-  if (!isSeller && targetStageId === 'qualified') {
-    const profile = lead.buyerProfile || context.buyerProfile || lead.details;
-    const hasBudget = profile?.budget || (profile?.budgetMin && profile?.budgetMax);
-    const hasPayment = profile?.paymentMethod;
-    const hasArea = profile?.area || profile?.targetSectors?.length > 0;
-    const hasPurpose = profile?.purpose;
-
-    if (!hasBudget || !hasPayment || !hasArea || !hasPurpose) {
-      return {
-        allowed: false,
-        deliverableKey: 'buyer_profile',
-        missingDeliverable: 'ملف المشتري المؤهل غير مكتمل: يلزم تسجيل الميزانية، وطريقة الدفع، والمنطقة، والغرض.',
-        reason: 'Incomplete buyer qualification questions'
-      };
-    }
-  }
-
-  // 4. Transition to 'matched' requires at least 3 nominations OR an open search request
-  if (!isSeller && targetStageId === 'matched') {
-    const nominationsCount = (lead.nominations?.length || 0) + (context.nominations?.length || 0);
-    const hasSearchRequest = lead.hasOpenSearchRequest || context.hasOpenSearchRequest;
-
-    if (nominationsCount < 3 && !hasSearchRequest) {
-      return {
-        allowed: false,
-        deliverableKey: 'nominations_or_search_request',
-        missingDeliverable: 'المخرج الإلزامي: يلزم اعتماد 3 ترشيحات مكتوبة (الأقرب/القيمة/التحدي) أو فتح طلب بحث موجّه للمخزون.',
-        reason: 'Requires 3 written nominations or an open SearchRequest'
-      };
-    }
-  }
-
-  // 5. Transition to 'proposal' / 'negotiating' requires completed site visit report
-  if (!isSeller && (targetStageId === 'negotiating' || targetStageId === 'proposal')) {
+  // A buyer reaches negotiation only after a completed site visit report
+  if (!isSeller && targetStageId === 'negotiating') {
     const hasVisitReport = lead.siteVisitReport || context.siteVisitReport || lead.siteVisit?.completed;
     if (!hasVisitReport) {
       return {
@@ -194,7 +145,7 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     }
   }
 
-  // 6. Transition to 'closing' / 'contract' requires Gate 2 passed and written offer
+  // Transition to 'closing' / 'contract' requires Gate 2 passed and written offer
   if (targetStageId === 'closing') {
     const gate2Passed = lead.gate2Passed || context.gate2Passed;
     const hasOffer = lead.writtenOffer || context.writtenOffer;
@@ -208,7 +159,7 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     }
   }
 
-  // 7. Transition to 'closed' requires Gate 3 checklist passed and executed price.
+  // Transition to 'closed' requires Gate 3 checklist passed and executed price.
   //    «إغلاق» is one stage now: a deal that did not go through the old «closing» step still has to show
   //    the Gate 2 checklist and the written offer, so no control is lost by skipping that step.
   if (targetStageId === 'closed') {

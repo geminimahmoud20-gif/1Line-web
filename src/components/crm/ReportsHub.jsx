@@ -1,16 +1,21 @@
 import { useMemo, useRef, useState } from 'react';
-import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer } from 'lucide-react';
+import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer, Hourglass, Network, Gauge } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import { loadViews, saveView, removeView } from '../../utils/reportViews';
 import PerformanceReportPanel from './PerformanceReportPanel';
 import ExecutiveSummaryPanel from './ExecutiveSummaryPanel';
 import TeamReportPanel from './TeamReportPanel';
+import OrgCapacityPanel from './OrgCapacityPanel';
+import KpiScorecardPanel from './KpiScorecardPanel';
 import MarketingReportPanel from './MarketingReportPanel';
+import MarketingMonthlyPanel from './MarketingMonthlyPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
 import MoneyReportPanel from './MoneyReportPanel';
+import FlowReportPanel from './FlowReportPanel';
 import ReportControls from './ReportControls';
+import SectionBoundary from '../common/SectionBoundary';
 import ExportMenu from './ExportMenu';
 import { collectReport, row } from '../../utils/reportExport';
 import { rangeText } from '../../utils/reportPeriods';
@@ -21,8 +26,11 @@ import './executive-summary.css';
 // Grouped by the question a manager asks, not by the data behind it
 const TABS = [
   { id: 'summary', icon: LayoutDashboard, ar: 'الملخص', en: 'Summary', q_ar: 'الشغل ماشي إزاي؟' },
+  { id: 'kpi', icon: Gauge, ar: 'المؤشرات', en: 'KPIs', q_ar: 'إحنا قريبين من الأهداف؟' },
   { id: 'sales', icon: Banknote, ar: 'المبيعات والفلوس', en: 'Sales & money', q_ar: 'بنبيع قد إيه وبنكسب كام؟' },
   { id: 'team', icon: Users, ar: 'الفريق', en: 'Team', q_ar: 'مين محتاج دعم؟' },
+  { id: 'flow', icon: Hourglass, ar: 'تدفق الشغل', en: 'Workflow', q_ar: 'فين الشغل واقف؟' },
+  { id: 'org', icon: Network, ar: 'الهيكل والسعة', en: 'Structure & capacity', q_ar: 'مين شايل إيه؟' },
   { id: 'marketing', icon: Megaphone, ar: 'التسويق', en: 'Marketing', q_ar: 'أنهي مصدر يستاهل فلوسه؟' },
   { id: 'stock', icon: Building, ar: 'العقارات والطلب', en: 'Stock & demand', q_ar: 'عندنا اللي العملاء عايزينه؟' },
   { id: 'risk', icon: ShieldAlert, ar: 'الخسارة والمخاطر', en: 'Losses & risk', q_ar: 'بنخسر عملاء ليه؟' },
@@ -30,7 +38,7 @@ const TABS = [
 ];
 // Old tab ids (a saved view from before) open their new home
 const LEGACY = { money: 'sales', portfolio: 'stock', demand: 'stock', calls: 'team', lost: 'risk' };
-const NO_RANGE = new Set(['goals']);
+const NO_RANGE = new Set(['goals', 'flow', 'org', 'kpi']);
 
 // The reports that live on their own screens, one tap away
 const LINKS = [
@@ -39,7 +47,7 @@ const LINKS = [
 ];
 
 /** «مركز التقارير»: one place and one date range / comparison for every report (managers) */
-export default function ReportsHub({ leads = [], properties = [], demands = [], intake = [], members = [], me, canManage = false, areaNames = {}, lang = 'ar', onOpenTab, onOpenLead, triggerToast }) {
+export default function ReportsHub({ leads = [], coverage = null, properties = [], demands = [], intake = [], members = [], me, canManage = false, areaNames = {}, lang = 'ar', onOpenTab, onOpenLead, triggerToast }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const [now] = useState(() => Date.now());
@@ -103,6 +111,15 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         })}
       </div>
 
+      {coverage && (
+        <p className={`pr-coverage ${coverage.complete && !coverage.loading && !coverage.failed ? '' : 'is-partial'}`} role="status">
+          {coverage.loading
+            ? L('بيتحسب من كل العملاء…', 'Computing over all leads…')
+            : coverage.complete && !coverage.failed
+              ? L(`التقارير محسوبة من كل العملاء (${coverage.count.toLocaleString('en-US')})`, `Covers all ${coverage.count.toLocaleString('en-US')} leads`)
+              : L(`التقارير من ${coverage.count.toLocaleString('en-US')} عميل بس، مش كل العملاء: الأرقام ممكن تكون أقل من الحقيقة`, `Covers ${coverage.count.toLocaleString('en-US')} leads only`)}
+        </p>
+      )}
       {!NO_RANGE.has(tab) && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
 
       <div className="rv" role="group" aria-label={L('العروض المحفوظة', 'Saved views')}>
@@ -125,6 +142,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       </div>
 
       <div ref={bodyRef} className="pr-hub__body">
+      <SectionBoundary name={`report:${tab}`} resetKey={tab} isAr={isAr}>
       {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'sales' && (
         <>
@@ -135,8 +153,16 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
           </section>
         </>
       )}
+      {tab === 'kpi' && <KpiScorecardPanel leads={leads} members={members} />}
+      {tab === 'flow' && <FlowReportPanel leads={leads} lang={lang} onOpenLead={onOpenLead} />}
+      {tab === 'org' && <OrgCapacityPanel leads={leads} members={members} me={me} lang={lang} canManage={canManage} triggerToast={triggerToast} />}
       {tab === 'team' && <TeamReportPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} />}
-      {tab === 'marketing' && <MarketingReportPanel leads={leads} range={range} lang={lang} onOpenTab={onOpenTab} />}
+      {tab === 'marketing' && (
+        <>
+          <MarketingMonthlyPanel leads={leads} lang={lang} canManage={canManage} triggerToast={triggerToast} />
+          <MarketingReportPanel leads={leads} range={range} lang={lang} onOpenTab={onOpenTab} />
+        </>
+      )}
       {tab === 'stock' && (
         <>
           <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />
@@ -145,6 +171,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       )}
       {tab === 'risk' && <LostReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'goals' && <GoalsPanel leads={leads} members={members} me={me} canManage={canManage} lang={lang} triggerToast={triggerToast} />}
+      </SectionBoundary>
       </div>
 
       {onOpenTab && (
