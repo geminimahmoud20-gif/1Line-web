@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
-import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer, Hourglass } from 'lucide-react';
+import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer, Hourglass, Network } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import { loadViews, saveView, removeView } from '../../utils/reportViews';
 import PerformanceReportPanel from './PerformanceReportPanel';
 import ExecutiveSummaryPanel from './ExecutiveSummaryPanel';
 import TeamReportPanel from './TeamReportPanel';
+import OrgCapacityPanel from './OrgCapacityPanel';
 import MarketingReportPanel from './MarketingReportPanel';
 import MarketingMonthlyPanel from './MarketingMonthlyPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
@@ -26,6 +27,7 @@ const TABS = [
   { id: 'sales', icon: Banknote, ar: 'المبيعات والفلوس', en: 'Sales & money', q_ar: 'بنبيع قد إيه وبنكسب كام؟' },
   { id: 'team', icon: Users, ar: 'الفريق', en: 'Team', q_ar: 'مين محتاج دعم؟' },
   { id: 'flow', icon: Hourglass, ar: 'تدفق الشغل', en: 'Workflow', q_ar: 'فين الشغل واقف؟' },
+  { id: 'org', icon: Network, ar: 'الهيكل والسعة', en: 'Structure & capacity', q_ar: 'مين شايل إيه؟' },
   { id: 'marketing', icon: Megaphone, ar: 'التسويق', en: 'Marketing', q_ar: 'أنهي مصدر يستاهل فلوسه؟' },
   { id: 'stock', icon: Building, ar: 'العقارات والطلب', en: 'Stock & demand', q_ar: 'عندنا اللي العملاء عايزينه؟' },
   { id: 'risk', icon: ShieldAlert, ar: 'الخسارة والمخاطر', en: 'Losses & risk', q_ar: 'بنخسر عملاء ليه؟' },
@@ -33,7 +35,7 @@ const TABS = [
 ];
 // Old tab ids (a saved view from before) open their new home
 const LEGACY = { money: 'sales', portfolio: 'stock', demand: 'stock', calls: 'team', lost: 'risk' };
-const NO_RANGE = new Set(['goals', 'flow']);
+const NO_RANGE = new Set(['goals', 'flow', 'org']);
 
 // The reports that live on their own screens, one tap away
 const LINKS = [
@@ -139,6 +141,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         </>
       )}
       {tab === 'flow' && <FlowReportPanel leads={leads} lang={lang} onOpenLead={onOpenLead} />}
+      {tab === 'org' && <OrgCapacityPanel leads={leads} members={members} me={me} lang={lang} canManage={canManage} triggerToast={triggerToast} />}
       {tab === 'team' && <TeamReportPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} />}
       {tab === 'marketing' && (
         <>

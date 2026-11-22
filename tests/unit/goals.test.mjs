@@ -51,3 +51,11 @@ test('goalProgress lists only goals that are set, and a person sees their own ro
   assert.equal(myGoalRows(leads, goals, 'a', NOW).length, 2);
   assert.deepEqual(myGoalRows(leads, goals, 'nobody', NOW), []);
 });
+
+test('a capacity saved beside the goals survives a save, and a person with only a capacity has no goal rows', async () => {
+  const { goalProgress } = await import('../../src/utils/goals.js');
+  assert.deepEqual(normalizeGoals({ team: { capacity: '40' }, people: { a: { capacity: 25, closed: 2 }, b: { capacity: 30 } } }),
+    { team: { capacity: 40 }, people: { a: { capacity: 25, closed: 2 }, b: { capacity: 30 } } });
+  const p = goalProgress([], { people: { a: { closed: 2 }, b: { capacity: 30 } } }, Date.parse('2026-11-10T10:00:00Z'));
+  assert.deepEqual(p.people.map((x) => x.uid), ['a']);
+});
