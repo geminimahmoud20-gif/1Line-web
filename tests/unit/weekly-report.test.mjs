@@ -30,7 +30,7 @@ test('the report states the week against the one before, with no client name or 
   assert.equal(r.week, '2026-11-13');
   assert.match(r.text, /تقرير الأسبوع \(7 نوفمبر – 13 نوفمبر\)/);
   assert.match(r.text, /عملاء جدد: 3 \(↑50%\)/);
-  assert.match(r.text, /صفقات اتقفلت: 1 · عمولتها: 20,000 ج/);
+  assert.match(r.text, /صفقات اتقفلت: 1 · عمولتها: 20,500 ج/);
   assert.match(r.text, /أكتر صفقات: Ali \(1\)/);
   assert.match(r.text, /https:\/\/s\/crm/);
   assert.ok(!/زينب|مرتضى|01011112222/.test(r.text));

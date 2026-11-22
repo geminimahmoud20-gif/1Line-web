@@ -331,7 +331,7 @@ export const leadBudget = (l) => {
  * scopeDesk: when set (a desk agent), every count is for that desk's leads and the shared pool
  * is reported separately; company-wide money is left out.
  */
-export function computeDashboardMetrics(allLeads = [], demands = [], { now = Date.now(), scopeDesk = null, commissionRate = 0.025 } = {}) {
+export function computeDashboardMetrics(allLeads = [], demands = [], { now = Date.now(), scopeDesk = null } = {}) {
   const todayKey = localDayKey(now);
   const leads = scopeDesk ? allLeads.filter((l) => l.assignedTo === scopeDesk) : allLeads;
   const open = leads.filter(isOpenLead);
@@ -353,7 +353,6 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
     pipelineValue,
     supplyValue,
     purchasingPower,
-    expectedCommission: pipelineValue * commissionRate,
     openCount: open.length,
     // The open buyers (what the budgets add up) and how many of them carry a budget; owners' listings are counted apart
     openBuyers: open.filter(buyerSide).length,

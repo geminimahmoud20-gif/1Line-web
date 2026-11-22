@@ -33,7 +33,7 @@ test('the report: reasons, stages, sellers, sources, value, the close ones and t
   ];
   const r = lostReport(leads, { range: week, prevRange: before });
   assert.deepEqual([r.total, r.prevTotal, r.change], [3, 1, 200]);
-  assert.equal(r.valueLost, 40000);
+  assert.equal(r.valueLost, 41000); // 2% of 2M + 1,000 legal review
   assert.equal(r.close, 1);
   assert.deepEqual(r.reasons.map((x) => [x.id, x.count]), [['price', 2], ['no_response', 1]]);
   assert.equal(r.reasons[0].label, 'السعر / الميزانية مش مناسبة');
@@ -41,7 +41,7 @@ test('the report: reasons, stages, sellers, sources, value, the close ones and t
   assert.deepEqual(r.sellers.map((s) => [s.label, s.count, s.close]), [['Ali', 2, 1], ['Mona', 1, 0]]);
   assert.equal(r.sources.length, 2);
   assert.equal(r.top[0].close, true); // the close one first
-  assert.equal(r.top[0].commission, 40000);
+  assert.equal(r.top[0].commission, 41000);
 });
 
 test('an empty range gives zeros, not NaN', () => {

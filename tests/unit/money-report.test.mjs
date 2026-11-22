@@ -44,10 +44,11 @@ test('ads economics: what a lead, a viewing and a deal cost, the commission won,
   assert.equal(r.ads.closed, 2);
   assert.equal(r.ads.costPerLead, 10000);
   assert.equal(r.ads.costPerDeal, 25000);
-  // 2.5% of 3,000,000 + 2.5% of 2,000,000 = 125,000 won; minus 50,000 of ads
-  assert.equal(r.ads.wonCommission, 125000);
-  assert.equal(r.ads.profit, 75000);
-  assert.equal(r.ads.returnPerEgp, 2.5);
+  // buyers: 1.5% of 3,000,000 + 1.5% of 2,000,000 = 75,000, plus 500 per million legal review = 2,500
+  // → 77,500 won; minus 50,000 of ads
+  assert.equal(r.ads.wonCommission, 77500);
+  assert.equal(r.ads.profit, 27500);
+  assert.equal(r.ads.returnPerEgp, 1.55);
   assert.equal(r.campaigns.best[0].campaign, 'sohag-nov');
 });
 
@@ -73,8 +74,8 @@ test('the forecast: open pipeline weighted by stage, this month\'s wins, and dea
     lead({ status: 'site_visit' })
   ];
   const r = moneyReport(leads, { now: NOW });
-  assert.equal(r.forecast.wonThisMonth, 75000);
-  assert.equal(r.forecast.gross, 100000);
-  assert.equal(r.forecast.weighted, 50000);
+  assert.equal(r.forecast.wonThisMonth, 46500); // 1.5% of 3M + 1,500 legal review
+  assert.equal(r.forecast.gross, 62000);        // 1.5% of 4M + 2,000
+  assert.equal(r.forecast.weighted, 31000);
   assert.equal(r.forecast.missingValue, 1);
 });

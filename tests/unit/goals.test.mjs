@@ -27,8 +27,8 @@ test('month actuals count each thing on its own day, for the team and per owner'
     lead({ isArchived: true })
   ];
   const a = monthActuals(leads, NOW);
-  assert.deepEqual(a.team, { leads: 2, viewings: 1, closed: 1, commission: 20000 });
-  assert.deepEqual(a.people.a, { name: 'Ali', leads: 2, viewings: 1, closed: 1, commission: 20000 });
+  assert.deepEqual(a.team, { leads: 2, viewings: 1, closed: 1, commission: 20500 }); // 2% of 1M + 500 legal review
+  assert.deepEqual(a.people.a, { name: 'Ali', leads: 2, viewings: 1, closed: 1, commission: 20500 });
   assert.equal(a.people.b.leads, 0);
 });
 
