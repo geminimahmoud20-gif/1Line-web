@@ -37,6 +37,44 @@
       })();
     </script>
 
+    <!-- If the app has not drawn anything 8 seconds after the page loaded (a script that failed to download or crashed
+         before it started), a visitor saw a blank screen with no way out. Say so, give a reload button, and show the
+         first error the browser reported, so a screenshot says what went wrong. It disappears once the app is on screen. -->
+    <script>
+      (function () {
+        var errors = [];
+        var note = function (m) { if (errors.length < 3) errors.push(String(m).slice(0, 160)); };
+        window.addEventListener('error', function (e) { note((e && e.message) || 'error'); });
+        window.addEventListener('unhandledrejection', function (e) { note((e && e.reason && (e.reason.message || e.reason)) || 'rejection'); });
+        var mounted = function () {
+          var root = document.getElementById('root');
+          if (!root) return true;
+          for (var i = 0; i < root.children.length; i++) { if (!root.children[i].classList.contains('seo-shell')) return true; }
+          return false;
+        };
+        var box = null;
+        var show = function () {
+          if (box || mounted()) return;
+          box = document.createElement('div');
+          box.setAttribute('role', 'alert');
+          box.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#0B1B32;color:#fff;font-family:Cairo,system-ui,sans-serif;text-align:center;direction:rtl';
+          var h = document.createElement('strong'); h.style.fontSize = '20px'; h.textContent = 'الصفحة بتتأخر في التحميل';
+          var p = document.createElement('p'); p.style.cssText = 'margin:0;opacity:.85;line-height:1.7'; p.textContent = 'ممكن النت ضعيف. جرّب تحدّث الصفحة.';
+          var b = document.createElement('button'); b.type = 'button'; b.textContent = 'حدّث الصفحة';
+          b.style.cssText = 'padding:12px 28px;border:0;border-radius:999px;background:#C9A96E;color:#0B1B32;font:700 16px Cairo,system-ui,sans-serif;cursor:pointer';
+          b.addEventListener('click', function () { location.reload(); });
+          box.appendChild(h); box.appendChild(p); box.appendChild(b);
+          if (errors.length) {
+            var d = document.createElement('small'); d.style.cssText = 'opacity:.6;direction:ltr;max-width:90vw;overflow-wrap:anywhere'; d.textContent = errors[0];
+            box.appendChild(d);
+          }
+          document.body.appendChild(box);
+        };
+        setTimeout(show, 8000);
+        setInterval(function () { if (box && mounted()) { box.parentNode && box.parentNode.removeChild(box); box = null; } }, 1000);
+      })();
+    </script>
+
     <!-- Theme pre-hydration (prevents flash of wrong theme) -->
     <script>
       (function() {
