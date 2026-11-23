@@ -76,6 +76,9 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
     if (!formData.propertyType) return toast(isAr ? 'حدد نوع العقار!' : 'Property type is required!');
     try {
       isSubmittingRef.current = true;
+      // Not `seller` (computed from the lead as it was before this edit): a type change in this same save
+      // (buyer → seller or back) must land the asking-price fields under the new type right away.
+      const sellerNow = isSellerLead({ ...lead, type: formData.type });
       const updated = {
         name,
         phone: (formData.phone || '').trim() || whatsapp,
@@ -98,8 +101,8 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
         budget: formData.budget,
         propertyType: formData.propertyType,
         // The owner's price is also saved where the sales pipeline reads the asking price
-        ...(seller && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}),
-        details: { ...(lead.details || {}), budget: formData.budget, expectedPrice: formData.budget, area: formData.area, propertyType: formData.propertyType, ...(seller && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}) }
+        ...(sellerNow && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}),
+        details: { ...(lead.details || {}), budget: formData.budget, expectedPrice: formData.budget, area: formData.area, propertyType: formData.propertyType, ...(sellerNow && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}) }
       };
       const saved = onUpdateLead ? await onUpdateLead(lead.id, updated, lead.version) : true;
       if (saved === false) return;

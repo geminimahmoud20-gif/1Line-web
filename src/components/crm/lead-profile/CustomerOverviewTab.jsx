@@ -54,6 +54,19 @@ export default function CustomerOverviewTab({
       {/* Fields Grid */}
       <form onSubmit={handleSaveProfile}>
         <div className="cms-form-grid cp-ov__grid">
+          {/* Client type: buyer or seller. Flips every label below (budget↔asking price, etc.) once saved. */}
+          <div className="form-group-item">
+            <label>{isAr ? 'نوع العميل:' : 'Client type:'}</label>
+            <select
+              disabled={!isEditing}
+              value={formData.type === 'seller' ? 'seller' : 'buyer'}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            >
+              <option value="buyer">{isAr ? 'مشتري' : 'Buyer'}</option>
+              <option value="seller">{isAr ? 'بائع' : 'Seller'}</option>
+            </select>
+          </div>
+
           {/* Phone */}
           <div className="form-group-item">
             <label>{isAr ? 'رقم الهاتف الأساسي:' : 'Primary Phone:'}</label>
