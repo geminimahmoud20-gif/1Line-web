@@ -38,11 +38,10 @@ export default function NextStepSheet({ lead, outcomeId, me, isAr = true, onSave
   return (
     <Modal
       open
-      onClose={() => {}}
+      dismissible={false}
       size="sm"
       title={isAr ? 'الخطوة الجاية؟' : 'What is the next step?'}
       description={lead?.name}
-      closeLabel={isAr ? 'إغلاق' : 'Close'}
       footer={(
         <>
           <Button variant="secondary" onClick={onSkip} disabled={busy}>{isAr ? 'مفيش خطوة تانية' : 'No next step'}</Button>
