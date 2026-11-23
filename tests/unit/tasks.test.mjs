@@ -152,10 +152,17 @@ test('the next task of a client is its earliest open one', async () => {
 
 test('a task says what is missing', async () => {
   const { taskProblem } = await import('../../src/utils/tasks.js');
-  assert.equal(taskProblem({ title: '', dueAt: '2026-11-14', me }), 'اكتب المهمة الأول');
-  assert.equal(taskProblem({ title: 'a', dueAt: '', me }), 'حدد ميعاد المهمة');
-  assert.equal(taskProblem({ title: 'a', dueAt: '2026-11-14' }), 'حدد المسؤول عن المهمة');
-  assert.equal(taskProblem({ title: 'a', dueAt: '2026-11-14', assignee: { uid: 'u2' } }), '');
+  assert.equal(taskProblem({ title: '', dueAt: '2026-11-14', me }, true, NOW), 'اكتب المهمة الأول');
+  assert.equal(taskProblem({ title: 'a', dueAt: '', me }, true, NOW), 'حدد ميعاد المهمة');
+  assert.equal(taskProblem({ title: 'a', dueAt: '2026-11-14' }, true, NOW), 'حدد المسؤول عن المهمة');
+  assert.equal(taskProblem({ title: 'a', dueAt: '2026-11-14', assignee: { uid: 'u2' } }, true, NOW), '');
+  assert.equal(taskProblem({ title: 'a', dueAt: '2026-11-13T09:00', assignee: { uid: 'u2' } }, true, NOW), ''); // today, even with a time already past, is fine
+});
+
+test('a task cannot be due on a day already passed', async () => {
+  const { taskProblem, buildTask } = await import('../../src/utils/tasks.js');
+  assert.equal(taskProblem({ title: 'a', dueAt: '2026-11-12', assignee: { uid: 'u2' } }, true, NOW), 'التاريخ ده فات، اختار يوم من النهارده');
+  assert.equal(buildTask({ title: 'a', dueAt: '2026-11-12', me, now: NOW }), null);
 });
 
 test('after «لم يرد» the next call is a task, up to the third try', async () => {

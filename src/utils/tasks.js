@@ -39,19 +39,22 @@ export const dueFromPreset = (presetId, now = Date.now()) => {
 const DUE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
 
 /**
- * Why this task can't be saved, in words for the form; '' when it can. A task needs a title, a day and someone
+ * Why this task can't be saved, in words for the form; '' when it can. A task needs a title, a day (today or
+ * later — a day already passed would land it in the overdue list the moment it is created) and someone
  * responsible (the assignee, else the person adding it).
  */
-export function taskProblem({ title, dueAt, assignee, me } = {}, isAr = true) {
+export function taskProblem({ title, dueAt, assignee, me } = {}, isAr = true, now = Date.now()) {
   if (!String(title ?? '').trim()) return isAr ? 'اكتب المهمة الأول' : 'Write the task first';
-  if (!DUE_RE.test(String(dueAt ?? ''))) return isAr ? 'حدد ميعاد المهمة' : 'Pick a date for the task';
+  const due = String(dueAt ?? '');
+  if (!DUE_RE.test(due)) return isAr ? 'حدد ميعاد المهمة' : 'Pick a date for the task';
+  if (due.slice(0, 10) < dayKeyFrom(now)) return isAr ? 'التاريخ ده فات، اختار يوم من النهارده' : 'That day has passed; pick today or later';
   if (!assignee?.uid && !me?.uid) return isAr ? 'حدد المسؤول عن المهمة' : 'Choose who is responsible';
   return '';
 }
 
 /** A task payload ready to store, or null when it has no title, no date or nobody responsible. `me`/`assignee`: { uid, name } */
 export function buildTask({ title, note = '', dueAt = '', priority = 'normal', kind = 'other', lead = null, assignee, me, now = Date.now() } = {}) {
-  if (taskProblem({ title, dueAt, assignee, me })) return null;
+  if (taskProblem({ title, dueAt, assignee, me }, true, now)) return null;
   const t = String(title ?? '').trim().replace(/\s+/g, ' ').slice(0, 140);
   const to = assignee?.uid ? assignee : me;
   const due = String(dueAt);
