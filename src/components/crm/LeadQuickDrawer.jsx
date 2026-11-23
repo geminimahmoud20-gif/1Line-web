@@ -397,7 +397,7 @@ export default function LeadQuickDrawer({
                 {isAr ? 'حذف' : 'Delete'}
               </Button>
             )}
-            {onConvertToProperty && (
+            {sellerFile && onConvertToProperty && (
               <Button variant="secondary" size="sm" icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
                 {isAr ? 'حوّله لعقار' : 'To listing'}
               </Button>

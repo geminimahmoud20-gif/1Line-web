@@ -65,12 +65,13 @@ export const ReferralPortal = ({
         name: referralForm.referralName,
         phone: `${referralCountry}${referralForm.referralPhone}`,
         whatsapp: `${referralCountry}${referralForm.referralPhone}`,
-        propertyType: referralForm.referralType || 'residential',
         area: '', // a referral names a person, not an area
         type: 'referral',
         source: 'برنامج الإحالة والشركاء',
         notes: `إحالة من: ${referralForm.referrerName} (${referrerCountry}${referralForm.referrerPhone}) - صلة القرابة: ${referralForm.relationship}`,
-        details: updatedForm
+        // «نوع الإحالة» names what the referred person is — a seller referral needs the signal isSellerLead()
+        // checks, so the CRM shows them as an owner, not a buyer with «seller» sitting in the property-type field.
+        details: { ...updatedForm, ...(referralForm.referralType === 'seller' ? { sellerRole: 'owner' } : {}) }
       });
     }
     setReferralForm({

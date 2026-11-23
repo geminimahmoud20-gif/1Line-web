@@ -248,7 +248,10 @@ export const DemandsPortal = ({
           details: {
             demandId: referringDemand?.id,
             demandText: referringDemand?.text_ar,
-            propertyNotes: referralForm.propertyNotes
+            propertyNotes: referralForm.propertyNotes,
+            // This contact is offering a unit against someone else's buyer demand, not buying one themselves —
+            // the seller-side signal isSellerLead() checks, so the CRM shows owner/property fields, not buyer ones.
+            sellerRole: 'owner'
           }
         });
       }
