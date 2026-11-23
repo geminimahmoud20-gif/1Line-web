@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Modal, Button, Input } from '../ui';
-import { buildTask, KINDS, PRIORITIES } from '../../utils/tasks';
+import { buildTask, dayKeyFrom, KINDS, PRIORITIES } from '../../utils/tasks';
 import { suggestNextStep, composeDue } from '../../utils/nextStep';
 import { addTask } from '../../firebaseLazy';
 
@@ -66,7 +66,7 @@ export default function NextStepSheet({ lead, outcomeId, me, isAr = true, onSave
           </label>
         </div>
         <div className="crm-nextstep__row">
-          <Input type="date" label={isAr ? 'اليوم' : 'Day'} value={day} onChange={(e) => setDay(e.target.value)} required />
+          <Input type="date" label={isAr ? 'اليوم' : 'Day'} value={day} min={dayKeyFrom()} onChange={(e) => setDay(e.target.value)} required />
           <Input type="time" label={isAr ? (s.needsTime ? 'الساعة (إلزامي)' : 'الساعة') : 'Time'} value={time} onChange={(e) => setTime(e.target.value)} required={s.needsTime} />
         </div>
         {error && <p className="crm-nextstep__err" role="alert">{error}</p>}
