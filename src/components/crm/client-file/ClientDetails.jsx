@@ -22,6 +22,7 @@ const OWNER_TAGS = [
   { id: 'vip', name_ar: 'VIP', name_en: 'VIP' },
   { id: 'expat', name_ar: 'مغترب بالخليج', name_en: 'Gulf Expat' },
   { id: 'direct_owner', name_ar: 'مالك مباشر', name_en: 'Direct owner' },
+  { id: 'broker', name_ar: 'وسيط عقاري', name_en: 'Real estate broker' },
   { id: 'quick_sale', name_ar: 'عايز يبيع بسرعة', name_en: 'Quick sale' },
   { id: 'installment', name_ar: 'يقبل التقسيط', name_en: 'Accepts installments' },
   { id: 'negotiator', name_ar: 'مفاوض جاد', name_en: 'Serious Negotiator' }
