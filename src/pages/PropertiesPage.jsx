@@ -7,7 +7,6 @@ import {
   LayoutGrid, 
   Map as MapIcon, 
   ArrowUpDown,
-  ShieldCheck,
   Users
 } from 'lucide-react';
 import { FAMILY_KINDS } from '../utils/propertyInsights';
@@ -330,8 +329,8 @@ export default function PropertiesPage({
 
   return (
     <div className="properties-page-wrapper">
-      {/* Page header: title + count, sort and view mode on one line; the "how we work" promise folded
-          into one plain line underneath instead of its own boxed strip (fewer stacked bars) */}
+      {/* Page header: title + count, sort and view mode on one line. No boxed "how we work" strip
+          (that stays on /about and the unit page) — just the title and a short line under it. */}
       <div className="pbar-head">
         <div className="pbar-head-row">
           <div className="pbar-head-titles">
@@ -340,9 +339,7 @@ export default function PropertiesPage({
               <span className="pbar-count">{filteredProperties.length} {lang === 'ar' ? 'عقار متاح' : 'units'}</span>
             </h1>
             <p className="pbar-subtitle">
-              {lang === 'ar'
-                ? <>شقق، فيلات، محلات، أراضي، وعقارات زراعية وصناعية معروضة في سوهاج <span className="pbar-trust"><ShieldCheck size={12} aria-hidden="true" /> بنراجع الورق معاك قبل أي حجز · بنقارن السعر بأسعار المنطقة · كل التكاليف مكتوبة قبل الحجز</span></>
-                : <>Apartments, villas, shops, land, farmland and industrial units in Sohag. <span className="pbar-trust"><ShieldCheck size={12} aria-hidden="true" /> We check papers before any reservation · price compared to the area · all costs in writing</span></>}
+              {lang === 'ar' ? 'شقق، فيلات، محلات، أراضي، وعقارات زراعية وصناعية معروضة في سوهاج' : 'Apartments, villas, shops, land, farmland and industrial units in Sohag'}
             </p>
           </div>
 
