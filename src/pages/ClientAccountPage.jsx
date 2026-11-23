@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Scale, ShieldCheck, Mail, Phone, LogOut, Trash2, ArrowLeft, ArrowRight, MessageSquare, CheckCircle2, Calendar, Edit3, X } from 'lucide-react';
+import { Heart, Scale, ShieldCheck, Mail, Phone, LogOut, Trash2, ArrowLeft, ArrowRight, MessageSquare, CheckCircle2, Calendar, Edit3, X, Building } from 'lucide-react';
 import { useClientAuth } from '../context/ClientAuthContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';
@@ -9,7 +9,9 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { normalizePhoneNumber } from '../utils/securityShield';
 
 import { readMyDemands } from '../utils/browserStorage';
+import { clientOwnedListings, interestedBuyersFor } from '../utils/clientListings';
 import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
+import AccountListingsTab from '../components/account/AccountListingsTab';
 import AccountCompareTab from '../components/account/AccountCompareTab';
 import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
 import '../styles/client-auth-modes.css';
@@ -59,7 +61,7 @@ export default function ClientAccountPage({
     updateClientProfile 
   } = useClientAuth();
 
-  const [activeTab, setActiveTab] = useState('favorites'); // 'favorites' | 'compare' | 'inquiries'
+  const [activeTab, setActiveTab] = useState('favorites'); // 'favorites' | 'compare' | 'inquiries' | 'listings'
 
   // Edit Profile Modal State
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -97,6 +99,14 @@ export default function ClientAccountPage({
       .filter((d) => phonesMatch(d.whatsapp || d.phone, clientPhone))
       .map((d) => ({ ...d, ...(liveById.get(String(d.id)) || {}) }));
   }, [demands, clientUser]);
+
+  // Units this client (owner or broker) has listed with us, and who asked about each one
+  const clientListings = useMemo(() => clientOwnedListings(properties, clientLeads), [properties, clientLeads]);
+  const listingInterests = useMemo(() => {
+    const map = new Map();
+    clientListings.forEach((p) => map.set(p.id, interestedBuyersFor(p.id, leads)));
+    return map;
+  }, [clientListings, leads]);
 
   // Aggregate stats
   const totalFavoriteValue = useMemo(() => {
@@ -159,6 +169,21 @@ export default function ClientAccountPage({
         `──────────────\n` +
         `أرغب في تأكيد تفاصيل الحضور وتحديد نقطة الانطلاق مع المستشار المرافق.`
       : `Site visit confirmation for ${dateText}`;
+    window.open(getWhatsAppUrl(msg), '_blank');
+  };
+
+  // WhatsApp follow-up about a specific listed unit
+  const handleListingWhatsApp = (property, interestCount = 0) => {
+    const title = isAr ? (property.title_ar || property.title) : (property.title_en || property.title_ar || property.title);
+    const msg = isAr
+      ? `🏠 *متابعة وحدة معروضة — منصة 1Line سوهاج*\n` +
+        `👤 *الاسم:* ${clientUser?.name}\n` +
+        `📱 *الهاتف:* ${clientUser?.whatsapp}\n` +
+        `🔖 *الوحدة:* ${title} (كود ${property.id})\n` +
+        `${interestCount > 0 ? `👀 فيه ${interestCount} مهتم سجّل طلب معاينة.\n` : ''}` +
+        `──────────────\n` +
+        `أرجو إفادتي بآخر المستجدات والعروض على الوحدة دي.`
+      : `Follow-up on listing #${property.id}`;
     window.open(getWhatsAppUrl(msg), '_blank');
   };
 
@@ -303,7 +328,7 @@ export default function ClientAccountPage({
               </strong>
             </div>
 
-            <div 
+            <div
               className={`stat-box clickable ${activeTab === 'inquiries' ? 'active' : ''}`}
               onClick={() => setActiveTab('inquiries')}
             >
@@ -312,6 +337,18 @@ export default function ClientAccountPage({
                 {totalInquiriesCount}
               </strong>
             </div>
+
+            {clientListings.length > 0 && (
+              <div
+                className={`stat-box clickable ${activeTab === 'listings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('listings')}
+              >
+                <span className="stat-label">{isAr ? 'وحداتي المعروضة' : 'My Listings'}</span>
+                <strong className="stat-num text-emerald">
+                  {clientListings.length}
+                </strong>
+              </div>
+            )}
 
             {favoriteProperties.length > 0 && (
               <div className="stat-box hide-mobile">
@@ -364,8 +401,8 @@ export default function ClientAccountPage({
             <span className="tab-pill-count">{compareList.length}</span>
           </button>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             className={`account-tab-btn ${activeTab === 'inquiries' ? 'active' : ''}`}
             onClick={() => setActiveTab('inquiries')}
           >
@@ -373,6 +410,18 @@ export default function ClientAccountPage({
             <span>{isAr ? 'طلباتي' : 'Requests'}</span>
             <span className="tab-pill-count">{totalInquiriesCount}</span>
           </button>
+
+          {clientListings.length > 0 && (
+            <button
+              type="button"
+              className={`account-tab-btn ${activeTab === 'listings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('listings')}
+            >
+              <Building size={16} color={activeTab === 'listings' ? '#059669' : 'currentColor'} />
+              <span>{isAr ? 'وحداتي' : 'My Units'}</span>
+              <span className="tab-pill-count">{clientListings.length}</span>
+            </button>
+          )}
         </div>
 
         {/* Tab 1: Saved Favorites View */}
@@ -469,6 +518,17 @@ export default function ClientAccountPage({
             isAr={isAr}
             lang={lang}
             properties={properties}
+          />
+        )}
+
+        {/* Tab 4: My Listed Units (owners & brokers only) */}
+        {activeTab === 'listings' && clientListings.length > 0 && (
+          <AccountListingsTab
+            clientListings={clientListings}
+            listingInterests={listingInterests}
+            handleListingWhatsApp={handleListingWhatsApp}
+            isAr={isAr}
+            lang={lang}
           />
         )}
       </div>

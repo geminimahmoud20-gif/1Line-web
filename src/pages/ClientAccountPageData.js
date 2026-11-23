@@ -36,6 +36,14 @@ export const STAGE_CONFIG = {
   closed: { ar: 'صفقة ناجحة ومكتملة 🎉', en: 'Completed', color: '#16a34a', bg: 'rgba(22, 163, 74, 0.14)' }
 };
 
+// A listed unit's own status (set in CRM → العقارات), shown to its owner/broker in «وحداتي»
+export const LISTING_STATUS_CONFIG = {
+  published: { ar: 'معروضة ومتاحة', en: 'Live & available', color: '#059669', bg: 'rgba(5, 150, 105, 0.12)' },
+  under_negotiation: { ar: 'تحت التفاوض', en: 'Under negotiation', color: '#d97706', bg: 'rgba(217, 119, 6, 0.14)' },
+  sold: { ar: 'اتباعت', en: 'Sold', color: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' },
+  hidden: { ar: 'مخفية حالياً (قيد المراجعة)', en: 'Hidden (under review)', color: '#b91c1c', bg: 'rgba(185, 28, 28, 0.1)' }
+};
+
 export function getAreaDisplayName(areaKey, lang = 'ar') {
   if (!areaKey) return lang === 'ar' ? 'سوهاج' : 'Sohag';
   const normKey = normalizeAreaKey(areaKey);
@@ -47,5 +55,5 @@ export function getAreaDisplayName(areaKey, lang = 'ar') {
   // An old id (east, kawthar…) shows its old name, never a code; anything else is just "Sohag"
   const legacy = areaLabel(areaKey, lang === 'ar');
   if (legacy && legacy !== areaKey) return legacy;
-  return /[\u0600-\u06FF]/.test(areaKey) ? areaKey : (lang === 'ar' ? 'سوهاج' : 'Sohag');
+  return /[؀-ۿ]/.test(areaKey) ? areaKey : (lang === 'ar' ? 'سوهاج' : 'Sohag');
 }
