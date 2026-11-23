@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Building, MapPin, MessageSquare, Tag, Users, ExternalLink } from 'lucide-react';
+import { Building, MapPin, MessageSquare, Users, ExternalLink } from 'lucide-react';
 import { PROPERTY_TYPE_NAMES, LISTING_STATUS_CONFIG, getAreaDisplayName } from '../../pages/ClientAccountPageData';
 import './AccountListingsTab.app.css';
 
@@ -66,23 +66,13 @@ export default function AccountListingsTab({ clientListings, listingInterests, h
                     <span>{isAr ? 'مهتمين بالوحدة' : 'Interested buyers'}</span>
                     <span className="listing-interest-count">{interested.length}</span>
                   </div>
+                  {/* Only the count: whoever asked stays a client of the agency, not shared with the owner directly */}
                   {interested.length > 0 ? (
-                    <ul className="listing-interest-list">
-                      {interested.slice(0, 4).map((lead) => (
-                        <li key={lead.id}>
-                          <Tag size={11} />
-                          <span>{lead.name || (isAr ? 'عميل' : 'A client')}</span>
-                          {lead.createdAt && (
-                            <span className="text-muted">
-                              {new Date(lead.createdAt).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                      {interested.length > 4 && (
-                        <li className="text-muted">{isAr ? `+ ${interested.length - 4} آخرين` : `+ ${interested.length - 4} more`}</li>
-                      )}
-                    </ul>
+                    <p className="listing-interest-summary">
+                      {isAr
+                        ? `${interested.length} ${interested.length === 1 ? 'شخص طلب' : 'أشخاص طلبوا'} معاينة للوحدة دي — مستشارك هيتواصل معاك بالتفاصيل`
+                        : `${interested.length} ${interested.length === 1 ? 'person has' : 'people have'} requested a viewing — your advisor will follow up with details`}
+                    </p>
                   ) : (
                     <p className="listing-interest-empty">
                       {isAr ? 'لسه محدش طلب معاينة للوحدة دي' : 'No viewing requests on this unit yet'}

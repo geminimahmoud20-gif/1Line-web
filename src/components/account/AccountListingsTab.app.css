@@ -67,27 +67,11 @@
   font-weight: 800;
   color: #059669;
 }
-.listing-interest-list {
-  list-style: none;
+.listing-interest-summary {
   margin: 6px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.listing-interest-list li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: 0.76rem;
   color: var(--text-secondary);
-}
-.listing-interest-list li > span:nth-child(2) {
-  font-weight: 700;
-}
-.listing-interest-list li > span:last-child {
-  margin-inline-start: auto;
-  font-size: 0.7rem;
+  line-height: 1.5;
 }
 .listing-interest-empty {
   margin: 6px 0 0;
