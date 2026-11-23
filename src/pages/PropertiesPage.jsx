@@ -8,7 +8,6 @@ import {
   Map as MapIcon, 
   ArrowUpDown,
   ShieldCheck,
-  CheckCircle2,
   Users
 } from 'lucide-react';
 import { FAMILY_KINDS } from '../utils/propertyInsights';
@@ -331,28 +330,26 @@ export default function PropertiesPage({
 
   return (
     <div className="properties-page-wrapper">
-      {/* Page Header Bar - Compact Executive Luxury */}
-      <div className="properties-page-header compact-page-header">
-        <div className="page-header-container">
-          <div className="page-header-titles">
-            <div className="page-header-main-row">
-              <h1 className="page-header-title">
-                {lang === 'ar' ? 'استكشاف العقارات في سوهاج' : 'Explore Properties in Sohag'}
-              </h1>
-              <span className="results-count-badge">
-                {filteredProperties.length} {lang === 'ar' ? 'عقار متاح' : 'Units'}
-              </span>
-            </div>
-            <p className="page-header-subtitle">
-              {lang === 'ar' ? 'شقق، فيلات، محلات، أراضي، وعقارات زراعية وصناعية معروضة في سوهاج. الوحدات اللي اتراجع ورقها عليها شارة «مراجَع ومعتمد».' : 'Apartments, villas, shops, land, farmland and industrial units in Sohag. Listings whose papers we checked carry a "Reviewed & approved" badge.'}
+      {/* Page header: title + count, sort and view mode on one line; the "how we work" promise folded
+          into one plain line underneath instead of its own boxed strip (fewer stacked bars) */}
+      <div className="pbar-head">
+        <div className="pbar-head-row">
+          <div className="pbar-head-titles">
+            <h1 className="pbar-title">
+              {lang === 'ar' ? 'استكشاف العقارات في سوهاج' : 'Explore Properties in Sohag'}
+              <span className="pbar-count">{filteredProperties.length} {lang === 'ar' ? 'عقار متاح' : 'units'}</span>
+            </h1>
+            <p className="pbar-subtitle">
+              {lang === 'ar'
+                ? <>شقق، فيلات، محلات، أراضي، وعقارات زراعية وصناعية معروضة في سوهاج <span className="pbar-trust"><ShieldCheck size={12} aria-hidden="true" /> بنراجع الورق معاك قبل أي حجز · بنقارن السعر بأسعار المنطقة · كل التكاليف مكتوبة قبل الحجز</span></>
+                : <>Apartments, villas, shops, land, farmland and industrial units in Sohag. <span className="pbar-trust"><ShieldCheck size={12} aria-hidden="true" /> We check papers before any reservation · price compared to the area · all costs in writing</span></>}
             </p>
           </div>
 
-          {/* View Mode Controls */}
-          <div className="view-mode-controls">
-            <div className="sort-selector-wrap">
-              <ArrowUpDown size={13} />
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <div className="pbar-view-controls">
+            <div className="pbar-sort">
+              <ArrowUpDown size={13} aria-hidden="true" />
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} aria-label={lang === 'ar' ? 'الترتيب' : 'Sort'}>
                 <option value="featured">{lang === 'ar' ? 'المميز أولاً' : 'Featured First'}</option>
                 <option value="price_asc">{lang === 'ar' ? 'السعر: من الأقل للأعلى' : 'Price: Low to High'}</option>
                 <option value="price_desc">{lang === 'ar' ? 'السعر: من الأعلى للأقل' : 'Price: High to Low'}</option>
@@ -360,55 +357,30 @@ export default function PropertiesPage({
               </select>
             </div>
 
-            <div className="view-toggle-btns">
+            <div className="pbar-view-toggle">
               <button
                 type="button"
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                className={`pbar-view-btn ${viewMode === 'grid' ? 'is-on' : ''}`}
                 onClick={() => setViewMode('grid')}
-                title={lang === 'ar' ? 'عرض شبكة العقارات الفاخرة' : 'Luxury Grid View'}
-                aria-label={lang === 'ar' ? 'عرض شبكة العقارات الفاخرة' : 'Luxury Grid View'}
+                title={lang === 'ar' ? 'عرض شبكة العقارات' : 'Grid view'}
+                aria-label={lang === 'ar' ? 'عرض شبكة العقارات' : 'Grid view'}
+                aria-pressed={viewMode === 'grid'}
               >
-                <LayoutGrid size={15} />
-                <span className="hide-mobile">{lang === 'ar' ? 'شبكة العقارات' : 'Grid'}</span>
+                <LayoutGrid size={15} aria-hidden="true" />
+                <span className="hide-mobile">{lang === 'ar' ? 'شبكة' : 'Grid'}</span>
               </button>
               <button
                 type="button"
-                className={`view-btn ${viewMode === 'split' ? 'active' : ''}`}
+                className={`pbar-view-btn ${viewMode === 'split' ? 'is-on' : ''}`}
                 onClick={() => setViewMode('split')}
-                title={lang === 'ar' ? 'عرض تفاعلي (خريطة + قائمة)' : 'Split View'}
-                aria-label={lang === 'ar' ? 'عرض تفاعلي (خريطة + قائمة)' : 'Split View'}
+                title={lang === 'ar' ? 'عرض خريطة وقائمة' : 'Map + list view'}
+                aria-label={lang === 'ar' ? 'عرض خريطة وقائمة' : 'Map + list view'}
+                aria-pressed={viewMode === 'split'}
               >
-                <MapIcon size={15} />
-                <span className="hide-mobile">{lang === 'ar' ? 'خريطة وقائمة' : 'Split'}</span>
+                <MapIcon size={15} aria-hidden="true" />
+                <span className="hide-mobile">{lang === 'ar' ? 'خريطة' : 'Map'}</span>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 🛡️ 1LINE CERTIFIED STANDARD EXPLAINER (شريط المعيار المعتمد المدمج الأنيق) */}
-      <div className="properties-certified-explainer-strip compact-trust-strip">
-        <div className="certified-explainer-inner">
-          <div className="certified-badge-pill">
-            <ShieldCheck size={14} className="text-emerald" />
-            <span>{lang === 'ar' ? 'شغلنا معاك:' : 'How we work:'}</span>
-          </div>
-          <div className="certified-points-row">
-            {/* Process commitments (what 1Line does), not per-listing certifications */}
-            <span className="cert-point">
-              <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'بنراجع الورق معاك قبل أي حجز' : 'We check the papers with you before any reservation'}</span>
-            </span>
-            <span className="cert-dot">•</span>
-            <span className="cert-point">
-              <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'بنقارن السعر بأسعار المنطقة' : 'We compare the price with the area'}</span>
-            </span>
-            <span className="cert-dot">•</span>
-            <span className="cert-point">
-              <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'كل التكاليف مكتوبة قبل الحجز' : 'All costs in writing before reserving'}</span>
-            </span>
           </div>
         </div>
       </div>
