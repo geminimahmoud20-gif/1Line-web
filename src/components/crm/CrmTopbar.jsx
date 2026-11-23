@@ -10,6 +10,8 @@ import { loadAlertsSeenAt, saveAlertsSeenAt } from '../../firebaseLazy';
 import { ageLabel } from '../../utils/inboxView';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import PhoneText from './PhoneText';
+import { normalizeArabicText } from '../../utils/semanticSearchEngine';
+import { phoneMatchesQuery } from '../../utils/crmLeadViews';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -184,20 +186,22 @@ export default function CrmTopbar({
   // Filtered matching items for live search
   const matchingLeads = useMemo(() => {
     if (!universalSearch || !universalSearch.trim()) return [];
-    const q = universalSearch.toLowerCase();
-    return leads.filter(l => (l.name || '').toLowerCase().includes(q) || (l.phone || '').includes(q)).slice(0, 4);
+    const q = normalizeArabicText(universalSearch);
+    const qDigits = q.replace(/\D/g, '');
+    return leads.filter(l => normalizeArabicText(l.name).includes(q) || phoneMatchesQuery(l.phone, qDigits)).slice(0, 4);
   }, [leads, universalSearch]);
 
   const matchingProperties = useMemo(() => {
     if (!universalSearch || !universalSearch.trim()) return [];
-    const q = universalSearch.toLowerCase();
-    return properties.filter(p => (p.title_ar || '').toLowerCase().includes(q) || (p.locationName_ar || '').toLowerCase().includes(q)).slice(0, 4);
+    const q = normalizeArabicText(universalSearch);
+    return properties.filter(p => normalizeArabicText(p.title_ar).includes(q) || normalizeArabicText(p.locationName_ar).includes(q)).slice(0, 4);
   }, [properties, universalSearch]);
 
   const matchingDemands = useMemo(() => {
     if (!universalSearch || !universalSearch.trim()) return [];
-    const q = universalSearch.toLowerCase();
-    return demands.filter(d => (d.text_ar || '').toLowerCase().includes(q) || (d.clientName || '').toLowerCase().includes(q) || (d.phone || '').includes(q)).slice(0, 4);
+    const q = normalizeArabicText(universalSearch);
+    const qDigits = q.replace(/\D/g, '');
+    return demands.filter(d => normalizeArabicText(d.text_ar).includes(q) || normalizeArabicText(d.clientName).includes(q) || phoneMatchesQuery(d.phone, qDigits)).slice(0, 4);
   }, [demands, universalSearch]);
 
   return (

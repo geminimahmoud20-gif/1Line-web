@@ -8,6 +8,8 @@ import { reconcilePublicDemands } from '../../firebaseLazy';
 import DemandFormModal from './demands/DemandFormModal';
 import DemandMatchModal from './demands/DemandMatchModal';
 import { PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
+import { normalizeArabicText } from '../../utils/semanticSearchEngine';
+import { phoneMatchesQuery } from '../../utils/crmLeadViews';
 import { getAreas } from '../../utils/areasData';
 import { findArea, placeAreas, inArea } from '../../utils/areaLookup';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
@@ -79,13 +81,13 @@ export default function DemandsManagerPanel({
       if (typeFilter !== 'all' && demand.type !== typeFilter) return false;
 
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const textAr = (demand.text_ar || '').toLowerCase();
-        const textEn = (demand.text_en || '').toLowerCase();
-        const client = (demand.clientName || '').toLowerCase();
-        const phone = (demand.phone || '').toLowerCase();
-        const area = (demand.area_ar || demand.area_en || demand.area || '').toLowerCase();
-        return textAr.includes(q) || textEn.includes(q) || client.includes(q) || phone.includes(q) || area.includes(q);
+        const q = normalizeArabicText(searchQuery);
+        const qDigits = q.replace(/\D/g, '');
+        const textAr = normalizeArabicText(demand.text_ar);
+        const textEn = normalizeArabicText(demand.text_en);
+        const client = normalizeArabicText(demand.clientName);
+        const area = normalizeArabicText(demand.area_ar || demand.area_en || demand.area);
+        return textAr.includes(q) || textEn.includes(q) || client.includes(q) || phoneMatchesQuery(demand.phone, qDigits) || area.includes(q);
       }
       return true;
     });
