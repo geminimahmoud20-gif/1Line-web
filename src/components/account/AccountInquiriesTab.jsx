@@ -1,6 +1,7 @@
 import { LEAD_TYPE_NAMES, PROPERTY_TYPE_NAMES, STAGE_CONFIG, getAreaDisplayName } from '../../pages/ClientAccountPageData';
 import { Link } from 'react-router-dom';
-import { Building, Sparkles, FileText, MapPin, ExternalLink, MessageSquare, Calendar, Clock, Car, Tag } from 'lucide-react';
+import { Building, Home, Sparkles, FileText, MapPin, ExternalLink, MessageSquare, Calendar, Clock, Car, Tag } from 'lucide-react';
+import { isSellerLead } from '../../utils/crmLeadViews';
 import './AccountInquiriesTab.app.css';
 
 export default function AccountInquiriesTab({
@@ -124,6 +125,7 @@ export default function AccountInquiriesTab({
             <div className="client-inquiries-grid">
               {clientLeads.map((lead) => {
                 const stage = STAGE_CONFIG[lead.status] || STAGE_CONFIG.new;
+                const seller = isSellerLead(lead);
                 const typeLabel = LEAD_TYPE_NAMES[lead.type] || lead.type || (isAr ? 'استشارة' : 'Inquiry');
                 const areaName = getAreaDisplayName(lead.area || '', lang);
                 const propTypeLabel = PROPERTY_TYPE_NAMES[lead.propertyType] || lead.propertyType || '';
@@ -132,15 +134,20 @@ export default function AccountInquiriesTab({
                   <div key={lead.id} className="client-lead-card">
                     <div className="lead-card-top">
                       <div className="lead-type-tag">
-                        <Sparkles size={13} className="text-gold" />
+                        {seller ? <Home size={13} className="text-gold" /> : <Sparkles size={13} className="text-gold" />}
                         <span>{typeLabel}</span>
                       </div>
-                      <span 
+                      <span
                         className="lead-stage-pill"
                         style={{ color: stage.color, background: stage.bg }}
                       >
                         {isAr ? stage.ar : stage.en}
                       </span>
+                    </div>
+                    {/* So the client can tell near-identical requests apart, and reference one by code */}
+                    <div className="lead-card-ref">
+                      <span>{[propTypeLabel, areaName].filter(Boolean).join(' · ') || (isAr ? 'طلب عام' : 'General inquiry')}</span>
+                      <span className="text-muted" dir="ltr">#{lead.id}</span>
                     </div>
 
                     <div className="lead-card-body">
@@ -158,7 +165,7 @@ export default function AccountInquiriesTab({
 
                       {lead.budget && (
                         <div className="lead-info-row">
-                          <span className="lead-info-label">{isAr ? 'الميزانية المستهدفة:' : 'Budget:'}</span>
+                          <span className="lead-info-label">{seller ? (isAr ? 'السعر المطلوب:' : 'Asking price:') : (isAr ? 'الميزانية المستهدفة:' : 'Budget:')}</span>
                           <span className="lead-info-val text-gold">{lead.budget} {isAr ? 'ج.م' : 'EGP'}</span>
                         </div>
                       )}
@@ -166,14 +173,15 @@ export default function AccountInquiriesTab({
                       <div className="lead-info-row">
                         <span className="lead-info-label">{isAr ? 'تاريخ التسجيل:' : 'Date:'}</span>
                         <span className="lead-info-val text-muted">
-                          {lead.createdAt || lead.timestamp 
-                            ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US') 
+                          {lead.createdAt || lead.timestamp
+                            ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')
                             : (isAr ? 'مؤخراً' : 'Recent')}
                         </span>
                       </div>
 
                       {lead.notes && (
                         <div className="lead-notes-snippet">
+                          <span className="lead-notes-label">{isAr ? 'تفاصيل إضافية' : 'Additional details'}</span>
                           <p>{lead.notes}</p>
                         </div>
                       )}
