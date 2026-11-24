@@ -5,13 +5,32 @@ import { areaLabel } from '../utils/placeLabels';
 export const LEAD_TYPE_NAMES = {
   buyer: 'شراء عقار',
   seller: 'عرض عقار للبيع',
+  buyer_instant: 'ترشيح عقار فوري',
+  buyer_demand: 'طلب شراء معلن',
+  viewing_request: 'طلب معاينة ميدانية',
+  visit: 'طلب معاينة ميدانية',
   investor: 'استثمار عقاري VIP',
   bespoke_request: 'طلب عقار خاص VIP',
+  special_request: 'طلب عقار خاص VIP',
   financing: 'استفسار تمويل وتقسيط',
   valuation: 'طلب تقييم عقاري',
+  broker: 'انضمام وسيط عقاري',
+  trade_in: 'طلب تبديل عقار',
+  instant_quote: 'طلب تسعير فوري',
   client_account: 'تسجيل حساب عميل',
   client_account_verified: 'تفعيل حساب عميل' // older leads
 };
+
+export function getLeadTypeDisplayName(type, isAr = true) {
+  if (!type) return isAr ? 'استشارة عقارية' : 'Inquiry';
+  const cleanKey = String(type).trim().toLowerCase();
+  if (LEAD_TYPE_NAMES[cleanKey]) return isAr ? LEAD_TYPE_NAMES[cleanKey] : cleanKey;
+  if (cleanKey.startsWith('buyer')) return isAr ? 'طلب شراء عقار' : 'Buyer Request';
+  if (cleanKey.startsWith('seller')) return isAr ? 'عرض عقار للبيع' : 'Seller Offer';
+  if (cleanKey.includes('invest')) return isAr ? 'استثمار عقاري VIP' : 'VIP Investment';
+  if (cleanKey.includes('visit') || cleanKey.includes('view')) return isAr ? 'طلب معاينة ميدانية' : 'Viewing Request';
+  return isAr ? 'استشارة عقارية' : cleanKey.replace(/_/g, ' ');
+}
 
 export const PROPERTY_TYPE_NAMES = {
   apartment: 'شقة سكنية',
@@ -24,8 +43,27 @@ export const PROPERTY_TYPE_NAMES = {
   chalet: 'شاليه',
   commercial: 'تجاري',
   residential: 'سكني',
-  administrative: 'إداري'
+  administrative: 'إداري',
+  industrial_land: 'أرض صناعية',
+  agri_land: 'أرض زراعية',
+  farm: 'مزرعة / حديقة فاكهة',
+  factory: 'مصنع / ورشة',
+  warehouse: 'مخزن / مستودع',
+  townhouse: 'تاون هاوس',
+  duplex: 'دوبلكس',
+  penthouse: 'بنتهاوس',
+  roof: 'رووف',
+  studio: 'استوديو',
+  medical: 'مركز طبي / صيدلية'
 };
+
+export function getPropertyTypeDisplayName(propType, isAr = true) {
+  if (!propType) return '';
+  const cleanKey = String(propType).trim().toLowerCase();
+  if (PROPERTY_TYPE_NAMES[cleanKey]) return isAr ? PROPERTY_TYPE_NAMES[cleanKey] : cleanKey;
+  if (/[؀-ۿ]/.test(propType)) return propType;
+  return cleanKey.replace(/_/g, ' ');
+}
 
 export const STAGE_CONFIG = {
   new: { ar: 'طلب جديد (قيد التعيين)', en: 'New Inquiry', color: '#0284c7', bg: 'rgba(2, 132, 199, 0.12)' },
@@ -33,7 +71,9 @@ export const STAGE_CONFIG = {
   site_visit: { ar: 'معاينة مجدولة مؤكدة 🚗', en: 'Site Visit Scheduled', color: '#d97706', bg: 'rgba(217, 119, 6, 0.14)' },
   negotiating: { ar: 'قيد التفاوض والتقييم', en: 'Negotiation', color: '#ea580c', bg: 'rgba(234, 88, 12, 0.14)' },
   closing: { ar: 'إجراءات حجز وتعاقد', en: 'Closing / Deposit', color: '#059669', bg: 'rgba(5, 150, 105, 0.14)' },
-  closed: { ar: 'صفقة ناجحة ومكتملة 🎉', en: 'Completed', color: '#16a34a', bg: 'rgba(22, 163, 74, 0.14)' }
+  closed: { ar: 'صفقة ناجحة ومكتملة 🎉', en: 'Completed', color: '#16a34a', bg: 'rgba(22, 163, 74, 0.14)' },
+  inactive: { ar: 'غير متفاعل / معلق', en: 'Inactive / On Hold', color: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' },
+  lost: { ar: 'ملغي / غير متاح', en: 'Cancelled / Archived', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)' }
 };
 
 // A listed unit's own status (set in CRM → العقارات), shown to its owner/broker in «وحداتي»

@@ -1,9 +1,11 @@
-import { useId, useState } from 'react';
+import { useId, useState, useMemo } from 'react';
+import { localDayKey } from '../../utils/crmLeadViews';
 import { Modal, Button, Input, Select } from '../ui';
 import { buildTask, dayKeyFrom, KINDS, PRIORITIES } from '../../utils/tasks';
 import { suggestNextStep, composeDue } from '../../utils/nextStep';
 import { isSellerLead } from '../../utils/crmLeadViews';
 import { addTask } from '../../firebaseLazy';
+import { localDayKey } from '../../utils/crmLeadViews';
 
 /**
  * «الخطوة الجاية؟» after an outcome: the next task comes pre-filled and has to be saved, or skipped on purpose
@@ -30,6 +32,15 @@ export default function NextStepSheet({ lead, outcomeId, me, isAr = true, onSave
   const dueAt = composeDue(day, time, { needsTime: s.needsTime });
   const save = async (e) => {
     e.preventDefault();
+
+    // Validate: date must be today or later
+    const selectedDayKey = day ? localDayKey(day) : '';
+    const todayKey = localDayKey();
+    if (selectedDayKey && selectedDayKey < todayKey) {
+      setError(isAr ? 'تاريخ المهمة يجب أن يكون اليوم أو позже' : 'Task date must be today or later');
+      return;
+    }
+
     const task = buildTask({ title, dueAt, priority, kind, lead: { id: lead.id, name: lead.name }, me });
     if (!task) { setError(s.needsTime && !time ? (isAr ? 'حدد ساعة المعاينة' : 'Please specify time') : (isAr ? 'اكتب الخطوة وحدد اليوم' : 'Please write task and set day')); return; }
     setBusy(true);

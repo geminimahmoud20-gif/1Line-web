@@ -1,6 +1,6 @@
-import { LEAD_TYPE_NAMES, PROPERTY_TYPE_NAMES, STAGE_CONFIG, getAreaDisplayName } from '../../pages/ClientAccountPageData';
+import { LEAD_TYPE_NAMES, PROPERTY_TYPE_NAMES, STAGE_CONFIG, getAreaDisplayName, getLeadTypeDisplayName, getPropertyTypeDisplayName } from '../../pages/ClientAccountPageData';
 import { Link } from 'react-router-dom';
-import { Building, Sparkles, FileText, MapPin, ExternalLink, MessageSquare, Calendar, Clock, Car, Tag } from 'lucide-react';
+import { Building, Sparkles, FileText, MapPin, ExternalLink, MessageSquare, Calendar, Clock, Car, Tag, Ruler, Coins } from 'lucide-react';
 import './AccountInquiriesTab.app.css';
 
 export default function AccountInquiriesTab({
@@ -124,9 +124,27 @@ export default function AccountInquiriesTab({
             <div className="client-inquiries-grid">
               {clientLeads.map((lead) => {
                 const stage = STAGE_CONFIG[lead.status] || STAGE_CONFIG.new;
-                const typeLabel = LEAD_TYPE_NAMES[lead.type] || lead.type || (isAr ? 'استشارة' : 'Inquiry');
-                const areaName = getAreaDisplayName(lead.area || '', lang);
-                const propTypeLabel = PROPERTY_TYPE_NAMES[lead.propertyType] || lead.propertyType || '';
+                const typeLabel = getLeadTypeDisplayName(lead.type, isAr);
+                const areaName = getAreaDisplayName(lead.area || lead.details?.area || '', lang);
+                const rawPropType = lead.propertyType || lead.details?.propertyType;
+                const propTypeLabel = getPropertyTypeDisplayName(rawPropType, isAr);
+                const isSeller = lead.type === 'seller' || Boolean(lead.details?.askingPrice) || Boolean(lead.details?.propertyType && lead.details?.size);
+
+                // Price: asking price for sellers, budget for buyers
+                const numBudget = Number(String(lead.budget || lead.details?.budget || 0).replace(/[^0-9.]/g, ''));
+                const rawPrice = Number(lead.details?.askingPrice || lead.details?.expectedPrice || numBudget || 0);
+                const formattedPrice = rawPrice > 0 
+                  ? `${rawPrice.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`
+                  : (lead.budget ? `${lead.budget} ${isAr ? 'ج.م' : 'EGP'}` : '');
+                const priceLabel = isSeller ? (isAr ? 'السعر المطلوب:' : 'Asking Price:') : (isAr ? 'الميزانية المستهدفة:' : 'Budget:');
+
+                // Size
+                const sizeVal = lead.details?.size || (lead.notes?.match(/بمساحة\s*([0-9]+)\s*م/)?.[1]);
+
+                // Parse pipe-delimited notes into clean tags if structured
+                const noteParts = (lead.notes && lead.notes.includes('|'))
+                  ? lead.notes.split('|').map(s => s.trim()).filter(Boolean)
+                  : [];
 
                 return (
                   <div key={lead.id} className="client-lead-card">
@@ -156,10 +174,17 @@ export default function AccountInquiriesTab({
                         </div>
                       )}
 
-                      {lead.budget && (
+                      {formattedPrice && (
                         <div className="lead-info-row">
-                          <span className="lead-info-label">{isAr ? 'الميزانية المستهدفة:' : 'Budget:'}</span>
-                          <span className="lead-info-val text-gold">{lead.budget} {isAr ? 'ج.م' : 'EGP'}</span>
+                          <span className="lead-info-label">{priceLabel}</span>
+                          <span className="lead-info-val text-gold"><Coins size={12} /> {formattedPrice}</span>
+                        </div>
+                      )}
+
+                      {sizeVal && (
+                        <div className="lead-info-row">
+                          <span className="lead-info-label">{isAr ? 'المساحة:' : 'Size:'}</span>
+                          <span className="lead-info-val"><Ruler size={12} /> {sizeVal} {isAr ? 'م²' : 'm²'}</span>
                         </div>
                       )}
 
@@ -172,11 +197,17 @@ export default function AccountInquiriesTab({
                         </span>
                       </div>
 
-                      {lead.notes && (
+                      {noteParts.length > 0 ? (
+                        <div className="lead-specs-tags">
+                          {noteParts.map((part, pIdx) => (
+                            <span key={pIdx} className="lead-spec-tag">{part}</span>
+                          ))}
+                        </div>
+                      ) : lead.notes ? (
                         <div className="lead-notes-snippet">
                           <p>{lead.notes}</p>
                         </div>
-                      )}
+                      ) : null}
                     </div>
 
                     <div className="lead-card-footer">
