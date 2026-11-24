@@ -1,5 +1,5 @@
-/* Listings filters on phones: search + location chips stay visible, everything else folds
-   behind one toggle so the first listing appears on the first screen. */
+/* Listings filters on phones: search + a folded toggle for the rest, so the first listing appears
+   on the first screen. */
 .pf-mobile-toggle { display: none; }
 
 @media (max-width: 768px) {
@@ -13,52 +13,35 @@
     padding: 0 14px;
     margin: 4px 0 2px;
     border-radius: 14px;
-    border: 1px solid var(--xs-line, rgba(148, 163, 184, 0.35));
-    background: var(--xs-surface, #fff);
-    color: var(--xs-ink, #0B1B32);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card, #fff);
+    color: var(--text-primary);
     font: inherit;
     font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
   }
-  .pf-mobile-toggle > svg:first-child { color: var(--xs-gold, #C5A059); }
-  .pf-count {
-    display: grid;
-    place-items: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: var(--xs-gold, #C5A059);
-    color: #0B1B32;
-    font-size: 0.72rem;
-  }
-  .pf-results { margin-inline-start: auto; font-size: 0.76rem; font-weight: 600; color: var(--xs-muted, #64748b); }
+  .pf-mobile-toggle > svg:first-child { color: var(--accent-gold, #c5a059); }
+  .pf-results { margin-inline-start: auto; font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
 
-  /* The desktop title row repeats the count and the reset action — not needed on phones */
-  .compact-filters-card .filter-header-bar { display: none; }
-  .compact-filters-card.pf-open .filter-header-bar { display: flex; order: 3; }
+  .pbar-filters { display: flex; flex-direction: column; padding: 8px 12px; }
+  .pbar-filters-row { order: 1; }
+  .pbar-filters > :not(.pbar-filters-row):not(.pf-mobile-toggle) { order: 4; }
 
-  .compact-filters-card { display: flex; flex-direction: column; }
-  .compact-filters-card > .filter-grid-inputs { order: 1; }
-  .compact-filters-card > :not(.filter-grid-inputs):not(.pf-mobile-toggle):not(.filter-header-bar) { order: 4; }
+  /* Folded: keep only keyword search and the active-filter chips */
+  .pbar-filters.pf-folded .pbar-filters-row > .pbar-field:not(.pbar-field--search),
+  .pbar-filters.pf-folded .pbar-filters-row > .pbar-row-actions,
+  .pbar-filters.pf-folded .pbar-advanced { display: none !important; }
 
-  /* Folded: keep only keyword search, location chips and the active-filter chips */
-  .compact-filters-card.pf-folded > .filter-grid-inputs > .filter-item:not(.search-item),
-  .compact-filters-card.pf-folded .filter-advanced-drawer,
-  .compact-filters-card.pf-folded .toolbar-tags-row { display: none !important; }
-
-  .compact-filters-card .toolbar-pills-scroll {
+  .pbar-filters .pbar-tags-scroll {
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
   }
-  .compact-filters-card .toolbar-pills-scroll::-webkit-scrollbar { display: none; }
-  .compact-filters-card .toolbar-pills-scroll > * { flex: none; }
+  .pbar-filters .pbar-tags-scroll::-webkit-scrollbar { display: none; }
+  .pbar-filters .pbar-tags-scroll > * { flex: none; }
 
-  /* Phones: the first listing shows on the first screen. The count sits once, on the filters
-     toggle; the search label repeats its placeholder; the "how we work" strip is on every unit page */
-  .properties-page-header .results-count-badge,
-  .properties-certified-explainer-strip,
-  .compact-filters-card .search-item > .compact-label { display: none; }
+  /* Phones: the count sits once, on the filters toggle, and the trust line moves to a plain
+     sentence in the page header (no boxed strip to repeat per unit page) */
+  .pbar-count { display: none; }
 }

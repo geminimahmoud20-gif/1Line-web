@@ -35,6 +35,29 @@ test('search matches name, phone, notes and tags, case-insensitively', () => {
   assert.deepEqual(ids(filterLeads(leads, { searchQuery: '   ' })), [1, 2, 4]);
 });
 
+test('phone search ignores spacing, +20/0020 and matches whatsapp/altPhone too', () => {
+  const l = [
+    { id: 10, name: 'A', phone: '01033200010' },
+    { id: 11, name: 'B', whatsapp: '01155500000' },
+    { id: 12, name: 'C', altPhone: '01299900000' }
+  ];
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: '+20 10 33200010' })), [10]);
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: '00201033200010' })), [10]);
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: '0115 550 0000' })), [11]);
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: '01299900000' })), [12]);
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: '٠١٠٣٣٢٠٠٠١٠' })), [10]); // Eastern-Arabic digits
+});
+
+test('name/notes search ignores Arabic spelling variants (أ/إ/آ, ة/ه, ى/ي)', () => {
+  const l = [
+    { id: 20, name: 'أحمد الدسوقي' },
+    { id: 21, name: 'سهام', notes: 'عايزة شقة في المعادي' }
+  ];
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: 'احمد' })), [20]);
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: 'سهام' })), [21]);
+  assert.deepEqual(ids(filterLeads(l, { searchQuery: 'المعادى' })), [21]); // ى typed instead of ي
+});
+
 test('"my deals" keeps the agent\'s desk and the pool, except for the super admin', () => {
   assert.deepEqual(ids(filterLeads(leads, { myDealsOnly: true, activeRole: 'agent_east', agentName: 'Sales Team A' })), [1, 4]);
   assert.deepEqual(ids(filterLeads(leads, { myDealsOnly: true, activeRole: 'super_admin', agentName: 'x' })), [1, 2, 4]);
@@ -356,6 +379,25 @@ test('an owner counts at the price he asks, wherever it was saved', async () => 
   assert.equal(leadBudget({ type: 'seller', details: { askingPrice: '2,500,000', budget: '1000' } }), 2500000);
   assert.equal(leadBudget({ type: 'seller', details: { budget: '1500000' } }), 1500000);
   assert.equal(leadBudget({ type: 'buyer', budget: '800000', askingPrice: 9 }), 800000); // a buyer never reads asking price
+});
+
+test('a pair of duplicates a staff member confirmed are different deals stops being flagged', () => {
+  // x is told y is a different deal; x then has no unreviewed counterpart left, so the pair drops out
+  const pair = [
+    { id: 'x', phone: '01099999999', dupReviewed: ['y'] },
+    { id: 'y', phone: '01099999999' }
+  ];
+  assert.equal(duplicatesById(pair).size, 0);
+  // With a third, still-unreviewed lead on the same number, the group stays flagged for everyone in it —
+  // dismissing is a whole-group decision (what MergeLeadsModal writes), not silently partial
+  const triple = [
+    { id: 'x', phone: '01099999999', dupReviewed: ['y'] },
+    { id: 'y', phone: '01099999999' },
+    { id: 'z', phone: '01099999999' }
+  ];
+  const d = duplicatesById(triple);
+  assert.deepEqual(d.get('x').sort(), ['y', 'z']);
+  assert.deepEqual(d.get('z').sort(), ['x', 'y']);
 });
 
 test('pipelineOverviewOf counts a client once, not once per un-merged duplicate lead', () => {

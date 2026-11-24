@@ -114,6 +114,7 @@ export default function LeadsTab({
   triggerToast,
   duplicateIds = new Map(),
   onMergeLeads,
+  onDismissDuplicates,
   onMergeAllDuplicates,
   canMergeLeads = false,
   sourceFilter = 'all',
@@ -455,6 +456,7 @@ export default function LeadsTab({
           canMerge={canMergeLeads && !!onMergeLeads}
           onCancel={() => setMergeGroup(null)}
           onMerge={async (keepId, otherIds) => { await onMergeLeads(keepId, otherIds); setMergeGroup(null); }}
+          onDismiss={onDismissDuplicates ? async (ids) => { await onDismissDuplicates(ids); setMergeGroup(null); } : undefined}
         />
       )}
       {mergeAllOpen && (

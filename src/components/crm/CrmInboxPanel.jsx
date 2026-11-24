@@ -20,6 +20,8 @@ import { cx } from '../ui/cx';
 import './CrmInboxPanel.css';
 import './client-card.css';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
+import { normalizeArabicText } from '../../utils/semanticSearchEngine';
+import { phoneMatchesQuery } from '../../utils/crmLeadViews';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
 import { sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -394,15 +396,15 @@ export default function CrmInboxPanel({
     let list = (categorized[activeTab] || []).filter((l) => matchesView(l, view, myUid, currentStaffName));
 
     if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      const digits = q.replace(/[^0-9]/g, '');
-      const has = (v) => typeof v === 'string' && v.toLowerCase().includes(q);
+      const q = normalizeArabicText(searchQuery);
+      const qDigits = q.replace(/\D/g, '');
+      const has = (v) => typeof v === 'string' && normalizeArabicText(v).includes(q);
       list = list.filter((l) => {
         const d = l.details || {};
         return has(l.name) || has(l.notes) || has(l.assignedTo) || has(l.ownerName) || has(d.propertyCode)
           || has(formatAreaName(d.area || l.area)) || has(formatPropertyType(d.propertyType || l.propertyType))
-          // Phones match on digits, so "0123 699" and "+20123…" both find 01236999836
-          || (canSeePhone && digits.length >= 3 && String(l.phone || '').replace(/[^0-9]/g, '').replace(/^20/, '0').includes(digits.replace(/^20/, '0')));
+          // Phones match on digits, so "0123 699", "+20123…" and "0020123…" all find 01236999836
+          || (canSeePhone && [l.phone, l.whatsapp, l.altPhone].some((p) => phoneMatchesQuery(p, qDigits)));
       });
     }
 

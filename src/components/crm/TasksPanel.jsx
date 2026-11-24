@@ -4,7 +4,7 @@ import { useTasks } from '../../hooks/useTasks';
 import { addTask, updateTask, removeTask } from '../../firebaseLazy';
 import {
   PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
-  dueFromPreset, snoozed, pushAllPatch, completion, reopening, dueLabel,
+  dueFromPreset, dayKeyFrom, snoozed, pushAllPatch, completion, reopening, dueLabel,
   workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch, focusTasks, doneThisWeek, daysLate
 } from '../../utils/tasks';
 import { firstContactPatch } from '../../utils/crmLeadViews';
@@ -47,7 +47,7 @@ function EditForm({ t, isAr, onSave, onCancel }) {
       {problem && <small role="alert" className="tk-problem">{problem}</small>}
       <input className="tk-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={140} aria-label={isAr ? 'المهمة' : 'Task'} />
       <div className="tk-row-fields">
-        <input type="date" className="tk-input" value={day} onChange={(e) => setDay(e.target.value)} aria-label={isAr ? 'اليوم' : 'Day'} />
+        <input type="date" className="tk-input" value={day} min={dayKeyFrom()} onChange={(e) => setDay(e.target.value)} aria-label={isAr ? 'اليوم' : 'Day'} />
         <input type="time" className="tk-input" value={time} onChange={(e) => setTime(e.target.value)} aria-label={isAr ? 'الساعة' : 'Time'} />
         <select className="tk-input" value={priority} onChange={(e) => setPriority(e.target.value)} aria-label={isAr ? 'الأولوية' : 'Priority'}>
           {PRIORITIES.map((p) => <option key={p.id} value={p.id}>{isAr ? p.ar : p.en}</option>)}
@@ -201,7 +201,7 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAss
         <button type="button" className={preset === 'custom' ? 'is-on' : ''} aria-pressed={preset === 'custom'} onClick={() => setPreset('custom')}>{isAr ? 'تاريخ تاني' : 'Pick a day'}</button>
       </div>
       <div className="tk-row-fields">
-        {preset === 'custom' && <input type="date" className="tk-input" value={customDay} onChange={(e) => setCustomDay(e.target.value)} aria-label={isAr ? 'اليوم' : 'Day'} />}
+        {preset === 'custom' && <input type="date" className="tk-input" value={customDay} min={dayKeyFrom()} onChange={(e) => setCustomDay(e.target.value)} aria-label={isAr ? 'اليوم' : 'Day'} />}
         <input type="time" className="tk-input" value={time} onChange={(e) => setTime(e.target.value)} aria-label={isAr ? 'الساعة (اختياري)' : 'Time (optional)'} />
         <select className="tk-input" value={priority} onChange={(e) => setPriority(e.target.value)} aria-label={isAr ? 'الأولوية' : 'Priority'}>
           {PRIORITIES.map((p) => <option key={p.id} value={p.id}>{isAr ? p.ar : p.en}</option>)}

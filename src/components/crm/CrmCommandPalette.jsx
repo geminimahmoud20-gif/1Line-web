@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Building, Zap, Phone, Command } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
+import { normalizeArabicText } from '../../utils/semanticSearchEngine';
+import { phoneMatchesQuery } from '../../utils/crmLeadViews';
 
 export default function CrmCommandPalette({
   isOpen,
@@ -119,23 +121,24 @@ export default function CrmCommandPalette({
 
   // Filtered results calculation
   const searchResults = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeArabicText(query);
+    const qDigits = q.replace(/\D/g, '');
     if (!q) {
       return quickActions;
     }
 
     const filteredActions = quickActions.filter(a =>
-      (a.title_ar && a.title_ar.toLowerCase().includes(q)) ||
-      (a.title_en && a.title_en.toLowerCase().includes(q))
+      normalizeArabicText(a.title_ar).includes(q) ||
+      normalizeArabicText(a.title_en).includes(q)
     );
 
     const canViewPhone = canViewLeadPhone(userRole);
 
     const filteredLeads = leads
       .filter(l =>
-        (l.name && l.name.toLowerCase().includes(q)) ||
-        (canViewPhone && l.phone && l.phone.includes(q)) ||
-        (l.area && l.area.toLowerCase().includes(q))
+        normalizeArabicText(l.name).includes(q) ||
+        (canViewPhone && phoneMatchesQuery(l.phone, qDigits)) ||
+        normalizeArabicText(l.area).includes(q)
       )
       .slice(0, 5)
       .map(l => {
@@ -154,9 +157,9 @@ export default function CrmCommandPalette({
 
     const filteredProperties = properties
       .filter(p =>
-        (p.title_ar && p.title_ar.toLowerCase().includes(q)) ||
-        (p.id && String(p.id).toLowerCase().includes(q)) ||
-        (p.locationName_ar && p.locationName_ar.toLowerCase().includes(q))
+        normalizeArabicText(p.title_ar).includes(q) ||
+        normalizeArabicText(String(p.id ?? '')).includes(q) ||
+        normalizeArabicText(p.locationName_ar).includes(q)
       )
       .slice(0, 4)
       .map(p => ({
@@ -172,9 +175,9 @@ export default function CrmCommandPalette({
 
     const filteredDemands = demands
       .filter(d =>
-        (d.clientName && d.clientName.toLowerCase().includes(q)) ||
-        (d.text_ar && d.text_ar.toLowerCase().includes(q)) ||
-        (d.phone && d.phone.includes(q))
+        normalizeArabicText(d.clientName).includes(q) ||
+        normalizeArabicText(d.text_ar).includes(q) ||
+        phoneMatchesQuery(d.phone, qDigits)
       )
       .slice(0, 3)
       .map(d => ({

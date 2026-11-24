@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { hasNoRooms } from '../../utils/propertyKinds';
-import { Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileCheck, Waves, PieChart, ChevronDown, ChevronUp, KeyRound, Check } from 'lucide-react';
+import {
+  Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileCheck, Waves, PieChart,
+  ChevronDown, ChevronUp, KeyRound, Check, Building2, MapPin, Wallet, BedDouble
+} from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import './property-filters-mobile.css';
@@ -54,8 +57,8 @@ export default function PropertyFilters({
   const handleToggleTag = (tagId) => {
     const currentTags = filters.smartTags || [];
     const exists = currentTags.includes(tagId);
-    const updated = exists 
-      ? currentTags.filter(t => t !== tagId) 
+    const updated = exists
+      ? currentTags.filter(t => t !== tagId)
       : [...currentTags, tagId];
     onFilterChange('smartTags', updated);
   };
@@ -146,8 +149,10 @@ export default function PropertyFilters({
     return list;
   })();
 
+  const showBedrooms = !(hasNoRooms(filters.type) && filters.type !== 'office');
+
   return (
-    <div className={`properties-filters-card luxury-filters-container compact-filters-card ${mobileOpen ? 'pf-open' : 'pf-folded'}`}>
+    <div className={`pbar-filters ${mobileOpen ? 'pf-open' : 'pf-folded'}`}>
       {/* Phones only: one toggle for all filters, with the active count */}
       <button
         type="button"
@@ -162,79 +167,38 @@ export default function PropertyFilters({
         {mobileOpen ? <ChevronUp size={15} aria-hidden="true" /> : <ChevronDown size={15} aria-hidden="true" />}
       </button>
 
-      {/* Top Header Bar - Streamlined */}
-      <div className="filter-header-bar compact-header-bar">
-        <div className="filter-title-wrap">
-          <div className="filter-title-icon-badge">
-            <SlidersHorizontal size={16} />
-          </div>
-          <div className="filter-title-text-group">
-            <h3 className="filter-main-title">{isAr ? 'ابحث وفلتر' : 'Search & filter'}</h3>
-          </div>
+      {/* One row: search + the filters people use most, with the two actions at the end */}
+      <div className="pbar-filters-row">
+        <div className="pbar-field pbar-field--search">
+          <Search size={15} aria-hidden="true" />
+          <input
+            type="text"
+            placeholder={isAr ? 'ابحث بالمنطقة، الشارع، أو نوع العقار...' : 'Search by area, street, or type...'}
+            aria-label={isAr ? 'بحث بالاسم أو الكلمة الدلالية' : 'Keyword search'}
+            value={filters.query || ''}
+            onChange={(e) => onFilterChange('query', e.target.value)}
+          />
+          {filters.query && (
+            <button
+              type="button"
+              className="pbar-field-clear"
+              onClick={() => onFilterChange('query', '')}
+              aria-label={isAr ? 'مسح النص' : 'Clear'}
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
 
-        <div className="filter-header-actions">
-          <button
-            type="button"
-            className={`filter-toggle-adv-btn ${showAdvanced ? 'active' : ''}`}
-            onClick={() => setShowAdvanced(prev => !prev)}
-          >
-            <span>{isAr ? (showAdvanced ? 'خيارات أقل' : 'فلاتر أكتر') : (showAdvanced ? 'Less Filters' : 'More Filters')}</span>
-            {advancedCount > 0 && <b className="pf-count">{advancedCount}</b>}
-            {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-
-          <button
-            type="button"
-            className="filter-reset-btn"
-            onClick={onResetFilters}
-            title={isAr ? 'إعادة ضبط كافة الفلاتر' : 'Reset all filters'}
-          >
-            <RotateCcw size={13} />
-            <span>{isAr ? 'إعادة ضبط' : 'Reset'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Primary Filter Grid - Balanced Single-Height Row */}
-      <div className="filter-grid-inputs compact-grid-inputs">
-        {/* Search Keyword */}
-        <div className="filter-item search-item">
-          <label className="compact-label">{isAr ? 'بحث بالاسم أو الكلمة الدلالية' : 'Keyword Search'}</label>
-          <div className="filter-input-with-icon">
-            <Search size={15} />
-            <input
-              type="text"
-              placeholder={isAr ? 'ابحث بالمنطقة، الشارع، أو نوع العقار...' : 'Search by area, street, or type...'}
-              aria-label={isAr ? 'بحث بالاسم أو الكلمة الدلالية' : 'Keyword Search'}
-              value={filters.query || ''}
-              onChange={(e) => onFilterChange('query', e.target.value)}
-            />
-            {filters.query && (
-              <button
-                type="button"
-                className="filter-clear-input-btn"
-                onClick={() => onFilterChange('query', '')}
-                aria-label="مسح النص"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Property Type */}
-        {/* Property Type with Sector Grouping */}
-        <div className="filter-item">
-          <label className="compact-label">{isAr ? 'نوع العقار والقطاع' : 'Property Type & Sector'}</label>
+        <div className="pbar-field">
+          <Building2 size={15} aria-hidden="true" />
           <select
             value={filters.type || 'all'}
+            aria-label={isAr ? 'نوع العقار والقطاع' : 'Property type & sector'}
             onChange={(e) => {
               const newType = e.target.value;
               onFilterChange('type', newType);
-              if (hasNoRooms(newType)) {
-                onFilterChange('bedrooms', 'all');
-              }
+              if (hasNoRooms(newType)) onFilterChange('bedrooms', 'all');
             }}
           >
             <option value="all">{isAr ? 'جميع العقارات والقطاعات' : 'All Types & Sectors'}</option>
@@ -263,73 +227,77 @@ export default function PropertyFilters({
           </select>
         </div>
 
-        {/* Location / Area */}
-        <div className="filter-item">
-          <label className="compact-label">{isAr ? 'المنطقة' : 'Location'}</label>
-          <select
-            value={filters.area || 'all'}
-            onChange={(e) => onFilterChange('area', e.target.value)}
-          >
+        <div className="pbar-field">
+          <MapPin size={15} aria-hidden="true" />
+          <select value={filters.area || 'all'} aria-label={isAr ? 'المنطقة' : 'Location'} onChange={(e) => onFilterChange('area', e.target.value)}>
             <AreaOptions areas={areas} isAr={isAr} includeAll={areas.some((a) => a?.id === 'all')} />
           </select>
         </div>
 
-        {/* Max budget: one list with the amounts written out ("حتى 2 مليون"), no slider */}
-        <div className="filter-item">
-          <label className="compact-label">{isAr ? 'الميزانية' : 'Budget'}</label>
+        <div className="pbar-field">
+          <Wallet size={15} aria-hidden="true" />
           <select
             value={BUDGET_OPTIONS.some((o) => o.value === Number(filters.maxPrice)) ? Number(filters.maxPrice) : ANY_PRICE}
+            aria-label={isAr ? 'الميزانية' : 'Budget'}
             onChange={(e) => onFilterChange('maxPrice', Number(e.target.value))}
           >
             {BUDGET_OPTIONS.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
           </select>
         </div>
 
-        {/* Bedrooms: only where rooms apply (not land, shops, farms, factories…) */}
-        {!(hasNoRooms(filters.type) && filters.type !== 'office') && (
-          <div className="filter-item bedrooms-filter-item">
-            <label className="compact-label">{isAr ? 'عدد الغرف' : 'Bedrooms'}</label>
-            <div className="bedroom-pills compact-bedroom-pills">
-              {['all', '1', '2', '3', '4+'].map((beds) => (
+        {showBedrooms && (
+          <div className="pbar-field pbar-field--pills" role="group" aria-label={isAr ? 'عدد الغرف' : 'Bedrooms'}>
+            <BedDouble size={15} aria-hidden="true" className="pbar-pills-icon" />
+            {['all', '1', '2', '3', '4+'].map((beds) => {
+              const active = filters.bedrooms === beds || ((!filters.bedrooms || filters.bedrooms === 'any') && beds === 'all');
+              return (
                 <button
                   key={beds}
                   type="button"
-                  className={`bedroom-pill ${
-                    (filters.bedrooms === beds || ((!filters.bedrooms || filters.bedrooms === 'any') && beds === 'all')) ? 'active' : ''
-                  }`}
-                  aria-pressed={filters.bedrooms === beds || ((!filters.bedrooms || filters.bedrooms === 'any') && beds === 'all')}
+                  className={`pbar-pill ${active ? 'is-on' : ''}`}
+                  aria-pressed={active}
                   onClick={() => onFilterChange('bedrooms', beds)}
                 >
                   {beds === 'all' ? (isAr ? 'الكل' : 'All') : beds}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
+
+        <div className="pbar-row-actions">
+          <button type="button" className={`pbar-adv-btn ${showAdvanced ? 'is-on' : ''}`} onClick={() => setShowAdvanced((p) => !p)} aria-expanded={showAdvanced}>
+            <SlidersHorizontal size={13} aria-hidden="true" />
+            <span>{isAr ? (showAdvanced ? 'خيارات أقل' : 'فلاتر أكتر') : (showAdvanced ? 'Less' : 'More filters')}</span>
+            {advancedCount > 0 && <b className="pf-count">{advancedCount}</b>}
+          </button>
+          <button type="button" className="pbar-reset-btn" onClick={onResetFilters} title={isAr ? 'إعادة ضبط كافة الفلاتر' : 'Reset all filters'}>
+            <RotateCcw size={13} aria-hidden="true" />
+            <span className="hide-mobile">{isAr ? 'إعادة ضبط' : 'Reset'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Advanced Secondary Filter Drawer */}
       {showAdvanced && (
-        <div className="filter-advanced-drawer compact-adv-drawer">
-          <div className="filter-grid-inputs adv-grid">
-            {/* Delivery / Completion Status */}
-            <div className="filter-item">
-              <label className="compact-label">{isAr ? 'حالة الاستلام' : 'Delivery Status'}</label>
+        <div className="pbar-advanced">
+          <div className="pbar-advanced-row">
+            <div className="pbar-field">
               <select
                 value={filters.completionStatus || 'all'}
+                aria-label={isAr ? 'حالة الاستلام' : 'Delivery status'}
                 onChange={(e) => onFilterChange('completionStatus', e.target.value)}
               >
-                <option value="all">{isAr ? 'جميع الحالات' : 'All Delivery Statuses'}</option>
+                <option value="all">{isAr ? 'جميع حالات الاستلام' : 'All Delivery Statuses'}</option>
                 <option value="ready">{isAr ? 'جاهز للاستلام الفوري' : 'Ready to Move'}</option>
                 <option value="under_construction">{isAr ? 'تحت الإنشاء / تسليم لاحق' : 'Under Construction'}</option>
               </select>
             </div>
 
-            {/* Finishing Type */}
-            <div className="filter-item">
-              <label className="compact-label">{isAr ? 'مستوى التشطيب' : 'Finishing Quality'}</label>
+            <div className="pbar-field">
               <select
                 value={filters.finishing || 'all'}
+                aria-label={isAr ? 'مستوى التشطيب' : 'Finishing quality'}
                 onChange={(e) => onFilterChange('finishing', e.target.value)}
               >
                 <option value="all">{isAr ? 'كافة مستويات التشطيب' : 'All Finishing'}</option>
@@ -337,27 +305,26 @@ export default function PropertyFilters({
                 <option value="core">{isAr ? 'على الطوب / نص تشطيب' : 'Core & semi-finished'}</option>
               </select>
             </div>
-
           </div>
 
           {/* Words in the listing text: a search aid, not a document check */}
-          <div className="toolbar-row toolbar-tags-row">
-            <span className="toolbar-section-label">
-              <Sparkles size={12} className="text-gold" />
+          <div className="pbar-tags-row">
+            <span className="pbar-tags-label">
+              <Sparkles size={12} aria-hidden="true" />
               {isAr ? 'مذكور في الوصف:' : 'Mentioned in the listing:'}
             </span>
-            <div className="toolbar-pills-scroll">
+            <div className="pbar-tags-scroll">
               {SMART_FILTER_TAGS.map((tag) => {
                 const isTagActive = (filters.smartTags || []).includes(tag.id);
                 return (
                   <button
                     key={tag.id}
                     type="button"
-                    className={`smart-tag-pill compact-smart-tag ${isTagActive ? 'active' : ''}`}
+                    className={`pbar-tag ${isTagActive ? 'is-on' : ''}`}
                     aria-pressed={isTagActive}
                     onClick={() => handleToggleTag(tag.id)}
                   >
-                    {isTagActive && <Check size={11} className="tag-check" />}
+                    {isTagActive && <Check size={11} aria-hidden="true" />}
                     <span>{isAr ? tag.label_ar : tag.label_en}</span>
                   </button>
                 );
@@ -371,18 +338,18 @@ export default function PropertyFilters({
 
       {/* Active Filter Chips Bar (Removable Pills) */}
       {activeChips.length > 0 && (
-        <div className="filter-active-chips-bar compact-active-chips">
-          <span className="active-chips-title">{isAr ? 'الفلاتر المفعلة:' : 'Active Filters:'}</span>
-          <div className="active-chips-list">
+        <div className="pbar-chips">
+          <span className="pbar-chips-label">{isAr ? 'الفلاتر المفعلة:' : 'Active filters:'}</span>
+          <div className="pbar-chips-list">
             {activeChips.map((chip) => (
-              <div key={chip.id} className="active-filter-chip compact-active-chip">
+              <div key={chip.id} className="pbar-chip">
                 <span>{chip.label}</span>
                 <button
                   type="button"
-                  className="chip-remove-btn"
+                  className="pbar-chip-remove"
                   onClick={chip.onRemove}
                   title={isAr ? 'إلغاء هذا الفلتر' : 'Remove filter'}
-                  aria-label="إزالة الفلتر"
+                  aria-label={isAr ? 'إزالة الفلتر' : 'Remove filter'}
                 >
                   <X size={11} />
                 </button>

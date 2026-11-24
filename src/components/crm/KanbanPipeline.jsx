@@ -6,7 +6,8 @@ import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { leadScore, isOpenLead, isSellerLead, isAccountLead, duplicatesById, pipelineOverviewOf } from '../../utils/crmLeadViews';
+import { leadScore, isOpenLead, isSellerLead, isAccountLead, duplicatesById, pipelineOverviewOf, phoneMatchesQuery } from '../../utils/crmLeadViews';
+import { normalizeArabicText } from '../../utils/semanticSearchEngine';
 import { SELLER_STAGES, pipelineKind, askingPriceOf } from '../../utils/leadPipeline';
 import { ownerMessageFor } from '../../utils/ownerMessages';
 import { clientRoleOf } from '../../utils/clientRole';
@@ -283,11 +284,12 @@ export default function KanbanPipeline({
       if (l.isArchived) return false;
       if (!matchesType(l, filterType)) return false;
       if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const nameMatch = (l.name || '').toLowerCase().includes(q);
-        const phoneMatch = (l.phone || l.whatsapp || '').replace(/[^0-9]/g, '').includes(q.replace(/[^0-9]/g, ''));
-        const areaMatch = (l.area || l.details?.area || l.location || '').toLowerCase().includes(q);
-        const propTypeMatch = (l.propertyType || l.details?.propertyType || '').toLowerCase().includes(q);
+        const q = normalizeArabicText(searchQuery);
+        const qDigits = q.replace(/\D/g, '');
+        const nameMatch = normalizeArabicText(l.name).includes(q);
+        const phoneMatch = [l.phone, l.whatsapp, l.altPhone].some((p) => phoneMatchesQuery(p, qDigits));
+        const areaMatch = normalizeArabicText(l.area || l.details?.area || l.location).includes(q);
+        const propTypeMatch = normalizeArabicText(l.propertyType || l.details?.propertyType).includes(q);
         if (!nameMatch && !phoneMatch && !areaMatch && !propTypeMatch) return false;
       }
       return true;

@@ -1,132 +1,278 @@
-/* Moved out of App.css: used only by PropertyFilters (loaded with it, not on every page) */
-.properties-filters-card {
-  background: #ffffff;
+/* The properties-page search & filter bar: one row (search + type + area + budget + bedrooms +
+   actions), an optional drawer for the rest, and the active-filter chips. Replaces several
+   stacked, differently-themed blocks that used to live across App.css / home-luxe.css /
+   light-headers.css / properties-compact.css — one definition, one theme switch (prefers-color-scheme
+   plus the site's [data-theme] override), so there is nothing else to keep in sync. */
+
+.pbar-filters {
+  background: var(--bg-card, #fff);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
   margin-bottom: 16px;
   box-shadow: var(--shadow-sm);
 }
-.filter-title-text-group {
+
+.pbar-filters-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
-.toolbar-row {
+
+.pbar-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-main, #f8fafc);
+  color: var(--text-muted);
+  flex: 1 1 150px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pbar-field:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(13, 72, 161, 0.12);
+}
+
+.pbar-field > svg:first-child { flex-shrink: 0; }
+
+.pbar-field select,
+.pbar-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  box-shadow: none !important;
+}
+
+/* A <select> with no vertical padding can have its text clipped by some mobile browsers'
+   own rendering of the control; a <select> can also carry its own (sometimes taller) native
+   minimum height that "height: 100%" alone doesn't override. Giving it real padding and letting
+   it size itself (centered by the field's own "align-items: center") avoids both. */
+.pbar-field select {
+  cursor: pointer;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 8px 0 !important;
+}
+.pbar-field input::placeholder { color: var(--text-muted); font-weight: 500; }
+
+.pbar-field--search { flex: 2 1 220px; }
+
+.pbar-field-clear {
+  position: absolute;
+  inset-inline-end: 8px;
+  background: rgba(148, 163, 184, 0.25);
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.pbar-field-clear:hover { background: var(--rose); color: #fff; }
+
+/* Bedrooms: a segmented control sharing the same field chrome as the selects beside it */
+.pbar-field--pills {
+  flex: 1 1 200px;
+  padding: 3px;
+  gap: 2px;
+}
+.pbar-pills-icon { margin-inline-start: 4px; flex-shrink: 0; }
+.pbar-pill {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.pbar-pill:hover { color: var(--text-primary); }
+.pbar-pill.is-on { background: var(--primary); color: #fff; }
+
+.pbar-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+.pbar-adv-btn,
+.pbar-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-main, #f8fafc);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.pbar-adv-btn:hover,
+.pbar-reset-btn:hover { color: var(--text-primary); border-color: var(--accent-gold, #c5a059); }
+.pbar-adv-btn.is-on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pbar-reset-btn:hover { color: var(--rose); border-color: var(--rose); }
+
+.pf-count {
+  display: grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-gold, #c5a059);
+  color: #0b1b32;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+/* Advanced drawer: a thin divider only appears once something is open, instead of a box for
+   every state (open or closed) the row above already had */
+.pbar-advanced {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pbar-advanced-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pbar-advanced-row .pbar-field { flex: 1 1 200px; }
+
+.pbar-tags-row {
   display: flex;
   align-items: center;
   gap: 8px;
   min-height: 26px;
 }
-.compact-active-chips {
-  margin-top: 8px;
-  padding-top: 6px;
-  gap: 6px;
-}
-.compact-active-chip {
-  padding: 2px 8px;
-  font-size: 0.72rem;
-  border-radius: 999px;
-}
-.luxury-filters-container {
-  background: var(--bg-card);
-  border: 1px solid rgba(2, 132, 199, 0.18);
-  border-radius: var(--radius-lg);
-  padding: 14px 18px;
-  box-shadow: 0 8px 24px -5px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 202, 40, 0.08);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.luxury-filters-container:hover {
-  border-color: rgba(245, 158, 11, 0.3);
-  box-shadow: 0 12px 32px -6px rgba(2, 132, 199, 0.12), 0 0 0 1px rgba(255, 202, 40, 0.12);
-}
-.filter-header-actions {
-  display: flex;
+.pbar-tags-label {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-}
-.adv-grid {
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
-}
-.filter-clear-input-btn {
-  position: absolute;
-  left: 10px;
-  background: rgba(148, 163, 184, 0.2);
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 800;
   color: var(--text-muted);
-  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-[dir="ltr"] .filter-clear-input-btn {
-  left: auto;
-  right: 10px;
-}
-.filter-clear-input-btn:hover {
-  background: var(--rose);
-  color: #ffffff;
-}
-.tag-check {
-  color: #081226;
-}
-.filter-active-chips-bar {
+.pbar-tags-scroll {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-  padding-top: 12px;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex-grow: 1;
+}
+.pbar-tags-scroll::-webkit-scrollbar { display: none; }
+
+.pbar-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  height: 25px;
+  border-radius: 999px;
+  background: var(--bg-main, #f8fafc);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.pbar-tag:hover { border-color: var(--accent-gold, #c5a059); color: var(--text-primary); }
+.pbar-tag.is-on {
+  background: linear-gradient(135deg, #ffca28 0%, #f59e0b 100%);
+  color: #081226;
+  border-color: #f59e0b;
+}
+
+/* Active filter chips */
+.pbar-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-light);
   flex-wrap: wrap;
 }
-.active-chips-title {
-  font-size: 0.78rem;
+.pbar-chips-label {
+  font-size: 0.76rem;
   font-weight: 800;
   color: var(--text-muted);
   white-space: nowrap;
 }
-.active-chips-list {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.active-filter-chip {
+.pbar-chips-list { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pbar-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 3px 9px;
   border-radius: var(--radius-pill);
   background: rgba(2, 132, 199, 0.1);
   border: 1px solid rgba(2, 132, 199, 0.25);
   color: var(--primary-dark);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  animation: chipIn 0.2s ease-out;
 }
-[data-theme="dark"] .active-filter-chip {
-  background: rgba(56, 189, 248, 0.15);
-  border-color: rgba(56, 189, 248, 0.3);
-  color: #7dd3fc;
-}
-.chip-remove-btn {
+[data-theme='dark'] .pbar-chip { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: #7dd3fc; }
+.pbar-chip-remove {
   background: none;
   border: none;
   color: currentColor;
   cursor: pointer;
-  padding: 2px;
+  padding: 1px;
   border-radius: 50%;
   display: flex;
-  align-items: center;
-  justify-content: center;
   opacity: 0.75;
-  transition: opacity 0.15s, transform 0.15s;
 }
-.chip-remove-btn:hover {
-  opacity: 1;
-  transform: scale(1.2);
+.pbar-chip-remove:hover { opacity: 1; }
+
+@media (max-width: 1060px) {
+  .pbar-field,
+  .pbar-field--search,
+  .pbar-field--pills { flex-basis: calc(50% - 4px); }
+  .pbar-row-actions { flex-basis: 100%; margin-inline-start: 0; justify-content: flex-end; }
+}
+
+@media (max-width: 640px) {
+  .pbar-field,
+  .pbar-field--search,
+  .pbar-field--pills { flex-basis: 100%; }
+  .pbar-advanced-row .pbar-field { flex-basis: 100%; }
 }

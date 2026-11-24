@@ -123,7 +123,6 @@ import './App.css';
 import './styles/luxury-system.css';
 import './styles/home-luxe.css';
 import './styles/mobile-polish.css';
-import './styles/properties-compact.css';
 import './styles/touch-performance.css';
 import AppRoutes from './AppRoutes';
 import { withoutContact } from './utils/sellerListing';

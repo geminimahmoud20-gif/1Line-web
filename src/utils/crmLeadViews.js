@@ -6,6 +6,7 @@
 
 import { STAGE_RANK } from './stages.js';
 import { assigneeValue } from './assignees.js';
+import { normalizeArabicText } from './semanticSearchEngine.js';
 
 export function getNormalizedPropertyStatus(prop) {
   if (!prop) return 'published';
@@ -446,8 +447,11 @@ export function escalationLevel(l, now = Date.now()) {
   return waited > responseSlaMs(l) ? 1 : 0;
 }
 
-/** Map normalised phone -> ids, for phones held by two or more active leads */
+/** Map normalised phone -> ids, for phones held by two or more active leads. A pair a staff member
+ *  already looked at and confirmed is really two different deals (l.dupReviewed holds the other id)
+ *  is not flagged again — an id stays in the group only while it still has an unreviewed counterpart. */
 export function findDuplicateGroups(leads = []) {
+  const byId = new Map(leads.map((l) => [l.id, l]));
   const byPhone = new Map();
   for (const l of leads) {
     if (!l || l.isArchived) continue;
@@ -458,7 +462,13 @@ export function findDuplicateGroups(leads = []) {
     }
   }
   const groups = new Map();
-  for (const [k, ids] of byPhone) if (ids.length > 1) groups.set(k, ids);
+  for (const [k, ids] of byPhone) {
+    const kept = ids.filter((id) => {
+      const reviewed = new Set(byId.get(id)?.dupReviewed || []);
+      return ids.some((other) => other !== id && !reviewed.has(other));
+    });
+    if (kept.length > 1) groups.set(k, kept);
+  }
   return groups;
 }
 
@@ -546,13 +556,31 @@ export function matchesOwner(lead, ownerFilter = OWNER_ALL) {
   return v === ownerFilter;
 }
 
+/** Digits only, with a leading +20/20/0020 country code folded to the local "01…" form, so a
+ *  number typed (or stored) with its country code lines up with one typed (or stored) without it. */
+export const localDigits = (digits) => {
+  if (digits.startsWith('0020')) return `0${digits.slice(4)}`;
+  if (digits.startsWith('20') && digits.length >= 11) return `0${digits.slice(2)}`;
+  return digits;
+};
+
+/** A phone-like field matches a typed query (any spacing or country-code form) once both are reduced
+ *  to local digits — the one shared rule every search box in the CRM should use for a phone. */
+export const phoneMatchesQuery = (value, queryDigits) => {
+  if (!value || queryDigits.length < 3) return false;
+  return localDigits(String(value).replace(/\D/g, '')).includes(localDigits(queryDigits));
+};
+
 export function filterLeads(leads = [], opts = {}) {
   const {
     myDealsOnly = false, activeRole, agentName, leadFilter = 'all',
     temperatureFilter = 'all', areaFilter = 'all', areaIds = null, sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
     today, now = Date.now(), duplicateIds = null, ownerFilter = 'all', situationById = null
   } = opts;
-  const q = searchQuery.trim().toLowerCase();
+  // Normalized so a search matches regardless of Arabic spelling variants (أ/إ/آ → ا, ة → ه, ى → ي) or
+  // Eastern-Arabic digits; the phone digits are compared on their own, so any format (spaces, +20, 0020…) matches.
+  const q = normalizeArabicText(searchQuery);
+  const qDigits = q.replace(/\D/g, '');
   const todayKey = today || localDayKey(now);
   const dupes = leadFilter === 'dupes' ? (duplicateIds || duplicatesById(leads)) : null;
 
@@ -621,11 +649,11 @@ export function filterLeads(leads = [], opts = {}) {
     if (sourceFilter !== 'all' && leadSourceKey(l) !== sourceFilter) return false;
     if (!inDateRange(l, dateFilter, now)) return false;
     if (q) {
-      const matchName = (l.name || '').toLowerCase().includes(q);
-      const matchPhone = (l.phone || '').includes(q);
-      const matchNotes = l.notes && l.notes.toLowerCase().includes(q);
-      const matchCity = l.cityOrExpat && l.cityOrExpat.toLowerCase().includes(q);
-      const matchTags = l.tags && l.tags.some((t) => t.toLowerCase().includes(q));
+      const matchPhone = [l.phone, l.whatsapp, l.altPhone].some((p) => phoneMatchesQuery(p, qDigits));
+      const matchName = normalizeArabicText(l.name).includes(q);
+      const matchNotes = l.notes && normalizeArabicText(l.notes).includes(q);
+      const matchCity = l.cityOrExpat && normalizeArabicText(l.cityOrExpat).includes(q);
+      const matchTags = l.tags && l.tags.some((t) => normalizeArabicText(t).includes(q));
       if (!matchName && !matchPhone && !matchNotes && !matchCity && !matchTags) return false;
     }
     return true;

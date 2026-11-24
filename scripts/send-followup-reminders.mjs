@@ -15,6 +15,10 @@
 //      listings (approvedAt since the last run, tracked in push_state/_matching) are scored against the open
 //      buyers, and the leads are read only when there is something new. The first run starts from «now».
 //
+//    • And the other way round: a brand-new buyer lead (createdAt since the last run, tracked in
+//      push_state/_buyermatch) that already fits a live listing tells their own salesperson right away — the
+//      live catalog is only fetched (from /api/catalog, no extra Firestore reads) when there is a new buyer.
+//
 //    • Tells the managers once a day when an exclusive agreement is about to end (14, 7, 3 days, and the day it ends;
 //      utils/exclusivity), from property_private (only the exclusive listings are read). Remembered in push_state/_exclusive.
 //
@@ -30,7 +34,7 @@ import { digestFor, shouldSend } from '../src/utils/reminderDigest.js';
 import { dueSoonFor, taskAlertPayload } from '../src/utils/nextStep.js';
 import { localDayKey } from '../src/utils/crmLeadViews.js';
 import { assignmentPayload } from '../src/utils/tasks.js';
-import { freshListings, matchAlerts, matchAlertPayload, OPEN_BUYER_STAGES } from '../src/utils/matchAlerts.js';
+import { freshListings, matchAlerts, matchAlertPayload, freshBuyers, buyerMatchAlerts, buyerMatchAlertPayload, OPEN_BUYER_STAGES } from '../src/utils/matchAlerts.js';
 import { linkOpenAlerts, linkOpenPayload } from '../src/utils/linkOpenAlerts.js';
 import { exclusiveAlerts, exclusiveAlertPayload, cleanExclusive, todayKey } from '../src/utils/exclusivity.js';
 
@@ -145,6 +149,35 @@ if (alertHours) {
     const buyers = (await db.collection('leads').where('status', 'in', OPEN_BUYER_STAGES).get()).docs.map((d) => ({ id: d.id, ...d.data() }));
     matchByOwner = matchAlerts(matchFresh, buyers);
     console.log(`${matchFresh.length} new listing(s) checked against ${buyers.length} open clients: ${matchByOwner.size} salesperson(s) to tell`);
+  }
+}
+
+// ── The other way round: a brand-new buyer lead that already fits a live listing ──
+// push_state/_buyermatch remembers when this last ran; a Firestore range query on createdAt reads only the
+// leads created since then (cheap — not the whole open-buyers collection), and the live catalog is fetched
+// from /api/catalog (CDN-cached, no extra Firestore reads) only when there is a fresh buyer to check.
+const buyerMatchRef = db.doc('push_state/_buyermatch');
+let buyerMatchState = null;
+let freshB = [];
+let buyerMatchByOwner = new Map();
+if (alertHours) {
+  buyerMatchState = (await buyerMatchRef.get()).data() || null;
+  const since = buyerMatchState?.lastRunAt || now.toISOString(); // the first run starts from now: no backlog blast
+  const done = new Set(buyerMatchState?.processed || []);
+  const newLeadsSnap = buyerMatchState
+    ? await db.collection('leads').where('createdAt', '>', admin.firestore.Timestamp.fromDate(new Date(since))).get()
+    : { docs: [] };
+  freshB = freshBuyers(newLeadsSnap.docs.map((d) => ({ id: d.id, ...d.data() })), done);
+  if (freshB.length) {
+    let liveProps = [];
+    try {
+      const res = await fetch(`${SUBJECT}/api/catalog`);
+      if (res.ok) { const data = await res.json(); liveProps = Array.isArray(data.properties) ? data.properties : []; }
+    } catch (err) { console.error('catalog fetch failed:', err.message); }
+    if (liveProps.length) {
+      buyerMatchByOwner = buyerMatchAlerts(freshB, liveProps);
+      console.log(`${freshB.length} new buyer(s) checked against ${liveProps.length} live listings: ${buyerMatchByOwner.size} salesperson(s) to tell`);
+    }
   }
 }
 
@@ -272,6 +305,17 @@ for (const doc of subscribers) {
     }
   }
 
+  // 4b. A brand-new buyer lead of theirs already fits a live listing
+  const buyerMatchPayload = buyerMatchAlertPayload(buyerMatchByOwner.get(doc.id));
+  if (buyerMatchPayload) {
+    if (dryRun) console.log(`[dry run] ${member.name || doc.id}: ${buyerMatchPayload.title} — ${buyerMatchPayload.body}`);
+    else {
+      const r = await pushTo(doc.id, subs, buyerMatchPayload);
+      subs = r.alive;
+      if (r.delivered) sent += 1;
+    }
+  }
+
   // 6. A client opened a listing link this person sent
   const linkPayload = linkOpenPayload(linkByOwner.get(doc.id));
   if (linkPayload) {
@@ -310,6 +354,10 @@ if (alertHours && !dryRun) {
   await matchRef.set({
     lastRunAt: now.toISOString(),
     processed: [...(matchState?.processed || []), ...matchFresh.map((p) => String(p.id))].slice(-300)
+  });
+  await buyerMatchRef.set({
+    lastRunAt: now.toISOString(),
+    processed: [...(buyerMatchState?.processed || []), ...freshB.map((l) => String(l.id))].slice(-300)
   });
 }
 console.log(`${sent} reminder${sent === 1 ? '' : 's'} sent`);

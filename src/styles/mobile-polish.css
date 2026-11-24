@@ -279,15 +279,6 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
 }
 @media (max-width: 768px) {
   /* Properties page: the first unit was below the first screen. Shorter title block, one-row trust strip. */
-  html .compact-page-header .page-header-titles { padding: 12px 16px !important; }
-  html .compact-page-header .page-header-subtitle { display: none; }
-  html .compact-page-header .page-header-title { font-size: 1.2rem !important; }
-  html .compact-page-header .results-count-badge { white-space: nowrap; flex: none; }
-  html .properties-certified-explainer-strip { padding: 6px 12px !important; }
-  html .certified-explainer-inner { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 8px; scrollbar-width: none; }
-  html .certified-explainer-inner::-webkit-scrollbar { display: none; }
-  html .certified-points-row { flex-wrap: nowrap; }
-  html .certified-badge-pill, html .cert-point { flex: none; }
 }
 
 /* Unit page with no photos yet: a short note instead of an empty black frame (the gallery sits on the dark hero) */

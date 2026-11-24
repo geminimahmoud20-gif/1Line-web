@@ -1,0 +1,88 @@
+/* AccountListingsTab: the owner/broker view of their own listed units ("وحداتي") */
+.listings-tab-view {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.client-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.client-listing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid rgba(20, 43, 73, 0.1);
+}
+.listing-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.listing-card-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  line-height: 1.35;
+}
+.listing-card-title:hover {
+  color: #d97706;
+}
+.listing-status-pill {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.listing-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+.listing-interest-box {
+  background: rgba(5, 150, 105, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.listing-interest-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.listing-interest-count {
+  margin-inline-start: auto;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #059669;
+}
+.listing-interest-summary {
+  margin: 6px 0 0;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.listing-interest-empty {
+  margin: 6px 0 0;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+.listing-card-footer {
+  display: flex;
+  gap: 8px;
+}
+.listing-card-footer .btn-lead-action {
+  flex: 1;
+  text-decoration: none;
+}
