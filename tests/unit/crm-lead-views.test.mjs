@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { leadScore, filterLeads, computeCrmAnalytics, sortLeads, duplicatesById, buildMergedLead, leadSourceKey, waitingMs, phoneKey, lostReasonCounts, parseMoney, localDayKey, isOverdue, isDueToday, isStale, isUnassigned, computeDashboardMetrics } from '../../src/utils/crmLeadViews.js';
+import { leadScore, filterLeads, computeCrmAnalytics, sortLeads, duplicatesById, buildMergedLead, leadSourceKey, waitingMs, phoneKey, lostReasonCounts, parseMoney, localDayKey, isOverdue, isDueToday, isStale, isUnassigned, computeDashboardMetrics, pipelineOverviewOf } from '../../src/utils/crmLeadViews.js';
 
 const leads = [
   { id: 1, name: 'Ahmed', phone: '01011111111', type: 'buyer', status: 'new', assignedTo: 'Sales Team A', temperature: 'hot', details: { area: 'east' } },
@@ -356,4 +356,38 @@ test('an owner counts at the price he asks, wherever it was saved', async () => 
   assert.equal(leadBudget({ type: 'seller', details: { askingPrice: '2,500,000', budget: '1000' } }), 2500000);
   assert.equal(leadBudget({ type: 'seller', details: { budget: '1500000' } }), 1500000);
   assert.equal(leadBudget({ type: 'buyer', budget: '800000', askingPrice: 9 }), 800000); // a buyer never reads asking price
+});
+
+test('pipelineOverviewOf counts a client once, not once per un-merged duplicate lead', () => {
+  const open = [
+    { id: 1, type: 'buyer', status: 'new', phone: '01011111111', budget: 2_000_000 },
+    // Same number, a second form never merged: must not double the buyer total or the open count
+    { id: 2, type: 'buyer', status: 'new', phone: '01011111111', budget: 2_000_000 },
+    { id: 3, type: 'seller', status: 'contacted', phone: '01022222222', askingPrice: 6_000_000 },
+    { id: 4, type: 'buyer', status: 'closed', phone: '01033333333', budget: 9_000_000 } // closed: not open
+  ];
+  const r = pipelineOverviewOf(open);
+  assert.equal(r.activeCount, 2); // the duplicate buyer and the seller, not 3
+  assert.equal(r.totalVol, 2_000_000);
+  assert.equal(r.supplyVol, 6_000_000);
+  assert.equal(r.highValue, 1); // the 6M seller only; the closed 9M lead is not open
+});
+
+test('pipelineOverviewOf keeps the larger value when two open leads share a number', () => {
+  const open = [
+    { id: 1, type: 'seller', status: 'new', phone: '01011111111', askingPrice: 1_000_000 },
+    { id: 2, type: 'seller', status: 'contacted', phone: '01011111111', askingPrice: 7_000_000 }
+  ];
+  const r = pipelineOverviewOf(open);
+  assert.equal(r.activeCount, 1);
+  assert.equal(r.supplyVol, 7_000_000);
+  assert.equal(r.highValue, 1);
+});
+
+test('pipelineOverviewOf falls back to the lead id when neither phone nor whatsapp is set', () => {
+  const open = [
+    { id: 'a', type: 'buyer', status: 'new', budget: 1_000_000 },
+    { id: 'b', type: 'buyer', status: 'new', budget: 1_000_000 }
+  ];
+  assert.equal(pipelineOverviewOf(open).activeCount, 2);
 });
