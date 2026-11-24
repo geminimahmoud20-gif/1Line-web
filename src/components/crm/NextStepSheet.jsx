@@ -5,7 +5,6 @@ import { buildTask, dayKeyFrom, KINDS, PRIORITIES } from '../../utils/tasks';
 import { suggestNextStep, composeDue } from '../../utils/nextStep';
 import { isSellerLead } from '../../utils/crmLeadViews';
 import { addTask } from '../../firebaseLazy';
-import { localDayKey } from '../../utils/crmLeadViews';
 
 /**
  * «الخطوة الجاية؟» after an outcome: the next task comes pre-filled and has to be saved, or skipped on purpose
@@ -37,7 +36,7 @@ export default function NextStepSheet({ lead, outcomeId, me, isAr = true, onSave
     const selectedDayKey = day ? localDayKey(day) : '';
     const todayKey = localDayKey();
     if (selectedDayKey && selectedDayKey < todayKey) {
-      setError(isAr ? 'تاريخ المهمة يجب أن يكون اليوم أو позже' : 'Task date must be today or later');
+      setError(isAr ? 'تاريخ المهمة يجب أن يكون اليوم أو تاريخاً لاحقاً' : 'Task date must be today or later');
       return;
     }
 

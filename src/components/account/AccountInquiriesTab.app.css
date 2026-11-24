@@ -145,6 +145,27 @@
   align-items: center;
   gap: 4px;
 }
+.lead-specs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 6px 0;
+  border-top: 1px dashed var(--border-color, rgba(0, 0, 0, 0.08));
+}
+.lead-spec-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface-secondary, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  line-height: 1.3;
+}
 .btn-lead-action {
   width: 100%;
   display: flex;

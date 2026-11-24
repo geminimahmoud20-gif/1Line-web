@@ -302,14 +302,31 @@ export default function LeadDrawerOverview({
                     <dd className="crm-ld__fact-val">
                       <span>{value}</span>
                       {isSeller && isPrice && onUpdateLead && (
-                        <button
-                          type="button"
-                          className="crm-ld__inline-edit-btn"
-                          onClick={() => { setEditingPrice(true); setInlinePriceInput(String(rawAskingPrice || '')); }}
-                          title={L('تعديل السعر مباشرة', 'Edit price')}
-                        >
-                          <Edit3 size={12} aria-hidden="true" />
-                        </button>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <button
+                            type="button"
+                            className="crm-ld__inline-edit-btn"
+                            onClick={() => { setEditingPrice(true); setInlinePriceInput(String(rawAskingPrice || '')); }}
+                            title={L('تعديل السعر مباشرة', 'Edit price')}
+                          >
+                            <Edit3 size={12} aria-hidden="true" />
+                          </button>
+                          {isSuspiciouslyLowForTotal && details.size > 0 && (
+                            <button
+                              type="button"
+                              className="ui-btn ui-btn--secondary ui-btn--xs"
+                              style={{ fontSize: '10px', padding: '2px 6px', height: '22px' }}
+                              onClick={() => {
+                                const calculated = details.size * rawAskingPrice;
+                                setInlinePriceInput(String(calculated));
+                                setEditingPrice(true);
+                              }}
+                              title={L('احتساب السعر الإجمالي بضرب سعر المتر في المساحة', 'Calculate total')}
+                            >
+                              💡 {L(`احتساب الإجمالي (${(details.size * rawAskingPrice).toLocaleString('en-US')} ج.م)`, `Calc total`)}
+                            </button>
+                          )}
+                        </div>
                       )}
                       {isSeller && isSize && onUpdateLead && (
                         <button
@@ -418,6 +435,41 @@ export default function LeadDrawerOverview({
               {FOLLOW_UP_ACTIONS.map((a) => (
                 <Button key={a.id} variant="ghost" size="sm" onClick={() => logFollowUp(a)}>{L(a.ar, a.en)}</Button>
               ))}
+            </div>
+          </div>
+        )}
+        {lastOut && lastOut.id === 'not_fit' && lead?.status !== 'lost' && lead?.status !== 'inactive' && (
+          <div className="crm-ld__followup">
+            <span>{L('العقار غير مناسب — الإجراء المقترح:', 'Not a fit — Suggested action:')}</span>
+            <div className="crm-ld__row">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  onUpdateLead?.(lead.id, {
+                    status: 'lost',
+                    lostReason: 'not_interested',
+                    lostNote: 'غير مناسب / صرف نظر',
+                    lostAt: new Date().toISOString()
+                  }, lead.version);
+                  triggerToast?.(L('تم نقل العميل إلى مرحلة خسارة', 'Moved to lost'), 'info');
+                }}
+              >
+                {L('نقل إلى خسارة', 'Move to lost')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  onUpdateLead?.(lead.id, {
+                    status: 'inactive',
+                    lastActivityAt: new Date().toISOString()
+                  }, lead.version);
+                  triggerToast?.(L('تم نقل العميل إلى غير متفاعل', 'Moved to inactive'), 'info');
+                }}
+              >
+                {L('نقل إلى غير متفاعل', 'Move to inactive')}
+              </Button>
             </div>
           </div>
         )}

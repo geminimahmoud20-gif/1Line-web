@@ -13,7 +13,7 @@ import { clientOwnedListings, interestedBuyersFor } from '../utils/clientListing
 import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
 import AccountListingsTab from '../components/account/AccountListingsTab';
 import AccountCompareTab from '../components/account/AccountCompareTab';
-import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
+import { LEAD_TYPE_NAMES, getLeadTypeDisplayName } from './ClientAccountPageData';
 import '../styles/client-auth-modes.css';
 import { siteLink } from '../config/siteConfig';
 import './ClientAccountPage.app.css';
@@ -145,7 +145,7 @@ export default function ClientAccountPage({
 
   // WhatsApp follow-up for a specific inquiry
   const handleInquiryWhatsApp = (lead) => {
-    const typeLabel = LEAD_TYPE_NAMES[lead.type] || lead.type || 'استشارة عقارية';
+    const typeLabel = getLeadTypeDisplayName(lead.type, isAr);
     const msg = isAr
       ? `📋 *متابعة طلب استشارة عقارية — منصة 1Line سوهاج*\n` +
         `👤 *الاسم:* ${clientUser?.name || lead.name}\n` +
