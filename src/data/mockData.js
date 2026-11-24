@@ -22,6 +22,11 @@ export const INITIAL_LEADS = [
     followUp: 'First Call Done',
     assignedTo: 'Dr. Mahmoud Elbaz',
     notes: 'العميل مهتم جداً بالشراء الفوري كاش في شرق سوهاج. ميزانية 3.5 مليون مع مقدم 1.5 مليون وقسط مريح.',
+    outcomes: [
+      { id: 'callback', at: new Date(Date.now() - 3600000 * 4).toISOString(), n: 'د. محمود الباز' }
+    ],
+    lastOutcome: 'callback',
+    lastOutcomeAt: new Date(Date.now() - 3600000 * 4).toISOString(),
     details: {
       purpose: 'live',
       propertyType: 'apartment',
@@ -39,6 +44,33 @@ export const INITIAL_LEADS = [
       moveInDate: '2026-08-01',
       investmentHorizon: 'medium',
       readinessScore: 92
+    }
+  },
+  {
+    id: 'lead-seller-notfit',
+    name: 'محمود هاشم',
+    phone: '01099887766',
+    whatsapp: '01099887766',
+    email: 'm.hashem@gmail.com',
+    type: 'seller',
+    score: 65,
+    temperature: 'cold',
+    source: 'الموقع',
+    landingPage: '/sell',
+    timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
+    status: 'new',
+    assignedTo: 'Dr. Mahmoud Elbaz',
+    notes: 'المالك نفسه للشقة بسوهاج الجديدة، طلب السعر 2.5 مليون لكن صرف نظر حالياً.',
+    outcomes: [
+      { id: 'not_fit', at: new Date(Date.now() - 60000 * 5).toISOString(), n: 'د. محمود الباز' }
+    ],
+    lastOutcome: 'not_fit',
+    lastOutcomeAt: new Date(Date.now() - 60000 * 5).toISOString(),
+    details: {
+      propertyType: 'apartment',
+      area: 'new_sohag',
+      budget: '2,500,000',
+      askingPrice: 2500000
     }
   },
   {
@@ -60,6 +92,11 @@ export const INITIAL_LEADS = [
     followUp: 'Valuation Shared',
     assignedTo: 'Sales Team A',
     notes: 'يريد بيع قطعة أرض 400م في سوهاج الجديدة. تم إرسال تقرير التقييم المبدئي.',
+    outcomes: [
+      { id: 'interested', at: new Date(Date.now() - 3600000 * 2).toISOString(), n: 'د. محمود الباز' }
+    ],
+    lastOutcome: 'interested',
+    lastOutcomeAt: new Date(Date.now() - 3600000 * 2).toISOString(),
     details: {
       propertyType: 'land',
       area: 'new_sohag',

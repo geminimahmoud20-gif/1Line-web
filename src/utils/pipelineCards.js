@@ -39,8 +39,26 @@ export function isStalled(lead, now = Date.now()) {
 /** A new request nobody called within 24 hours */
 export function isNewOverdue(lead, now = Date.now()) {
   if ((lead?.status || 'new') !== 'new') return false;
+  if (lead?.lastContactedAt || lead?.lastOutcome || (Array.isArray(lead?.outcomes) && lead.outcomes.length > 0)) return false;
   const c = createdMs(lead);
   return Number.isFinite(c) && now - c > DAY;
+}
+
+/** Crisp relative time: "الآن" · "من 5 د" · "من ساعتين" · "النهارده" · "من 3 أيام" */
+export function relativeTimeLabel(time, now = Date.now(), isAr = true) {
+  const ms = typeof time === 'number' ? time : new Date(time).getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return '';
+  const diff = Math.max(0, now - ms);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return isAr ? 'الآن' : 'just now';
+  if (m < 60) return isAr ? `من ${m} د` : `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return isAr ? (h === 1 ? 'من ساعة' : h === 2 ? 'من ساعتين' : `من ${h} س`) : `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return isAr ? 'أمس' : 'yesterday';
+  if (d === 2) return isAr ? 'من يومين' : '2d ago';
+  if (d <= 10) return isAr ? `من ${d} أيام` : `${d}d ago`;
+  return isAr ? `من ${d} يوم` : `${d}d ago`;
 }
 
 /** "النهارده" · "من يوم" · "من يومين" · "من 5 أيام" · "من 17 يوم" */

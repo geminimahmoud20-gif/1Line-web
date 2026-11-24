@@ -945,6 +945,9 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       updateLeadField(id, enrichedFields).then((saved) => {
         if (saved !== false) return;
+        // Don't rollback mock leads or local development items
+        const isMock = String(id).startsWith('lead-') || String(id).startsWith('mock-');
+        if (isMock) return;
         applyToLeads((l) => ({ ...l, ...previousValues }));
         triggerToast(
           lang === 'ar'

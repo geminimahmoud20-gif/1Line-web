@@ -30,3 +30,12 @@ test('situationKinds maps clients to converted / outcome kinds', () => {
   assert.equal(kinds.get('L3'), 'not_fit');
   assert.equal(kinds.has('L4'), false);
 });
+
+test('seller lead gets seller-specific outcome labels', () => {
+  const s = leadSituation({ id: 's1', type: 'seller', outcomes: [{ id: 'not_fit', at: at(1) }] });
+  assert.equal(s.label, 'غير مناسب / صرف نظر');
+  assert.equal(s.tone, 'bad');
+  const s2 = leadSituation({ id: 's2', type: 'seller', outcomes: [{ id: 'interested', at: at(2) }] });
+  assert.equal(s2.label, 'أكّد الرغبة في البيع والسعر');
+  assert.equal(s2.tone, 'good');
+});

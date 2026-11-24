@@ -4,7 +4,20 @@
 //  happened last, which is what the team needs to decide the next call. Pure: tests/unit/lead-situation.test.mjs.
 // =============================================================
 import { outcomeById, outcomesOf, attemptsOf } from './stageGate.js';
-import { LOST_REASONS } from './crmLeadViews.js';
+import { LOST_REASONS, isSellerLead } from './crmLeadViews.js';
+
+export const SELLER_OUTCOME_LABELS = {
+  reached: 'تم التواصل مع المالك',
+  interested: 'أكّد الرغبة في البيع والسعر',
+  viewing_set: 'تحديد موعد معاينة وتثمين',
+  viewing_done: 'تمت معاينة العقار وتصويره',
+  offer: 'تقديم عرض شراء للمالك',
+  agreed: 'الاتفاق على السعر وعقد البيع',
+  callback: 'طلب مهلة / كلّمني بعدين',
+  no_answer: 'لم يرد',
+  not_fit: 'غير مناسب / صرف نظر',
+  wrong_number: 'رقم غلط'
+};
 
 /** What a listing made from a client is doing now */
 export const LISTING_STATUS_AR = {
@@ -39,15 +52,24 @@ export function leadSituation(lead = {}, listing = null) {
   if (listing) {
     return { kind: 'converted', tone: listing.status === 'sold' ? 'good' : 'info', label: `اتحوّل لعقار · ${LISTING_STATUS_AR[listing.status] || 'مسودة'}` };
   }
-  const last = outcomesOf(lead).at(-1);
+  let last = outcomesOf(lead).at(-1);
+  if (!last && lead.lastOutcome) {
+    last = {
+      id: lead.lastOutcome,
+      at: lead.lastOutcomeAt || lead.lastActivityAt || lead.updatedAt,
+      reason: lead.lostReason || ''
+    };
+  }
   const o = last && outcomeById(last.id);
   if (!o) return null;
+  const isSeller = isSellerLead(lead);
   const tone = o.kind === 'positive' ? 'good' : o.kind === 'negative' ? 'bad' : 'warn';
-  let label = o.ar;
-  if (last.id === 'no_answer') label = `${o.ar} · محاولة ${Math.max(1, attemptsOf(lead))}`;
+  const base = (isSeller && SELLER_OUTCOME_LABELS[last.id]) ? SELLER_OUTCOME_LABELS[last.id] : o.ar;
+  let label = base;
+  if (last.id === 'no_answer') label = `${base} · محاولة ${Math.max(1, attemptsOf(lead))}`;
   else if (last.reason) {
     const why = LOST_REASONS.find((r) => r.id === last.reason)?.ar;
-    if (why) label = `${o.ar} · ${why}`;
+    if (why) label = `${base} · ${why}`;
   }
   return { kind: last.id, tone, label, at: last.at };
 }

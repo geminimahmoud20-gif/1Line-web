@@ -21,9 +21,10 @@ import './kanban-redesign.css';
 import './kanban-mobile.css';
 import './kanban-decision.css';
 import './client-card.css';
-import { stageSinceMs, isStalled, daysLabel, shortMoney, moneyScale, STALE_DAYS } from '../../utils/pipelineCards';
+import { stageSinceMs, isStalled, daysLabel, shortMoney, moneyScale, STALE_DAYS, relativeTimeLabel } from '../../utils/pipelineCards';
 import PhoneText from './PhoneText';
 import { attentionOf, decisionList, attentionSummary, sortByAttention, BIG_DEAL } from '../../utils/dealSignals';
+import { leadSituation, listingByLead } from '../../utils/leadSituation';
 
 const CARDS_PER_STAGE = 5;
 
@@ -105,6 +106,7 @@ export default function KanbanPipeline({
 }) {
   // Leads sharing a phone: the same person asking more than once shows up as several cards, so say so on each
   const sameNumber = useMemo(() => duplicatesById(leads), [leads]);
+  const propertiesByLead = useMemo(() => listingByLead(properties), [properties]);
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
@@ -1048,6 +1050,7 @@ export default function KanbanPipeline({
                     // One reason per deal, with the next step; replaces the separate overdue/stalled boxes
                     const signal = attentionOf(lead, { now, value: budget });
                     const isOverdue = signal?.tone === 'danger';
+                    const situation = leadSituation(lead, propertiesByLead.get(String(lead.id)) || null);
 
                     const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
                     const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
@@ -1127,7 +1130,22 @@ export default function KanbanPipeline({
                           <PhoneText leadId={lead.id} value={formatPhoneNumber(lead.whatsapp || lead.phone)} surface="kanban" isAr={isAr} className="kb-phone" />
                         </div>
 
-                        {signal && (
+                        {situation && (
+                          <div
+                            className={`kb-situation is-${situation.tone}`}
+                            title={`${situation.label}${situation.at ? ` · ${relativeTimeLabel(situation.at, now, isAr)}` : ''}`}
+                          >
+                            <span className="kb-situation__dot" aria-hidden="true" />
+                            <span className="kb-situation__text">
+                              <strong className="kb-situation__prefix">{isAr ? 'آخر نتيجة:' : 'Last:'}</strong> {situation.label}
+                            </span>
+                            {situation.at && (
+                              <span className="kb-situation__time">{relativeTimeLabel(situation.at, now, isAr)}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {signal && (!situation || signal.id !== 'new_overdue') && (
                           <p className={`kb-reason is-${signal.tone}`}>
                             <span className="kb-reason__why">{stalled && signal.id === 'stalled' ? <Hourglass size={12} aria-hidden="true" /> : <AlertTriangle size={12} aria-hidden="true" />}{signal.label}{signal.days ? (isAr ? ` · ${signal.days} يوم` : ` · ${signal.days}d`) : ''}</span>
                             <span className="kb-reason__next">{signal.next}</span>

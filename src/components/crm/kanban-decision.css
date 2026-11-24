@@ -62,6 +62,35 @@
 .kb-reason.is-danger .kb-reason__why { color: var(--ui-danger); }
 .kb-reason__next { font: var(--ui-fw-medium) var(--ui-fs-1) / 1.4 var(--ui-font); color: var(--ui-text-2); }
 
+/* Card situation: what happened last with the client (outcome / converted / not suitable) */
+.kb-situation {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border-radius: var(--ui-r-sm, 6px);
+  font-size: var(--ui-fs-1, 11px); line-height: 1.35; margin-top: 5px;
+  background: var(--ui-surface-2); border: 1px solid var(--ui-line);
+  color: var(--ui-text-2); transition: all 0.15s ease;
+}
+.kb-situation__dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--ui-text-3); }
+.kb-situation__text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-situation__prefix { font-weight: 700; color: var(--ui-text); margin-inline-end: 2px; }
+.kb-situation__time { font-size: 10px; color: var(--ui-text-3); white-space: nowrap; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+.kb-situation.is-good { background: var(--ui-success-tint, rgba(16, 185, 129, 0.08)); border-color: rgba(16, 185, 129, 0.28); color: var(--ui-text); }
+.kb-situation.is-good .kb-situation__dot { background: var(--ui-success, #10b981); }
+.kb-situation.is-good .kb-situation__prefix { color: var(--ui-success, #059669); }
+
+.kb-situation.is-bad { background: var(--ui-danger-tint, rgba(239, 68, 68, 0.08)); border-color: rgba(239, 68, 68, 0.28); color: var(--ui-text); }
+.kb-situation.is-bad .kb-situation__dot { background: var(--ui-danger, #ef4444); }
+.kb-situation.is-bad .kb-situation__prefix { color: var(--ui-danger, #dc2626); }
+
+.kb-situation.is-warn { background: var(--ui-warning-tint, rgba(245, 158, 11, 0.08)); border-color: rgba(245, 158, 11, 0.28); color: var(--ui-text); }
+.kb-situation.is-warn .kb-situation__dot { background: var(--ui-warning, #f59e0b); }
+.kb-situation.is-warn .kb-situation__prefix { color: var(--ui-warning, #d97706); }
+
+.kb-situation.is-info { background: var(--ui-info-tint, rgba(59, 130, 246, 0.08)); border-color: rgba(59, 130, 246, 0.28); color: var(--ui-text); }
+.kb-situation.is-info .kb-situation__dot { background: var(--ui-info, #3b82f6); }
+.kb-situation.is-info .kb-situation__prefix { color: var(--ui-info, #2563eb); }
+
 /* Quiet cards: actions appear on hover or focus (always there on touch screens and on cards that need action) */
 @media (hover: hover) and (pointer: fine) {
   .kb-card:not(.has-signal) .kb-actions {
