@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { leadCreatedMs, leadSourceKey, LEAD_SOURCES } from '../../utils/crmLeadViews';
+import { leadCreatedMs, leadSourceKey, LEAD_SOURCES, isSellerLead, leadBudget } from '../../utils/crmLeadViews';
+import { getAreaDisplayName } from '../../pages/ClientAccountPageData';
 
 const STAGE = { new: ['عميل محتمل', 'Lead'], contacted: ['مؤهل', 'Qualified'], site_visit: ['اجتماع / معاينة', 'Meeting / viewing'], negotiating: ['تفاوض', 'Negotiation'], closing: ['إغلاق (توقيع وحجز)', 'Closing'], closed: ['إغلاق', 'Closed'], lost: ['خسارة', 'Lost'], inactive: ['غير متفاعل', 'Unresponsive'] };
 
 /**
  * Same phone on several leads: pick the record to keep, the others are folded into it and deleted.
  * Deleting is admin-only in the rules, so other roles see the list with a note instead of the button.
+ *
+ * When every lead in the group is a seller/owner submission, a second "sell" form is not always the
+ * same resubmission — it can be a genuinely different unit from the same owner or broker. So that case
+ * asks first: same unit (go on to merge) or a different unit (leave both, never ask about this pair again).
  */
-export default function MergeLeadsModal({ group = [], isAr, canMerge, onMerge, onCancel }) {
+export default function MergeLeadsModal({ group = [], isAr, canMerge, onMerge, onDismiss, onCancel }) {
   const sorted = [...group].sort((a, b) => (leadCreatedMs(a) || Infinity) - (leadCreatedMs(b) || Infinity));
+  const allSellers = sorted.length > 0 && sorted.every(isSellerLead);
+  const [askedUnit, setAskedUnit] = useState(!allSellers);
   const [keepId, setKeepId] = useState(sorted[0]?.id);
   const [busy, setBusy] = useState(false);
   const fmt = (l) => {
@@ -17,6 +24,11 @@ export default function MergeLeadsModal({ group = [], isAr, canMerge, onMerge, o
     return t ? new Date(t).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB') : '—';
   };
   const sourceLabel = (l) => { const s = LEAD_SOURCES.find((x) => x.id === leadSourceKey(l)); return s ? (isAr ? s.ar : s.en) : ''; };
+  const unitLine = (l) => {
+    const area = getAreaDisplayName(l.details?.area || l.area || '', isAr ? 'ar' : 'en');
+    const price = leadBudget(l);
+    return [area, price > 0 ? `${price.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}` : ''].filter(Boolean).join(' · ');
+  };
 
   const merge = async () => {
     if (!canMerge || busy || !keepId) return;
@@ -27,6 +39,60 @@ export default function MergeLeadsModal({ group = [], isAr, canMerge, onMerge, o
       setBusy(false);
     }
   };
+
+  const dismiss = async () => {
+    if (busy || !onDismiss) return;
+    setBusy(true);
+    try {
+      await onDismiss(sorted.map((l) => l.id));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // All of them are sell/owner requests: ask first whether this is one unit or several, before picking
+  // which record to keep. "Different units" never merges — it just stops asking about this exact group.
+  if (!askedUnit) {
+    return (
+      <div className="track-modal-backdrop" onClick={onCancel}>
+        <div className="property-form-modal-card" role="dialog" aria-modal="true" aria-labelledby="dup-unit-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+          <div className="modal-form-header">
+            <h3 id="dup-unit-title">{isAr ? 'نفس الرقم، بس هو نفس العرض؟' : 'Same phone — but the same listing?'}</h3>
+            <button type="button" className="drawer-close-btn" onClick={onCancel} aria-label={isAr ? 'إغلاق' : 'Close'}>
+              <X size={18} />
+            </button>
+          </div>
+          <p style={{ margin: '0 0 12px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
+            {isAr
+              ? 'نفس المالك أو الوسيط ممكن يبعت أكتر من عرض لوحدات مختلفة. قبل الدمج، قارن التفاصيل:'
+              : "The same owner or broker can list more than one unit. Compare the details before merging:"}
+          </p>
+          <div className="crm-merge-list">
+            {sorted.map((l) => (
+              <div key={l.id} className="crm-merge-item">
+                <span className="crm-merge-main">
+                  <strong>{l.name || (isAr ? 'بدون اسم' : 'Unnamed')}</strong>
+                  <span>{unitLine(l) || (isAr ? 'مفيش تفاصيل وحدة متسجّلة' : 'No unit details on file')}</span>
+                  <span>{fmt(l)} · {sourceLabel(l)}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-outline btn-sm" onClick={onCancel}>{isAr ? 'إغلاق' : 'Close'}</button>
+            {onDismiss && (
+              <button type="button" className="btn btn-outline btn-sm" onClick={dismiss} disabled={busy}>
+                {busy ? (isAr ? 'جاري الحفظ…' : 'Saving…') : (isAr ? 'لأ، دي وحدة تانية لنفس العميل' : "No, it's a different unit")}
+              </button>
+            )}
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setAskedUnit(true)}>
+              {isAr ? 'آه، نفس الوحدة — كمّل الدمج' : 'Yes, same unit — continue'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="track-modal-backdrop" onClick={onCancel}>

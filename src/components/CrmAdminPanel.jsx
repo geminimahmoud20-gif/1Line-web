@@ -772,6 +772,19 @@ export const CrmAdminPanel = ({
     return true;
   };
 
+  // Staff looked at a "same phone" group (usually two sell requests) and said they're really two
+  // different deals, not a resubmission: stop flagging this exact group, without touching either record
+  const handleDismissDuplicates = async (ids = []) => {
+    if (!onUpdateLead || ids.length < 2) return;
+    for (const id of ids) {
+      const lead = leads.find((l) => l.id === id);
+      if (!lead) continue;
+      const next = [...new Set([...(lead.dupReviewed || []), ...ids.filter((o) => o !== id)])];
+      await onUpdateLead(id, { dupReviewed: next }, lead.version);
+    }
+    triggerToast(isAr ? 'اتسجلوا كعملاء/عروض مختلفة، مش هيتعرضوا كمكررين تاني' : 'Marked as different deals', 'success');
+  };
+
   // «دمج كل المكرر»: each plan (utils/dedupePlan) keeps one request and archives the others (nothing deleted)
   const handleMergeAllDuplicates = async (plans) => {
     if (!plans.length || !onUpdateLead) return false;
@@ -929,6 +942,7 @@ export const CrmAdminPanel = ({
           onWhatsAppClick={onWhatsAppClick}
           duplicateIds={duplicateIds}
           onMergeLeads={handleMergeLeads}
+          onDismissDuplicates={handleDismissDuplicates}
           onMergeAllDuplicates={handleMergeAllDuplicates}
           canMergeLeads={mayDeleteLeads}
           canEdit={canEditLeads}
