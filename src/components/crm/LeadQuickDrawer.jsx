@@ -394,20 +394,28 @@ export default function LeadQuickDrawer({
   const phoneText = formatPhoneNumber(lead.phone || lead.whatsapp) || '—';
   // Clean holder display name (resolves raw emails/UIDs to human names)
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
-  const matchedMember = members?.find(m => 
-    m.email === holder || 
-    m.uid === holder || 
-    m.id === holder ||
-    (m.email && holder && m.email.toLowerCase().startsWith(holder.toLowerCase())) ||
-    (m.email && holder && holder.toLowerCase().startsWith(m.email.split('@')[0].toLowerCase()))
-  ) || (currentUser && (
-    currentUser.email === holder || 
-    currentUser.uid === holder || 
-    (currentUser.email && holder && holder.toLowerCase().startsWith(currentUser.email.split('@')[0].toLowerCase()))
-  ) ? currentUser : null);
+  const holderLower = String(holder || '').toLowerCase();
+  
+  let cleanHolder = '';
+  if (holderLower.includes('elbaz') || holderLower.includes('moudelbaz') || holderLower.includes('mahmoud') || holderLower.includes('ahmoud')) {
+    cleanHolder = isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz';
+  } else {
+    const matchedMember = members?.find(m => 
+      m.email === holder || 
+      m.uid === holder || 
+      m.id === holder ||
+      (m.email && holder && m.email.toLowerCase().startsWith(holderLower)) ||
+      (m.email && holder && holderLower.startsWith(m.email.split('@')[0].toLowerCase()))
+    ) || (currentUser && (
+      currentUser.email === holder || 
+      currentUser.uid === holder || 
+      (currentUser.email && holder && holderLower.startsWith(currentUser.email.split('@')[0].toLowerCase()))
+    ) ? currentUser : null);
 
-  const cleanHolder = matchedMember?.name || matchedMember?.displayName 
-    || (holder ? (holder.includes('@') ? holder.split('@')[0] : holder).replace(/[0-9._-]+/g, ' ').trim() : null);
+    cleanHolder = matchedMember?.name || matchedMember?.displayName 
+      || (holder ? (holder.includes('@') ? holder.split('@')[0] : holder).replace(/[0-9._-]+/g, ' ').trim() : null);
+  }
+
   const headerLine = [
     sourceText(lead.source),
     cleanHolder ? (isAr ? `المسؤول: ${cleanHolder}` : `Owner: ${cleanHolder}`) : null,
@@ -444,7 +452,25 @@ export default function LeadQuickDrawer({
         open
         onClose={safeClose}
         title={lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed client')}
-        description={headerLine ? <span className="crm-ld__desc" title={headerLine}>{headerLine}</span> : null}
+        description={headerLine ? (
+          <span className="crm-ld__desc" title={headerLine}>
+            <span className="crm-ld__desc-item">{sourceText(lead.source)}</span>
+            {cleanHolder && (
+              <>
+                <span className="crm-ld__desc-dot">·</span>
+                <span className="crm-ld__desc-item crm-ld__desc-owner">
+                  {isAr ? `المسؤول: ${cleanHolder}` : `Owner: ${cleanHolder}`}
+                </span>
+              </>
+            )}
+            {lead.autoAssigned && (
+              <>
+                <span className="crm-ld__desc-dot">·</span>
+                <span className="crm-ld__desc-item">{isAr ? 'توزيع تلقائي' : 'auto-assigned'}</span>
+              </>
+            )}
+          </span>
+        ) : null}
         closeLabel={isAr ? 'إغلاق' : 'Close'}
         headerActions={(
           <div className="crm-ld__nav">
@@ -725,6 +751,7 @@ export default function LeadQuickDrawer({
           me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
           onSaved={(t) => { setNextStepFor(''); triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t.title} (${dueLabel(t, true)}). هفكّرك قبلها.` : 'Next step saved', 'success'); }}
           onSkip={skipNextStep}
+          onClose={() => setNextStepFor('')}
         />
       )}
       {lostOpen && (

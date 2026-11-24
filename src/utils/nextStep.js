@@ -17,9 +17,21 @@ const SUGGESTIONS = {
   task_done: { title: 'متابعة العميل', kind: 'call', priority: 'normal', days: 1 }
 };
 
+const SELLER_SUGGESTIONS = {
+  reached: { title: 'متابعة بيانات العقار وتأكيد الرغبة بالبيع', kind: 'call', priority: 'normal', days: 1 },
+  interested: { title: 'طلب صور ومواصفات العقار وتحديد موعد المعاينة', kind: 'whatsapp', priority: 'normal', days: 1 },
+  callback: { title: 'اتصال بالمالك بعد المهلة', kind: 'call', priority: 'normal', days: 1 },
+  viewing_set: { title: 'معاينة وتصوير العقار وتثمينه', kind: 'visit', priority: 'high', days: 1, needsTime: true },
+  viewing_done: { title: 'تجهيز تقرير التقييم وبدء التسويق للمشترين', kind: 'call', priority: 'high', days: 1 },
+  offer: { title: 'عرض تفاصيل عرض الشراء على المالك والتفاوض', kind: 'call', priority: 'high', days: 1 },
+  agreed: { title: 'تجهيز عقد البيع وتحديد موعد التوقيع', kind: 'docs', priority: 'high', days: 1 },
+  task_done: { title: 'متابعة المالك والعقار', kind: 'call', priority: 'normal', days: 1 }
+};
+
 /** The suggested next task after this outcome, or null when none is needed (no answer has its own retries; negatives end the chase) */
-export function suggestNextStep(outcomeId, now = Date.now()) {
-  const s = SUGGESTIONS[outcomeId];
+export function suggestNextStep(outcomeId, now = Date.now(), isSeller = false) {
+  const table = isSeller ? SELLER_SUGGESTIONS : SUGGESTIONS;
+  const s = table[outcomeId] || SUGGESTIONS[outcomeId];
   if (!s) return null;
   return { title: s.title, kind: s.kind, priority: s.priority, day: dayKeyFrom(now, s.days), time: s.needsTime ? '' : '10:00', needsTime: Boolean(s.needsTime) };
 }

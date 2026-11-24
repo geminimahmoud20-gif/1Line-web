@@ -118,7 +118,18 @@
 .crm-ld__page-preview { white-space: pre-wrap; padding: var(--ui-s-2) var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); margin: var(--ui-s-2) 0; overflow-wrap: anywhere; }
 
 /* Tidier on a phone: one-line header, one-row stage strip, folded secondary blocks */
-.crm-ld__desc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-ld__desc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ui-fs-2, 12px);
+  color: var(--ui-text-2, #64748b);
+  line-height: 1.5;
+}
+.crm-ld__desc-item { white-space: nowrap; }
+.crm-ld__desc-owner { color: var(--ui-text, #0f172a); font-weight: var(--ui-fw-medium, 500); }
+.crm-ld__desc-dot { color: var(--ui-text-3, #94a3b8); }
 .crm-ld__fold { padding: 0; gap: 0; }
 .crm-ld__fold-sum { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-3) var(--ui-s-4); cursor: pointer; list-style: none; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); min-height: 44px; }
 .crm-ld__fold-sum::-webkit-details-marker { display: none; }
