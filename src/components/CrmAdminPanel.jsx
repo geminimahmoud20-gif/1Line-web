@@ -895,6 +895,7 @@ export const CrmAdminPanel = ({
           lang={lang}
           triggerToast={triggerToast}
           activeRole={activeRole}
+          currentUser={currentUser}
         />
       )}
 

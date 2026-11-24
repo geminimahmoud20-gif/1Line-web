@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Building2, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
-import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
@@ -32,21 +31,26 @@ const CARDS_PER_STAGE = 5;
 // غير متفاعل and خسارة. Same status ids as before (utils/dealStages).
 const BASE_STAGES = [
   { id: 'new', title_ar: 'عملاء محتملين', title_en: 'Leads', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
-  { id: 'contacted', title_ar: 'مؤهل', title_en: 'Qualified', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
-  { id: 'site_visit', title_ar: 'اجتماع / معاينة', title_en: 'Meeting / viewing', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
-  { id: 'negotiating', title_ar: 'تفاوض', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
-  { id: 'closed', title_ar: 'إغلاق', title_en: 'Closed', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
+  { id: 'contacted', title_ar: 'مؤهل (تأهيل الطلب)', title_en: 'Qualified', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
+  { id: 'site_visit', title_ar: 'معاينة وزيارة', title_en: 'Meeting / viewing', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
+  { id: 'negotiating', title_ar: 'تفاوض وعروض', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
+  { id: 'closed', title_ar: 'إغلاق وحجز', title_en: 'Closed', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
   { id: 'inactive', title_ar: 'غير متفاعل', title_en: 'Unresponsive', color: 'var(--crm-muted)', bg: 'var(--crm-line)' },
   { id: 'lost', title_ar: 'خسارة', title_en: 'Lost', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)' }
 ];
 // The first five columns are steps forward; «next» and «back» only move inside them
 const PROGRESS_COUNT = PROGRESS_STAGE_IDS.length;
 
-// The same columns named for an owner's sale (utils/leadPipeline): inspection & valuation, listed, sold
-const SELLER_COLUMNS = BASE_STAGES.map((st) => {
-  const sel = SELLER_STAGES.find((x) => x.id === st.id);
-  return sel ? { ...st, title_ar: sel.column_ar, title_en: sel.column_en } : st;
-});
+// Seven stages tailored for seller / owner supply pipeline
+const SELLER_COLUMNS = [
+  { id: 'new', title_ar: 'عروض بيع جديدة', title_en: 'New listings', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
+  { id: 'contacted', title_ar: 'مؤهل (تأكيد العقار)', title_en: 'Qualified (verified)', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
+  { id: 'site_visit', title_ar: 'معاينة وتثمين', title_en: 'Inspection & valuation', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
+  { id: 'negotiating', title_ar: 'معروض للبيع وتفاوض', title_en: 'Listed & negotiating', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
+  { id: 'closed', title_ar: 'تم البيع بنجاح', title_en: 'Closed (sold)', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
+  { id: 'inactive', title_ar: 'غير متفاعل', title_en: 'Unresponsive', color: 'var(--crm-muted)', bg: 'var(--crm-line)' },
+  { id: 'lost', title_ar: 'تراجع المالك / خسارة', title_en: 'Lost / withdrawn', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)' }
+];
 /** A lead's own stage names: an owner's card offers «معروض للبيع», not «تفاوض» */
 const stagesOfLead = (lead) => (pipelineKind(lead) === 'seller' ? SELLER_COLUMNS : BASE_STAGES);
 // Buyers / owners / investors chips: an owner is anyone who came to sell or value (isSellerLead)
@@ -96,7 +100,8 @@ export default function KanbanPipeline({
   onOpenLead,
   lang = 'ar',
   triggerToast,
-  activeRole = 'sales_agent'
+  activeRole = 'sales_agent',
+  currentUser
 }) {
   // Leads sharing a phone: the same person asking more than once shows up as several cards, so say so on each
   const sameNumber = useMemo(() => duplicatesById(leads), [leads]);
@@ -105,7 +110,6 @@ export default function KanbanPipeline({
   const [leadToDelete, setLeadToDelete] = useState(null);
   // A lead dropped on «خسارة» asks why first
   const [lostFor, setLostFor] = useState(null);
-  const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
   // Two separate pipelines: requests (buyers) and offers (owners and brokers), each with its own stages and card
   const [filterType, setFilterType] = useState('buyer');
   const isPhone = useMediaQuery('(max-width: 640px)');
@@ -358,7 +362,12 @@ export default function KanbanPipeline({
     e.preventDefault();
   };
 
-  const stageOk = (lead, targetStageId) => guardStage(lead, { status: targetStageId, ...(targetStageId === 'lost' ? { lostReason: 'pending' } : {}) }, { role: activeRole, toast: triggerToast });
+  const STAGE_DEFAULT_OUTCOMES = {
+    contacted: { id: 'reached', ar: 'تم التواصل والتأهيل' },
+    site_visit: { id: 'viewing_set', ar: 'تم تحديد موعد معاينة' },
+    negotiating: { id: 'offer', ar: 'تقديم عرض وتفاوض' },
+    closed: { id: 'agreed', ar: 'اتفاق وحجز' }
+  };
 
   const handleDrop = (e, targetStageId) => {
     e.preventDefault();
@@ -366,47 +375,71 @@ export default function KanbanPipeline({
     if (leadId) {
       const targetLead = leads.find(l => l.id === leadId);
       if (targetLead && boardColumnOf(targetLead.status) === targetStageId) { setDraggedLeadId(null); return; }
-      // The stage lock: log the activity outcome first, and only a manager goes back
-      if (targetLead && !stageOk(targetLead, targetStageId)) { setDraggedLeadId(null); return; }
       if (targetLead && targetStageId === 'lost') { setLostFor(targetLead); setDraggedLeadId(null); return; }
       if (targetLead && onUpdateLead) {
+        const defOutcome = STAGE_DEFAULT_OUTCOMES[targetStageId];
+        let outcomePatch = {};
+        if (defOutcome && !targetLead.outcomes?.some((o) => o.id === defOutcome.id)) {
+          const entry = {
+            id: defOutcome.id,
+            at: new Date().toISOString(),
+            by: String(currentUser?.uid || ''),
+            n: String(currentUser?.displayName || 'مسؤول المبيعات').slice(0, 40)
+          };
+          outcomePatch = {
+            outcomes: [...(targetLead.outcomes || []), entry].slice(-30),
+            lastOutcome: defOutcome.id,
+            lastOutcomeAt: entry.at
+          };
+        }
+
         const validation = validateStageTransition(targetLead, targetStageId, {
           userRole: activeRole,
           isFounderApproved: targetLead.isFounderApproved || activeRole === 'super_admin'
         });
 
-        if (!validation.allowed) {
-          setBlockerModal({ isOpen: true, blockerInfo: validation, lead: targetLead });
-          if (triggerToast) {
-            triggerToast(validation.missingDeliverable, 'error');
-          }
-          setDraggedLeadId(null);
-          return;
-        }
-
         const prevStageId = targetLead.status || 'new';
+        const stageObj = PIPELINE_STAGES.find((s) => s.id === targetStageId);
+        const stageTitle = isAr ? stageObj?.title_ar || targetStageId : stageObj?.title_en || targetStageId;
+
         const updates = { 
           status: targetStageId,
           statusUpdatedAt: new Date().toISOString(),
           lastActivityAt: new Date().toISOString(),
+          ...outcomePatch,
           ...(prevStageId === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})
         };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
         onUpdateLead(leadId, updates, targetLead.version);
+
         if (triggerToast) {
-          triggerToast(
-            isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`,
-            'success',
-            {
-              onUndo: () => {
-                onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
-              },
-              undoLabel: isAr ? 'تراجع' : 'Undo',
-              duration: 6000
-            }
-          );
+          if (!validation.allowed && validation.missingDeliverable) {
+            triggerToast(
+              isAr ? `تم النقل إلى ${stageTitle} · تنبيه: يرجى استكمال ${validation.missingDeliverable}` : `Moved to ${stageTitle} · Note: ${validation.missingDeliverable}`,
+              'info',
+              {
+                onUndo: () => {
+                  onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+                },
+                undoLabel: isAr ? 'تراجع' : 'Undo',
+                duration: 6000
+              }
+            );
+          } else {
+            triggerToast(
+              isAr ? `تم نقل العميل بنجاح إلى مرحلة ${stageTitle}` : `Lead moved to ${stageTitle}`,
+              'success',
+              {
+                onUndo: () => {
+                  onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+                },
+                undoLabel: isAr ? 'تراجع' : 'Undo',
+                duration: 6000
+              }
+            );
+          }
         }
       }
     }
@@ -419,42 +452,68 @@ export default function KanbanPipeline({
     if (currentIndex >= 0 && currentIndex < PROGRESS_COUNT - 1) {
       const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
-      if (!stageOk(lead, nextStage.id)) return;
+
+      const defOutcome = STAGE_DEFAULT_OUTCOMES[nextStage.id];
+      let outcomePatch = {};
+      if (defOutcome && !lead.outcomes?.some((o) => o.id === defOutcome.id)) {
+        const entry = {
+          id: defOutcome.id,
+          at: new Date().toISOString(),
+          by: String(currentUser?.uid || ''),
+          n: String(currentUser?.displayName || 'مسؤول المبيعات').slice(0, 40)
+        };
+        outcomePatch = {
+          outcomes: [...(lead.outcomes || []), entry].slice(-30),
+          lastOutcome: defOutcome.id,
+          lastOutcomeAt: entry.at
+        };
+      }
+
       const validation = validateStageTransition(lead, nextStage.id, {
         userRole: activeRole,
         isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
       });
 
-      if (!validation.allowed) {
-        setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
-        if (triggerToast) {
-          triggerToast(validation.missingDeliverable, 'error');
-        }
-        return;
-      }
+      const stageTitle = isAr ? nextStage.title_ar : nextStage.title_en;
 
       if (onUpdateLead) {
         const updates = { 
           status: nextStage.id,
           statusUpdatedAt: new Date().toISOString(),
-          lastActivityAt: new Date().toISOString()
+          lastActivityAt: new Date().toISOString(),
+          ...outcomePatch
         };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
         onUpdateLead(lead.id, updates, lead.version);
+
         if (triggerToast) {
-          triggerToast(
-            isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`,
-            'success',
-            {
-              onUndo: () => {
-                onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
-              },
-              undoLabel: isAr ? 'تراجع' : 'Undo',
-              duration: 6000
-            }
-          );
+          if (!validation.allowed && validation.missingDeliverable) {
+            triggerToast(
+              isAr ? `تم النقل إلى ${stageTitle} · تنبيه: يرجى استكمال ${validation.missingDeliverable}` : `Moved to ${stageTitle} · Note: ${validation.missingDeliverable}`,
+              'info',
+              {
+                onUndo: () => {
+                  onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+                },
+                undoLabel: isAr ? 'تراجع' : 'Undo',
+                duration: 6000
+              }
+            );
+          } else {
+            triggerToast(
+              isAr ? `تم نقل العميل إلى مرحلة: ${stageTitle}` : `Moved to ${stageTitle}`,
+              'success',
+              {
+                onUndo: () => {
+                  onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+                },
+                undoLabel: isAr ? 'تراجع' : 'Undo',
+                duration: 6000
+              }
+            );
+          }
         }
       }
     }
@@ -681,13 +740,51 @@ export default function KanbanPipeline({
         </section>
       )}
 
+      {/* 🚀 Dual Pipeline Selector: Buyers vs Sellers */}
+      <div className="crm-kanban__pipeline-selector" role="tablist" aria-label={isAr ? 'مسار الصفقات' : 'Pipeline'}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterType === 'buyer'}
+          className={`crm-kanban__pipeline-tab ${filterType === 'buyer' ? 'is-active' : ''}`}
+          onClick={() => setFilterType('buyer')}
+        >
+          <span className="pipeline-tab__icon">🎯</span>
+          <div className="pipeline-tab__info">
+            <span className="pipeline-tab__title">{isAr ? 'مسار صفقات المشترين (الطلبات)' : 'Buyer Deals Pipeline'}</span>
+            <span className="pipeline-tab__desc">{isAr ? 'تأهيل المشترين، المعاينات الميدانية، التفاوض وحجز الوحدات' : 'Qualification, viewings, negotiation & deposit'}</span>
+          </div>
+          <span className="pipeline-tab__badge">
+            {leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} {isAr ? 'صفقة' : 'deals'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterType === 'seller'}
+          className={`crm-kanban__pipeline-tab is-seller ${filterType === 'seller' ? 'is-active' : ''}`}
+          onClick={() => setFilterType('seller')}
+        >
+          <span className="pipeline-tab__icon">🏠</span>
+          <div className="pipeline-tab__info">
+            <span className="pipeline-tab__title">{isAr ? 'مسار توريد العقارات (الملاك والبائعين)' : 'Property Supply Pipeline (Sellers)'}</span>
+            <span className="pipeline-tab__desc">{isAr ? 'عروض البيع، معاينة وتثمين العقار، العقد الحصري، تم البيع' : 'New listings, valuation, exclusive contract & sold'}</span>
+          </div>
+          <span className="pipeline-tab__badge">
+            {leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} {isAr ? 'عقار' : 'listings'}
+          </span>
+        </button>
+      </div>
+
       <div className="crm-kanban__toolbar">
         <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
-          <Chip pressed={filterType === 'buyer'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} onClick={() => setFilterType('buyer')}>{isAr ? 'طلبات (مشترين)' : 'Requests (buyers)'}</Chip>
-          <Chip pressed={filterType === 'seller'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} onClick={() => setFilterType('seller')}>{isAr ? 'عروض (ملاك ووسطاء)' : 'Offers (owners, brokers)'}</Chip>
-          <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
+          <Chip pressed={filterType === 'all'} count={leads.filter((l) => isOpenLead(l)).length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+          <Chip pressed={filterType === 'buyer'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} onClick={() => setFilterType('buyer')}>{isAr ? 'المشترين' : 'Buyers'}</Chip>
+          <Chip pressed={filterType === 'seller'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} onClick={() => setFilterType('seller')}>{isAr ? 'البائعين والملاك' : 'Sellers'}</Chip>
+          <Chip pressed={filterType === 'investor'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'investor')).length} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
           {(accountCount > 0 || filterType === 'account') && (
-            <Chip pressed={filterType === 'account'} count={accountCount} onClick={() => setFilterType('account')}>{isAr ? 'حسابات جديدة (لم تحدد)' : 'New accounts (undecided)'}</Chip>
+            <Chip pressed={filterType === 'account'} count={accountCount} onClick={() => setFilterType('account')}>{isAr ? 'حسابات جديدة' : 'New accounts'}</Chip>
           )}
         </div>
         <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
@@ -738,12 +835,12 @@ export default function KanbanPipeline({
         onScroll={() => syncScroll(boardRef.current, topBarRef.current)}
         style={{
           display: 'grid',
-          // Empty columns stay narrow so the space goes to the stages that hold deals
+          // Empty columns stay wide enough so stage names never truncate
           gridTemplateColumns: isPhone ? 'minmax(0, 1fr)' : PIPELINE_STAGES.map((s) => {
             if (collapsedStages.includes(s.id)) return '54px';
             const empty = !(leadsByStage[s.id] || []).length;
-            if (compact) return empty ? 'minmax(110px, 0.5fr)' : 'minmax(170px, 1fr)';
-            return empty ? 'minmax(150px, 0.5fr)' : 'minmax(280px, 1fr)';
+            if (compact) return empty ? 'minmax(140px, 0.5fr)' : 'minmax(180px, 1fr)';
+            return empty ? 'minmax(220px, 0.7fr)' : 'minmax(280px, 1fr)';
           }).join(' ')
         }}
       >
@@ -1135,7 +1232,7 @@ export default function KanbanPipeline({
         </div>
       )}
 
-      {/* 1Line OS Deliverable Gate Blocker Modal */}
+      {/* 1Line OS Lost Reason Modal */}
       {lostFor && (
         <LostReasonModal
           lead={lostFor}
@@ -1155,17 +1252,6 @@ export default function KanbanPipeline({
           }}
         />
       )}
-      <StageDeliverableModal
-        isOpen={blockerModal.isOpen}
-        onClose={() => setBlockerModal({ isOpen: false, blockerInfo: null, lead: null })}
-        blockerInfo={blockerModal.blockerInfo}
-        lead={blockerModal.lead}
-        onOpenDeliverableAction={(leadToEdit) => {
-          setBlockerModal({ isOpen: false, blockerInfo: null, lead: null });
-          if (onOpenLead) onOpenLead(leadToEdit);
-          else if (onOpenEditLead) onOpenEditLead(leadToEdit);
-        }}
-      />
     </div>
   );
 }

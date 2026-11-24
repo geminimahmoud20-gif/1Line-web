@@ -11,7 +11,6 @@ import { boardStagesFor, buyersForSeller } from '../../utils/leadPipeline';
 import { boardColumnOf } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition } from '../../services/stateMachineEngine';
-import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
 import { leadScore, LEAD_SCORE_HIGH, isSellerLead, isAccountLead, firstContactPatch, leadBudget, isOpenLead } from '../../utils/crmLeadViews';
@@ -67,7 +66,6 @@ export default function LeadQuickDrawer({
   const [viewingDateTime, setViewingDateTime] = useState('');
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
-  const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
   const [localTab, setLocalTab] = useState('work'); // 'work' | 'client' | 'team' | 'history' | 'matching' | 'broker'
   const members = useTeamMembers(allLeads);
   const activeTab = tabProp || localTab;
@@ -631,16 +629,6 @@ export default function LeadQuickDrawer({
           onConfirm={(fields) => { setLostOpen(false); handleUpdateStatus('lost', fields); }}
         />
       )}
-      <StageDeliverableModal
-        isOpen={blockerModal.isOpen}
-        onClose={() => setBlockerModal({ isOpen: false, blockerInfo: null })}
-        blockerInfo={blockerModal.blockerInfo}
-        lead={lead}
-        onOpenDeliverableAction={() => {
-          setBlockerModal({ isOpen: false, blockerInfo: null });
-          setActiveTab('work');
-        }}
-      />
     </>
   );
 }

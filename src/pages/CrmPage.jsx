@@ -116,6 +116,8 @@ export default function CrmPage({
       if (params.get('dev_auth') === 'true') {
         try {
           sessionStorage.setItem('crm_auth', 'true');
+          sessionStorage.removeItem(LOCKED_FLAG);
+          markCrmActive();
           setCrmAuthenticated(true);
         } catch { /* storage unavailable */ }
       }
@@ -821,7 +823,11 @@ export default function CrmPage({
                 type="button"
                 data-testid="dev-quick-login-btn"
                 onClick={() => {
-                  sessionStorage.setItem('crm_auth', 'true');
+                  try {
+                    sessionStorage.setItem('crm_auth', 'true');
+                    sessionStorage.removeItem(LOCKED_FLAG);
+                    markCrmActive();
+                  } catch {}
                   setCrmAuthenticated(true);
                   if (triggerToast) triggerToast(isAr ? 'تم الدخول بوضع التطوير المباشر' : 'Logged in via Dev Mode', 'success');
                 }}
