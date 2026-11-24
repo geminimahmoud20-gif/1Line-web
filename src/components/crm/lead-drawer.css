@@ -9,9 +9,46 @@
 .crm-ld__phone { display: inline-flex; align-items: center; gap: var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); font-variant-numeric: tabular-nums; }
 .crm-ld__quick { display: flex; gap: var(--ui-s-2); }
 
-.crm-ld__stage { padding: var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
-.crm-ld__stage-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--ui-s-2); }
-.crm-ld__stages { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.crm-ld__stage { padding: 12px 14px; background: var(--ui-surface-2); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); }
+.crm-ld__stage-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.crm-ld__stages { display: flex; flex-direction: column; gap: 8px; }
+.crm-ld__stages-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 2px 0 4px; }
+.crm-ld__stage-chip {
+  min-width: 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 7px 4px; border-radius: var(--ui-r-md, 8px); border: 1px solid var(--ui-line);
+  background: var(--ui-surface); color: var(--ui-text-2); font-family: inherit; font-size: 11px;
+  font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.crm-ld__stage-chip span:last-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.crm-ld__stage-chip:hover { border-color: var(--ui-line-strong); background: var(--ui-surface-hover); }
+.crm-ld__stage-chip.is-current {
+  background: var(--ui-accent, #d97706); color: #fff; border-color: var(--ui-accent, #d97706);
+  font-weight: 700; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28);
+}
+.crm-ld__stage-chip.is-passed {
+  border-color: rgba(217, 119, 6, 0.35); background: rgba(217, 119, 6, 0.08); color: var(--ui-text);
+}
+.crm-ld__stage-num {
+  display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+  border-radius: 50%; font-size: 10px; font-weight: 700; background: rgba(0, 0, 0, 0.06);
+}
+.crm-ld__stage-chip.is-current .crm-ld__stage-num { background: rgba(255, 255, 255, 0.25); color: #fff; }
+
+.crm-ld__stage-sides { display: flex; justify-content: flex-end; gap: 8px; padding-top: 6px; border-top: 1px dashed var(--ui-line); }
+.crm-ld__side-chip {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ui-line); background: var(--ui-surface);
+  color: var(--ui-text-3); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+}
+.crm-ld__side-chip:hover { background: var(--ui-surface-hover); color: var(--ui-text); border-color: var(--ui-line-strong); }
+.crm-ld__side-chip.is-current {
+  background: var(--ui-surface-2); color: var(--ui-text); border-color: var(--ui-line-strong); font-weight: 700;
+}
+.crm-ld__side-chip.is-lost.is-current {
+  background: var(--ui-danger-tint, rgba(239, 68, 68, 0.1)); color: var(--ui-danger, #ef4444); border-color: var(--ui-danger, #ef4444);
+}
 .crm-ld__lost[aria-pressed='true'] { background: var(--ui-danger); border-color: var(--ui-danger); color: var(--ui-on-danger); }
 
 .crm-ld__h { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
@@ -164,7 +201,7 @@
 /* ── Calmer drawer: sections are separate tabs (work, client, team, history), tools are one grouped card ── */
 .crm-ld { gap: var(--ui-s-3); }
 .crm-ld__stack { gap: var(--ui-s-3); }
-.crm-ld__stage { padding: 0; background: none; }
+.crm-ld__stage { padding: 10px 12px; background: var(--ui-surface-2); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); }
 .crm-ld__stage-head { margin-bottom: var(--ui-s-1); }
 .crm-ld__block { padding: var(--ui-s-3) var(--ui-s-4); }
 .crm-ld__tools { display: flex; flex-direction: column; padding: var(--ui-s-3) var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }

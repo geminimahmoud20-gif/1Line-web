@@ -129,6 +129,7 @@
   position: relative; display: inline-flex; align-items: center; gap: var(--ui-s-2);
   height: var(--ui-control-h); padding: 0 var(--ui-s-3); border: 0; background: none; cursor: pointer;
   font: var(--ui-fw-semibold) var(--ui-fs-3) / 1 var(--ui-font); color: var(--ui-text-3); white-space: nowrap;
+  flex-shrink: 0;
   transition: color var(--ui-dur-1) var(--ui-ease-out);
 }
 .ui-tab:hover { color: var(--ui-text); }

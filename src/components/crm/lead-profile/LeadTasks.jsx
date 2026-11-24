@@ -3,10 +3,12 @@ import { CheckCircle2, Circle, ListChecks } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTasks } from '../../../hooks/useTasks';
 import { TaskForm } from '../TasksPanel';
-import { bucketOf, dueLabel } from '../../../utils/tasks';
+import { bucketOf, dueLabel, buildTask, dueFromPreset } from '../../../utils/tasks';
 import { Badge } from '../../ui';
 import TaskDoneFlow from '../TaskDoneFlow';
 import { userDisplayName } from '../../../utils/assignees';
+import { isSellerLead } from '../../../utils/crmLeadViews';
+import { addTask } from '../../../firebaseLazy';
 
 /** The open tasks behind one client, and a quick way to add the next one */
 export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title, members = [], canAssign = false }) {
@@ -20,8 +22,27 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
   if (!lead?.id || !me.uid) return null;
   // A manager adding a task from a client's file gives it to the person who holds the client (shown in their list)
   const ownerUid = lead.ownerUid && lead.ownerUid !== me.uid && members.some((m) => m.uid === lead.ownerUid) ? lead.ownerUid : '';
+  const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller';
 
   const done = (t) => setFlowTask(t);
+
+  const handleQuickAdd = async (quickTitle, kind = 'call') => {
+    const day = dueFromPreset('tomorrow');
+    const payload = buildTask({
+      title: `${quickTitle} — ${String(lead.name || '').split(' ').slice(0, 2).join(' ')}`,
+      dueAt: `${day}T11:00`,
+      priority: 'high',
+      kind,
+      lead: { id: lead.id, name: lead.name },
+      assignee: null,
+      me
+    });
+    if (!payload) return;
+    const id = await addTask(payload);
+    if (id) {
+      triggerToast?.(isAr ? `اتضافت المهمة: ${quickTitle}` : 'Task created', 'success');
+    }
+  };
 
   return (
     <section className="crm-ld__block" aria-labelledby="crm-ld-tasks">
@@ -44,6 +65,64 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
             </li>
           ))}
         </ul>
+      )}
+      {open.length === 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+          <span style={{ fontSize: '11px', color: 'var(--ui-text-3)', fontWeight: 600 }}>
+            {isAr ? '⚡ مهام سريعة بنقرة واحدة:' : '⚡ Quick 1-tap tasks:'}
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {isSeller ? (
+              <>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                  onClick={() => handleQuickAdd(isAr ? '📞 تأكيد السعر والمساحة' : 'Confirm Price & Size', 'call')}
+                >
+                  📞 {isAr ? 'تأكيد السعر والمساحة' : 'Confirm Price & Size'}
+                </button>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                  onClick={() => handleQuickAdd(isAr ? '📸 طلب صور ومواصفات العقار' : 'Request Photos & Specs', 'whatsapp')}
+                >
+                  📸 {isAr ? 'طلب صور العقار' : 'Request Photos'}
+                </button>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                  onClick={() => handleQuickAdd(isAr ? '📍 تحديد موعد معاينة وتثمين' : 'Schedule Inspection & Valuation', 'visit')}
+                >
+                  📍 {isAr ? 'تحديد موعد معاينة وتثمين' : 'Schedule Inspection'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                  onClick={() => handleQuickAdd(isAr ? '📞 الاتصال واستكشاف الاحتياج' : 'Call & Discovery', 'call')}
+                >
+                  📞 {isAr ? 'استكشاف الاحتياج' : 'Call & Discovery'}
+                </button>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                  onClick={() => handleQuickAdd(isAr ? '🏠 ترشيح 3 وحدات مطابقة' : 'Send 3 Matched Units', 'whatsapp')}
+                >
+                  🏠 {isAr ? 'ترشيح 3 وحدات' : 'Send Matches'}
+                </button>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                  onClick={() => handleQuickAdd(isAr ? '📅 حجز موعد معاينة ميدانية' : 'Book Viewing', 'visit')}
+                >
+                  📅 {isAr ? 'حجز موعد معاينة' : 'Book Viewing'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       )}
       {flowTask && <TaskDoneFlow key={flowTask.id} task={flowTask} lead={lead} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />}
       <TaskForm key={lead.id} isAr={isAr} me={me} members={members} canAssign={canAssign} defaultAssigneeUid={ownerUid} lead={{ id: lead.id, name: lead.name }} triggerToast={triggerToast} compact />

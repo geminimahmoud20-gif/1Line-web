@@ -5,9 +5,22 @@ import { updateTask } from '../../firebaseLazy';
 import { completion } from '../../utils/tasks';
 import { suggestNextStep, SKIP_LOG } from '../../utils/nextStep';
 import { OUTCOMES, STAGE_RULES, outcomeEntry, outcomeSave, outcomeById } from '../../utils/stageGate';
-import { lostReasonsFor } from '../../utils/crmLeadViews';
+import { lostReasonsFor, isSellerLead } from '../../utils/crmLeadViews';
 import { scheduleNextAttempt } from '../../utils/retryCall';
 import NextStepSheet from './NextStepSheet';
+
+const SELLER_OUTCOME_LABELS = {
+  reached: 'تم التواصل مع المالك',
+  interested: 'أكّد الرغبة في البيع والسعر',
+  viewing_set: 'تحديد موعد معاينة وتثمين',
+  viewing_done: 'تمت معاينة العقار وتصويره',
+  offer: 'تقديم عرض شراء للمالك',
+  agreed: 'الاتفاق على السعر وعقد البيع',
+  callback: 'طلب مهلة / كلّمني بعدين',
+  no_answer: 'لم يرد',
+  not_fit: 'غير مناسب / صرف نظر',
+  wrong_number: 'رقم غلط'
+};
 
 const NEEDS_OUTCOME = new Set(['call', 'whatsapp', 'visit']);
 
@@ -86,10 +99,14 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
   return (
     <Modal open onClose={onClose} size="sm" title={isAr ? 'حصل إيه؟' : 'What happened?'} description={`${task.title} — ${lead.name || ''}`} closeLabel={isAr ? 'إلغاء' : 'Cancel'}>
       <div className="crm-ld__row">
-        {options.map((o) => (
-          <Button key={o.id} variant="secondary" size="sm" disabled={busy}
-            onClick={() => (o.kind === 'negative' ? (setNegative(o.id), setReason('')) : finish(o.id))}>{o.ar}</Button>
-        ))}
+        {options.map((o) => {
+          const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller';
+          const label = isSeller && isAr && SELLER_OUTCOME_LABELS[o.id] ? SELLER_OUTCOME_LABELS[o.id] : o.ar;
+          return (
+            <Button key={o.id} variant="secondary" size="sm" disabled={busy}
+              onClick={() => (o.kind === 'negative' ? (setNegative(o.id), setReason('')) : finish(o.id))}>{label}</Button>
+          );
+        })}
       </div>
       {negative && (
         <form className="crm-ld__form" onSubmit={(e) => { e.preventDefault(); if (reason) finish(negative, { reason, lose: true }); }}>

@@ -58,6 +58,18 @@ export default function LeadDrawerOverview({
   const siteSettings = useSiteSettings();
   const L = (ar, en) => (isAr ? ar : en);
   const sellerRole = sellerRoleOf(lead);
+  const SELLER_OUTCOME_LABELS = {
+    reached: 'تم التواصل مع المالك',
+    interested: 'أكّد الرغبة في البيع والسعر',
+    viewing_set: 'تحديد موعد معاينة وتثمين',
+    viewing_done: 'تمت معاينة العقار وتصويره',
+    offer: 'تقديم عرض شراء للمالك',
+    agreed: 'الاتفاق على السعر وعقد البيع',
+    callback: 'طلب مهلة / كلّمني بعدين',
+    no_answer: 'لم يرد',
+    not_fit: 'غير مناسب / صرف نظر',
+    wrong_number: 'رقم غلط'
+  };
   // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
   const stageOutcomes = (STAGE_RULES.find((s) => s.id === (lead?.status || 'new'))?.outcomes || []).map((id) => OUTCOMES.find((o) => o.id === id)).filter(Boolean);
   const attempts = attemptsOf(lead || {});
@@ -132,13 +144,28 @@ export default function LeadDrawerOverview({
   const rawArea = details.area || lead?.area;
   const quickType = PROPERTY_TYPES.find((t) => t.id === (details.propertyType || lead?.propertyType))?.name_ar;
   const quickArea = !rawArea ? '' : rawArea === 'all' ? L('كل المناطق', 'All areas') : areaNameOf(rawArea, getAreas(), isAr);
-  const quickPrice = !askingPriceOf(lead) && lead?.budget ? `${lead.budget} ${L('ج.م (تقريبي)', 'EGP (approx.)')}` : '';
+  
+  const numBudget = Number(String(lead?.budget || 0).replace(/[^0-9.]/g, ''));
+  const rawAskingPrice = askingPriceOf(lead) || numBudget;
+  const isSuspiciouslyLowForTotal = isSeller && rawAskingPrice > 0 && rawAskingPrice < 100000;
+  
+  let formattedPriceDisplay = '';
+  if (rawAskingPrice > 0) {
+    const formattedNum = Number(rawAskingPrice).toLocaleString('en-US');
+    if (isSuspiciouslyLowForTotal) {
+      formattedPriceDisplay = `${formattedNum} ${L('ج.م (قد يكون للمتر)', 'EGP (may be per m²)')}`;
+    } else {
+      formattedPriceDisplay = `${formattedNum} ${L('ج.م', 'EGP')}`;
+    }
+  } else if (details.estimatedAvg) {
+    formattedPriceDisplay = `${Number(details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م (تقدير آلي)', 'EGP (estimate)')}`;
+  }
+
   const sellerFacts = [
     [L('نوع العقار', 'Type'), quickType],
     [L('المنطقة', 'Area'), quickArea],
-    [L('السعر المطلوب', 'Asking price'), quickPrice],
+    [L('السعر المطلوب', 'Asking price'), formattedPriceDisplay],
     [L('المساحة', 'Size'), details.size && `${details.size} ${L('م²', 'm²')}`],
-    [askingPriceOf(lead) ? L('السعر المطلوب', 'Asking price') : L('التقدير الآلي', 'Estimate'), (askingPriceOf(lead) || details.estimatedAvg) && `${Number(askingPriceOf(lead) || details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
     [L('الغرف', 'Rooms'), details.rooms],
     [L('الدور', 'Floor'), details.floor && (details.floor === 'ground' ? L('أرضي', 'Ground') : details.floor)],
     [L('التشطيب', 'Finishing'), details.finishingLabelAr],
@@ -225,20 +252,23 @@ export default function LeadDrawerOverview({
           {attempts > 0 && ` ${L(`آخر ${attempts} محاولة بلا رد.`, `${attempts} tries without an answer.`)}`}
         </p>
         <div className="crm-ld__row">
-          {stageOutcomes.map((o) => (
-            <Button
-              key={o.id}
-              variant="secondary"
-              size="sm"
-              onClick={() => (o.kind === 'negative' ? (setPendingNeg(o.id), setNegReason('')) : handleLogCall(o.id))}
-            >
-              {o.ar}
-            </Button>
-          ))}
+          {stageOutcomes.map((o) => {
+            const label = isSeller && isAr && SELLER_OUTCOME_LABELS[o.id] ? SELLER_OUTCOME_LABELS[o.id] : (isAr ? o.ar : o.id);
+            return (
+              <Button
+                key={o.id}
+                variant="secondary"
+                size="sm"
+                onClick={() => (o.kind === 'negative' ? (setPendingNeg(o.id), setNegReason('')) : handleLogCall(o.id))}
+              >
+                {label}
+              </Button>
+            );
+          })}
         </div>
         {lastOutMeta && (
           <div className={`crm-ld__last is-${lastOutMeta.kind}`}>
-            <span>{L('آخر نتيجة', 'Last result')}: <b>{lastOutMeta.ar}{lastOut.id === 'no_answer' && attempts > 0 ? ` · ${L(`محاولة ${attempts}`, `try ${attempts}`)}` : ''}</b></span>
+            <span>{L('آخر نتيجة', 'Last result')}: <b>{(isSeller && isAr && SELLER_OUTCOME_LABELS[lastOut.id]) ? SELLER_OUTCOME_LABELS[lastOut.id] : lastOutMeta.ar}{lastOut.id === 'no_answer' && attempts > 0 ? ` · ${L(`محاولة ${attempts}`, `try ${attempts}`)}` : ''}</b></span>
             <small>{agoText(lastOut.at)}</small>
           </div>
         )}

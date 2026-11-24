@@ -29,6 +29,7 @@ import { liveListings } from '../../utils/marketStats';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
 import ClientDetails from './client-file/ClientDetails';
 import ClientJourney from './client-file/ClientJourney';
+import ClientTimeline from './client-file/ClientTimeline';
 import { buildTimeline } from '../../utils/clientTimeline';
 import './lead-drawer.css';
 import BrokerFile from './lead-profile/BrokerFile';
@@ -41,6 +42,23 @@ import { attentionOf, nextStepFor as stepFor } from '../../utils/dealSignals';
 import { clientRoleOf, missingFor } from '../../utils/clientRole';
 import { ownerMessages } from '../../utils/ownerMessages';
 import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineCards';
+
+const SHORT_STEPPER_LABELS = {
+  seller: {
+    new: 'عرض جديد',
+    contacted: 'مؤهل',
+    site_visit: 'معاينة',
+    negotiating: 'تسويق وعروض',
+    closed: 'تم البيع'
+  },
+  buyer: {
+    new: 'جديد',
+    contacted: 'مؤهل',
+    site_visit: 'معاينة',
+    negotiating: 'تفاوض',
+    closed: 'حجز وعقد'
+  }
+};
 
 export default function LeadQuickDrawer({
   lead,
@@ -259,10 +277,43 @@ export default function LeadQuickDrawer({
   };
 
   const handleDelete = async () => {
-    const ok = await confirm(deletePrompt({ names: [lead.name], isAr }));
+    const ok = await confirm({
+      title: isAr ? `حذف ملف "${lead.name || 'العميل'}"؟` : `Delete "${lead.name || 'client'}"?`,
+      message: isAr 
+        ? 'هل أنت متأكد من الحذف النهائي للعميل؟ سيتم مسح سجل المكالمات والمتابعات بالكامل. إذا كان العميل غير مهتم، يفضل نقله لمرحلة «خسارة» مع ذكر السبب لحفظ السجل.'
+        : 'Are you sure you want to permanently delete this lead? All call logs and history will be lost.',
+      confirmLabel: isAr ? 'تأكيد الحذف النهائي' : 'Delete',
+      cancelLabel: isAr ? 'إلغاء' : 'Cancel'
+    });
     if (!ok) return;
     onDeleteLead(lead.id);
     onClose();
+  };
+
+  const handleSafeConvertToProperty = async () => {
+    if (!onConvertToProperty) return;
+    const details = lead.details || {};
+    const size = parseInt(details.size, 10);
+    const hasPrice = askingPriceOf(lead) > 0 || (lead.budget && Number(String(lead.budget).replace(/[^0-9]/g, '')) > 0);
+    const hasPhotos = Array.isArray(details.images) && details.images.length > 0;
+
+    const missingSpecs = [];
+    if (!size) missingSpecs.push(isAr ? 'المساحة' : 'Size');
+    if (!hasPrice) missingSpecs.push(isAr ? 'السعر' : 'Price');
+    if (!hasPhotos) missingSpecs.push(isAr ? 'الصور' : 'Photos');
+
+    if (missingSpecs.length > 0) {
+      const ok = await confirm({
+        title: isAr ? 'تحويل العقار كمسودة غير منشورة' : 'Convert as Hidden Draft',
+        message: isAr
+          ? `الوحدة تنقصها بيانات أساسية (${missingSpecs.join('، ')}). هل تريد إنشاء مسودة عقار غير منشورة (مخفية) واستكمال مواصفاتها في لوحة العقارات؟`
+          : `Missing specs (${missingSpecs.join(', ')}). Create a hidden draft?`,
+        confirmLabel: isAr ? 'إنشاء مسودة مخفية' : 'Create Draft',
+        cancelLabel: isAr ? 'إلغاء' : 'Cancel'
+      });
+      if (!ok) return;
+    }
+    onConvertToProperty(lead);
   };
 
   // Schedule Viewing Action
@@ -341,9 +392,27 @@ export default function LeadQuickDrawer({
   const score = leadScore(lead);
   const temperature = { hot: { ar: 'ساخن', en: 'Hot', tone: 'danger' }, warm: { ar: 'دافئ', en: 'Warm', tone: 'warning' }, cold: { ar: 'بارد', en: 'Cold', tone: 'info' } }[lead.temperature];
   const phoneText = formatPhoneNumber(lead.phone || lead.whatsapp) || '—';
-  // One short line under the name: where it came from, who holds it (the campaign is in «من فين جه؟»)
+  // Clean holder display name (resolves raw emails/UIDs to human names)
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
-  const headerLine = [sourceText(lead.source), holder ? (isAr ? `مع ${holder}` : `With ${holder}`) : null, lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null].filter(Boolean).join(' · ');
+  const matchedMember = members?.find(m => 
+    m.email === holder || 
+    m.uid === holder || 
+    m.id === holder ||
+    (m.email && holder && m.email.toLowerCase().startsWith(holder.toLowerCase())) ||
+    (m.email && holder && holder.toLowerCase().startsWith(m.email.split('@')[0].toLowerCase()))
+  ) || (currentUser && (
+    currentUser.email === holder || 
+    currentUser.uid === holder || 
+    (currentUser.email && holder && holder.toLowerCase().startsWith(currentUser.email.split('@')[0].toLowerCase()))
+  ) ? currentUser : null);
+
+  const cleanHolder = matchedMember?.name || matchedMember?.displayName 
+    || (holder ? (holder.includes('@') ? holder.split('@')[0] : holder).replace(/[0-9._-]+/g, ' ').trim() : null);
+  const headerLine = [
+    sourceText(lead.source),
+    cleanHolder ? (isAr ? `المسؤول: ${cleanHolder}` : `Owner: ${cleanHolder}`) : null,
+    lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null
+  ].filter(Boolean).join(' · ');
   const historyCount = buildTimeline(lead).events.length;
   // The decision first: what is wrong with this deal, and the one thing to do next
   const dealValue = leadBudget(lead);
@@ -465,17 +534,45 @@ export default function LeadQuickDrawer({
 
           <section className="crm-ld__stage" aria-labelledby="crm-ld-stage">
             <div className="crm-ld__stage-head">
-              <h3 id="crm-ld-stage" className="crm-ld__h">{isAr ? 'المرحلة' : 'Stage'}</h3>
+              <h3 id="crm-ld-stage" className="crm-ld__h">{isAr ? 'مسار الصفقة' : 'Deal Pipeline'}</h3>
             </div>
             <div className="crm-ld__stages">
-              {stages.slice(0, 6).map((st) => (
-                <Chip key={st.id} pressed={currentColumn === st.id} onClick={() => handleUpdateStatus(st.id)}>
-                  {isAr ? st.label_ar : st.label_en}
-                </Chip>
-              ))}
-              <Chip className="crm-ld__lost" pressed={lead.status === 'lost'} onClick={() => handleUpdateStatus('lost')}>
-                {isAr ? 'خسارة' : 'Lost'}
-              </Chip>
+              <div className="crm-ld__stages-row" role="radiogroup" aria-label={isAr ? 'مراحل المسار' : 'Pipeline stages'}>
+                {stages.slice(0, 5).map((st, idx) => {
+                  const isCurrent = currentColumn === st.id;
+                  const currentIdx = stages.findIndex(s => s.id === currentColumn);
+                  const isPassed = currentIdx > idx && currentColumn !== 'lost' && currentColumn !== 'inactive';
+                  const shortText = (isAr && SHORT_STEPPER_LABELS[isSeller ? 'seller' : 'buyer']?.[st.id]) || (isAr ? st.label_ar : st.label_en);
+                  return (
+                    <button
+                      type="button"
+                      key={st.id}
+                      className={`crm-ld__stage-chip${isCurrent ? ' is-current' : ''}${isPassed ? ' is-passed' : ''}`}
+                      onClick={() => handleUpdateStatus(st.id)}
+                      title={isAr ? st.label_ar : st.label_en}
+                    >
+                      <span className="crm-ld__stage-num">{idx + 1}</span>
+                      <span>{shortText}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="crm-ld__stage-sides">
+                <button
+                  type="button"
+                  className={`crm-ld__side-chip${currentColumn === 'inactive' ? ' is-current' : ''}`}
+                  onClick={() => handleUpdateStatus('inactive')}
+                >
+                  {isAr ? 'غير متفاعل' : 'Unresponsive'}
+                </button>
+                <button
+                  type="button"
+                  className={`crm-ld__side-chip is-lost${currentColumn === 'lost' || lead.status === 'lost' ? ' is-current' : ''}`}
+                  onClick={() => handleUpdateStatus('lost')}
+                >
+                  {isAr ? 'خسارة' : 'Lost'}
+                </button>
+              </div>
             </div>
           </section>
 
@@ -544,9 +641,9 @@ export default function LeadQuickDrawer({
             ]}
           />
 
-          {['work', 'client', 'history'].includes(activeTab) && (
+          {activeTab === 'work' && (
             <LeadDrawerOverview
-              view={activeTab}
+              view="work"
               onOpenClient={() => setActiveTab('client')}
               allLeads={allLeads.length ? allLeads : filteredLeads}
               lead={lead}
@@ -555,7 +652,7 @@ export default function LeadQuickDrawer({
               agentName={userDisplayName(currentUser)}
               handleScheduleViewing={handleScheduleViewing}
               isAr={isAr}
-              onConvertToProperty={onConvertToProperty}
+              onConvertToProperty={handleSafeConvertToProperty}
               properties={properties}
               selectedViewingPropId={selectedViewingPropId}
               setSelectedViewingPropId={setSelectedViewingPropId}
@@ -577,10 +674,19 @@ export default function LeadQuickDrawer({
           )}
 
           {activeTab === 'history' && (
-            <details className="crm-ld__block crm-ld__fold">
-              <summary className="crm-ld__fold-sum">{isAr ? 'رحلة الزائر على الموقع' : 'Visitor journey'}</summary>
-              <ClientJourney lead={lead} properties={properties} isAr={isAr} />
-            </details>
+            <div className="crm-ld__stack">
+              <ClientTimeline
+                lead={lead}
+                isAr={isAr}
+                newNote={newNote}
+                setNewNote={setNewNote}
+                onAddNote={handleAddNote}
+              />
+              <details className="crm-ld__block crm-ld__fold" open>
+                <summary className="crm-ld__fold-sum">{isAr ? 'رحلة الزائر على الموقع' : 'Visitor journey'}</summary>
+                <ClientJourney lead={lead} properties={properties} isAr={isAr} />
+              </details>
+            </div>
           )}
 
           {activeTab === 'matching' && sellerFile && (
