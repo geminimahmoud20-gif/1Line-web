@@ -328,6 +328,32 @@ export const leadBudget = (l) => {
 };
 
 /**
+ * The pipeline's executive totals (KanbanPipeline's overview tiles): open deals, counted and summed
+ * once per phone number, never once per lead record. Two open leads sharing a phone are a client who
+ * filled a second form before the merge caught it (api/_merge-core.js merges most of these, but a
+ * delay or a missed sweep can leave one behind) — the same conversation twice, not two real deals.
+ * Counting both would overstate every total here, so the one with the larger value is kept.
+ */
+export function pipelineOverviewOf(leads = [], { worth = leadBudget, highValueAt = 5_000_000 } = {}) {
+  const byPhone = new Map();
+  for (const l of leads) {
+    if (!isOpenLead(l)) continue;
+    const key = phoneKey(l.phone) || phoneKey(l.whatsapp) || `id:${l.id}`;
+    const prev = byPhone.get(key);
+    if (!prev || worth(l) > worth(prev)) byPhone.set(key, l);
+  }
+  let totalVol = 0;
+  let supplyVol = 0;
+  let highValue = 0;
+  for (const l of byPhone.values()) {
+    const b = worth(l);
+    if (isSellerLead(l)) supplyVol += b; else totalVol += b;
+    if (b >= highValueAt) highValue++;
+  }
+  return { totalVol, supplyVol, highValue, activeCount: byPhone.size };
+}
+
+/**
  * Dashboard numbers. The active pipeline is open deals only (not archived, won or lost).
  * scopeDesk: when set (a desk agent), every count is for that desk's leads and the shared pool
  * is reported separately; company-wide money is left out.

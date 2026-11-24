@@ -6,7 +6,7 @@ import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { leadScore, isOpenLead, leadBudget, isSellerLead, isAccountLead, duplicatesById, phoneMatchesQuery } from '../../utils/crmLeadViews';
+import { leadScore, isOpenLead, isSellerLead, isAccountLead, duplicatesById, pipelineOverviewOf, phoneMatchesQuery } from '../../utils/crmLeadViews';
 import { normalizeArabicText } from '../../utils/semanticSearchEngine';
 import { SELLER_STAGES, pipelineKind, askingPriceOf } from '../../utils/leadPipeline';
 import { ownerMessageFor } from '../../utils/ownerMessages';
@@ -22,7 +22,7 @@ import './kanban-redesign.css';
 import './kanban-mobile.css';
 import './kanban-decision.css';
 import './client-card.css';
-import { stageSinceMs, isStalled, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
+import { stageSinceMs, isStalled, daysLabel, shortMoney, moneyScale, STALE_DAYS } from '../../utils/pipelineCards';
 import PhoneText from './PhoneText';
 import { attentionOf, decisionList, attentionSummary, sortByAttention, BIG_DEAL } from '../../utils/dealSignals';
 
@@ -340,27 +340,13 @@ export default function KanbanPipeline({
   // Clients who only registered an account: counted apart so none is forgotten
   const accountCount = useMemo(() => leads.filter((l) => !l.isArchived && isOpenLead(l) && matchesType(l, 'account')).length, [leads]);
 
-  // Executive pipeline metrics overview
-  const pipelineOverview = useMemo(() => {
-    let totalVol = 0;
-    let supplyVol = 0;
-    let highValue = 0;
-    // Open deals only (not won, lost or archived), counted the same way as the dashboard:
-    // the board also shows the won/lost columns, which made its total look bigger than the dashboard's
-    const open = filteredLeads.filter(isOpenLead);
-    open.forEach(l => {
-      const b = leadBudget(l);
-      // Buyers' budgets and owners' asking prices are counted apart
-      if (isSellerLead(l)) supplyVol += b; else totalVol += b;
-      if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
-    });
-    return {
-      totalVol,
-      supplyVol,
-      highValue,
-      activeCount: open.length
-    };
-  }, [filteredLeads]);
+  // Executive pipeline metrics overview. Open deals only (not won, lost or archived), counted the same way
+  // as the dashboard, and once per phone — two open leads for the same number are an un-merged duplicate
+  // (the same client's second form), not two real deals, and would otherwise inflate every total here.
+  const pipelineOverview = useMemo(
+    () => pipelineOverviewOf(filteredLeads, { worth: getLeadBudget, highValueAt: HIGH_VALUE_DEAL_THRESHOLD }),
+    [filteredLeads]
+  );
 
   // Drag & Drop Handlers
   const handleDragStart = (e, leadId) => {
@@ -629,9 +615,9 @@ export default function KanbanPipeline({
         ) : filterType === 'seller' ? (
         <KpiTile
           label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
-          value={pipelineOverview.supplyVol > 0 ? pipelineOverview.supplyVol / 1000000 : null}
+          value={moneyScale(pipelineOverview.supplyVol, isAr).value}
           digits={1}
-          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          unit={moneyScale(pipelineOverview.supplyVol, isAr).unit}
           emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
           tone="primary"
           icon={<Building2 size={16} />}
@@ -639,9 +625,9 @@ export default function KanbanPipeline({
         ) : (
         <KpiTile
           label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
-          value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
+          value={moneyScale(pipelineOverview.totalVol, isAr).value}
           digits={1}
-          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          unit={moneyScale(pipelineOverview.totalVol, isAr).unit}
           emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
           tone="primary"
           icon={<TrendingUp size={16} />}

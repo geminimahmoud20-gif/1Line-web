@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney } from '../../src/utils/pipelineCards.js';
+import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, moneyScale } from '../../src/utils/pipelineCards.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = 100 * DAY;
@@ -30,4 +30,14 @@ test('labels', () => {
   assert.equal(daysLabel(17 * DAY), 'من 17 يوم');
   assert.equal(shortMoney(12_450_000), '12.5 مليون');
   assert.equal(shortMoney(850_000), '850 ألف');
+  assert.equal(shortMoney(1_444_900_000), '1.4 مليار');
+  assert.equal(shortMoney(1_444_900_000, false), '1.4B');
+});
+
+test('moneyScale switches a KpiTile value/unit from مليون to مليار at 1000 مليون', () => {
+  assert.deepEqual(moneyScale(1_444_900_000), { value: 1.4449, unit: 'مليار ج.م' });
+  assert.deepEqual(moneyScale(999_000_000), { value: 999, unit: 'مليون ج.م' });
+  assert.deepEqual(moneyScale(1_000_000_000), { value: 1, unit: 'مليار ج.م' });
+  assert.deepEqual(moneyScale(0), { value: null, unit: 'مليون ج.م' });
+  assert.deepEqual(moneyScale(2_000_000_000, false), { value: 2, unit: 'B EGP' });
 });

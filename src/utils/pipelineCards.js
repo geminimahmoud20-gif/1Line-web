@@ -54,13 +54,30 @@ export function daysLabel(ms, isAr = true) {
   return `من ${d} ${d <= 10 ? 'أيام' : 'يوم'}`;
 }
 
-/** "12.5 مليون" · "850 ألف" */
+/** "1.4 مليار" · "12.5 مليون" · "850 ألف" */
 export function shortMoney(n, isAr = true) {
   const v = Number(n) || 0;
+  if (v >= 1_000_000_000) {
+    const b = Math.round((v / 1_000_000_000) * 10) / 10;
+    return isAr ? `${b} مليار` : `${b}B`;
+  }
   if (v >= 1_000_000) {
     const m = Math.round((v / 1_000_000) * 10) / 10;
     return isAr ? `${m} مليون` : `${m}M`;
   }
   const k = Math.round(v / 1000);
   return isAr ? `${k} ألف` : `${k}K`;
+}
+
+/**
+ * A money total as a KpiTile {value, unit} pair, switching from مليون to مليار at 1000 مليون
+ * (1e9) so a KPI never shows "1,444.9 مليون" when "1.4 مليار" reads at a glance.
+ */
+export function moneyScale(n, isAr = true) {
+  const v = Number(n) || 0;
+  const billions = v >= 1_000_000_000;
+  return {
+    value: v > 0 ? v / (billions ? 1_000_000_000 : 1_000_000) : null,
+    unit: isAr ? (billions ? 'مليار ج.م' : 'مليون ج.م') : (billions ? 'B EGP' : 'M EGP')
+  };
 }
