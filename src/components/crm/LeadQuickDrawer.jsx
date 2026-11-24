@@ -72,6 +72,7 @@ export default function LeadQuickDrawer({
   const members = useTeamMembers(allLeads);
   const activeTab = tabProp || localTab;
   const setActiveTab = (t) => { setLocalTab(t); onTabChange?.(t); };
+  const [inlineBlocker, setInlineBlocker] = useState(null);
   const confirm = useConfirm();
   const { currentUser } = useAuth();
   const [nextStepFor, setNextStepFor] = useState('');
@@ -154,7 +155,7 @@ export default function LeadQuickDrawer({
   // The old «توقيع وحجز» step sits in the «إغلاق» chip (boardColumnOf)
   const currentColumn = boardColumnOf(lead.status);
 
-  const handleUpdateStatus = (newStatus, lostFields) => {
+  const handleUpdateStatus = (newStatus, lostFields, forceBypass = false) => {
     if (!onUpdateLead) return;
     // The stage lock: log what happened first (and only a manager goes back a stage)
     if (!guardStage(lead, { status: newStatus, ...(newStatus === 'lost' ? { lostReason: lostFields?.lostReason || 'pending' } : {}) }, { role: activeRole, toast: triggerToast })) return;
@@ -167,11 +168,18 @@ export default function LeadQuickDrawer({
       isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
     });
 
-    if (!validation.allowed) {
-      setBlockerModal({ isOpen: true, blockerInfo: validation });
+    if (!validation.allowed && !forceBypass) {
+      setInlineBlocker({
+        targetStatus: newStatus,
+        deliverableKey: validation.deliverableKey,
+        missingDeliverable: validation.missingDeliverable
+      });
       triggerToast?.(validation.missingDeliverable, 'error');
       return;
     }
+
+    setInlineBlocker(null);
+    setBlockerModal({ isOpen: false, blockerInfo: null });
 
     const stageObj = stages.find(s => s.id === newStatus);
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
@@ -472,6 +480,55 @@ export default function LeadQuickDrawer({
               </Chip>
             </div>
           </section>
+
+          {inlineBlocker && (
+            <div style={{
+              margin: '8px 0 16px',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              background: 'rgba(234, 179, 8, 0.1)',
+              border: '1px solid rgba(234, 179, 8, 0.35)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--crm-warning)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>⚠️ {isAr ? 'مطلوب استكمال المخرج:' : 'Required deliverable:'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInlineBlocker(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)', padding: '2px', fontSize: '14px' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', lineHeight: 1.5 }}>
+                {inlineBlocker.missingDeliverable}
+              </p>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setActiveTab('overview');
+                  }}
+                >
+                  {isAr ? 'استكمال البيانات بالملف' : 'Fill details'}
+                </Button>
+                {activeRole === 'super_admin' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleUpdateStatus(inlineBlocker.targetStatus, null, true)}
+                  >
+                    {isAr ? 'تجاوز بصلاحية الإدارة' : 'Bypass (Admin)'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           <Tabs
             label={isAr ? 'أقسام ملف العميل' : 'Client sections'}

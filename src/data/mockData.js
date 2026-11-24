@@ -120,6 +120,103 @@ export const INITIAL_LEADS = [
       holdingPeriod: '5',
       expectedYield: '14%'
     }
+  },
+  {
+    id: 'lead-seller-1',
+    name: 'مؤمن رمضان',
+    phone: '01151015008',
+    whatsapp: '01151015008',
+    email: 'moemen.ramadan@gmail.com',
+    type: 'seller',
+    score: 95,
+    temperature: 'hot',
+    source: 'Website Form',
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+    status: 'new',
+    assignedTo: 'Unassigned',
+    budget: '21,000,000',
+    notes: 'صفقة كبرى +5 مليون. مالك فيلا / تاون هاوس في سوهاج غرب. يرغب بالبيع السريع.',
+    details: {
+      propertyType: 'villa',
+      area: 'west',
+      location: 'سوهاج غرب',
+      expectedPrice: '21,000,000',
+      askingPrice: '21,000,000',
+      price: '21,000,000',
+      budget: '21,000,000'
+    }
+  },
+  {
+    id: 'lead-seller-2',
+    name: 'وليد محمد مسعود',
+    phone: '01014124720',
+    whatsapp: '01014124720',
+    email: 'walid.masoud@gmail.com',
+    type: 'seller',
+    score: 88,
+    temperature: 'warm',
+    source: 'WhatsApp',
+    timestamp: new Date(Date.now() - 3600000 * 20).toISOString(),
+    status: 'contacted',
+    assignedTo: 'Dr. Mahmoud Elbaz',
+    budget: '3,500,000',
+    notes: 'مالك فيلا / تاون هاوس سوهاج غرب. تم التواصل ومطلوب تحديد موعد معاينة.',
+    details: {
+      propertyType: 'villa',
+      area: 'west',
+      location: 'سوهاج غرب',
+      expectedPrice: '3,500,000',
+      askingPrice: '3,500,000',
+      budget: '3,500,000'
+    }
+  },
+  {
+    id: 'lead-seller-3',
+    name: 'محمد العوامري',
+    phone: '01224751500',
+    whatsapp: '01224751500',
+    email: 'm.awamri@gmail.com',
+    type: 'seller',
+    score: 90,
+    temperature: 'warm',
+    source: 'Direct Call',
+    timestamp: new Date(Date.now() - 3600000 * 30).toISOString(),
+    status: 'site_visit',
+    assignedTo: 'Dr. Mahmoud Elbaz',
+    budget: '4,200,000',
+    notes: 'شقة سكنية سوهاج شرق (ش أخميم). تم فحص المستندات والاتفاق على السعر.',
+    details: {
+      propertyType: 'apartment',
+      area: 'east',
+      location: 'سوهاج شرق',
+      expectedPrice: '4,200,000',
+      askingPrice: '4,200,000',
+      budget: '4,200,000'
+    }
+  },
+  {
+    id: 'lead-seller-4',
+    name: 'عبد الحكيم عامر',
+    phone: '01025930000',
+    whatsapp: '01025930000',
+    email: 'amer@gmail.com',
+    type: 'seller',
+    score: 92,
+    temperature: 'hot',
+    source: 'CRM Referral',
+    timestamp: new Date(Date.now() - 3600000 * 48).toISOString(),
+    status: 'negotiating',
+    assignedTo: 'Dr. Mahmoud Elbaz',
+    budget: '1,660,000',
+    notes: 'المالك نفسه للوحدة، شقة سكنية للسكن أو الاستثمار - جاردن سيتي سوهاج.',
+    details: {
+      propertyType: 'apartment',
+      area: 'east',
+      location: 'جاردن سيتي',
+      expectedPrice: '1,660,000',
+      askingPrice: '1,660,000',
+      budget: '1,660,000'
+    }
   }
 ];
 

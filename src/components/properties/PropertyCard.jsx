@@ -45,6 +45,7 @@ import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { paymentTerms, planSummary } from '../../utils/paymentTerms';
+import { getQuickHighlights } from '../../utils/propertyHighlights';
 
 const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
@@ -137,6 +138,7 @@ export default function PropertyCard({
   const priceData = formatCurrencyPrice(offer ? offer.price : (plan ? (plan.now ? plan.now.amount : terms.amount) : property.price), currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
+  const quickHighlights = getQuickHighlights(property, isAr);
 
   // Multi-unit / whole building detection
   const isMultiUnit = isMultiUnitOrBuilding(property);
@@ -485,6 +487,16 @@ export default function PropertyCard({
             <TrendingDown size={13} strokeWidth={2} aria-hidden="true" />
             <span>{isAr ? `أقل ${belowAvgPct}% من متوسط المنطقة` : `${belowAvgPct}% below area average`}</span>
           </span>
+        )}
+
+        {quickHighlights.length > 0 && (
+          <div className="pcx-highlights" aria-label={isAr ? 'أبرز مواصفات الوحدة' : 'Key unit highlights'}>
+            {quickHighlights.map((hl, i) => (
+              <span key={i} className={`pcx-highlight-pill pcx-highlight-pill--${hl.tone || 'feature'}`}>
+                {hl.label}
+              </span>
+            ))}
+          </div>
         )}
 
         <h3 className="pcx-title">

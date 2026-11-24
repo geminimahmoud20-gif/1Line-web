@@ -487,7 +487,11 @@ export function PropertiesProvider({ children }) {
   // CRM Leads State
   const [leads, setLeads] = useState(() => {
     // Sample leads and cloud leads cached by older versions are dropped (see persistLeads)
-    return readLeadCache().filter((l) => l && typeof l === 'object' && !SAMPLE_LEAD_IDS.has(String(l.id)) && !isCloudLead(l));
+    const cached = readLeadCache().filter((l) => l && typeof l === 'object' && !SAMPLE_LEAD_IDS.has(String(l.id)) && !isCloudLead(l));
+    if (cached.length > 0) return cached;
+    // In dev mode when offline or testing without cloud leads, populate INITIAL_LEADS so CRM deal flows can be tested
+    if (import.meta.env?.DEV) return INITIAL_LEADS;
+    return [];
   });
   const leadsRef = useRef(leads);
   useEffect(() => {

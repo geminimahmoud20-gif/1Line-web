@@ -89,6 +89,9 @@ const DEFAULT_FORM_STATE = {
   finishing: '',
   completionStatus: '',
   deliveryYear: '',
+  delivery_ar: 'استلام فوري',
+  delivery_en: 'Immediate Handover',
+  quickHighlights: [],
   status: 'published', // 'published' | 'hidden' | 'under_negotiation' | 'sold'
   featured: false,
   priorityRank: 0,

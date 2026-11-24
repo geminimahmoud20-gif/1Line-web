@@ -378,6 +378,98 @@ html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; 
 }
 .dark-theme .pcx-insight, :root[data-theme="dark"] .pcx-insight { color: #4ADE80; background: rgba(74, 222, 128, 0.1); }
 
+/* ── Quick Highlights row under price ──────────────────────── */
+.pcx-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: -2px;
+  min-height: 24px;
+}
+
+.pcx-highlight-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  background: var(--pcx-soft);
+  color: var(--pcx-ink);
+  border: 1px solid var(--pcx-line);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.pcx-highlight-pill--delivery {
+  background: rgba(15, 157, 88, 0.08);
+  color: #0B7A45;
+  border-color: rgba(15, 157, 88, 0.25);
+}
+
+.pcx-highlight-pill--finishing {
+  background: rgba(197, 160, 89, 0.12);
+  color: var(--pcx-gold-text);
+  border-color: rgba(197, 160, 89, 0.32);
+}
+
+.pcx-highlight-pill--feature {
+  background: rgba(11, 78, 162, 0.07);
+  color: #0B4EA2;
+  border-color: rgba(11, 78, 162, 0.22);
+}
+
+.pcx-highlight-pill--finance {
+  background: rgba(147, 51, 234, 0.08);
+  color: #7E22CE;
+  border-color: rgba(147, 51, 234, 0.22);
+}
+
+.pcx-highlight-pill--legal {
+  background: rgba(14, 116, 144, 0.08);
+  color: #0E7490;
+  border-color: rgba(14, 116, 144, 0.22);
+}
+
+:root[data-theme="dark"] .pcx-highlight-pill--delivery,
+.dark-theme .pcx-highlight-pill--delivery {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ADE80;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+:root[data-theme="dark"] .pcx-highlight-pill--finishing,
+.dark-theme .pcx-highlight-pill--finishing {
+  background: rgba(217, 185, 126, 0.15);
+  color: #FCD34D;
+  border-color: rgba(217, 185, 126, 0.35);
+}
+
+:root[data-theme="dark"] .pcx-highlight-pill--feature,
+.dark-theme .pcx-highlight-pill--feature {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+:root[data-theme="dark"] .pcx-highlight-pill--finance,
+.dark-theme .pcx-highlight-pill--finance {
+  background: rgba(192, 132, 252, 0.15);
+  color: #D8B4FE;
+  border-color: rgba(192, 132, 252, 0.35);
+}
+
+:root[data-theme="dark"] .pcx-highlight-pill--legal,
+.dark-theme .pcx-highlight-pill--legal {
+  background: rgba(45, 212, 191, 0.15);
+  color: #5EEAD4;
+  border-color: rgba(45, 212, 191, 0.35);
+}
+
 .pcx-title {
   margin: 0;
   font-size: 1rem;

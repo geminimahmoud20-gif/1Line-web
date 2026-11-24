@@ -66,6 +66,130 @@
 .crm-layout .crm-props .crm-props-table tr.crm-prow.is-selected > td { background: var(--ui-primary-tint); }
 .crm-prow.is-trash { opacity: 0.65; }
 .crm-prow__check { width: 40px; }
+
+/* ── CRM Quick Highlights Control Box ──────────────────────── */
+.crm-highlights-box {
+  background: var(--crm-subtle);
+  border: 1px solid var(--crm-line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.crm-highlights-title {
+  font-size: var(--crm-text-base, 0.95rem);
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: var(--crm-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.crm-highlights-subtitle {
+  font-size: var(--crm-text-xs, 0.75rem);
+  color: var(--crm-muted);
+  margin: 0 0 14px 0;
+  line-height: 1.4;
+}
+.crm-highlights-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.crm-highlight-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: var(--crm-text-xs, 0.75rem);
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--crm-card);
+  border: 1px solid var(--crm-line-strong);
+  color: var(--crm-body);
+  transition: all 0.2s ease;
+}
+.crm-highlight-preset-btn:hover {
+  border-color: var(--crm-accent);
+  color: var(--crm-accent-text);
+}
+.crm-highlight-preset-btn.is-active {
+  background: var(--crm-accent-soft);
+  border-color: var(--crm-accent);
+  color: var(--crm-accent-text);
+  font-weight: 700;
+}
+.crm-highlight-active-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--crm-card);
+  border: 1px dashed var(--crm-line-strong);
+  border-radius: 8px;
+  min-height: 42px;
+  margin-bottom: 12px;
+}
+.crm-highlight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--crm-subtle);
+  border: 1px solid var(--crm-line);
+  border-radius: 6px;
+  font-size: var(--crm-text-xs, 0.75rem);
+  font-weight: 700;
+  color: var(--crm-ink);
+}
+.crm-highlight-tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--crm-muted);
+  font-size: 11px;
+  padding: 0;
+  line-height: 1;
+}
+.crm-highlight-tag button:hover {
+  color: var(--crm-danger);
+}
+.crm-highlight-custom-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.crm-highlight-custom-row input {
+  flex: 1;
+}
+.crm-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.crm-highlights-label {
+  font-size: var(--crm-text-xs, 0.75rem);
+  font-weight: 700;
+  color: var(--crm-ink);
+  display: block;
+  margin-bottom: 6px;
+}
+.crm-highlights-empty {
+  font-size: var(--crm-text-xs, 0.75rem);
+  color: var(--crm-faint);
+}
+.crm-highlight-add-btn {
+  padding: 6px 14px;
+  font-size: var(--crm-text-xs, 0.75rem);
+  font-weight: 700;
+}
+.crm-highlights-group {
+  margin-bottom: 10px;
+}
+
 .crm-prow__check input { width: 18px; height: 18px; accent-color: var(--ui-primary); cursor: pointer; }
 .crm-prow__main { display: flex; gap: var(--ui-s-3); align-items: flex-start; min-width: 280px; }
 .crm-prow__thumb { position: relative; flex-shrink: 0; width: 72px; height: 54px; border-radius: var(--ui-r-sm); overflow: hidden; background: var(--ui-surface-2); }

@@ -86,3 +86,52 @@ test('state-machine: moving to "lost" mandates a valid lostReason', () => {
   const res2 = validateStageTransition(lead, 'lost', { lostReason: 'price' });
   assert.equal(res2.allowed, true);
 });
+
+test('state-machine: seller pipeline validates property facts and allows qualification without buyer profile', () => {
+  const bareSellerLead = {
+    id: 's-1',
+    status: 'new',
+    type: 'seller',
+    name: 'مالك عقار'
+  };
+  const res1 = validateStageTransition(bareSellerLead, 'qualified');
+  assert.equal(res1.allowed, false);
+  assert.equal(res1.deliverableKey, 'seller_property_profile');
+  assert.ok(res1.missingDeliverable.includes('ملف عقار المالك غير مكتمل'));
+
+  const validSellerLead = {
+    id: 's-2',
+    status: 'new',
+    type: 'seller',
+    name: 'عبد الحكيم عامر',
+    propertyType: 'apartment',
+    area: 'city',
+    details: {
+      askingPrice: 3500000,
+      size: 160
+    }
+  };
+  const res2 = validateStageTransition(validSellerLead, 'qualified');
+  assert.equal(res2.allowed, true);
+  assert.equal(res2.reason, null);
+  assert.ok(res2.nextTask !== null, 'should generate handoff task for inventory');
+});
+
+test('state-machine: seller high-value deals (>= 5M) mandate Founder escalation and sign-off', () => {
+  const highValueSeller = {
+    id: 's-3',
+    status: 'site_visit',
+    type: 'seller',
+    details: {
+      askingPrice: 8_000_000,
+      propertyType: 'villa'
+    }
+  };
+  const res1 = validateStageTransition(highValueSeller, 'negotiating', { userRole: 'sales_agent' });
+  assert.equal(res1.allowed, false);
+  assert.equal(res1.deliverableKey, 'founder_high_value_approval');
+
+  const res2 = validateStageTransition(highValueSeller, 'negotiating', { isFounderApproved: true });
+  assert.equal(res2.allowed, true);
+});
+

@@ -108,6 +108,19 @@ export default function CrmPage({
     const t = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
     return URL_TABS.includes(t) ? t : 'dashboard';
   });
+
+  // Development auto-auth helper via query param (?dev_auth=true)
+  useEffect(() => {
+    if (import.meta.env?.DEV && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('dev_auth') === 'true') {
+        try {
+          sessionStorage.setItem('crm_auth', 'true');
+          setCrmAuthenticated(true);
+        } catch { /* storage unavailable */ }
+      }
+    }
+  }, [setCrmAuthenticated]);
   // While the CRM is open, "Install" installs the 1Line CRM app (crm.webmanifest), not the site
   useEffect(() => {
     setManifestFor('/crm');
@@ -803,6 +816,35 @@ export default function CrmPage({
                       : (isAr ? 'تسجيل الدخول' : 'Sign In'))}
               </span>
             </button>
+            {import.meta.env?.DEV && (
+              <button
+                type="button"
+                data-testid="dev-quick-login-btn"
+                onClick={() => {
+                  sessionStorage.setItem('crm_auth', 'true');
+                  setCrmAuthenticated(true);
+                  if (triggerToast) triggerToast(isAr ? 'تم الدخول بوضع التطوير المباشر' : 'Logged in via Dev Mode', 'success');
+                }}
+                style={{
+                  marginTop: '10px',
+                  padding: '9px 16px',
+                  background: 'rgba(212, 175, 55, 0.12)',
+                  border: '1px dashed var(--gold)',
+                  borderRadius: '8px',
+                  color: 'var(--gold)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                ⚡ {isAr ? 'دخول تجريبي فوري (وضع التطوير)' : 'Quick Dev Login (Testing Mode)'}
+              </button>
+            )}
           </form>
 
           <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'center' }}>
