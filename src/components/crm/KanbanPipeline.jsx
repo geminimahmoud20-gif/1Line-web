@@ -778,34 +778,73 @@ export default function KanbanPipeline({
       </div>
 
       <div className="crm-kanban__toolbar">
-        <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
-          <Chip pressed={filterType === 'all'} count={leads.filter((l) => isOpenLead(l)).length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
-          <Chip pressed={filterType === 'buyer'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} onClick={() => setFilterType('buyer')}>{isAr ? 'المشترين' : 'Buyers'}</Chip>
-          <Chip pressed={filterType === 'seller'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} onClick={() => setFilterType('seller')}>{isAr ? 'البائعين والملاك' : 'Sellers'}</Chip>
-          <Chip pressed={filterType === 'investor'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'investor')).length} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
+        <div className="crm-kanban__views" role="group" aria-label={isAr ? 'تصفية الصفقات' : 'Filter deals'}>
+          <Chip
+            pressed={onlyAttention}
+            count={attention.count}
+            onClick={() => setOnlyAttention((v) => !v)}
+            icon={<AlertTriangle size={14} aria-hidden="true" />}
+          >
+            {isAr ? 'محتاج قرار بس' : 'Needs a decision'}
+          </Chip>
+          {leads.filter((l) => isOpenLead(l) && matchesType(l, 'investor')).length > 0 && (
+            <Chip
+              pressed={filterType === 'investor'}
+              count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'investor')).length}
+              onClick={() => setFilterType(filterType === 'investor' ? 'seller' : 'investor')}
+            >
+              {isAr ? 'مستثمرين' : 'Investors'}
+            </Chip>
+          )}
           {(accountCount > 0 || filterType === 'account') && (
-            <Chip pressed={filterType === 'account'} count={accountCount} onClick={() => setFilterType('account')}>{isAr ? 'حسابات جديدة' : 'New accounts'}</Chip>
+            <Chip
+              pressed={filterType === 'account'}
+              count={accountCount}
+              onClick={() => setFilterType(filterType === 'account' ? 'seller' : 'account')}
+            >
+              {isAr ? 'حسابات جديدة' : 'New accounts'}
+            </Chip>
           )}
-        </div>
-        <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
-          <Chip pressed={onlyAttention} count={attention.count} onClick={() => setOnlyAttention((v) => !v)} icon={<AlertTriangle size={14} aria-hidden="true" />}>{isAr ? 'محتاج قرار بس' : 'Needs a decision'}</Chip>
-          <Chip pressed={compact} onClick={toggleCompact} icon={<Rows3 size={14} aria-hidden="true" />}>{isAr ? 'عرض مضغوط' : 'Compact'}</Chip>
-          {collapsedStages.length < PIPELINE_STAGES.length ? (
-            <Chip onClick={collapseAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'طي كل الأعمدة' : 'Collapse all'}</Chip>
+          {filterType !== 'all' ? (
+            <button
+              type="button"
+              className="crm-kanban__show-all-btn"
+              onClick={() => setFilterType('all')}
+              title={isAr ? 'عرض كل الصفقات دون فرز بالمسار' : 'Show all'}
+            >
+              {isAr ? `عرض الكل (${leads.filter((l) => isOpenLead(l)).length})` : `All (${leads.filter((l) => isOpenLead(l)).length})`}
+            </button>
           ) : (
-            <Chip onClick={expandAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'فتح كل الأعمدة' : 'Expand all'}</Chip>
+            <Chip pressed onClick={() => setFilterType('seller')}>
+              {isAr ? 'الكل معروض (انقر للعودة للمسار)' : 'Showing all (click to exit)'}
+            </Chip>
           )}
         </div>
-        <label className="crm-kanban__search">
-          <Search size={16} aria-hidden="true" />
-          <input
-            type="search"
-            aria-label={isAr ? 'بحث في الصفقات' : 'Search deals'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isAr ? 'اسم أو تليفون' : 'Name or phone'}
-          />
-        </label>
+
+        <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض والبحث' : 'Layout and search'}>
+          <label className="crm-kanban__search">
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label={isAr ? 'بحث في الصفقات' : 'Search deals'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isAr ? 'اسم أو تليفون...' : 'Name or phone...'}
+            />
+          </label>
+          <Chip pressed={compact} onClick={toggleCompact} icon={<Rows3 size={14} aria-hidden="true" />}>
+            {isAr ? 'عرض مضغوط' : 'Compact'}
+          </Chip>
+          {collapsedStages.length < PIPELINE_STAGES.length ? (
+            <Chip onClick={collapseAll} icon={<Columns3 size={14} aria-hidden="true" />}>
+              {isAr ? 'طي الأعمدة' : 'Collapse all'}
+            </Chip>
+          ) : (
+            <Chip onClick={expandAll} icon={<Columns3 size={14} aria-hidden="true" />}>
+              {isAr ? 'فتح الأعمدة' : 'Expand all'}
+            </Chip>
+          )}
+        </div>
       </div>
 
       {/* On a phone one stage fills the screen, picked from the row of stages above it */}
@@ -818,17 +857,8 @@ export default function KanbanPipeline({
           ))}
         </div>
       )}
+
       {/* Kanban Stages Board */}
-      {!isPhone && boardWidth > 0 && (
-        <div
-          ref={topBarRef}
-          className="crm-kanban__topscroll"
-          aria-hidden="true"
-          onScroll={() => syncScroll(topBarRef.current, boardRef.current)}
-        >
-          <div ref={topTrackRef} />
-        </div>
-      )}
       <div
         ref={boardRef}
         className={`kanban-board-scroll-container${compact ? ' is-compact' : ''}${isPhone ? ' is-phone' : ''}`}
