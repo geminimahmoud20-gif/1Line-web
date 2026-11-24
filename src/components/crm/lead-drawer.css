@@ -67,7 +67,25 @@
 .crm-ld__facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--ui-s-3); }
 .crm-ld__facts dt { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
 .crm-ld__fact--wide { grid-column: 1 / -1; }
+.crm-ld__fact--editing { grid-column: span 2; }
 .crm-ld__facts dd { margin: 2px 0 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); font-variant-numeric: tabular-nums; }
+.crm-ld__fact-val { display: flex; align-items: center; gap: 6px; }
+.crm-ld__inline-edit-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+  border-radius: 4px; border: 1px solid transparent; background: transparent; color: var(--ui-text-3);
+  cursor: pointer; transition: all 0.15s ease; padding: 0;
+}
+.crm-ld__inline-edit-btn:hover { background: var(--ui-surface-2); color: var(--ui-accent, #d97706); border-color: var(--ui-line); }
+.crm-ld__inline-edit-box { margin-top: 4px; }
+.crm-ld__inline-form { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.crm-ld__inline-input {
+  flex: 1; min-width: 100px; max-width: 160px; height: 30px; padding: 0 8px;
+  border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-sm, 6px); background: var(--ui-surface);
+  color: var(--ui-text); font-size: var(--ui-fs-2); font-family: inherit;
+}
+.crm-ld__inline-input:focus { outline: none; border-color: var(--ui-accent, #d97706); box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15); }
+.crm-ld__inline-btns { display: inline-flex; align-items: center; gap: 4px; }
+.crm-ld__missing-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .crm-ld__photos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--ui-s-2); }
 .crm-ld__photos a { display: flex; flex-direction: column; gap: var(--ui-s-1); color: var(--ui-text-2); text-decoration: none; font-size: var(--ui-fs-1); }
 .crm-ld__photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--ui-r-sm); border: 1px solid var(--ui-line); }

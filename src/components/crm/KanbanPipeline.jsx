@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Building2, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
+import { Building2, BarChart3, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
@@ -15,7 +15,7 @@ import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
-import { PageHeader, KpiRow, KpiTile, Chip, useConfirm } from '../ui';
+import { PageHeader, KpiRow, KpiTile, Chip, Button, useConfirm } from '../ui';
 import { archivePrompt } from '../../utils/deleteConfirm';
 import './kanban-redesign.css';
 import './kanban-mobile.css';
@@ -139,6 +139,20 @@ export default function KanbanPipeline({
   });
   const toggleCompact = () => setCompact((prev) => {
     try { localStorage.setItem('oneline_kanban_compact', prev ? '0' : '1'); } catch { /* ignore storage error */ }
+    return !prev;
+  });
+
+  // Executive summary toggle: can collapse KPI cards and decisions strip to give board full height
+  const [showExecutiveSummary, setShowExecutiveSummary] = useState(() => {
+    try {
+      const saved = localStorage.getItem('crm_kanban_exec_summary');
+      return saved !== null ? saved === '1' : true;
+    } catch {
+      return true;
+    }
+  });
+  const toggleExecutiveSummary = () => setShowExecutiveSummary((prev) => {
+    try { localStorage.setItem('crm_kanban_exec_summary', prev ? '0' : '1'); } catch {}
     return !prev;
   });
 
@@ -654,90 +668,116 @@ export default function KanbanPipeline({
       <PageHeader
         title={isAr ? 'مسار الصفقات' : 'Pipeline'}
         description={isAr ? 'اسحب الصفقة من مرحلة لمرحلة، أو افتحها علشان تسجّل مكالمة.' : 'Drag a deal between stages, or open it to log a call.'}
+        actions={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleExecutiveSummary}
+            icon={<BarChart3 size={15} aria-hidden="true" />}
+          >
+            {showExecutiveSummary
+              ? (isAr ? 'إخفاء الملخص' : 'Hide summary')
+              : (isAr ? 'إظهار الملخص' : 'Show summary')}
+          </Button>
+        }
       />
 
-      <KpiRow label={isAr ? 'ملخص المسار' : 'Pipeline summary'}>
-        <KpiTile
-          label={isAr ? 'صفقات مفتوحة' : 'Open deals'}
-          value={pipelineOverview.activeCount}
-          tone="info"
-          icon={<Users size={16} />}
-        />
-        {filterType === 'account' ? (
-        <KpiTile
-          label={isAr ? 'لسه ما حدّدوش عايزين إيه' : 'Not decided yet'}
-          value={pipelineOverview.activeCount}
-          tone="warning"
-          hint={isAr ? 'اتصل واسأل: شراء ولا بيع؟' : 'Call and ask: buy or sell?'}
-          icon={<Building2 size={16} />}
-        />
-        ) : filterType === 'seller' ? (
-        <KpiTile
-          label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
-          value={moneyScale(pipelineOverview.supplyVol, isAr).value}
-          digits={1}
-          unit={moneyScale(pipelineOverview.supplyVol, isAr).unit}
-          emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
-          tone="primary"
-          icon={<Building2 size={16} />}
-        />
-        ) : (
-        <KpiTile
-          label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
-          value={moneyScale(pipelineOverview.totalVol, isAr).value}
-          digits={1}
-          unit={moneyScale(pipelineOverview.totalVol, isAr).unit}
-          emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
-          tone="primary"
-          icon={<TrendingUp size={16} />}
-        />
-        )}
-        <KpiTile
-          label={isAr ? 'محتاج قرار النهارده' : 'Needs a decision'}
-          value={attention.count}
-          tone={attention.danger > 0 ? 'danger' : attention.count > 0 ? 'warning' : 'success'}
-          hint={attention.count > 0
-            ? (attention.value > 0 ? (isAr ? `${shortMoney(attention.value, true)} ج.م معرّضة للضياع` : `${shortMoney(attention.value, false)} EGP at risk`) : (isAr ? 'اضغط تشوفهم' : 'Tap to see them'))
-            : (isAr ? 'مفيش صفقة متأخرة' : 'Nothing is late')}
-          icon={<AlertTriangle size={16} />}
-          onClick={attention.count > 0 || onlyAttention ? () => setOnlyAttention((v) => !v) : undefined}
-        />
-        <KpiTile
-          label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
-          value={pipelineOverview.highValue}
-          tone="accent"
-          icon={<ShieldAlert size={16} />}
-        />
-      </KpiRow>
-
-      {/* The few deals to act on first, most urgent on top */}
-      {decisions.length > 0 && !onlyAttention && (
-        <section className="kb-decide" aria-label={isAr ? 'قرارات النهارده' : 'Decisions for today'}>
-          <h2 className="kb-decide__title"><Zap size={15} aria-hidden="true" />{isAr ? 'ابدأ بيهم النهارده' : 'Start with these today'}
-            {attention.count > decisions.length && (
-              <button type="button" className="kb-decide__all" onClick={() => setOnlyAttention(true)}>
-                {isAr ? `عرض الكل (${attention.count})` : `All ${attention.count}`}
-              </button>
+      {showExecutiveSummary && (
+        <div className="crm-kanban__exec-summary">
+          <KpiRow label={isAr ? 'ملخص المسار' : 'Pipeline summary'}>
+            <KpiTile
+              label={filterType === 'seller' ? (isAr ? 'عقارات معروضة نشطة' : 'Active listings') : (filterType === 'buyer' ? (isAr ? 'طلبات شراء نشطة' : 'Active buyer requests') : (isAr ? 'إجمالي الصفقات المفتوحة' : 'Open deals'))}
+              value={filteredLeads.filter(isOpenLead).length}
+              hint={pipelineOverview.activeCount !== filteredLeads.filter(isOpenLead).length && isAr ? `${pipelineOverview.activeCount} عميل فريد` : undefined}
+              tone="info"
+              icon={<Users size={16} />}
+            />
+            {filterType === 'account' ? (
+            <KpiTile
+              label={isAr ? 'لسه ما حدّدوش عايزين إيه' : 'Not decided yet'}
+              value={filteredLeads.filter(isOpenLead).length}
+              tone="warning"
+              hint={isAr ? 'اتصل واسأل: شراء ولا بيع؟' : 'Call and ask: buy or sell?'}
+              icon={<Building2 size={16} />}
+            />
+            ) : filterType === 'seller' ? (
+            <KpiTile
+              label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
+              value={moneyScale(pipelineOverview.supplyVol, isAr).value}
+              digits={1}
+              unit={moneyScale(pipelineOverview.supplyVol, isAr).unit}
+              emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
+              tone="primary"
+              icon={<Building2 size={16} />}
+            />
+            ) : (
+            <KpiTile
+              label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
+              value={moneyScale(pipelineOverview.totalVol, isAr).value}
+              digits={1}
+              unit={moneyScale(pipelineOverview.totalVol, isAr).unit}
+              emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
+              tone="primary"
+              icon={<TrendingUp size={16} />}
+            />
             )}
-          </h2>
-          <ul className="kb-decide__list">
-            {decisions.map(({ lead, value, signal }) => (
-              <li key={lead.id} className={`kb-decide__row is-${signal.tone}`}>
-                <button type="button" className="kb-decide__main" onClick={() => (onOpenLead ? onOpenLead(lead) : onOpenEditLead?.(lead))}>
-                  <span className="kb-decide__dot" aria-hidden="true" />
-                  <span className="kb-decide__text">
-                    <strong>{lead.name?.trim() || (isAr ? 'عميل بدون اسم' : 'Unnamed lead')}{value > 0 && <small> · <bdi>{shortMoney(value, isAr)}</bdi></small>}</strong>
-                    <span>{signal.label}{signal.days ? (isAr ? ` (${signal.days} يوم)` : ` (${signal.days}d)`) : ''} · {signal.next}</span>
-                  </span>
-                  {isAr ? <ArrowLeft size={15} aria-hidden="true" /> : <ArrowRight size={15} aria-hidden="true" />}
-                </button>
-                <button type="button" className="kb-decide__wa" onClick={() => onWhatsAppClick(lead)} aria-label={isAr ? `واتساب ${lead.name || ''}` : `WhatsApp ${lead.name || ''}`} title={isAr ? 'واتساب' : 'WhatsApp'}>
-                  <MessageSquare size={15} aria-hidden="true" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+            <KpiTile
+              label={isAr ? 'محتاج قرار النهارده' : 'Needs a decision'}
+              value={attention.count}
+              tone={attention.danger > 0 ? 'danger' : attention.count > 0 ? 'warning' : 'success'}
+              hint={attention.count > 0
+                ? (attention.value > 0 ? (isAr ? `${shortMoney(attention.value, true)} ج.م معرّضة للضياع` : `${shortMoney(attention.value, false)} EGP at risk`) : (isAr ? 'اضغط تشوفهم' : 'Tap to see them'))
+                : (isAr ? 'مفيش صفقة متأخرة' : 'Nothing is late')}
+              icon={<AlertTriangle size={16} />}
+              onClick={attention.count > 0 || onlyAttention ? () => setOnlyAttention((v) => !v) : undefined}
+            />
+            <KpiTile
+              label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
+              value={pipelineOverview.highValue}
+              tone="accent"
+              icon={<ShieldAlert size={16} />}
+            />
+          </KpiRow>
+
+          {/* The few deals to act on first, most urgent on top */}
+          {decisions.length > 0 && !onlyAttention && (
+            <section className="kb-decide" aria-label={isAr ? 'قرارات النهارده' : 'Decisions for today'}>
+              <h2 className="kb-decide__title"><Zap size={15} aria-hidden="true" />{isAr ? 'ابدأ بيهم النهارده' : 'Start with these today'}
+                {attention.count > decisions.length && (
+                  <button type="button" className="kb-decide__all" onClick={() => setOnlyAttention(true)}>
+                    {isAr ? `عرض الكل (${attention.count})` : `All ${attention.count}`}
+                  </button>
+                )}
+              </h2>
+              <ul className="kb-decide__list">
+                {decisions.map(({ lead, value, signal }) => (
+                  <li key={lead.id} className={`kb-decide__row is-${signal.tone}`}>
+                    <button
+                      type="button"
+                      className="kb-decide__main"
+                      onClick={() => (onOpenLead ? onOpenLead(lead) : onOpenEditLead?.(lead))}
+                      title={`${lead.name || ''} · ${signal.label} · ${signal.next}`}
+                    >
+                      <span className="kb-decide__dot" aria-hidden="true" />
+                      <span className="kb-decide__text">
+                        <strong>{lead.name?.trim() || (isAr ? 'عميل بدون اسم' : 'Unnamed lead')}{value > 0 && <small> · <bdi>{shortMoney(value, isAr)}</bdi></small>}</strong>
+                        <span className="kb-decide__sub">
+                          <span className="kb-decide__sub-label">{signal.label}{signal.days ? (isAr ? ` (${signal.days} يوم)` : ` (${signal.days}d)`) : ''}</span>
+                          <span className="kb-decide__sub-dot">·</span>
+                          <span className="kb-decide__sub-next">{signal.next}</span>
+                        </span>
+                      </span>
+                      {isAr ? <ArrowLeft size={15} aria-hidden="true" /> : <ArrowRight size={15} aria-hidden="true" />}
+                    </button>
+                    <button type="button" className="kb-decide__wa" onClick={() => onWhatsAppClick(lead)} aria-label={isAr ? `واتساب ${lead.name || ''}` : `WhatsApp ${lead.name || ''}`} title={isAr ? 'واتساب' : 'WhatsApp'}>
+                      <MessageSquare size={15} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       )}
 
       {/* 🚀 Dual Pipeline Selector: Buyers vs Sellers */}

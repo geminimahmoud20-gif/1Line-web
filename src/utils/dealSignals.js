@@ -11,11 +11,11 @@ export const IDLE_DAYS = 5;
 
 /** What to do next, per stage (the same activities the stage lock asks for) */
 export const NEXT_STEP = {
-  new: 'اتصل بيه وأكّد المطلوب',
-  contacted: 'حدّد ميعاد معاينة',
-  site_visit: 'اسأله رأيه بعد المعاينة',
-  negotiating: 'قدّم العرض واقفل على سعر',
-  closing: 'جهّز الحجز والعقد'
+  new: 'تأكيد المطلوب',
+  contacted: 'تحديد موعد معاينة',
+  site_visit: 'متابعة بعد المعاينة',
+  negotiating: 'تقديم العرض والتفاوض',
+  closing: 'تجهيز الحجز والعقد'
 };
 
 /** Someone who only registered an account: the first call finds out what they want */
@@ -23,11 +23,11 @@ export const NEXT_STEP_ACCOUNT = 'اتصل واسأله: بيدوّر على ش�
 
 /** The same steps for an owner selling a property: valuation, the exclusive contract, buyers, signing */
 export const NEXT_STEP_SELLER = {
-  new: 'اتصل بالمالك وأكّد بيانات العقار والسعر',
-  contacted: 'حدّد ميعاد معاينة وتقييم العقار',
-  site_visit: 'اتفق على السعر وعقد البيع الحصري',
-  negotiating: 'اعرض العقار وتابع المشترين المهتمين',
-  closing: 'جهّز عقد البيع وتوقيعه'
+  new: 'تأكيد بيانات العقار والسعر',
+  contacted: 'تحديد موعد معاينة وتقييم',
+  site_visit: 'توقيع عقد البيع الحصري',
+  negotiating: 'متابعة المشترين والعروض',
+  closing: 'تجهيز وتوقيع عقد البيع'
 };
 
 /** What to do next for this client at this stage, by the kind of client */
@@ -69,19 +69,38 @@ export function attentionOf(lead, { now = Date.now(), value = 0 } = {}) {
   const touched = lastTouchMs(lead);
   const idleDays = Number.isFinite(touched) ? Math.floor((now - touched) / DAY) : 0;
 
-  if (isNewOverdue(lead, now)) id = 'new_overdue';
-  else if (Number.isFinite(follow) && follow < startOfDay(now)) {
+  let customLabel = null;
+  let customWeight = null;
+
+  if (isNewOverdue(lead, now)) {
+    id = 'new_overdue';
+    if (value >= 10_000_000) {
+      customLabel = 'صفقة VIP كبرى (+10م)';
+      customWeight = 125;
+    } else if (value >= BIG_DEAL) {
+      customLabel = 'صفقة كبرى (+5م)';
+      customWeight = 115;
+    }
+  } else if (Number.isFinite(follow) && follow < startOfDay(now)) {
     id = 'follow_overdue';
     days = Math.max(1, Math.round((startOfDay(now) - startOfDay(follow)) / DAY));
-  } else if (value >= BIG_DEAL && idleDays >= BIG_IDLE_DAYS) { id = 'big_idle'; days = idleDays; }
-  else if (isStalled(lead, now)) id = 'stalled';
-  else if (idleDays >= IDLE_DAYS) { id = 'idle'; days = idleDays; }
+  } else if (value >= BIG_DEAL && idleDays >= BIG_IDLE_DAYS) {
+    id = 'big_idle';
+    days = idleDays;
+  } else if (isStalled(lead, now)) {
+    id = 'stalled';
+  } else if (idleDays >= IDLE_DAYS) {
+    id = 'idle';
+    days = idleDays;
+  }
 
   if (!id) return null;
   const r = REASONS[id];
+  const label = customLabel || r.label;
+  const weight = customWeight !== null ? customWeight : r.weight;
   // Money breaks ties inside one reason: up to +9 for 10M and above
   const money = Math.min(9, Math.floor((Number(value) || 0) / 1_000_000 * 0.9));
-  return { id, tone: r.tone, label: r.label, next: nextStepFor(lead, status), score: r.weight + money, ...(days ? { days } : {}) };
+  return { id, tone: r.tone, label, next: nextStepFor(lead, status), score: weight + money, ...(days ? { days } : {}) };
 }
 
 /** Deals that need attention, most urgent first: [{ lead, value, signal }] */

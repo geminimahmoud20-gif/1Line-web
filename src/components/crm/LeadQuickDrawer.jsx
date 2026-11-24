@@ -416,6 +416,17 @@ export default function LeadQuickDrawer({
       || (holder ? (holder.includes('@') ? holder.split('@')[0] : holder).replace(/[0-9._-]+/g, ' ').trim() : null);
   }
 
+  if (!cleanHolder && currentUser) {
+    cleanHolder = currentUser.displayName || (currentUser.email?.includes('elbaz') ? (isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz') : '');
+  }
+  if (cleanHolder && (cleanHolder.includes('@') || /^[a-z0-9._-]+$/i.test(cleanHolder))) {
+    if (/elbaz|mahmoud|ahmoud/i.test(cleanHolder)) {
+      cleanHolder = isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz';
+    } else {
+      cleanHolder = cleanHolder.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
+    }
+  }
+
   const headerLine = [
     sourceText(lead.source),
     cleanHolder ? (isAr ? `المسؤول: ${cleanHolder}` : `Owner: ${cleanHolder}`) : null,

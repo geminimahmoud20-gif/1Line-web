@@ -14,12 +14,15 @@ import { addTask } from '../../../firebaseLazy';
 export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title, members = [], canAssign = false }) {
   const { currentUser } = useAuth();
   const { tasks } = useTasks();
-  const me = useMemo(() => ({ uid: currentUser?.uid, name: userDisplayName(currentUser) }), [currentUser]);
+  const me = useMemo(() => ({
+    uid: currentUser?.uid || 'crm-user',
+    name: userDisplayName(currentUser) || (isAr ? 'مسؤول المبيعات' : 'Sales Advisor')
+  }), [currentUser, isAr]);
   const open = useMemo(() => tasks.filter((t) => String(t.leadId) === String(lead?.id) && t.status !== 'done')
     .sort((a, b) => String(a.dueAt || '9999').localeCompare(String(b.dueAt || '9999'))), [tasks, lead?.id]);
   const [flowTask, setFlowTask] = useState(null);
   const [now] = useState(() => Date.now()); // the drawer is short-lived: the time it opened is fine
-  if (!lead?.id || !me.uid) return null;
+  if (!lead?.id) return null;
   // A manager adding a task from a client's file gives it to the person who holds the client (shown in their list)
   const ownerUid = lead.ownerUid && lead.ownerUid !== me.uid && members.some((m) => m.uid === lead.ownerUid) ? lead.ownerUid : '';
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller';

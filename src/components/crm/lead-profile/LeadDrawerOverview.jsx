@@ -1,4 +1,4 @@
-import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass, Edit3 } from 'lucide-react';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
@@ -94,6 +94,54 @@ export default function LeadDrawerOverview({
   };
   const [pendingNeg, setPendingNeg] = useState('');
   const [negReason, setNegReason] = useState('');
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [inlinePriceInput, setInlinePriceInput] = useState('');
+  const [editingSize, setEditingSize] = useState(false);
+  const [inlineSizeInput, setInlineSizeInput] = useState('');
+
+  const handleSavePrice = (e) => {
+    e?.preventDefault();
+    const cleanNum = Number(String(inlinePriceInput).replace(/[^0-9]/g, ''));
+    if (!onUpdateLead || isNaN(cleanNum) || cleanNum <= 0) return;
+    const at = new Date().toISOString();
+    const prevPrice = askingPriceOf(lead) || Number(String(lead?.budget || 0).replace(/[^0-9.]/g, ''));
+    onUpdateLead(lead.id, {
+      budget: cleanNum,
+      details: {
+        ...(lead.details || {}),
+        askingPrice: cleanNum,
+        priceFormatted: `${cleanNum.toLocaleString('en-US')} ج.م`
+      },
+      activityLogs: [
+        { timestamp: at, action: `تحديث السعر المطلوب: من ${prevPrice ? prevPrice.toLocaleString('en-US') : 'غير محدد'} إلى ${cleanNum.toLocaleString('en-US')} ج.م`, kind: 'note', ...(agentName ? { agent: agentName } : {}) },
+        ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])
+      ].slice(0, 100),
+      lastActivityAt: at
+    }, lead.version);
+    setEditingPrice(false);
+    triggerToast?.(L(`تم تحديث السعر إلى ${cleanNum.toLocaleString('en-US')} ج.م`, `Price updated to ${cleanNum.toLocaleString('en-US')} EGP`), 'success');
+  };
+
+  const handleSaveSize = (e) => {
+    e?.preventDefault();
+    const cleanSize = parseInt(String(inlineSizeInput).replace(/[^0-9]/g, ''), 10);
+    if (!onUpdateLead || !cleanSize || cleanSize <= 0) return;
+    const at = new Date().toISOString();
+    onUpdateLead(lead.id, {
+      details: {
+        ...(lead.details || {}),
+        size: cleanSize
+      },
+      activityLogs: [
+        { timestamp: at, action: `تسجيل مساحة العقار: ${cleanSize} م²`, kind: 'note', ...(agentName ? { agent: agentName } : {}) },
+        ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])
+      ].slice(0, 100),
+      lastActivityAt: at
+    }, lead.version);
+    setEditingSize(false);
+    triggerToast?.(L(`تم تسجيل المساحة: ${cleanSize} م²`, `Size saved: ${cleanSize} m²`), 'success');
+  };
+
   // Sending a message counts as the first reply: the "no reply" clock stops
   const markContacted = () => {
     auditContactUse(lead, 'whatsapp');
@@ -210,9 +258,74 @@ export default function LeadDrawerOverview({
         </div>
         {briefFacts.length > 0 ? (
           <dl className="crm-ld__facts">
-            {briefFacts.map(([label, value]) => (
-              <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
-            ))}
+            {briefFacts.map(([label, value]) => {
+              const isPrice = label === L('السعر المطلوب', 'Asking price');
+              const isSize = label === L('المساحة', 'Size');
+              return (
+                <div key={label} className={isPrice && editingPrice ? 'crm-ld__fact--editing' : ''}>
+                  <dt>{label}</dt>
+                  {isPrice && editingPrice ? (
+                    <dd className="crm-ld__inline-edit-box">
+                      <form onSubmit={handleSavePrice} className="crm-ld__inline-form">
+                        <input
+                          type="number"
+                          autoFocus
+                          value={inlinePriceInput}
+                          onChange={(e) => setInlinePriceInput(e.target.value)}
+                          placeholder={L('السعر بالجنيه...', 'Price in EGP...')}
+                          className="crm-ld__inline-input"
+                        />
+                        <div className="crm-ld__inline-btns">
+                          <Button variant="primary" size="xs" type="submit">{L('حفظ', 'Save')}</Button>
+                          <Button variant="ghost" size="xs" type="button" onClick={() => setEditingPrice(false)}>{L('إلغاء', 'Cancel')}</Button>
+                        </div>
+                      </form>
+                    </dd>
+                  ) : isSize && editingSize ? (
+                    <dd className="crm-ld__inline-edit-box">
+                      <form onSubmit={handleSaveSize} className="crm-ld__inline-form">
+                        <input
+                          type="number"
+                          autoFocus
+                          value={inlineSizeInput}
+                          onChange={(e) => setInlineSizeInput(e.target.value)}
+                          placeholder={L('المساحة م²...', 'Size m²...')}
+                          className="crm-ld__inline-input"
+                        />
+                        <div className="crm-ld__inline-btns">
+                          <Button variant="primary" size="xs" type="submit">{L('حفظ', 'Save')}</Button>
+                          <Button variant="ghost" size="xs" type="button" onClick={() => setEditingSize(false)}>{L('إلغاء', 'Cancel')}</Button>
+                        </div>
+                      </form>
+                    </dd>
+                  ) : (
+                    <dd className="crm-ld__fact-val">
+                      <span>{value}</span>
+                      {isSeller && isPrice && onUpdateLead && (
+                        <button
+                          type="button"
+                          className="crm-ld__inline-edit-btn"
+                          onClick={() => { setEditingPrice(true); setInlinePriceInput(String(rawAskingPrice || '')); }}
+                          title={L('تعديل السعر مباشرة', 'Edit price')}
+                        >
+                          <Edit3 size={12} aria-hidden="true" />
+                        </button>
+                      )}
+                      {isSeller && isSize && onUpdateLead && (
+                        <button
+                          type="button"
+                          className="crm-ld__inline-edit-btn"
+                          onClick={() => { setEditingSize(true); setInlineSizeInput(String(details.size || '')); }}
+                          title={L('تعديل المساحة مباشرة', 'Edit size')}
+                        >
+                          <Edit3 size={12} aria-hidden="true" />
+                        </button>
+                      )}
+                    </dd>
+                  )}
+                </div>
+              );
+            })}
           </dl>
         ) : (
           <p className="crm-ld__hint">{isSeller
@@ -221,18 +334,44 @@ export default function LeadDrawerOverview({
         )}
         {isSeller && missing.length > 0 && (
           <div className="crm-ld__missing">
-            <span>{L(`ناقص: ${missing.join('، ')}`, `Missing: ${missing.join(', ')}`)}</span>
-            {egWhatsapp && (
-              <a
-                href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(completeMessage)}`}
-                onClick={sendCompletion}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ui-btn ui-btn--secondary ui-btn--sm"
-              >
-                <Send size={16} aria-hidden="true" />{L('ابعت له رابط تكملة البيانات', 'Send the form to complete it')}
-              </a>
-            )}
+            <span className="crm-ld__missing-text">{L(`ناقص: ${missing.join('، ')}`, `Missing: ${missing.join(', ')}`)}</span>
+            <div className="crm-ld__missing-actions">
+              {!details.size && (
+                editingSize ? (
+                  <form onSubmit={handleSaveSize} className="crm-ld__inline-form">
+                    <input
+                      type="number"
+                      autoFocus
+                      value={inlineSizeInput}
+                      onChange={(e) => setInlineSizeInput(e.target.value)}
+                      placeholder={L('المساحة م²...', 'Size m²...')}
+                      className="crm-ld__inline-input"
+                    />
+                    <Button variant="primary" size="xs" type="submit">{L('حفظ', 'Save')}</Button>
+                    <Button variant="ghost" size="xs" type="button" onClick={() => setEditingSize(false)}>{L('إلغاء', 'Cancel')}</Button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    className="ui-btn ui-btn--secondary ui-btn--xs"
+                    onClick={() => { setEditingSize(true); setInlineSizeInput(''); }}
+                  >
+                    📐 {L('تسجيل المساحة', 'Add size')}
+                  </button>
+                )
+              )}
+              {egWhatsapp && (
+                <a
+                  href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(completeMessage)}`}
+                  onClick={sendCompletion}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ui-btn ui-btn--secondary ui-btn--xs"
+                >
+                  <Send size={14} aria-hidden="true" />{L('رابط تكملة البيانات', 'Send form link')}
+                </a>
+              )}
+            </div>
           </div>
         )}
         {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}

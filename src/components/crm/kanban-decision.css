@@ -32,6 +32,11 @@
 .kb-decide__text strong { font-size: var(--ui-fs-3); color: var(--ui-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kb-decide__text small { font-size: var(--ui-fs-1); font-weight: var(--ui-fw-medium); color: var(--ui-text-2); }
 .kb-decide__text > span { font-size: var(--ui-fs-1); color: var(--ui-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-decide__sub { display: inline-flex; align-items: center; gap: 4px; font-size: var(--ui-fs-1); color: var(--ui-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.kb-decide__sub-label { font-weight: var(--ui-fw-bold); color: var(--ui-text); flex-shrink: 0; }
+.kb-decide__row.is-danger .kb-decide__sub-label { color: var(--ui-danger); }
+.kb-decide__sub-dot { opacity: 0.5; flex-shrink: 0; }
+.kb-decide__sub-next { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kb-decide__wa {
   flex-shrink: 0; width: var(--ui-touch); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
   background: var(--ui-green-tint); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); color: var(--ui-success);
