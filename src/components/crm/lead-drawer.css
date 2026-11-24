@@ -1,53 +1,101 @@
 /* Lead drawer (CRM redesign phase 3): built on the kit Drawer; only the layout lives here. */
 .crm-ld { display: flex; flex-direction: column; gap: var(--ui-s-4); font-family: var(--ui-font); color: var(--ui-text); }
-.crm-ld__nav { display: flex; align-items: center; gap: 2px; }
+.crm-ld__nav { display: flex; align-items: center; gap: 4px; }
+.crm-ld__nav-contact { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 4px; }
+.crm-ld__nav-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border-radius: 6px; text-decoration: none; transition: all 0.15s ease;
+}
+.crm-ld__nav-btn--wa { background: rgba(37, 211, 102, 0.12); color: #16a34a; border: 1px solid rgba(37, 211, 102, 0.35); }
+.crm-ld__nav-btn--wa:hover { background: #25D366; color: #ffffff; }
+.crm-ld__nav-btn--call { background: rgba(11, 28, 54, 0.08); color: #0B1C36; border: 1px solid rgba(11, 28, 54, 0.2); }
+.crm-ld__nav-btn--call:hover { background: #0B1C36; color: #ffffff; }
 .crm-ld__counter { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
 .crm-ld__delete { color: var(--ui-danger); margin-inline-end: auto; }
 
-.crm-ld__summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.crm-ld__desc-phone {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  color: #0B1C36;
+  direction: ltr;
+}
+
+/* Tabs inside drawer: smooth horizontal scroll, no clipping, system colors */
+.crm-ld .ui-tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(20, 43, 73, 0.08);
+}
+.crm-ld .ui-tab {
+  font-size: 13px;
+  padding: 0 10px;
+}
+.crm-ld .ui-tab__bar {
+  background: #0B1C36;
+}
+.crm-ld .ui-tab[aria-selected='true'] {
+  color: #0B1C36;
+  font-weight: 700;
+}
+
+.crm-ld__summary {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3);
+  padding: 12px 14px; background: #FFFFFF; border: 1px solid rgba(20, 43, 73, 0.08); border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(11, 28, 54, 0.04);
+}
 .crm-ld__contact { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
 .crm-ld__phone { display: inline-flex; align-items: center; gap: var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); font-variant-numeric: tabular-nums; }
 .crm-ld__quick { display: flex; gap: var(--ui-s-2); }
 
-.crm-ld__stage { padding: 12px 14px; background: var(--ui-surface-2); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); }
+.crm-ld__stage {
+  padding: 12px 14px; background: #FFFFFF; border: 1px solid rgba(20, 43, 73, 0.08);
+  border-radius: var(--ui-r-lg, 12px); box-shadow: 0 1px 3px rgba(11, 28, 54, 0.04);
+}
 .crm-ld__stage-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .crm-ld__stages { display: flex; flex-direction: column; gap: 8px; }
-.crm-ld__stages-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 2px 0 4px; }
+.crm-ld__stages-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 2px 0; }
 .crm-ld__stage-chip {
   min-width: 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 7px 4px; border-radius: var(--ui-r-md, 8px); border: 1px solid var(--ui-line);
-  background: var(--ui-surface); color: var(--ui-text-2); font-family: inherit; font-size: 11px;
+  padding: 8px 4px; border-radius: 8px; border: 1px solid rgba(20, 43, 73, 0.1);
+  background: #F8FAFC; color: #475569; font-family: inherit; font-size: 11.5px;
   font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
-  overflow: hidden; text-overflow: ellipsis;
 }
 .crm-ld__stage-chip span:last-child {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.crm-ld__stage-chip:hover { border-color: var(--ui-line-strong); background: var(--ui-surface-hover); }
+.crm-ld__stage-chip:hover { border-color: #0B1C36; background: #FFFFFF; color: #0B1C36; }
 .crm-ld__stage-chip.is-current {
-  background: var(--ui-accent, #d97706); color: #fff; border-color: var(--ui-accent, #d97706);
-  font-weight: 700; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28);
+  background: linear-gradient(135deg, #0B1C36 0%, #16305A 100%);
+  color: #FFFFFF; border-color: #0B1C36; font-weight: 700;
+  box-shadow: 0 3px 10px rgba(11, 28, 54, 0.22);
 }
 .crm-ld__stage-chip.is-passed {
-  border-color: rgba(217, 119, 6, 0.35); background: rgba(217, 119, 6, 0.08); color: var(--ui-text);
+  border-color: rgba(4, 120, 87, 0.3); background: #ECFDF5; color: #047857; font-weight: 600;
 }
 .crm-ld__stage-num {
-  display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
-  border-radius: 50%; font-size: 10px; font-weight: 700; background: rgba(0, 0, 0, 0.06);
+  display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px;
+  border-radius: 50%; font-size: 10px; font-weight: 800; background: rgba(0, 0, 0, 0.06);
 }
-.crm-ld__stage-chip.is-current .crm-ld__stage-num { background: rgba(255, 255, 255, 0.25); color: #fff; }
+.crm-ld__stage-chip.is-current .crm-ld__stage-num { background: #D4AF37; color: #0B1C36; font-weight: 800; }
+.crm-ld__stage-chip.is-passed .crm-ld__stage-num { background: #047857; color: #FFFFFF; }
 
-.crm-ld__stage-sides { display: flex; justify-content: flex-end; gap: 8px; padding-top: 6px; border-top: 1px dashed var(--ui-line); }
-.crm-ld__side-chip {
-  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ui-line); background: var(--ui-surface);
-  color: var(--ui-text-3); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+.crm-ld__stage-sides {
+  display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px;
+  margin-top: 4px; border-top: 1px dashed rgba(20, 43, 73, 0.1);
 }
-.crm-ld__side-chip:hover { background: var(--ui-surface-hover); color: var(--ui-text); border-color: var(--ui-line-strong); }
+.crm-ld__side-chip {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(20, 43, 73, 0.1); background: #F8FAFC;
+  color: #64748B; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+}
+.crm-ld__side-chip:hover { background: #FFFFFF; color: #0F172A; border-color: rgba(20, 43, 73, 0.25); }
 .crm-ld__side-chip.is-current {
-  background: var(--ui-surface-2); color: var(--ui-text); border-color: var(--ui-line-strong); font-weight: 700;
+  background: #F1F5F9; color: #0F172A; border-color: #0B1C36; font-weight: 700;
 }
 .crm-ld__side-chip.is-lost.is-current {
-  background: var(--ui-danger-tint, rgba(239, 68, 68, 0.1)); color: var(--ui-danger, #ef4444); border-color: var(--ui-danger, #ef4444);
+  background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; font-weight: 700;
 }
 .crm-ld__lost[aria-pressed='true'] { background: var(--ui-danger); border-color: var(--ui-danger); color: var(--ui-on-danger); }
 
@@ -203,17 +251,13 @@
 .crm-ld[data-stage='closed'] { --lead-accent: var(--ui-success); }
 .crm-ld[data-stage='inactive'],
 .crm-ld[data-stage='lost'] { --lead-accent: var(--ui-text-3); }
-.crm-ld__summary {
-  padding: var(--ui-s-3) var(--ui-s-4); border-radius: 18px; border-inline-start: 5px solid var(--lead-accent);
-  background: color-mix(in srgb, var(--lead-accent) 9%, var(--ui-surface));
-}
 .crm-ld__block {
-  border-radius: 18px;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent), 0 14px 26px -20px color-mix(in srgb, var(--ui-n900) 30%, transparent);
+  border-radius: 12px;
+  border: 1px solid rgba(20, 43, 73, 0.08);
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(11, 28, 54, 0.04);
 }
-/* The next step is the block to act on: it carries the stage colour on its edge */
-.crm-ld__stack > .crm-ld__block:first-child { border-inline-start: 5px solid var(--lead-accent); }
-.crm-ld__stack { gap: var(--ui-s-4); }
+.crm-ld__stack { gap: var(--ui-s-3, 12px); }
 
 /* «حصل إيه؟»: the last result logged, and what was done after a no-answer */
 .crm-ld__last { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--ui-r-md, 10px); background: var(--ui-surface-2); font-size: var(--ui-fs-2); color: var(--ui-text-2); }

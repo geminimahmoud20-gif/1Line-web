@@ -45,10 +45,10 @@ import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineC
 
 const SHORT_STEPPER_LABELS = {
   seller: {
-    new: 'عرض جديد',
+    new: 'جديد',
     contacted: 'مؤهل',
     site_visit: 'معاينة',
-    negotiating: 'تسويق وعروض',
+    negotiating: 'عروض',
     closed: 'تم البيع'
   },
   buyer: {
@@ -56,7 +56,7 @@ const SHORT_STEPPER_LABELS = {
     contacted: 'مؤهل',
     site_visit: 'معاينة',
     negotiating: 'تفاوض',
-    closed: 'حجز وعقد'
+    closed: 'تم التعاقد'
   }
 };
 
@@ -466,6 +466,15 @@ export default function LeadQuickDrawer({
         description={headerLine ? (
           <span className="crm-ld__desc" title={headerLine}>
             <span className="crm-ld__desc-item">{sourceText(lead.source)}</span>
+            {hasRealPhone && (
+              <>
+                <span className="crm-ld__desc-dot">·</span>
+                <span className="crm-ld__desc-item crm-ld__desc-phone" dir="ltr">
+                  <Phone size={11} aria-hidden="true" style={{ verticalAlign: 'middle', marginInlineEnd: '3px' }} />
+                  <PhoneText leadId={lead.id} value={phoneText === '—' ? '' : phoneText} surface="drawer-head" isAr={isAr} />
+                </span>
+              </>
+            )}
             {cleanHolder && (
               <>
                 <span className="crm-ld__desc-dot">·</span>
@@ -485,6 +494,28 @@ export default function LeadQuickDrawer({
         closeLabel={isAr ? 'إغلاق' : 'Close'}
         headerActions={(
           <div className="crm-ld__nav">
+            {hasRealPhone && (
+              <div className="crm-ld__nav-contact">
+                <a
+                  href={`https://wa.me/${egWhatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => markContacted('whatsapp')}
+                  className="crm-ld__nav-btn crm-ld__nav-btn--wa"
+                  title={isAr ? 'محادثة واتساب مباشرة' : 'WhatsApp'}
+                >
+                  <MessageSquare size={14} aria-hidden="true" />
+                </a>
+                <a
+                  href={`tel:${cleanPhone}`}
+                  onClick={() => markContacted('call')}
+                  className="crm-ld__nav-btn crm-ld__nav-btn--call"
+                  title={isAr ? 'اتصال هاتف' : 'Call'}
+                >
+                  <Phone size={14} aria-hidden="true" />
+                </a>
+              </div>
+            )}
             <IconButton
               size="sm"
               label={prevLead ? `${isAr ? 'العميل السابق' : 'Previous'}: ${prevLead.name || ''}` : (isAr ? 'العميل السابق' : 'Previous')}

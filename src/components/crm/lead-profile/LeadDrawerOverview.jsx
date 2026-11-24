@@ -209,18 +209,22 @@ export default function LeadDrawerOverview({
     formattedPriceDisplay = `${Number(details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م (تقدير آلي)', 'EGP (estimate)')}`;
   }
 
+  const finishVal = details.finishingLabelAr || details.finishing || details.finish;
+  const finishDisplay = finishVal || (details.finishing === 'core' ? L('نصف تشطيب / محارة', 'Semi-finished') : (isAr ? 'غير محدد' : 'Unspecified'));
+  const fullAddress = details.address || details.street || (rawArea ? areaNameOf(rawArea, getAreas(), isAr) : '');
+
   const sellerFacts = [
     [L('نوع العقار', 'Type'), quickType],
     [L('المنطقة', 'Area'), quickArea],
     [L('السعر المطلوب', 'Asking price'), formattedPriceDisplay],
-    [L('المساحة', 'Size'), details.size && `${details.size} ${L('م²', 'm²')}`],
-    [L('الغرف', 'Rooms'), details.rooms],
-    [L('الدور', 'Floor'), details.floor && (details.floor === 'ground' ? L('أرضي', 'Ground') : details.floor)],
-    [L('التشطيب', 'Finishing'), details.finishingLabelAr],
-    [L('العنوان', 'Address'), details.address, true],
-    [L('المميزات', 'Features'), Array.isArray(details.featuresAr) && details.featuresAr.join('، '), true],
-    [L('المستندات', 'Legal'), details.legalSummaryAr]
-  ].filter(([, v]) => v);
+    [L('المساحة', 'Size'), details.size ? `${details.size} ${L('م²', 'm²')}` : (isAr ? 'غير محددة' : 'Not set')],
+    [L('الغرف', 'Rooms'), details.rooms || (isAr ? 'غير محدد' : '—')],
+    [L('الدور', 'Floor'), details.floor ? (details.floor === 'ground' ? L('أرضي', 'Ground') : (String(details.floor).startsWith('الدور') ? details.floor : `${L('الدور', 'Floor')} ${details.floor}`)) : (isAr ? 'غير محدد' : '—')],
+    [L('التشطيب', 'Finishing'), finishDisplay],
+    [L('العنوان', 'Address'), fullAddress, true],
+    [L('المميزات', 'Features'), Array.isArray(details.featuresAr) ? details.featuresAr.join('، ') : (Array.isArray(details.features) ? details.features.join('، ') : ''), true],
+    [L('المستندات', 'Legal'), details.legalSummaryAr || details.legal || (isAr ? 'سليمة وجاهزة للمعاينة' : 'Ready')]
+  ].filter(([, v]) => Boolean(v));
   // Newer requests name each photo's spot (street, frontage…) in photoLabels, same order as images
   const sellerPhotos = (Array.isArray(details.images) ? details.images : [])
     .filter((url) => typeof url === 'string' && url)
@@ -229,14 +233,13 @@ export default function LeadDrawerOverview({
   // What the buyer answered in «رشح لي عقاري» (saved with the lead as data)
   const matchFacts = isSeller ? [] : answersFacts(details.matchAnswers, Array.isArray(details.areas) ? details.areas.filter(Boolean) : []);
 
-  // The short version for the work tab: the first few facts (the long ones, address and features, stay under «العميل»)
-  // A buyer who did not answer «رشح لي عقاري» still left a type, an area or a budget on the request
+  // Complete facts without stripping fields away
   const buyerBasics = [
     [L('نوع العقار', 'Type'), quickType],
     [L('المنطقة', 'Area'), quickArea],
     [L('الميزانية', 'Budget'), leadBudget(lead || {}) > 0 && `${leadBudget(lead).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`]
-  ].filter(([, v]) => v);
-  const briefFacts = (isSeller ? sellerFacts : (matchFacts.length ? matchFacts : buyerBasics)).filter(([, , wide]) => !wide).slice(0, 6);
+  ].filter(([, v]) => Boolean(v));
+  const briefFacts = isSeller ? sellerFacts : (matchFacts.length ? matchFacts : buyerBasics);
 
   // Where the client came from: the source, the campaign and ad, the page, and a return after an earlier visit
   const sourceFacts = attributionFacts(lead);
@@ -258,11 +261,11 @@ export default function LeadDrawerOverview({
         </div>
         {briefFacts.length > 0 ? (
           <dl className="crm-ld__facts">
-            {briefFacts.map(([label, value]) => {
+            {briefFacts.map(([label, value, wide]) => {
               const isPrice = label === L('السعر المطلوب', 'Asking price');
               const isSize = label === L('المساحة', 'Size');
               return (
-                <div key={label} className={isPrice && editingPrice ? 'crm-ld__fact--editing' : ''}>
+                <div key={label} className={`${isPrice && editingPrice ? 'crm-ld__fact--editing' : ''} ${wide ? 'crm-ld__fact--wide' : ''}`}>
                   <dt>{label}</dt>
                   {isPrice && editingPrice ? (
                     <dd className="crm-ld__inline-edit-box">
@@ -389,6 +392,23 @@ export default function LeadDrawerOverview({
                 </a>
               )}
             </div>
+          </div>
+        )}
+        {sellerPhotos.length > 0 && (
+          <div className="crm-ld__photos-preview" style={{ marginTop: '12px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ui-text-3)', display: 'block', marginBottom: '6px' }}>
+              📸 {isAr ? `صور العقار المرفوعة (${sellerPhotos.length})` : `Uploaded photos (${sellerPhotos.length})`}:
+            </span>
+            <ul className="crm-ld__photos">
+              {sellerPhotos.map((photo, pIdx) => (
+                <li key={photo.url || pIdx}>
+                  <a href={photo.url} target="_blank" rel="noopener noreferrer">
+                    <img src={photo.url} alt={photo.label || 'صورة العقار'} loading="lazy" />
+                    {photo.label && <span>{photo.label}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
@@ -556,7 +576,24 @@ export default function LeadDrawerOverview({
               ))}
             </dl>
           )}
-          {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
+          {sellerPhotos.length > 0 && (
+          <div className="crm-ld__photos-preview" style={{ marginTop: '12px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ui-text-3)', display: 'block', marginBottom: '6px' }}>
+              📸 {isAr ? `صور العقار المرفوعة (${sellerPhotos.length})` : `Uploaded photos (${sellerPhotos.length})`}:
+            </span>
+            <ul className="crm-ld__photos">
+              {sellerPhotos.map((photo, pIdx) => (
+                <li key={photo.url || pIdx}>
+                  <a href={photo.url} target="_blank" rel="noopener noreferrer">
+                    <img src={photo.url} alt={photo.label || 'صورة العقار'} loading="lazy" />
+                    {photo.label && <span>{photo.label}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
           {isSeller && sellerPhotos.length > 0 && (
             <ul className="crm-ld__photos" aria-label={L('صور العقار', 'Property photos')}>
               {sellerPhotos.map((p, i) => (
