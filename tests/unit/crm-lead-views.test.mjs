@@ -357,3 +357,21 @@ test('an owner counts at the price he asks, wherever it was saved', async () => 
   assert.equal(leadBudget({ type: 'seller', details: { budget: '1500000' } }), 1500000);
   assert.equal(leadBudget({ type: 'buyer', budget: '800000', askingPrice: 9 }), 800000); // a buyer never reads asking price
 });
+test('a pair of duplicates a staff member confirmed are different deals stops being flagged', () => {
+  // x is told y is a different deal; x then has no unreviewed counterpart left, so the pair drops out
+  const pair = [
+    { id: 'x', phone: '01099999999', dupReviewed: ['y'] },
+    { id: 'y', phone: '01099999999' }
+  ];
+  assert.equal(duplicatesById(pair).size, 0);
+  // With a third, still-unreviewed lead on the same number, the group stays flagged for everyone in it —
+  // dismissing is a whole-group decision (what MergeLeadsModal writes), not silently partial
+  const triple = [
+    { id: 'x', phone: '01099999999', dupReviewed: ['y'] },
+    { id: 'y', phone: '01099999999' },
+    { id: 'z', phone: '01099999999' }
+  ];
+  const d = duplicatesById(triple);
+  assert.deepEqual(d.get('x').sort(), ['y', 'z']);
+  assert.deepEqual(d.get('z').sort(), ['x', 'y']);
+});
