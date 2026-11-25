@@ -30,7 +30,7 @@ export default defineConfig([
       // an edit there does a full reload instead of a hot swap, which is fine for providers.
       'react-refresh/only-export-components': ['warn', {
         allowConstantExport: true,
-        allowExportNames: ['useAuth', 'useClientAuth', 'useCurrency', 'usePreferences', 'useProperties', 'useUIModal']
+        allowExportNames: ['useAuth', 'useClientAuth', 'useCurrency', 'usePreferences', 'useProperties', 'useOptionalProperties', 'useUIModal']
       }],
       'react-hooks/set-state-in-effect': 'warn',
     },

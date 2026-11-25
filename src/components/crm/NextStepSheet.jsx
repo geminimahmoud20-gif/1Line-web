@@ -1,11 +1,11 @@
 import { useId, useState, useMemo } from 'react';
-import { Modal, Button, Input, Select, Badge } from '../ui';
-import { buildTask, dayKeyFrom, KINDS, PRIORITIES, dueFromPreset } from '../../utils/tasks';
+import { Modal, Button, Input, Badge } from '../ui';
+import { buildTask, dayKeyFrom, KINDS, dueFromPreset } from '../../utils/tasks';
 import { suggestNextStep, composeDue } from '../../utils/nextStep';
 import { isSellerLead, localDayKey, lostReasonsFor } from '../../utils/crmLeadViews';
 import { boardStagesFor } from '../../utils/leadPipeline';
 import { addTask } from '../../firebaseLazy';
-import { MessageSquare, Phone, Calendar, Building, FileText, CheckCircle2, ChevronRight, Clock, Sparkles } from 'lucide-react';
+import { MessageSquare, Phone, Calendar, Building, FileText } from 'lucide-react';
 
 const CONTACT_CHANNELS = [
   { id: 'whatsapp', label_ar: 'واتساب', label_en: 'WhatsApp', icon: <MessageSquare size={14} /> },
@@ -68,7 +68,7 @@ export default function NextStepSheet({
 
   const [title, setTitle] = useState(defaultTitle);
   const [kind, setKind] = useState(s?.kind || (selectedStage === 'site_visit' ? 'visit' : 'call'));
-  const [priority, setPriority] = useState(s?.priority || 'normal');
+  const [priority] = useState(s?.priority || 'normal');
   const [day, setDay] = useState(s?.day || dueFromPreset('tomorrow'));
   const [time, setTime] = useState(s?.time || '11:00');
   const [busy, setBusy] = useState(false);
@@ -250,10 +250,10 @@ export default function NextStepSheet({
         {/* Section 1: What was done in contact */}
         <div style={{ background: 'var(--ui-surface-2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--ui-primary)' }}>
               📞 {isAr ? 'أولاً: إيه اللي تم في التواصل؟' : '1. Contact Activity:'}
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--ui-text-3)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--ui-text-3)' }}>
               {isAr ? '(الملاحظة اختيارية)' : '(Optional note)'}
             </span>
           </div>
@@ -273,7 +273,7 @@ export default function NextStepSheet({
                   border: channel === ch.id ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
                   background: channel === ch.id ? 'var(--ui-primary)' : 'var(--ui-surface)',
                   color: channel === ch.id ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
-                  fontSize: '11.5px',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.15s'
@@ -295,7 +295,7 @@ export default function NextStepSheet({
               padding: '7px 10px',
               borderRadius: '6px',
               border: '1px solid var(--ui-line)',
-              fontSize: '12px',
+              fontSize: 'var(--crm-text-xs)',
               fontFamily: 'inherit',
               resize: 'vertical',
               boxSizing: 'border-box'
@@ -306,7 +306,7 @@ export default function NextStepSheet({
         {/* Section 2: Target Deal Stage Selector */}
         <div style={{ background: 'var(--ui-surface)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--ui-primary)' }}>
               🎯 {isAr ? 'ثانياً: نقل العميل لمرحلة جديدة (للأمام أو للخلف):' : '2. Move to Stage (Forward or Backward):'}
             </span>
             <Badge tone={isLostStage ? 'danger' : (isInactiveStage ? 'neutral' : (isClosedStage ? 'success' : 'accent'))}>
@@ -337,15 +337,15 @@ export default function NextStepSheet({
                     padding: '7px 6px',
                     borderRadius: '8px',
                     border: isSelected
-                      ? (isLost ? '1.5px solid var(--ui-danger, #ef4444)' : '1.5px solid var(--ui-primary)')
+                      ? (isLost ? '1.5px solid var(--ui-danger, var(--crm-danger))' : '1.5px solid var(--ui-primary)')
                       : (isCurrent ? '1.5px dashed var(--ui-accent)' : '1px solid var(--ui-line)'),
                     background: isSelected
-                      ? (isLost ? 'var(--ui-danger, #ef4444)' : 'var(--ui-primary)')
+                      ? (isLost ? 'var(--ui-danger, var(--crm-danger))' : 'var(--ui-primary)')
                       : (isCurrent ? 'rgba(14, 165, 233, 0.08)' : (isLost ? 'rgba(239, 68, 68, 0.04)' : 'var(--ui-surface-2)')),
                     color: isSelected
-                      ? '#fff'
-                      : (isLost ? 'var(--ui-danger, #dc2626)' : (isInactive ? 'var(--ui-text-3)' : 'var(--ui-text-2)')),
-                    fontSize: '11.5px',
+                      ? 'var(--crm-on-dark)'
+                      : (isLost ? 'var(--ui-danger, var(--crm-danger))' : (isInactive ? 'var(--ui-text-3)' : 'var(--ui-text-2)')),
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: isSelected ? 700 : 600,
                     cursor: 'pointer',
                     boxShadow: isSelected ? '0 2px 8px rgba(11, 28, 54, 0.2)' : 'none',
@@ -361,10 +361,10 @@ export default function NextStepSheet({
                     width: '16px',
                     height: '16px',
                     borderRadius: '50%',
-                    fontSize: '10px',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 800,
                     background: isSelected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.06)',
-                    color: isSelected ? '#fff' : 'inherit',
+                    color: isSelected ? 'var(--crm-on-dark)' : 'inherit',
                     flexShrink: 0
                   }}>
                     {idx + 1}
@@ -389,7 +389,7 @@ export default function NextStepSheet({
             flexDirection: 'column',
             gap: '8px'
           }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-danger, #dc2626)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--ui-danger, var(--crm-danger))' }}>
               ⚠️ {isAr ? 'حدد سبب خسارة الصفقة (إلزامي للتحليل والتقارير):' : 'Select reason deal was lost (Required):'}
             </span>
 
@@ -406,11 +406,11 @@ export default function NextStepSheet({
                       padding: '6px 10px',
                       borderRadius: '6px',
                       background: checked ? 'rgba(239, 68, 68, 0.12)' : 'var(--ui-surface)',
-                      border: checked ? '1px solid var(--ui-danger, #ef4444)' : '1px solid var(--ui-line)',
+                      border: checked ? '1px solid var(--ui-danger, var(--crm-danger))' : '1px solid var(--ui-line)',
                       cursor: 'pointer',
-                      fontSize: '11.5px',
+                      fontSize: 'var(--crm-text-xs)',
                       fontWeight: checked ? 700 : 500,
-                      color: checked ? 'var(--ui-danger, #b91c1c)' : 'var(--ui-text-2)',
+                      color: checked ? 'var(--ui-danger, var(--crm-danger))' : 'var(--ui-text-2)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -420,7 +420,7 @@ export default function NextStepSheet({
                       value={r.id}
                       checked={checked}
                       onChange={() => setLostReason(r.id)}
-                      style={{ accentColor: 'var(--ui-danger, #ef4444)', margin: 0 }}
+                      style={{ accentColor: 'var(--ui-danger, var(--crm-danger))', margin: 0 }}
                     />
                     <span>{isAr ? r.ar : r.en}</span>
                   </label>
@@ -439,7 +439,7 @@ export default function NextStepSheet({
                 padding: '6px 10px',
                 borderRadius: '6px',
                 border: '1px solid var(--ui-line)',
-                fontSize: '12px',
+                fontSize: 'var(--crm-text-xs)',
                 boxSizing: 'border-box'
               }}
             />
@@ -452,7 +452,7 @@ export default function NextStepSheet({
                 onChange={(e) => setScheduleTaskForLost(e.target.checked)}
                 style={{ cursor: 'pointer' }}
               />
-              <label htmlFor="scheduleLostTask" style={{ fontSize: '11.5px', color: 'var(--ui-text-2)', cursor: 'pointer' }}>
+              <label htmlFor="scheduleLostTask" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--ui-text-2)', cursor: 'pointer' }}>
                 {isAr ? 'جدولة تذكير أو مهمة قادمة رغم إغلاق العميل كخسارة' : 'Schedule a follow-up task anyway'}
               </label>
             </div>
@@ -463,7 +463,7 @@ export default function NextStepSheet({
         {(!isLostStage || scheduleTaskForLost) && (
           <div style={{ background: 'var(--ui-surface-2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--ui-primary)' }}>
                 🗓️ {isAr ? 'ثالثاً: تسجيل الحدث القادم (المكالمة أو المعاينة أو الاجتماع):' : '3. Next Event (Call, Viewing, Meeting):'}
               </span>
             </div>
@@ -483,7 +483,7 @@ export default function NextStepSheet({
                     border: kind === k.id ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
                     background: kind === k.id ? 'var(--ui-primary)' : 'var(--ui-surface)',
                     color: kind === k.id ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
-                    fontSize: '11.5px',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.15s'
@@ -504,7 +504,7 @@ export default function NextStepSheet({
             />
 
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: 'var(--ui-text-3)' }}>{isAr ? 'الموعد السريع:' : 'Quick day:'}</span>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--ui-text-3)' }}>{isAr ? 'الموعد السريع:' : 'Quick day:'}</span>
               <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('today')}>{isAr ? 'النهارده' : 'Today'}</button>
               <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('tomorrow')}>{isAr ? 'بكرة' : 'Tomorrow'}</button>
               <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('3d')}>{isAr ? 'بعد ٣ أيام' : 'In 3 days'}</button>
@@ -532,7 +532,7 @@ export default function NextStepSheet({
           </div>
         )}
 
-        {error && <p style={{ color: 'var(--ui-danger)', margin: 0, fontSize: '12px', fontWeight: 600 }}>{error}</p>}
+        {error && <p style={{ color: 'var(--ui-danger)', margin: 0, fontSize: 'var(--crm-text-xs)', fontWeight: 600 }}>{error}</p>}
       </form>
     </Modal>
   );

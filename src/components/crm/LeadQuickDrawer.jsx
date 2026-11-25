@@ -23,11 +23,10 @@ import NextStepSheet from './NextStepSheet';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { sourceText } from '../../utils/crmLabels';
-import { deletePrompt } from '../../utils/deleteConfirm';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { scoreForBuyer } from '../../utils/matchingEngine';
 import { liveListings } from '../../utils/marketStats';
-import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
+import { Drawer, Button, IconButton, Badge, Tabs, useConfirm } from '../ui';
 import ClientDetails from './client-file/ClientDetails';
 import ClientJourney from './client-file/ClientJourney';
 import ClientTimeline from './client-file/ClientTimeline';
@@ -695,12 +694,12 @@ export default function LeadQuickDrawer({
                       type="button"
                       onClick={handleApproveHighValue}
                       style={{
-                        background: 'linear-gradient(135deg, #0B1C36 0%, #1e3a8a 100%)',
-                        border: '1px solid #D4AF37',
-                        color: '#D4AF37',
+                        background: 'var(--crm-danger)',
+                        border: '1px solid var(--crm-accent)',
+                        color: 'var(--crm-on-dark)',
                         borderRadius: '6px',
                         padding: '2px 8px',
-                        fontSize: '11px',
+                        fontSize: 'var(--crm-text-xs)',
                         fontWeight: 700,
                         cursor: 'pointer'
                       }}
@@ -748,7 +747,7 @@ export default function LeadQuickDrawer({
               justifyContent: 'space-between',
               gap: '10px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#DC2626', fontSize: '12px', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--crm-danger)', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                 <ShieldAlert size={16} />
                 <span>{isAr ? 'تم رفض العقار المربوط بهذا العميل من قِبل الإدارة.' : 'Property from this lead was rejected by management.'}</span>
               </div>
@@ -867,7 +866,7 @@ export default function LeadQuickDrawer({
                 <button
                   type="button"
                   onClick={() => setInlineBlocker(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)', padding: '2px', fontSize: '14px' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)', padding: '2px', fontSize: 'var(--crm-text-base)' }}
                 >
                   ✕
                 </button>

@@ -191,7 +191,7 @@ export function PropertiesProvider({ children }) {
   }, [reportCatalogSync]);
 
   const handleAddProperty = useCallback((rawProp) => {
-    const { _allowMultipleForLead, _openExisting, suggestedId, ...newProp } = rawProp || {};
+    const { _allowMultipleForLead, _openExisting, suggestedId: _suggestedId, ...newProp } = rawProp || {};
     const existingById = propertiesRef.current.find((p) => String(p.id) === String(newProp.id));
     if (existingById) {
       const diff = listingDiffPatch(existingById, newProp);

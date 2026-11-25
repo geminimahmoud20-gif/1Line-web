@@ -3,7 +3,6 @@
 // Implements Dr. Mahmoud Elbaz / 1Line Official Company Playbook rules.
 
 import { createHandoffTask } from '../models/schema.js';
-import { pipelineKind, askingPriceOf } from '../utils/leadPipeline.js';
 import { LOST_REASONS } from '../utils/crmLeadViews.js';
 
 export const HIGH_VALUE_DEAL_THRESHOLD = 5_000_000; // 5 Million EGP threshold requires Founder Sign-off

@@ -119,7 +119,7 @@ export default function PropertyFormModal({
           {draftAvailable && (
             <div style={{
               background: 'rgba(217, 119, 6, 0.1)',
-              border: '1px solid var(--crm-accent, #D97706)',
+              border: '1px solid var(--crm-accent)',
               borderRadius: '8px',
               padding: '10px 14px',
               marginBottom: '16px',
@@ -129,21 +129,21 @@ export default function PropertyFormModal({
               gap: '12px',
               flexWrap: 'wrap'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--crm-text-primary, #0F172A)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--crm-text-sm)', fontWeight: 600, color: 'var(--crm-ink)' }}>
                 <span>💾 {isAr ? 'توجد مسودة عقار غير محفوظة تم استرجاعها تلقائياً:' : 'Unsaved property draft found:'}</span>
-                <strong style={{ color: 'var(--crm-accent, #D97706)' }}>{draftAvailable.form?.title_ar || draftAvailable.form?.type || (isAr ? 'عقار غير مسمى' : 'Unnamed listing')}</strong>
+                <strong style={{ color: 'var(--crm-accent-text)' }}>{draftAvailable.form?.title_ar || draftAvailable.form?.type || (isAr ? 'عقار غير مسمى' : 'Unnamed listing')}</strong>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={onRestoreDraft}
                   style={{
-                    background: 'var(--crm-accent, #D97706)',
-                    color: '#fff',
+                    background: 'var(--crm-accent)',
+                    color: 'var(--crm-on-dark)',
                     border: 'none',
                     borderRadius: '6px',
                     padding: '5px 12px',
-                    fontSize: '12px',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 700,
                     cursor: 'pointer'
                   }}
@@ -155,11 +155,11 @@ export default function PropertyFormModal({
                   onClick={onDiscardDraft}
                   style={{
                     background: 'transparent',
-                    color: 'var(--crm-text-muted, #64748B)',
+                    color: 'var(--crm-muted)',
                     border: '1px solid rgba(0,0,0,0.2)',
                     borderRadius: '6px',
                     padding: '5px 10px',
-                    fontSize: '12px',
+                    fontSize: 'var(--crm-text-xs)',
                     cursor: 'pointer'
                   }}
                 >

@@ -125,7 +125,7 @@ export default function CustomerOverviewTab({
               onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
             />
             {isSeller && Number(String(formData.budget).replace(/[^0-9.]/g, '')) > 0 && Number(String(formData.budget).replace(/[^0-9.]/g, '')) < 100000 && (
-              <small style={{ color: 'var(--ui-warning, #d97706)', display: 'block', marginTop: '4px', fontSize: '11px' }}>
+              <small style={{ color: 'var(--ui-warning, var(--crm-warn))', display: 'block', marginTop: '4px', fontSize: 'var(--crm-text-xs)' }}>
                 ⚠️ {isAr ? 'تنبيه: المبلغ أقل من 100 ألف، هل هذا سعر المتر أم إجمالي قيمة العقار؟' : 'Warning: Amount < 100k, is this per m² or total price?'}
               </small>
             )}

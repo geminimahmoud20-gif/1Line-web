@@ -327,7 +327,7 @@ export default function LeadDrawerOverview({
                             <button
                               type="button"
                               className="ui-btn ui-btn--secondary ui-btn--xs"
-                              style={{ fontSize: '10px', padding: '2px 6px', height: '22px' }}
+                              style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 6px', height: '22px' }}
                               onClick={() => {
                                 const calculated = details.size * rawAskingPrice;
                                 setInlinePriceInput(String(calculated));
@@ -405,7 +405,7 @@ export default function LeadDrawerOverview({
         )}
         {sellerPhotos.length > 0 && (
           <div className="crm-ld__photos-preview" style={{ marginTop: '12px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ui-text-3)', display: 'block', marginBottom: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--ui-text-3)', display: 'block', marginBottom: '6px' }}>
               📸 {isAr ? `صور العقار المرفوعة (${sellerPhotos.length})` : `Uploaded photos (${sellerPhotos.length})`}:
             </span>
             <ul className="crm-ld__photos">
@@ -587,7 +587,7 @@ export default function LeadDrawerOverview({
           )}
           {sellerPhotos.length > 0 && (
           <div className="crm-ld__photos-preview" style={{ marginTop: '12px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ui-text-3)', display: 'block', marginBottom: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--ui-text-3)', display: 'block', marginBottom: '6px' }}>
               📸 {isAr ? `صور العقار المرفوعة (${sellerPhotos.length})` : `Uploaded photos (${sellerPhotos.length})`}:
             </span>
             <ul className="crm-ld__photos">

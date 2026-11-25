@@ -7,7 +7,7 @@ import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { leadScore, isOpenLead, isSellerLead, isAccountLead, duplicatesById, pipelineOverviewOf, phoneMatchesQuery } from '../../utils/crmLeadViews';
 import { normalizeArabicText } from '../../utils/semanticSearchEngine';
-import { SELLER_STAGES, pipelineKind, askingPriceOf } from '../../utils/leadPipeline';
+import { pipelineKind, askingPriceOf } from '../../utils/leadPipeline';
 import { ownerMessageFor } from '../../utils/ownerMessages';
 import { clientRoleOf } from '../../utils/clientRole';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
@@ -15,7 +15,6 @@ import LostReasonModal from './LostReasonModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
 import { addTask } from '../../firebaseLazy';
-import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip, Button, useConfirm } from '../ui';
 import { archivePrompt } from '../../utils/deleteConfirm';
@@ -1140,7 +1139,7 @@ export default function KanbanPipeline({
                               style={{
                                 background: 'rgba(239, 68, 68, 0.12)',
                                 borderColor: 'rgba(239, 68, 68, 0.35)',
-                                color: '#DC2626',
+                                color: 'var(--crm-danger)',
                                 fontWeight: 700
                               }}
                               title={isAr ? 'تم رفض العقار المربوط بهذا العميل من الإدارة' : 'Property was rejected by management'}
