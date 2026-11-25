@@ -254,6 +254,39 @@ export const INITIAL_LEADS = [
       askingPrice: '1,660,000',
       budget: '1,660,000'
     }
+  },
+  {
+    id: 'lead-salah-rejected',
+    name: 'صلاح عبدالمجيد محمد امين',
+    phone: '01001625926',
+    whatsapp: '01001625926',
+    email: 'salah.amin@gmail.com',
+    type: 'seller',
+    score: 85,
+    temperature: 'cold',
+    source: 'Website Form',
+    timestamp: new Date(Date.now() - 3600000 * 24 * 6).toISOString(),
+    status: 'lost',
+    lostReason: 'property_rejected',
+    lostReasonDetails: 'تم رفض العقار من قِبل الإدارة',
+    lostAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+    assignedTo: 'Dr. Mahmoud Elbaz',
+    budget: '12,000,000',
+    notes: 'صفقة كبرى +5 مليون. مالك فيلا / تاون هاوس سوهاج الجديدة. تم تحويل الطلب لعقار ولكن رفضته الإدارة لوجود مخالفات.',
+    outcomes: [
+      { id: 'not_fit', at: new Date(Date.now() - 3600000 * 12).toISOString(), reason: 'property_rejected', n: 'د. محمود الباز' }
+    ],
+    lastOutcome: 'not_fit',
+    lastOutcomeAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+    convertedPropertyId: 'prop-salah-rejected',
+    details: {
+      propertyType: 'villa',
+      area: 'new_sohag',
+      location: 'سوهاج الجديدة',
+      expectedPrice: '12,000,000',
+      askingPrice: '12,000,000',
+      budget: '12,000,000'
+    }
   }
 ];
 

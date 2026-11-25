@@ -245,6 +245,8 @@ export default function LeadsTab({
       viewingUnanswered: viewings.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
       sellers: sellers.length,
       sellerUnanswered: sellers.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
+      brokers: open.filter((l) => l.type === 'broker' || l.clientType === 'broker' || l.details?.sellerRole === 'broker').length,
+      investors: open.filter((l) => l.type === 'investor' || l.clientType === 'investor').length,
       accounts: accounts.length,
       accountUnanswered: accounts.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
       buyers: open.filter(isBuyerLead).length,
@@ -565,7 +567,8 @@ export default function LeadsTab({
         )}
         <Chip pressed={leadFilter === 'buyer'} count={counts.buyers} onClick={() => setLeadFilter('buyer')}>{isAr ? 'شراء' : 'Buyers'}</Chip>
         <Chip pressed={leadFilter === 'seller'} count={counts.sellers} onClick={() => setLeadFilter('seller')}>{isAr ? 'بيع' : 'Sellers'}</Chip>
-        <Chip pressed={leadFilter === 'investor'} onClick={() => setLeadFilter('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
+        <Chip pressed={leadFilter === 'broker'} count={counts.brokers} onClick={() => setLeadFilter('broker')}>{isAr ? 'وسطاء' : 'Brokers'}</Chip>
+        <Chip pressed={leadFilter === 'investor'} count={counts.investors} onClick={() => setLeadFilter('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
         <Select
           hideLabel
           className="crm-leads__more"

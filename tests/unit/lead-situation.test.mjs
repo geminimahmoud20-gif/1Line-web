@@ -47,3 +47,10 @@ test('seller lead gets seller-specific outcome labels', () => {
   assert.equal(s2.label, 'أكّد الرغبة في البيع والسعر');
   assert.equal(s2.tone, 'good');
 });
+
+test('lead with lostReason property_rejected returns converted_rejected badge even without listing object', () => {
+  const s = leadSituation({ id: 's3', type: 'seller', status: 'lost', lostReason: 'property_rejected' });
+  assert.equal(s.kind, 'converted_rejected');
+  assert.equal(s.tone, 'bad');
+  assert.match(s.label, /تم رفضه من الإدارة/);
+});

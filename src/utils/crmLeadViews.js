@@ -626,6 +626,10 @@ export function filterLeads(leads = [], opts = {}) {
       if (!isViewingLead(l)) return false;
     } else if (leadFilter === 'seller') {
       if (!isSellerLead(l)) return false;
+    } else if (leadFilter === 'broker') {
+      if (l.type !== 'broker' && l.clientType !== 'broker' && l.details?.sellerRole !== 'broker' && !(Array.isArray(l.tags) && l.tags.includes('broker'))) return false;
+    } else if (leadFilter === 'investor') {
+      if (l.type !== 'investor' && l.clientType !== 'investor' && !(Array.isArray(l.tags) && l.tags.includes('investor'))) return false;
     } else if (leadFilter === 'account') {
       if (!isAccountLead(l)) return false;
     } else if (leadFilter === 'buyer') {

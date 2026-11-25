@@ -54,13 +54,15 @@ const SELLER_COLUMNS = [
 ];
 /** A lead's own stage names: an owner's card offers «معروض للبيع», not «تفاوض» */
 const stagesOfLead = (lead) => (pipelineKind(lead) === 'seller' ? SELLER_COLUMNS : BASE_STAGES);
-// Buyers / owners / investors chips: an owner is anyone who came to sell or value (isSellerLead)
+// Buyers / owners / investors / brokers chips: an owner is anyone who came to sell or value (isSellerLead)
 const matchesType = (l, type) => {
   if (type === 'all') return true;
+  if (type === 'broker') return l.type === 'broker' || l.clientType === 'broker' || l.details?.sellerRole === 'broker' || (Array.isArray(l.tags) && l.tags.includes('broker'));
+  if (type === 'investor') return l.type === 'investor' || l.clientType === 'investor' || (Array.isArray(l.tags) && l.tags.includes('investor'));
   if (type === 'seller') return isSellerLead(l);
   // Someone who only registered an account has not said whether they buy or sell: their own list until they do
   if (type === 'account') return !isSellerLead(l) && isAccountLead(l);
-  if (type === 'buyer') return !isSellerLead(l) && !isAccountLead(l) && l.type !== 'investor';
+  if (type === 'buyer') return !isSellerLead(l) && !isAccountLead(l) && l.type !== 'investor' && l.type !== 'broker';
   return l.type === type;
 };
 
@@ -116,8 +118,8 @@ export default function KanbanPipeline({
   const [filterType, setFilterType] = useState('buyer');
   const isPhone = useMediaQuery('(max-width: 640px)');
   const [phoneStage, setPhoneStage] = useState('new');
-  // Columns read as an owner's pipeline when only owners are shown
-  const PIPELINE_STAGES = filterType === 'seller' ? SELLER_COLUMNS : BASE_STAGES;
+  // Columns read as an owner's pipeline when only owners or brokers are shown
+  const PIPELINE_STAGES = (filterType === 'seller' || filterType === 'broker') ? SELLER_COLUMNS : BASE_STAGES;
   const phoneStageId = PIPELINE_STAGES.some((st) => st.id === phoneStage) ? phoneStage : PIPELINE_STAGES[0].id;
   const [searchQuery, setSearchQuery] = useState('');
   // «محتاج قرار»: show only the deals that need a person today
@@ -848,6 +850,15 @@ export default function KanbanPipeline({
           >
             {isAr ? 'محتاج قرار بس' : 'Needs a decision'}
           </Chip>
+          {leads.filter((l) => isOpenLead(l) && matchesType(l, 'broker')).length > 0 && (
+            <Chip
+              pressed={filterType === 'broker'}
+              count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'broker')).length}
+              onClick={() => setFilterType(filterType === 'broker' ? 'seller' : 'broker')}
+            >
+              {isAr ? 'وسطاء' : 'Brokers'}
+            </Chip>
+          )}
           {leads.filter((l) => isOpenLead(l) && matchesType(l, 'investor')).length > 0 && (
             <Chip
               pressed={filterType === 'investor'}

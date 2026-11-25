@@ -35,10 +35,19 @@ export const LISTING_STATUS_AR = {
 };
 
 /** The listing made from this client (the listing form saves it with the client's id as sourceLeadId) */
-export function listingByLead(properties = []) {
+export function listingByLead(properties = [], leads = []) {
   const map = new Map();
   for (const p of properties) {
     if (p?.sourceLeadId && !p.deleted && !map.has(String(p.sourceLeadId))) map.set(String(p.sourceLeadId), p);
+  }
+  if (Array.isArray(leads) && leads.length > 0) {
+    const propsById = new Map((properties || []).map((p) => [String(p.id), p]));
+    for (const l of leads) {
+      const propId = l?.convertedPropertyId || l?.details?.convertedPropertyId || l?.listingId;
+      if (propId && propsById.has(String(propId)) && !map.has(String(l.id))) {
+        map.set(String(l.id), propsById.get(String(propId)));
+      }
+    }
   }
   return map;
 }
@@ -63,6 +72,14 @@ export function leadSituation(lead = {}, listing = null) {
       kind: 'converted',
       tone: listing.status === 'sold' ? 'good' : 'info',
       label: `اتحوّل لعقار · ${LISTING_STATUS_AR[listing.status] || 'مسودة'}`
+    };
+  }
+  if (lead?.lostReason === 'property_rejected' || lead?.rejectionReason) {
+    return {
+      kind: 'converted_rejected',
+      tone: 'bad',
+      label: 'اتحوّل لعقار · تم رفضه من الإدارة',
+      at: lead.lostAt || lead.lastOutcomeAt || lead.updatedAt || null
     };
   }
   let last = outcomesOf(lead).at(-1);

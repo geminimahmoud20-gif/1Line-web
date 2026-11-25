@@ -88,6 +88,20 @@ test('lost leads only show under "lost", and are counted by reason', () => {
   assert.deepEqual(lostReasonCounts(crm), { price: 1 });
 });
 
+test('broker and investor filters isolate broker and investor clients properly', () => {
+  const sample = [
+    { id: 'l1', type: 'broker', status: 'new' },
+    { id: 'l2', type: 'investor', status: 'new' },
+    { id: 'l3', type: 'buyer', status: 'new' },
+    { id: 'l4', type: 'seller', status: 'new' },
+    { id: 'l5', status: 'lost', lostReason: 'property_rejected' }
+  ];
+  assert.deepEqual(ids(filterLeads(sample, { leadFilter: 'broker' })), ['l1']);
+  assert.deepEqual(ids(filterLeads(sample, { leadFilter: 'investor' })), ['l2']);
+  assert.deepEqual(ids(filterLeads(sample, { leadFilter: 'lost' })), ['l5']);
+  assert.deepEqual(lostReasonCounts(sample), { property_rejected: 1 });
+});
+
 test('first-reply wait: only untouched new leads, archived ones ignored', () => {
   assert.equal(waitingMs(crm[0], NOW), 5 * H);
   assert.equal(waitingMs(crm[1], NOW), 0);

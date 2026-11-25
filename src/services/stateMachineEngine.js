@@ -207,11 +207,11 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     // Transition to 'negotiating' requires property valuation or completed inspection
     if (targetStageId === 'negotiating' || targetStageId === 'proposal') {
       const details = lead.details || {};
-      const hasValuation = details.askingPrice || details.estimatedAvg || lead.siteVisit?.completed || lead.siteVisitReport || context.hasValuation;
+      const hasValuation = lead.askingPrice || details.askingPrice || details.expectedPrice || details.estimatedAvg || lead.siteVisit?.completed || lead.siteVisitReport || context.hasValuation;
       if (!hasValuation) {
         return {
           allowed: false,
-          deliverableKey: 'seller_valuation_report',
+          deliverableKey: 'seller_asking_price',
           missingDeliverable: 'المخرج الإلزامي: يلزم تسجيل تقرير معاينة وتقييم العقار أو الاتفاق على السعر قبل التفاوض على العقد.',
           reason: 'Missing seller property valuation or inspection'
         };

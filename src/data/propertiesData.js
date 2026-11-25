@@ -965,6 +965,26 @@ export const PROPERTIES_DATA = [
     projectYear: 2021,
     description_ar: 'فرصة استثمارية نادرة في مدينة طهطا بسوهاج، عقار تجاري سكني كامل بمحلات أرضية مؤجرة في أكبر مركز تجاري بالمحافظة.',
     description_en: 'Rare commercial investment building in Tahta, Sohag, with leased ground-floor shops plus residential space.'
+  },
+  {
+    id: 'prop-salah-rejected',
+    sourceLeadId: 'lead-salah-rejected',
+    title_ar: 'فيلا / تاون هاوس سوهاج الجديدة',
+    title_en: 'Villa / Townhouse New Sohag',
+    type: 'villa',
+    category: 'residential',
+    areaKey: 'new_sohag',
+    price: 12000000,
+    size: 450,
+    bedrooms: 5,
+    bathrooms: 4,
+    status: 'hidden',
+    approval: 'rejected',
+    rejectedAt: '2026-11-24T12:00:00.000Z',
+    rejectionReason: 'تم رفض العقار من قِبل الإدارة لوجود مخالفات بنائية في الردود',
+    images: ['https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1200&q=80'],
+    description_ar: 'فيلا مستقلة بسوهاج الجديدة، تم رفضها من الإدارة.',
+    description_en: 'Villa in New Sohag, rejected by management.'
   }
 ];
 
