@@ -59,10 +59,17 @@ export const PROPERTY_TYPE_NAMES = {
 
 export function getPropertyTypeDisplayName(propType, isAr = true) {
   if (!propType) return '';
-  const cleanKey = String(propType).trim().toLowerCase();
+  const cleanKey = String(propType).trim().toLowerCase().replace(/[-\s]+/g, '_');
   if (PROPERTY_TYPE_NAMES[cleanKey]) return isAr ? PROPERTY_TYPE_NAMES[cleanKey] : cleanKey;
+  if (cleanKey.includes('industrial')) return isAr ? 'أرض صناعية' : 'Industrial Land';
+  if (cleanKey.includes('agri') || cleanKey.includes('farm')) return isAr ? 'أرض زراعية' : 'Agricultural Land';
+  if (cleanKey.includes('villa')) return isAr ? 'فيلا / تاون هاوس' : 'Villa';
+  if (cleanKey.includes('apart')) return isAr ? 'شقة سكنية' : 'Apartment';
+  if (cleanKey.includes('land')) return isAr ? 'قطعة أرض' : 'Land';
+  if (cleanKey.includes('shop') || cleanKey.includes('retail') || cleanKey.includes('commercial')) return isAr ? 'محل تجاري' : 'Retail / Shop';
+  if (cleanKey.includes('office') || cleanKey.includes('admin')) return isAr ? 'مكتب إداري' : 'Office';
   if (/[؀-ۿ]/.test(propType)) return propType;
-  return cleanKey.replace(/_/g, ' ');
+  return isAr ? 'عقار متنوع' : cleanKey.replace(/_/g, ' ');
 }
 
 export const STAGE_CONFIG = {

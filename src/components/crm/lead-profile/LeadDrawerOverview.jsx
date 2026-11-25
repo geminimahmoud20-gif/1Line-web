@@ -424,7 +424,7 @@ export default function LeadDrawerOverview({
       <section className="crm-ld__block" aria-labelledby="crm-ld-call">
         <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('حصل إيه؟', 'What happened?')}</h3>
         <p className="crm-ld__hint">
-          {L('سجّل نتيجة آخر نشاط: ده اللي بيفتح المرحلة اللي بعدها.', 'Log the result of the last activity: it unlocks the next stage.')}
+          {L('سجّل نتيجة التواصل أو حدّد الخطوة القادمة لتحديث مسار العميل بسلاسة.', 'Log the activity outcome or next step to update stage smoothly.')}
           {attempts > 0 && ` ${L(`آخر ${attempts} محاولة بلا رد.`, `${attempts} tries without an answer.`)}`}
         </p>
         <div className="crm-ld__row">

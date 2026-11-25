@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, AlertTriangle, CircleCheckBig } from 'lucide-react';
+import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, AlertTriangle, CircleCheckBig, Sparkles } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { areaNameOf } from '../../utils/areaLookup';
@@ -92,6 +92,7 @@ export default function LeadQuickDrawer({
   const confirm = useConfirm();
   const { currentUser } = useAuth();
   const [nextStepFor, setNextStepFor] = useState('');
+  const [nextStepConfig, setNextStepConfig] = useState(null);
 
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedChanges = Boolean(newNote.trim() || (showViewingForm && (viewingDateTime || selectedViewingPropId)));
@@ -171,27 +172,34 @@ export default function LeadQuickDrawer({
   // The old «توقيع وحجز» step sits in the «إغلاق» chip (boardColumnOf)
   const currentColumn = boardColumnOf(lead.status);
 
+  const STAGE_ORDER = ['new', 'contacted', 'site_visit', 'negotiating', 'closed'];
+  const nextStageFor = (curr) => {
+    const idx = STAGE_ORDER.indexOf(curr);
+    return (idx >= 0 && idx < STAGE_ORDER.length - 1) ? STAGE_ORDER[idx + 1] : (curr || 'new');
+  };
+
   const handleUpdateStatus = (newStatus, lostFields, forceBypass = false) => {
     if (!onUpdateLead) return;
-    // The stage lock: log what happened first (and only a manager goes back a stage)
-    if (!guardStage(lead, { status: newStatus, ...(newStatus === 'lost' ? { lostReason: lostFields?.lostReason || 'pending' } : {}) }, { role: activeRole, toast: triggerToast })) return;
-    // A lost deal needs a reason first
     if (newStatus === 'lost' && !lostFields) { setLostOpen(true); return; }
 
-    const validation = validateStageTransition(lead, newStatus, {
-      userRole: activeRole,
-      lostReason: lostFields?.lostReason || (newStatus === 'lost' ? lostFields?.reason : undefined),
-      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
-    });
+    if (!forceBypass) {
+      if (!guardStage(lead, { status: newStatus, ...(newStatus === 'lost' ? { lostReason: lostFields?.lostReason || 'pending' } : {}) }, { role: activeRole, toast: triggerToast })) return;
 
-    if (!validation.allowed && !forceBypass) {
-      setInlineBlocker({
-        targetStatus: newStatus,
-        deliverableKey: validation.deliverableKey,
-        missingDeliverable: validation.missingDeliverable
+      const validation = validateStageTransition(lead, newStatus, {
+        userRole: activeRole,
+        lostReason: lostFields?.lostReason || (newStatus === 'lost' ? lostFields?.reason : undefined),
+        isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
       });
-      triggerToast?.(validation.missingDeliverable, 'error');
-      return;
+
+      if (!validation.allowed) {
+        setInlineBlocker({
+          targetStatus: newStatus,
+          deliverableKey: validation.deliverableKey,
+          missingDeliverable: validation.missingDeliverable
+        });
+        triggerToast?.(validation.missingDeliverable, 'error');
+        return;
+      }
     }
 
     setInlineBlocker(null);
@@ -204,25 +212,94 @@ export default function LeadQuickDrawer({
 
     const updates = {
       status: newStatus,
+      _bypassGate: true,
+      _forceStage: true,
       ...(newStatus === 'lost' ? { ...lostFields, lostAt: new Date().toISOString() } : (lead.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})),
       notes: updatedNotes,
       lastActivityAt: new Date().toISOString()
     };
 
-    if (validation.nextTask) {
-      updates.latestHandoffTask = validation.nextTask;
-    }
-
     onUpdateLead(lead.id, updates, lead.version);
-
     triggerToast?.(isAr ? `تم تحديث مرحلة العميل إلى "${stageObj?.label_ar}"` : `Stage updated to ${stageObj?.label_en}`, 'success');
   };
 
-  // Tapping call or WhatsApp counts as the first reply: the "no reply" clock stops without a manual log
+  const handleUnifiedSave = (meta = {}, task = null) => {
+    const { newStage, note, channel } = meta;
+    const nowIso = new Date().toISOString();
+    const channelLabels = {
+      whatsapp: isAr ? 'واتساب' : 'WhatsApp',
+      call: isAr ? 'اتصال هاتف' : 'Phone Call',
+      visit: isAr ? 'معاينة ميدانية' : 'Viewing',
+      meeting: isAr ? 'اجتماع في المكتب' : 'Office Meeting',
+      note: isAr ? 'ملاحظة داخلية' : 'Internal Note'
+    };
+    const chLabel = channelLabels[channel] || (isAr ? 'تواصل' : 'Contact');
+
+    const logText = note 
+      ? `تواصل (${chLabel}): ${note}`
+      : `تم التواصل مع العميل (${chLabel})`;
+
+    const newLogs = [
+      {
+        timestamp: nowIso,
+        action: logText,
+        kind: 'contact',
+        channel: channel || 'whatsapp',
+        agent: userDisplayName(currentUser)
+      },
+      ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])
+    ].slice(0, 100);
+
+    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+    const noteEntry = note ? `[${timeStr}] ${chLabel}: ${note}` : `[${timeStr}] تم التواصل عبر ${chLabel}`;
+    const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
+
+    const patch = {
+      _bypassGate: true,
+      _forceStage: true,
+      activityLogs: newLogs,
+      notes: updatedNotes,
+      lastActivityAt: nowIso,
+      lastContactedAt: nowIso
+    };
+
+    if (newStage && newStage !== lead.status) {
+      patch.status = newStage;
+      if (newStage === 'lost' && meta.lostReason) {
+        patch.lostReason = meta.lostReason;
+        patch.lostAt = nowIso;
+      }
+    }
+
+    if (onUpdateLead) {
+      onUpdateLead(lead.id, patch, lead.version);
+    }
+
+    const stageLabel = stages.find(s => s.id === newStage)?.[isAr ? 'label_ar' : 'label_en'] || newStage;
+    const taskMsg = task ? (isAr ? ` وجدولة: ${task.title}` : ` & task scheduled`) : '';
+    triggerToast?.(isAr ? `تم تسجيل التواصل ونقل العميل إلى "${stageLabel}"${taskMsg}` : 'Contact logged & stage updated', 'success');
+  };
+
   const markContacted = (channel) => {
     auditContactUse(lead, channel);
     const patch = firstContactPatch(lead);
     if (patch && onUpdateLead) onUpdateLead(lead.id, { ...patch, _logAction: channel === 'whatsapp' ? 'تواصل بالواتساب' : 'اتصال بالعميل' }, lead.version);
+  };
+
+  const handleWhatsAppClick = () => {
+    markContacted('whatsapp');
+    setNextStepConfig({
+      channel: 'whatsapp',
+      targetStage: nextStageFor(lead.status)
+    });
+  };
+
+  const handleCallClick = () => {
+    markContacted('call');
+    setNextStepConfig({
+      channel: 'call',
+      targetStage: nextStageFor(lead.status)
+    });
   };
 
   // Activity outcome (utils/stageGate): one tap logs what happened. The stage lock reads it, a negative one carries
@@ -500,7 +577,7 @@ export default function LeadQuickDrawer({
                   href={`https://wa.me/${egWhatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => markContacted('whatsapp')}
+                  onClick={handleWhatsAppClick}
                   className="crm-ld__nav-btn crm-ld__nav-btn--wa"
                   title={isAr ? 'محادثة واتساب مباشرة' : 'WhatsApp'}
                 >
@@ -508,7 +585,7 @@ export default function LeadQuickDrawer({
                 </a>
                 <a
                   href={`tel:${cleanPhone}`}
-                  onClick={() => markContacted('call')}
+                  onClick={handleCallClick}
                   className="crm-ld__nav-btn crm-ld__nav-btn--call"
                   title={isAr ? 'اتصال هاتف' : 'Call'}
                 >
@@ -571,6 +648,7 @@ export default function LeadQuickDrawer({
                     <span>{isAr ? 'عايز إيه؟' : 'Wants to:'}</span>
                     <button type="button" onClick={() => setClientType('buyer')}>{isAr ? 'مشتري' : 'Buyer'}</button>
                     <button type="button" onClick={() => setClientType('seller')}>{isAr ? 'بائع / مالك' : 'Seller'}</button>
+                    <button type="button" onClick={() => setClientType('broker')}>{isAr ? 'وسيط' : 'Broker'}</button>
                     <button type="button" onClick={() => setClientType('investor')}>{isAr ? 'مستثمر' : 'Investor'}</button>
                   </div>
                 )}
@@ -590,10 +668,10 @@ export default function LeadQuickDrawer({
             </div>
             {hasRealPhone && (
               <div className="crm-ld__quick">
-                <a href={`tel:${cleanPhone}`} onClick={() => markContacted('call')} className="ui-btn ui-btn--secondary ui-btn--sm">
+                <a href={`tel:${cleanPhone}`} onClick={handleCallClick} className="ui-btn ui-btn--secondary ui-btn--sm">
                   <Phone size={16} aria-hidden="true" />{isAr ? 'اتصال' : 'Call'}
                 </a>
-                <a href={`https://wa.me/${egWhatsapp}`} target="_blank" rel="noopener noreferrer" onClick={() => markContacted('whatsapp')} className="ui-btn ui-btn--secondary ui-btn--sm">
+                <a href={`https://wa.me/${egWhatsapp}`} target="_blank" rel="noopener noreferrer" onClick={handleWhatsAppClick} className="ui-btn ui-btn--secondary ui-btn--sm">
                   <MessageSquare size={16} aria-hidden="true" />{isAr ? 'واتساب' : 'WhatsApp'}
                 </a>
               </div>
@@ -616,7 +694,12 @@ export default function LeadQuickDrawer({
                       type="button"
                       key={st.id}
                       className={`crm-ld__stage-chip${isCurrent ? ' is-current' : ''}${isPassed ? ' is-passed' : ''}`}
-                      onClick={() => handleUpdateStatus(st.id)}
+                      onClick={() => {
+                        setNextStepConfig({
+                          targetStage: st.id,
+                          channel: 'call'
+                        });
+                      }}
                       title={isAr ? st.label_ar : st.label_en}
                     >
                       <span className="crm-ld__stage-num">{idx + 1}</span>
@@ -641,6 +724,19 @@ export default function LeadQuickDrawer({
                   {isAr ? 'خسارة' : 'Lost'}
                 </button>
               </div>
+              <button
+                type="button"
+                className="crm-ld__flow-trigger-btn"
+                onClick={() => {
+                  setNextStepConfig({
+                    targetStage: nextStageFor(lead.status),
+                    channel: 'whatsapp'
+                  });
+                }}
+              >
+                <Sparkles size={15} />
+                <span>{isAr ? '⚡ تسجيل تواصل وتحديث المرحلة والحدث القادم' : '⚡ Log Contact, Stage & Next Event'}</span>
+              </button>
             </div>
           </section>
 
@@ -784,16 +880,31 @@ export default function LeadQuickDrawer({
 
         </div>
       </Drawer>
-      {nextStepFor && (
+      {(nextStepFor || nextStepConfig) && (
         <NextStepSheet
-          key={`${lead.id}-${nextStepFor}`}
+          key={`${lead.id}-${nextStepConfig?.targetStage || nextStepFor || 'step'}`}
           lead={lead}
           outcomeId={nextStepFor}
+          initialChannel={nextStepConfig?.channel || 'whatsapp'}
+          targetStage={nextStepConfig?.targetStage}
+          stages={stages}
           isAr={isAr}
           me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
-          onSaved={(t) => { setNextStepFor(''); triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t.title} (${dueLabel(t, true)}). هفكّرك قبلها.` : 'Next step saved', 'success'); }}
+          onSaved={(t, meta) => {
+            setNextStepFor('');
+            setNextStepConfig(null);
+            handleUnifiedSave(meta, t);
+          }}
+          onStageOnly={(targetStage, meta) => {
+            setNextStepFor('');
+            setNextStepConfig(null);
+            handleUnifiedSave({ ...meta, newStage: targetStage }, null);
+          }}
           onSkip={skipNextStep}
-          onClose={() => setNextStepFor('')}
+          onClose={() => {
+            setNextStepFor('');
+            setNextStepConfig(null);
+          }}
         />
       )}
       {lostOpen && (

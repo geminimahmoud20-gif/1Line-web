@@ -16,6 +16,7 @@ import {
   generateWhatsAppMessage, 
   formatWhatsAppPhone 
 } from '../../utils/matchingEngine';
+import { sourceText } from '../../utils/crmLabels';
 
 export default function WhatsAppMatchNotifierModal({
   isOpen,
@@ -479,7 +480,7 @@ export default function WhatsAppMatchNotifierModal({
 
                       <div style={{ display: 'flex', gap: '12px', marginTop: '3px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>
                         <span>📱 {client.phone}</span>
-                        <span>🏷️ {client.source}</span>
+                        <span>🏷️ {sourceText(client.source)}</span>
                         {client.leadBudget > 0 && <span>💰 ميزانية: {client.leadBudget.toLocaleString('en-US')} ج.م</span>}
                       </div>
 

@@ -15,6 +15,7 @@ export const KINDS = [
   { id: 'call', ar: 'اتصال', en: 'Call' },
   { id: 'whatsapp', ar: 'واتساب', en: 'WhatsApp' },
   { id: 'visit', ar: 'معاينة', en: 'Viewing' },
+  { id: 'meeting', ar: 'اجتماع في المكتب', en: 'Office Meeting' },
   { id: 'docs', ar: 'أوراق', en: 'Papers' },
   { id: 'other', ar: 'أخرى', en: 'Other' }
 ];

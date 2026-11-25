@@ -60,6 +60,12 @@ const SOURCE_TEXT = [
   [/^google$/i, 'جوجل'],
   [/^tiktok$/i, 'تيك توك'],
   [/^(import|csv|excel)/i, 'استيراد ملف'],
+  [/^buyer_?instants?$/i, 'ترشيح عقار فوري'],
+  [/^seller_?instants?$/i, 'تسجيل عقار فوري'],
+  [/^special_requests?$/i, 'طلب عقار VIP'],
+  [/^bespoke_requests?$/i, 'طلب عقار VIP'],
+  [/^instant_quote$/i, 'طلب تسعير فوري'],
+  [/^demands?$/i, 'طلب شراء معلن'],
   [/^client_account$/i, 'حساب عميل']
 ];
 

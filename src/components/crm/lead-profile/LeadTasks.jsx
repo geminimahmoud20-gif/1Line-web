@@ -51,7 +51,7 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
     <section className="crm-ld__block" aria-labelledby="crm-ld-tasks">
       <div className="crm-ld__block-head">
         <h3 id="crm-ld-tasks" className="crm-ld__h"><ListChecks size={16} aria-hidden="true" />{title || (isAr ? 'مهام العميل' : 'Client tasks')}</h3>
-        {open.length > 0 && <Badge tone="accent">{open.length}</Badge>}
+        {open.length > 0 && <Badge tone="accent">{isAr ? `${open.length} مهام مجدولة` : `${open.length} tasks`}</Badge>}
       </div>
       {open.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>

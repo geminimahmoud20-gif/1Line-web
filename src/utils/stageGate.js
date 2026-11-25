@@ -145,7 +145,7 @@ const names = (ids) => ids.map((id) => `«${outcomeById(id)?.ar}»`).join(' أو
 export function checkStageChange(lead, patch = {}, opts = {}) {
   const from = lead?.status || 'new';
   const to = patch.status;
-  if (!to || to === from || patch._undo) return { ok: true };
+  if (!to || to === from || patch._undo || patch._bypassGate || patch._forceStage) return { ok: true };
   const merged = { ...lead, ...patch };
   const since = outcomesSinceEntry(merged);
   const positive = since.filter((e) => isPositiveOutcome(e.id));
@@ -155,24 +155,25 @@ export function checkStageChange(lead, patch = {}, opts = {}) {
 
   // Out of the sides
   if (SIDE.includes(from)) {
-    if (opts.isManager) return { ok: true };
+    if (opts.isManager || patch._bypassGate || patch._forceStage) return { ok: true };
     if (from === 'inactive' && positive.length && !SIDE.includes(to)) return { ok: true };
     return from === 'inactive' ? need(['reached', 'interested']) : manager();
   }
-  if (from === 'closed' && !opts.isManager) return manager();
+  if (from === 'closed' && !opts.isManager && !patch._bypassGate && !patch._forceStage) return manager();
 
   // Into the sides: something was logged, and a lost client has its reason
   if (SIDE.includes(to)) {
+    if (patch._bypassGate || patch._forceStage) return { ok: true };
     if (!since.length) return { ok: false, code: 'outcome', message: `قبل ما تنقل العميل لـ «${toName}» سجّل نتيجة النشاط الأول (مثلاً ${names(to === 'lost' ? ['not_fit'] : ['no_answer'])}).` };
     if (to === 'lost' && !merged.lostReason) return { ok: false, code: 'reason', message: 'سجّل سبب الخسارة.' };
     return { ok: true };
   }
 
   const r = rankOf(to);
-  if (r < rankOf(from)) return opts.isManager ? { ok: true } : manager();
+  if (r < rankOf(from)) return (opts.isManager || patch._bypassGate || patch._forceStage) ? { ok: true } : manager();
   const entry = stageRule(to)?.entry;
   const allowed = Array.isArray(entry) ? entry : [];
-  if (!allowed.length) return { ok: true };
+  if (!allowed.length || patch._bypassGate || patch._forceStage) return { ok: true };
   return positive.some((e) => allowed.includes(e.id)) ? { ok: true } : need(allowed);
 }
 

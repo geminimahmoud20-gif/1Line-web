@@ -99,6 +99,34 @@
 }
 .crm-ld__lost[aria-pressed='true'] { background: var(--ui-danger); border-color: var(--ui-danger); color: var(--ui-on-danger); }
 
+.crm-ld__flow-trigger-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #D4AF37;
+  background: linear-gradient(135deg, #0B1C36 0%, #16305A 100%);
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(11, 28, 54, 0.15);
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+.crm-ld__flow-trigger-btn:hover {
+  background: linear-gradient(135deg, #16305A 0%, #0B1C36 100%);
+  box-shadow: 0 4px 14px rgba(11, 28, 54, 0.25);
+  transform: translateY(-1px);
+}
+.crm-ld__flow-trigger-btn svg {
+  color: #D4AF37;
+}
+
 .crm-ld__h { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
 .crm-ld__h svg { color: var(--ui-text-3); }
 .crm-ld__hint { margin: 0; font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text-3); }

@@ -60,15 +60,15 @@
 }
 .crm-kanban__topscroll { display: none !important; }
 .crm-kanban__search {
-  flex: 0 1 200px; min-width: 130px; max-width: 240px; display: flex; align-items: center; gap: var(--ui-s-2);
-  height: 36px; padding: 0 var(--ui-s-2);
-  background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md, 8px); color: var(--ui-text-3);
-  transition: all 0.15s ease;
+  flex: 0 1 220px; min-width: 140px; max-width: 260px; display: flex; align-items: center; gap: var(--ui-s-2);
+  height: 36px; padding: 0 12px;
+  background: #ffffff; border: 1px solid rgba(20, 43, 73, 0.15); border-radius: var(--ui-r-md, 8px); color: #64748B;
+  transition: all 0.2s ease;
 }
 .crm-kanban__search:focus-within {
-  border-color: var(--ui-accent, #d97706);
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
-  color: var(--ui-text);
+  border-color: #0B1C36;
+  box-shadow: 0 0 0 3px rgba(11, 28, 54, 0.08);
+  color: #0B1C36;
 }
 .crm-kanban__search input {
   flex: 1; min-width: 0; height: 100%; border: none !important; outline: none !important; box-shadow: none !important;
