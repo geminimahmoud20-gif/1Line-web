@@ -352,6 +352,14 @@ export default function CrmSidebar({
   }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests, tasksBadge, chatBadge]);
 
   const handleItemClick = (id) => {
+    if (id !== 'properties' && typeof window !== 'undefined' && window.__oneline_is_editing_property) {
+      const ok = window.confirm(
+        isAr
+          ? 'لديك شاشة إدخال عقار مفتوحة. هل تود الانتقال؟ (سيتم حفظ مسودتك تلقائياً لاسترجاعها عند العودة)'
+          : 'You have a property form open. Navigate away? (Your draft is saved automatically).'
+      );
+      if (!ok) return;
+    }
     setActiveTab(id);
     if (onCloseMobile) onCloseMobile();
   };

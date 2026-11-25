@@ -384,3 +384,36 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     nextTask
   };
 }
+
+/**
+ * Transforms an inter-departmental handoff deliverable into an actionable CRM Task in crm_tasks collection.
+ */
+export function handoffToCrmTask(nextTask, lead = {}, currentUser = {}) {
+  if (!nextTask) return null;
+  const deptLabelsAr = {
+    ops: 'إدارة العمليات',
+    inventory: 'قسم حصر وتثمين العقارات',
+    sales: 'فريق المبيعات',
+    marketing: 'فريق التسويق',
+    founder: 'الإدارة العليا / المؤسس'
+  };
+  const dept = deptLabelsAr[nextTask.toDept] || nextTask.toDept || 'الفريق المختص';
+  const due = nextTask.dueAt ? nextTask.dueAt.slice(0, 10) : new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  return {
+    title: `[تسليم ${dept}] ${nextTask.name}`,
+    note: `إحالة رسمية بين الإدارات: من ${deptLabelsAr[nextTask.fromDept] || nextTask.fromDept} إلى ${dept}. مهلة الإنجاز: ${nextTask.slaHours || 24} ساعة.`,
+    dueAt: due,
+    priority: (nextTask.slaHours && nextTask.slaHours <= 24) ? 'high' : 'normal',
+    status: 'open',
+    kind: 'other',
+    leadId: String(lead.id || nextTask.relatedEntityId || ''),
+    leadName: String(lead.name || 'عميل').slice(0, 40),
+    assigneeUid: String(currentUser?.uid || 'system'),
+    assigneeName: dept,
+    createdBy: String(currentUser?.uid || 'system'),
+    createdByName: String(currentUser?.displayName || '1Line OS'),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+}
+

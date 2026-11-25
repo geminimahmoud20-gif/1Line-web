@@ -12,7 +12,8 @@ import { ownerMessageFor } from '../../utils/ownerMessages';
 import { clientRoleOf } from '../../utils/clientRole';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
-import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
+import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
+import { addTask } from '../../firebaseLazy';
 import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip, Button, useConfirm } from '../ui';
@@ -448,6 +449,10 @@ export default function KanbanPipeline({
         };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
+          const crmTask = handoffToCrmTask(validation.nextTask, targetLead, currentUser);
+          if (crmTask) {
+            addTask(crmTask).catch(() => {});
+          }
         }
         onUpdateLead(leadId, updates, targetLead.version);
 

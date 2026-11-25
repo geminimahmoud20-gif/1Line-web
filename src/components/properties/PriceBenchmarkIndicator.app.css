@@ -52,3 +52,117 @@
 .gauge-pointer {
   user-select: none;
 }
+.pill-owner {
+  background: rgba(197, 160, 89, 0.14);
+  color: #7c5e30;
+  border: 1px solid rgba(197, 160, 89, 0.35);
+}
+.owner-transparency-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(197, 160, 89, 0.08);
+  border: 1px solid rgba(197, 160, 89, 0.32);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.owner-transparency-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.owner-transparency-body {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.owner-transparency-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+.owner-offer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #0b1c36;
+  background: #0b1c36;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.owner-offer-btn:hover {
+  opacity: 0.92;
+}
+.owner-alt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(11, 28, 54, 0.22);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.owner-offer-form {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-light);
+  display: grid;
+  gap: 10px;
+}
+.owner-offer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.owner-offer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.owner-offer-field input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  font: inherit;
+  font-size: 0.84rem;
+  background: var(--bg-page, #ffffff);
+  color: var(--text-primary);
+}
+.owner-offer-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .benchmark-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

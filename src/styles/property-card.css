@@ -367,16 +367,34 @@ html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; 
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 5px;
   margin-top: -2px;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
   color: #0B7A45;
   background: rgba(15, 157, 88, 0.1);
 }
+.pcx-insight.is-fair {
+  color: #1D4ED8;
+  background: rgba(29, 78, 216, 0.08);
+  border: 1px solid rgba(29, 78, 216, 0.16);
+}
+.pcx-insight.is-owner {
+  color: var(--pcx-gold-text);
+  background: var(--pcx-gold-soft);
+  border: 1px solid rgba(197, 160, 89, 0.3);
+}
+.pcx-insight-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
 .dark-theme .pcx-insight, :root[data-theme="dark"] .pcx-insight { color: #4ADE80; background: rgba(74, 222, 128, 0.1); }
+.dark-theme .pcx-insight.is-fair, :root[data-theme="dark"] .pcx-insight.is-fair { color: #93C5FD; background: rgba(59, 130, 246, 0.14); border-color: rgba(147, 197, 253, 0.25); }
+.dark-theme .pcx-insight.is-owner, :root[data-theme="dark"] .pcx-insight.is-owner { color: #E9D29A; background: rgba(217, 185, 126, 0.14); border-color: rgba(217, 185, 126, 0.3); }
 
 /* ── Quick Highlights row under price ──────────────────────── */
 .pcx-highlights {

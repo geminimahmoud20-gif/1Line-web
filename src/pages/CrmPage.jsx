@@ -400,6 +400,18 @@ export default function CrmPage({
     if (typeof navigator === 'undefined' || !navigator.serviceWorker) return undefined;
     const onMessage = (e) => {
       if (e.data?.type !== 'oneline_open') return;
+      // Protect active property input from being closed by background notification clicks
+      if (typeof window !== 'undefined' && window.__oneline_is_editing_property) {
+        if (triggerToast) {
+          triggerToast(
+            lang === 'ar'
+              ? 'وصل إشعار عميل جديد. تم الإبقاء على شاشة إدخال العقار لحماية بياناتك من الضياع.'
+              : 'New lead alert received. Maintained property form to protect unsaved work.',
+            'info'
+          );
+        }
+        return;
+      }
       const params = new URLSearchParams(String(e.data.url || '').split('?')[1] || '');
       const lead = e.data.leadId || params.get('lead');
       if (lead) setLeadToOpen(String(lead));
@@ -407,11 +419,26 @@ export default function CrmPage({
     };
     navigator.serviceWorker.addEventListener('message', onMessage);
     return () => navigator.serviceWorker.removeEventListener('message', onMessage);
-  }, []);
+  }, [lang, triggerToast]);
   useEffect(() => {
     if (!crmAuthenticated || !leadToOpen) return undefined;
+    if (typeof window !== 'undefined' && window.__oneline_is_editing_property) {
+      // Don't switch tab away while user is actively entering a property
+      return undefined;
+    }
     const lead = visibleLeads.find((l) => String(l.id) === leadToOpen);
-    if (!lead) return undefined;
+    if (!lead) {
+      // Clean up lingering leadToOpen after short wait if lead does not exist so it doesn't linger as a dormant trap
+      const timeout = setTimeout(() => {
+        setLeadToOpen('');
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('lead');
+          window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+        } catch {}
+      }, 3500);
+      return () => clearTimeout(timeout);
+    }
     // Switch to the leads screen, then open the lead once that screen listens for the event
     let opener = 0;
     const switcher = setTimeout(() => {

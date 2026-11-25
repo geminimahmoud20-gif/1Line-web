@@ -26,6 +26,7 @@ import '../styles/light-headers.css';
 import LandingLinks from '../components/properties/LandingLinks';
 import { inArea } from '../utils/areaLookup';
 import { blockedByApproval } from '../utils/publishApproval';
+import { evaluateListingPricing } from '../utils/pricingEvaluation';
 import './PropertiesPage.app.css';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
@@ -66,6 +67,7 @@ export default function PropertiesPage({
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
+  const [marketAlignedOnly, setMarketAlignedOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 9;
 
@@ -130,9 +132,9 @@ export default function PropertiesPage({
   }
 
   // Reset pagination on filter or sort change without cascading effect renders
-  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy, familyFilter });
-  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy || prevFilterState.familyFilter !== familyFilter) {
-    setPrevFilterState({ filters, sortBy, familyFilter });
+  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy, familyFilter, marketAlignedOnly });
+  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy || prevFilterState.familyFilter !== familyFilter || prevFilterState.marketAlignedOnly !== marketAlignedOnly) {
+    setPrevFilterState({ filters, sortBy, familyFilter, marketAlignedOnly });
     setCurrentPage(1);
   }
 
@@ -157,6 +159,7 @@ export default function PropertiesPage({
 
   const handleResetFilters = () => {
     setMapBounds(null);
+    setMarketAlignedOnly(false);
     setFilters({
       query: '',
       type: 'all',
@@ -300,6 +303,11 @@ export default function PropertiesPage({
         }
       }
 
+      if (marketAlignedOnly) {
+        const evalRes = evaluateListingPricing(prop, { lang, allListings: safeProperties });
+        if (evalRes.isOwnerPriced) return false;
+      }
+
       return true;
     }).sort((a, b) => {
       if (sortBy === 'price_asc') return a.price - b.price;
@@ -309,9 +317,14 @@ export default function PropertiesPage({
       if (a._semanticScore !== undefined && b._semanticScore !== undefined && a._semanticScore !== b._semanticScore) {
         return b._semanticScore - a._semanticScore;
       }
-      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+      const featDiff = (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+      if (featDiff !== 0) return featDiff;
+      // In default ranking, market-aligned & opportunity units appear before owner-priced units
+      const aOwner = evaluateListingPricing(a, { lang, allListings: safeProperties }).isOwnerPriced ? 1 : 0;
+      const bOwner = evaluateListingPricing(b, { lang, allListings: safeProperties }).isOwnerPriced ? 1 : 0;
+      return aOwner - bOwner;
     });
-  }, [safeProperties, filters, sortBy, familyFilter]);
+  }, [safeProperties, filters, sortBy, familyFilter, marketAlignedOnly, lang]);
 
   // Map view: "ابحث في المنطقة دي" limits the list to what the map shows
   const [mapBounds, setMapBounds] = useState(null);
@@ -391,9 +404,9 @@ export default function PropertiesPage({
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
           totalResults={filteredProperties.length}
-          extraActive={familyFilter !== 'all' ? 1 : 0}
+          extraActive={(familyFilter !== 'all' ? 1 : 0) + (marketAlignedOnly ? 1 : 0)}
           extra={(
-            <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات بيت العيلة' : 'Family categories'}>
+            <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات سريعة' : 'Quick categories'}>
               <span className="xs-family-chips-label"><Users size={14} aria-hidden="true" /> {lang === 'ar' ? 'بيت العيلة:' : 'Family hub:'}</span>
               <button type="button" className={familyFilter === 'all' ? 'is-on' : ''} onClick={() => setFamilyFilter('all')} aria-pressed={familyFilter === 'all'}>
                 {lang === 'ar' ? 'الكل' : 'All'}
@@ -403,6 +416,15 @@ export default function PropertiesPage({
                   {lang === 'ar' ? k.ar : k.en}
                 </button>
               ))}
+              <button
+                type="button"
+                className={marketAlignedOnly ? 'is-on' : ''}
+                onClick={() => setMarketAlignedOnly((v) => !v)}
+                aria-pressed={marketAlignedOnly}
+                title={lang === 'ar' ? 'عرض الوحدات المتوافقة مع السعر المرجعي فقط' : 'Show only units aligned with market reference price'}
+              >
+                {lang === 'ar' ? 'أسعار متوافقة مع السوق' : 'Market-aligned prices'}
+              </button>
             </nav>
           )}
         />

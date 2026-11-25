@@ -139,7 +139,20 @@ export function announceNewLeads(leads, { isAr = true, toast } = {}) {
     body: text,
     tag: `lead-${first.id}`,
     data: { url: `/crm?lead=${encodeURIComponent(first.id)}`, leadId: String(first.id) },
-    onClick: () => window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: first.id, lead: first } }))
+    onClick: () => {
+      if (typeof window !== 'undefined' && window.__oneline_is_editing_property) {
+        if (typeof toast === 'function') {
+          toast(
+            isAr
+              ? 'وصل إشعار عميل جديد. تم الإبقاء على شاشة إدخال العقار لحماية بياناتك من الإلغاء.'
+              : 'New lead alert. Preserved property form to protect unsaved work.',
+            'info'
+          );
+        }
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: first.id, lead: first } }));
+    }
   });
 }
 

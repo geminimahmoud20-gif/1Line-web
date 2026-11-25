@@ -32,7 +32,9 @@ import {
   ArrowUpDown,
   Car,
   Trees,
-  Landmark
+  Landmark,
+  CheckCircle2,
+  Tag
 } from 'lucide-react';
 import { cardFeatures } from '../../utils/buildingFeatures';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -46,6 +48,8 @@ import { listingBadges } from '../../utils/listingBadges';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { paymentTerms, planSummary } from '../../utils/paymentTerms';
 import { getQuickHighlights } from '../../utils/propertyHighlights';
+import { evaluateListingPricing } from '../../utils/pricingEvaluation';
+import { useOptionalProperties } from '../../context/PropertiesContext';
 
 const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
@@ -120,6 +124,7 @@ export default function PropertyCard({
   const touchStartX = useRef(null);
   const swiped = useRef(false);
   const { openRemoteInspection } = useUIModal();
+  const propsCtx = useOptionalProperties();
 
   if (!property) return null;
 
@@ -137,19 +142,13 @@ export default function PropertyCard({
   const plan = offer ? null : planSummary(terms, (n) => `${fmt(n)} ${isAr ? 'ج.م' : 'EGP'}`, isAr);
   const priceData = formatCurrencyPrice(offer ? offer.price : (plan ? (plan.now ? plan.now.amount : terms.amount) : property.price), currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
+  const pricing = evaluateListingPricing(property, { lang, allListings: propsCtx?.properties });
   const detailsUrl = `/properties/${property.id}`;
   const quickHighlights = getQuickHighlights(property, isAr);
 
   // Multi-unit / whole building detection
   const isMultiUnit = isMultiUnitOrBuilding(property);
   const unitBreakdown = isMultiUnit ? (benchmark?.unitBreakdown || parseUnitBreakdown(property, isAr)) : null;
-
-  // "Below area average" chip: only for single residential/commercial units when under district benchmark
-  const belowAvgPct = (() => {
-    if (isMultiUnit) return 0;
-    const m = benchmark?.badgeType === 'deal' && /(\d+)%/.exec(benchmark.badgeLabel || '');
-    return m ? Number(m[1]) : 0;
-  })();
 
   // At most two chips on the photo: availability (متاح / قيد التفاوض / تم البيع) and one more,
   // a private deal or the review badge. Each is switched on or off per listing in the CRM.
@@ -482,10 +481,22 @@ export default function PropertyCard({
           </div>
         )}
 
-        {!offer && belowAvgPct > 0 && (
-          <span className="pcx-insight" title={isAr ? 'مقارنة استرشادية بمتوسط سعر المتر في المنطقة' : 'Indicative, vs. the district average price per m²'}>
-            <TrendingDown size={13} strokeWidth={2} aria-hidden="true" />
-            <span>{isAr ? `أقل ${belowAvgPct}% من متوسط المنطقة` : `${belowAvgPct}% below area average`}</span>
+        {!offer && pricing.cardBadge && (
+          <span
+            className={`pcx-insight is-${pricing.cardBadge.tone}`}
+            title={pricing.cardBadge.hint}
+          >
+            {pricing.cardBadge.tone === 'opportunity' ? (
+              <TrendingDown size={13} strokeWidth={2} aria-hidden="true" />
+            ) : pricing.cardBadge.tone === 'fair' ? (
+              <CheckCircle2 size={13} strokeWidth={2} aria-hidden="true" />
+            ) : (
+              <Tag size={12} strokeWidth={2} aria-hidden="true" />
+            )}
+            <span>{pricing.cardBadge.label}</span>
+            {pricing.cardBadge.sublabel && (
+              <small className="pcx-insight-sub">· {pricing.cardBadge.sublabel}</small>
+            )}
           </span>
         )}
 

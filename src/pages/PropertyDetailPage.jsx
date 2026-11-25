@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame, Maximize2, BedDouble, Bath } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame, Maximize2, BedDouble, Bath, Tag } from 'lucide-react';
 import { keyFacts } from '../utils/keyFacts';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import usePropertyEngagement from '../hooks/usePropertyEngagement';
@@ -26,6 +26,7 @@ import { updatePageSeo, buildPropertySchema, buildBreadcrumbSchema, injectJsonLd
 import { listingSeoTitle } from '../utils/seoShell';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding } from '../utils/currencyAndBenchmark';
+import { evaluateListingPricing } from '../utils/pricingEvaluation';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
 import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
@@ -257,6 +258,7 @@ export default function PropertyDetailPage({
     // Elevator and parking show with the building facts in the specs card
   ].filter((u) => String(u.value || '').trim() !== '');
   const benchmark = getPriceBenchmark(property, lang);
+  const pricing = evaluateListingPricing(property, { lang, allListings: properties });
   // The plan from CRM → طريقة السداد, shown under the price; cash listings show nothing extra
   // A plan (installments / resale with installments left) leads with what is paid now, then the
   // installments, then the total; a cash listing shows its price
@@ -378,13 +380,25 @@ export default function PropertyDetailPage({
           </span>
         </>
       )}
-      {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
-      {benchmark && benchmark.badgeType !== 'premium' && (
+      {/* Owner-priced listings show a transparent, clickable pill; market-aligned listings keep their positive/fair pill */}
+      {pricing.isOwnerPriced ? (
+        <button
+          type="button"
+          className="benchmark-hero-pill is-premium"
+          onClick={() => {
+            setActiveTab('valuation');
+            setTimeout(() => document.getElementById('pd-tabpanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+          }}
+          title={pricing.cardBadge?.hint}
+          style={{ cursor: 'pointer' }}
+        >
+          <Tag size={13} />
+          <span>{isAr ? 'تسعير المالك · قدّم عرضك' : 'Owner-priced · Make an offer'}</span>
+        </button>
+      ) : benchmark && benchmark.badgeType !== 'premium' && (
         <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
           {benchmark.badgeType === 'deal' ? (
             <TrendingDown size={13} />
-          ) : benchmark.badgeType === 'premium' ? (
-            <Sparkles size={13} />
           ) : benchmark.badgeType === 'building' ? (
             <Building2 size={13} />
           ) : (
@@ -659,6 +673,8 @@ export default function PropertyDetailPage({
                     property={property}
                     lang={lang}
                     currency={currency}
+                    onSubmitOffer={onAddNewLead}
+                    triggerToast={triggerToast}
                   />
 
                   {/* 📈 Historical Price Trends & Capital Growth Chart */}

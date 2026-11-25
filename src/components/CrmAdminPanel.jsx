@@ -218,6 +218,9 @@ export const CrmAdminPanel = ({
   useEffect(() => {
     let cancelled = false;
     const handleOpenFromEvent = async (e) => {
+      if (typeof window !== 'undefined' && window.__oneline_is_editing_property) {
+        return;
+      }
       const targetLead = e.detail?.lead || leads.find((l) => l.id === e.detail?.leadId);
       if (targetLead) {
         setQuickDrawerLead(targetLead);

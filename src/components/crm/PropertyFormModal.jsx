@@ -7,6 +7,7 @@ import BuildingFieldsEditor from './BuildingFieldsEditor';
 import HandoverFieldsEditor from './HandoverFieldsEditor';
 import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
+import { PRICING_MODE_OPTIONS } from '../../utils/pricingEvaluation';
 import PhotoManager from './PhotoManager';
 import ListingContactFields from './ListingContactFields';
 import { FormStep, FormChecklist } from './PropertyFormSteps';
@@ -41,16 +42,38 @@ export default function PropertyFormModal({
   setForm,
   setShowAddModal,
   setShowMapPicker,
-  uploadProgressText
+  uploadProgressText,
+  draftAvailable = null,
+  onRestoreDraft,
+  onDiscardDraft
 }) {
   const confirm = useConfirm();
   const areaKnown = Boolean(form?.areaKey) && areas.some((a) => a.id === form.areaKey && a.id !== 'all');
   const hasDirtyContent = Boolean(
     (form?.title && String(form.title).trim()) ||
+    (form?.title_ar && String(form.title_ar).trim()) ||
     form?.price ||
     (form?.images && form.images.length > 0) ||
-    (form?.description && String(form.description).trim())
+    (form?.description && String(form.description).trim()) ||
+    (form?.description_ar && String(form.description_ar).trim())
   );
+
+  // Auto-save draft debounced to localStorage whenever dirty content changes
+  useEffect(() => {
+    if (!form || !hasDirtyContent) return;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem('oneline_property_form_draft', JSON.stringify({
+          form,
+          editingPropertyId,
+          savedAt: Date.now()
+        }));
+      } catch {
+        // storage quota
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [form, hasDirtyContent, editingPropertyId]);
 
   // A title from what is already picked: «شقة 140م للبيع في سوهاج الجديدة»
   const TYPE_TITLE = { apartment: 'شقة', villa: 'فيلا', house: 'منزل', commercial: 'محل تجاري', retail: 'محل تجاري', office: 'مكتب إداري', clinic: 'عيادة', land: 'أرض', building: 'عمارة' };
@@ -78,6 +101,7 @@ export default function PropertyFormModal({
           : 'You have entered property details or photos. Are you sure you want to discard them?', tone: 'primary' });
       if (!confirmClose) return;
     }
+    if (typeof window !== 'undefined') window.__oneline_is_editing_property = false;
     setShowAddModal(false);
   };
 
@@ -90,6 +114,60 @@ export default function PropertyFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="property-cms-form">
+          {/* Unsaved draft restoration alert */}
+          {draftAvailable && (
+            <div style={{
+              background: 'rgba(217, 119, 6, 0.1)',
+              border: '1px solid var(--crm-accent, #D97706)',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--crm-text-primary, #0F172A)' }}>
+                <span>💾 {isAr ? 'توجد مسودة عقار غير محفوظة تم استرجاعها تلقائياً:' : 'Unsaved property draft found:'}</span>
+                <strong style={{ color: 'var(--crm-accent, #D97706)' }}>{draftAvailable.form?.title_ar || draftAvailable.form?.type || (isAr ? 'عقار غير مسمى' : 'Unnamed listing')}</strong>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={onRestoreDraft}
+                  style={{
+                    background: 'var(--crm-accent, #D97706)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '5px 12px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {isAr ? 'استعادة المسودة ↺' : 'Restore Draft'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onDiscardDraft}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--crm-text-muted, #64748B)',
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {isAr ? 'تجاهل ومسح' : 'Discard'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* What's filled and what's missing: each chip jumps to its step */}
           <FormChecklist items={checklist} isAr={isAr} />
 
@@ -821,6 +899,32 @@ export default function PropertyFormModal({
                     {REVIEW_OPTIONS.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
                   </select>
                 </div>
+
+                {/* Pricing Evaluation Strategy (1Line Market Verified vs Owner-Priced) */}
+                <div className="form-group-item">
+                  <label htmlFor="pf-pricing-mode">{isAr ? 'تقييم السعر الاستشاري' : 'Pricing Evaluation'}</label>
+                  <select
+                    id="pf-pricing-mode"
+                    value={form.pricingMode || 'auto'}
+                    onChange={(e) => setForm({ ...form, pricingMode: e.target.value })}
+                  >
+                    {PRICING_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
+                  </select>
+                </div>
+
+                {form.pricingMode === 'owner_priced' && (
+                  <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
+                    <label htmlFor="pf-owner-price-note">{isAr ? 'توضيح إضافي للمشتري حول تسعير المالك (اختياري)' : 'Optional note for buyers on owner pricing'}</label>
+                    <input
+                      id="pf-owner-price-note"
+                      type="text"
+                      maxLength={220}
+                      placeholder={isAr ? 'اتركه فارغاً لاستخدام ملاحظة الشفافية القياسية من 1Line' : 'Leave blank to use standard 1Line transparency note'}
+                      value={form.ownerPriceNote_ar || ''}
+                      onChange={(e) => setForm({ ...form, ownerPriceNote_ar: e.target.value })}
+                    />
+                  </div>
+                )}
 
                 {/* Badge Preset Dropdown */}
                 <div className="form-group-item">

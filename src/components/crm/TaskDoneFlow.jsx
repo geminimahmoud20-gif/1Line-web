@@ -102,7 +102,34 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
         outcomeId={outcomeId || 'task_done'}
         me={me}
         isAr={isAr}
-        onSaved={(t) => { triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t.title}` : 'Next step saved', 'success'); onClose(); }}
+        onSaved={(t, meta = {}) => {
+          if (meta.newStage && meta.newStage !== lead.status) {
+            onUpdateLead?.(lead.id, {
+              status: meta.newStage,
+              _bypassGate: true,
+              _forceStage: true,
+              lastActivityAt: new Date().toISOString(),
+              ...(meta.newStage === 'lost' ? { lostReason: meta.lostReason || 'other', lostNote: meta.lostNote || '', lostAt: new Date().toISOString() } : {}),
+              ...(meta.note ? { notes: `[${meta.channel || 'تواصل'}] ${meta.note}\n${lead.notes || ''}` } : {})
+            }, lead.version);
+          }
+          triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t?.title || 'مهمة'}` : 'Next step saved', 'success');
+          onClose();
+        }}
+        onStageOnly={(newStage, meta = {}) => {
+          if (newStage && newStage !== lead.status) {
+            onUpdateLead?.(lead.id, {
+              status: newStage,
+              _bypassGate: true,
+              _forceStage: true,
+              lastActivityAt: new Date().toISOString(),
+              ...(newStage === 'lost' ? { lostReason: meta.lostReason || 'other', lostNote: meta.lostNote || '', lostAt: new Date().toISOString() } : {}),
+              ...(meta.note ? { notes: `[${meta.channel || 'تواصل'}] ${meta.note}\n${lead.notes || ''}` } : {})
+            }, lead.version);
+            triggerToast?.(isAr ? 'تم تحديث مرحلة العميل بنجاح' : 'Stage updated successfully', 'success');
+          }
+          onClose();
+        }}
         onSkip={skip}
       />
     );

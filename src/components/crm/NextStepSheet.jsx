@@ -2,7 +2,8 @@ import { useId, useState, useMemo } from 'react';
 import { Modal, Button, Input, Select, Badge } from '../ui';
 import { buildTask, dayKeyFrom, KINDS, PRIORITIES, dueFromPreset } from '../../utils/tasks';
 import { suggestNextStep, composeDue } from '../../utils/nextStep';
-import { isSellerLead, localDayKey } from '../../utils/crmLeadViews';
+import { isSellerLead, localDayKey, lostReasonsFor } from '../../utils/crmLeadViews';
+import { boardStagesFor } from '../../utils/leadPipeline';
 import { addTask } from '../../firebaseLazy';
 import { MessageSquare, Phone, Calendar, Building, FileText, CheckCircle2, ChevronRight, Clock, Sparkles } from 'lucide-react';
 
@@ -33,6 +34,11 @@ export default function NextStepSheet({
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller';
   const currentStageId = lead?.status || 'new';
 
+  const stagesList = useMemo(() => {
+    if (stages && stages.length > 0) return stages;
+    return boardStagesFor(lead || {});
+  }, [stages, lead]);
+
   // Determine default target stage
   const currentIdx = STAGE_ORDER.indexOf(currentStageId);
   const defaultNextStage = propTargetStage || (currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1 ? STAGE_ORDER[currentIdx + 1] : currentStageId);
@@ -40,6 +46,11 @@ export default function NextStepSheet({
   const [selectedStage, setSelectedStage] = useState(defaultNextStage);
   const [channel, setChannel] = useState(initialChannel || 'whatsapp');
   const [contactNote, setContactNote] = useState('');
+
+  // Lost deal state
+  const [lostReason, setLostReason] = useState('price');
+  const [lostNote, setLostNote] = useState('');
+  const [scheduleTaskForLost, setScheduleTaskForLost] = useState(false);
 
   const [s] = useState(() => suggestNextStep(outcomeId, Date.now(), isSeller));
   
@@ -50,6 +61,8 @@ export default function NextStepSheet({
     if (selectedStage === 'site_visit') return isAr ? `معاينة ميدانية للعقار مع ${firstName}` : `Viewing with ${firstName}`;
     if (selectedStage === 'negotiating') return isAr ? `جلسة تفاوض وعروض مع ${firstName}` : `Negotiation with ${firstName}`;
     if (selectedStage === 'closed') return isAr ? `إجراءات حجز وتعاقد ${firstName}` : `Closing for ${firstName}`;
+    if (selectedStage === 'inactive') return isAr ? `متابعة وإعادة تنشيط: ${firstName}` : `Re-activate ${firstName}`;
+    if (selectedStage === 'lost') return isAr ? `سجل خسارة صفقة ${firstName}` : `Lost record for ${firstName}`;
     return isAr ? `متابعة مع ${firstName}` : `Follow up with ${firstName}`;
   }, [s?.title, selectedStage, lead?.name, isAr]);
 
@@ -67,17 +80,29 @@ export default function NextStepSheet({
   };
 
   const handlePresetDay = (presetId) => {
-    setDay(dueFromPreset(presetId));
+    if (presetId === 'month') {
+      setDay(dayKeyFrom(Date.now(), 30));
+    } else if (presetId === '2w') {
+      setDay(dayKeyFrom(Date.now(), 14));
+    } else {
+      setDay(dueFromPreset(presetId));
+    }
   };
 
   const handleStageSelect = (stId) => {
     setSelectedStage(stId);
+    setError('');
     const firstName = String(lead?.name || '').split(' ').slice(0, 2).join(' ') || (isAr ? 'العميل' : 'Client');
     if (stId === 'site_visit') {
       setKind('visit');
       setTitle(isAr ? `معاينة ميدانية للعقار مع ${firstName}` : `Viewing with ${firstName}`);
     } else if (stId === 'negotiating') {
       setTitle(isAr ? `جلسة تفاوض وعروض مع ${firstName}` : `Negotiation with ${firstName}`);
+    } else if (stId === 'inactive') {
+      setTitle(isAr ? `متابعة وإعادة تنشيط: ${firstName}` : `Re-activate ${firstName}`);
+      setDay(dayKeyFrom(Date.now(), 14));
+    } else if (stId === 'closed') {
+      setTitle(isAr ? `متابعة ما بعد التعاقد: ${firstName}` : `Post-closing follow up: ${firstName}`);
     }
   };
 
@@ -101,14 +126,24 @@ export default function NextStepSheet({
   const save = async (e) => {
     e?.preventDefault();
 
-    const selectedDayKey = day ? localDayKey(day) : '';
-    const todayKey = localDayKey();
-    if (selectedDayKey && selectedDayKey < todayKey) {
-      setError(isAr ? 'تاريخ المهمة يجب أن يكون اليوم أو تاريخاً لاحقاً' : 'Task date must be today or later');
+    if (selectedStage === 'lost' && !lostReason) {
+      setError(isAr ? 'يرجى تحديد سبب خسارة الصفقة' : 'Please select a reason for the lost deal');
       return;
     }
 
-    const task = buildTask({ title: title || defaultTitle, dueAt, priority, kind, lead: { id: lead.id, name: lead.name }, me });
+    let task = null;
+    const shouldCreateTask = selectedStage !== 'lost' || scheduleTaskForLost;
+
+    if (shouldCreateTask) {
+      const selectedDayKey = day ? localDayKey(day) : '';
+      const todayKey = localDayKey();
+      if (selectedDayKey && selectedDayKey < todayKey) {
+        setError(isAr ? 'تاريخ المهمة يجب أن يكون اليوم أو تاريخاً لاحقاً' : 'Task date must be today or later');
+        return;
+      }
+      task = buildTask({ title: title || defaultTitle, dueAt, priority, kind, lead: { id: lead.id, name: lead.name }, me });
+    }
+
     setBusy(true);
 
     try {
@@ -118,25 +153,39 @@ export default function NextStepSheet({
       onSaved?.(task, {
         newStage: selectedStage,
         note: contactNote.trim(),
-        channel
+        channel,
+        lostReason: selectedStage === 'lost' ? lostReason : undefined,
+        lostNote: selectedStage === 'lost' ? lostNote.trim() : undefined
       });
     } catch {
-      setError(isAr ? 'تعذر حفظ المهمة، جرّب مرة أخرى' : 'Failed to save task');
+      setError(isAr ? 'تعذر حفظ البيانات، جرّب مرة أخرى' : 'Failed to save');
       setBusy(false);
     }
   };
 
   // 2. Update stage only without task
   const handleStageOnly = () => {
+    if (selectedStage === 'lost' && !lostReason) {
+      setError(isAr ? 'يرجى تحديد سبب خسارة الصفقة' : 'Please select a reason for the lost deal');
+      return;
+    }
     setBusy(true);
     onStageOnly?.(selectedStage, {
       note: contactNote.trim(),
-      channel
+      channel,
+      lostReason: selectedStage === 'lost' ? lostReason : undefined,
+      lostNote: selectedStage === 'lost' ? lostNote.trim() : undefined
     });
   };
 
-  const targetStageObj = stages.find((s) => s.id === selectedStage);
+  const targetStageObj = stagesList.find((s) => s.id === selectedStage);
   const targetStageLabel = targetStageObj ? (isAr ? targetStageObj.label_ar : targetStageObj.label_en) : selectedStage;
+
+  const isLostStage = selectedStage === 'lost';
+  const isInactiveStage = selectedStage === 'inactive';
+  const isClosedStage = selectedStage === 'closed';
+
+  const actionEmoji = isLostStage ? '' : (isInactiveStage ? '⏸️' : (isClosedStage ? '🏆' : '🚀'));
 
   return (
     <Modal
@@ -144,30 +193,63 @@ export default function NextStepSheet({
       dismissible
       onClose={handleClose}
       closeLabel={isAr ? 'إغلاق' : 'Close'}
-      size="md"
+      size="lg"
       title={isAr ? 'تسجيل تواصل وتحديث مسار العميل' : 'Log Contact & Update Stage'}
       description={lead?.name ? `${isAr ? 'للعميل: ' : 'For: '}${lead.name}` : ''}
       footer={(
-        <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Button variant="primary" type="submit" form={formId} disabled={busy}>
-              {isAr ? `حفظ الخطوة ونقل العميل إلى "${targetStageLabel}" 🚀` : `Save & Move to "${targetStageLabel}"`}
-            </Button>
-            <Button variant="secondary" type="button" onClick={handleStageOnly} disabled={busy}>
-              {isAr ? 'نقل المرحلة فقط بدون مهمة' : 'Update stage only'}
-            </Button>
-          </div>
-          <Button variant="ghost" onClick={handleClose} disabled={busy}>
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          width: '100%',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap-reverse'
+        }}>
+          <Button variant="ghost" type="button" onClick={handleClose} disabled={busy} style={{ whiteSpace: 'nowrap' }}>
             {isAr ? 'إلغاء' : 'Cancel'}
           </Button>
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
+            maxWidth: '100%',
+            flex: 1
+          }}>
+            {!isLostStage && (
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={handleStageOnly}
+                disabled={busy}
+                style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                {isAr ? 'نقل المرحلة فقط' : 'Stage only'}
+              </Button>
+            )}
+            <Button
+              variant={isLostStage ? 'danger' : 'primary'}
+              type="submit"
+              form={formId}
+              disabled={busy}
+              style={{ minWidth: 0, maxWidth: '100%' }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {isLostStage
+                  ? (isAr ? 'تأكيد تسجيل الخسارة والأرشفة ✖' : 'Confirm Deal Loss & Archive')
+                  : (isAr ? `حفظ الخطوة ونقل إلى "${targetStageLabel}" ${actionEmoji}` : `Save & Move to "${targetStageLabel}" ${actionEmoji}`)}
+              </span>
+            </Button>
+          </div>
         </div>
       )}
     >
-      <form id={formId} onSubmit={save} className="crm-nextstep" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <form id={formId} onSubmit={save} className="crm-nextstep" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         
         {/* Section 1: What was done in contact */}
-        <div style={{ background: 'var(--ui-surface-2)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ background: 'var(--ui-surface-2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
               📞 {isAr ? 'أولاً: إيه اللي تم في التواصل؟' : '1. Contact Activity:'}
             </span>
@@ -210,7 +292,7 @@ export default function NextStepSheet({
             rows={2}
             style={{
               width: '100%',
-              padding: '8px 10px',
+              padding: '7px 10px',
               borderRadius: '6px',
               border: '1px solid var(--ui-line)',
               fontSize: '12px',
@@ -222,18 +304,26 @@ export default function NextStepSheet({
         </div>
 
         {/* Section 2: Target Deal Stage Selector */}
-        <div style={{ background: 'var(--ui-surface)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
+        <div style={{ background: 'var(--ui-surface)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
               🎯 {isAr ? 'ثانياً: نقل العميل لمرحلة جديدة (للأمام أو للخلف):' : '2. Move to Stage (Forward or Backward):'}
             </span>
-            <Badge tone="accent">{targetStageLabel}</Badge>
+            <Badge tone={isLostStage ? 'danger' : (isInactiveStage ? 'neutral' : (isClosedStage ? 'success' : 'accent'))}>
+              {targetStageLabel}
+            </Badge>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '6px' }}>
-            {stages.map((st, idx) => {
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))',
+            gap: '6px'
+          }}>
+            {stagesList.map((st, idx) => {
               const isSelected = selectedStage === st.id;
               const isCurrent = currentStageId === st.id;
+              const isLost = st.id === 'lost';
+              const isInactive = st.id === 'inactive';
               return (
                 <button
                   type="button"
@@ -243,17 +333,24 @@ export default function NextStepSheet({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '4px',
-                    padding: '8px 4px',
+                    gap: '5px',
+                    padding: '7px 6px',
                     borderRadius: '8px',
-                    border: isSelected ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
-                    background: isSelected ? 'var(--ui-primary)' : 'var(--ui-surface-2)',
-                    color: isSelected ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
+                    border: isSelected
+                      ? (isLost ? '1.5px solid var(--ui-danger, #ef4444)' : '1.5px solid var(--ui-primary)')
+                      : (isCurrent ? '1.5px dashed var(--ui-accent)' : '1px solid var(--ui-line)'),
+                    background: isSelected
+                      ? (isLost ? 'var(--ui-danger, #ef4444)' : 'var(--ui-primary)')
+                      : (isCurrent ? 'rgba(14, 165, 233, 0.08)' : (isLost ? 'rgba(239, 68, 68, 0.04)' : 'var(--ui-surface-2)')),
+                    color: isSelected
+                      ? '#fff'
+                      : (isLost ? 'var(--ui-danger, #dc2626)' : (isInactive ? 'var(--ui-text-3)' : 'var(--ui-text-2)')),
                     fontSize: '11.5px',
                     fontWeight: isSelected ? 700 : 600,
                     cursor: 'pointer',
                     boxShadow: isSelected ? '0 2px 8px rgba(11, 28, 54, 0.2)' : 'none',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    minWidth: 0
                   }}
                   title={isAr ? st.label_ar : st.label_en}
                 >
@@ -266,89 +363,179 @@ export default function NextStepSheet({
                     borderRadius: '50%',
                     fontSize: '10px',
                     fontWeight: 800,
-                    background: isSelected ? 'var(--ui-accent)' : 'rgba(0, 0, 0, 0.06)',
-                    color: isSelected ? 'var(--ui-primary)' : 'inherit'
+                    background: isSelected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.06)',
+                    color: isSelected ? '#fff' : 'inherit',
+                    flexShrink: 0
                   }}>
                     {idx + 1}
                   </span>
-                  <span>{isAr ? st.label_ar : st.label_en}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {isAr ? st.label_ar : st.label_en}
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Section 3: Next Event / Action */}
-        <div style={{ background: 'var(--ui-surface-2)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
-              🗓️ {isAr ? 'ثالثاً: تسجيل الحدث القادم (المكالمة أو المعاينة أو الاجتماع):' : '3. Next Event (Call, Viewing, Meeting):'}
+        {/* Section 2.5: Lost reason selector if stage is lost */}
+        {isLostStage && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.05)',
+            padding: '12px 14px',
+            borderRadius: '10px',
+            border: '1.5px solid rgba(239, 68, 68, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-danger, #dc2626)' }}>
+              ⚠️ {isAr ? 'حدد سبب خسارة الصفقة (إلزامي للتحليل والتقارير):' : 'Select reason deal was lost (Required):'}
             </span>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '6px' }}>
+              {lostReasonsFor(lead).map((r) => {
+                const checked = lostReason === r.id;
+                return (
+                  <label
+                    key={r.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      background: checked ? 'rgba(239, 68, 68, 0.12)' : 'var(--ui-surface)',
+                      border: checked ? '1px solid var(--ui-danger, #ef4444)' : '1px solid var(--ui-line)',
+                      cursor: 'pointer',
+                      fontSize: '11.5px',
+                      fontWeight: checked ? 700 : 500,
+                      color: checked ? 'var(--ui-danger, #b91c1c)' : 'var(--ui-text-2)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="nextStepLostReason"
+                      value={r.id}
+                      checked={checked}
+                      onChange={() => setLostReason(r.id)}
+                      style={{ accentColor: 'var(--ui-danger, #ef4444)', margin: 0 }}
+                    />
+                    <span>{isAr ? r.ar : r.en}</span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <input
+              type="text"
+              placeholder={isAr ? 'ملاحظة تفصيلية حول سبب الخسارة (اختياري)...' : 'Additional note on why deal was lost (optional)...'}
+              value={lostNote}
+              maxLength={300}
+              onChange={(e) => setLostNote(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid var(--ui-line)',
+                fontSize: '12px',
+                boxSizing: 'border-box'
+              }}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+              <input
+                type="checkbox"
+                id="scheduleLostTask"
+                checked={scheduleTaskForLost}
+                onChange={(e) => setScheduleTaskForLost(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              <label htmlFor="scheduleLostTask" style={{ fontSize: '11.5px', color: 'var(--ui-text-2)', cursor: 'pointer' }}>
+                {isAr ? 'جدولة تذكير أو مهمة قادمة رغم إغلاق العميل كخسارة' : 'Schedule a follow-up task anyway'}
+              </label>
+            </div>
           </div>
+        )}
 
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-            {KINDS.map((k) => (
-              <button
-                type="button"
-                key={k.id}
-                onClick={() => handleKindSelect(k.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '5px 10px',
-                  borderRadius: '6px',
-                  border: kind === k.id ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
-                  background: kind === k.id ? 'var(--ui-primary)' : 'var(--ui-surface)',
-                  color: kind === k.id ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
-                  fontSize: '11.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-              >
-                <span>{k.id === 'visit' ? '🚗' : (k.id === 'meeting' ? '🏢' : (k.id === 'call' ? '📞' : (k.id === 'whatsapp' ? '💬' : '📝')))}</span>
-                <span>{isAr ? k.ar : k.en}</span>
-              </button>
-            ))}
-          </div>
+        {/* Section 3: Next Event / Action (Shown for normal stages or if requested for lost leads) */}
+        {(!isLostStage || scheduleTaskForLost) && (
+          <div style={{ background: 'var(--ui-surface-2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
+                🗓️ {isAr ? 'ثالثاً: تسجيل الحدث القادم (المكالمة أو المعاينة أو الاجتماع):' : '3. Next Event (Call, Viewing, Meeting):'}
+              </span>
+            </div>
 
-          <Input
-            label={isAr ? 'عنوان الخطوة القادمة' : 'Event Title'}
-            value={title}
-            maxLength={140}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+              {KINDS.map((k) => (
+                <button
+                  type="button"
+                  key={k.id}
+                  onClick={() => handleKindSelect(k.id)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '5px 10px',
+                    borderRadius: '6px',
+                    border: kind === k.id ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
+                    background: kind === k.id ? 'var(--ui-primary)' : 'var(--ui-surface)',
+                    color: kind === k.id ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  <span>{k.id === 'visit' ? '🚗' : (k.id === 'meeting' ? '🏢' : (k.id === 'call' ? '📞' : (k.id === 'whatsapp' ? '💬' : (k.id === 'docs' ? '📄' : '✨'))))}</span>
+                  <span>{isAr ? k.ar : k.en}</span>
+                </button>
+              ))}
+            </div>
 
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', color: 'var(--ui-text-3)' }}>{isAr ? 'الموعد السريع:' : 'Quick day:'}</span>
-            <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('today')}>{isAr ? 'النهارده' : 'Today'}</button>
-            <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('tomorrow')}>{isAr ? 'بكرة' : 'Tomorrow'}</button>
-            <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('3d')}>{isAr ? 'بعد ٣ أيام' : 'In 3 days'}</button>
-            <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('week')}>{isAr ? 'الأسبوع القادم' : 'Next week'}</button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
             <Input
-              type="date"
-              label={isAr ? 'تاريخ التنفيذ' : 'Day'}
-              value={day}
-              min={dayKeyFrom()}
-              onChange={(e) => setDay(e.target.value)}
+              label={isAr ? 'عنوان الخطوة القادمة' : 'Event Title'}
+              value={title}
+              maxLength={140}
+              onChange={(e) => setTitle(e.target.value)}
               required
             />
-            <Input
-              type="time"
-              label={isAr ? 'الساعة' : 'Time'}
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-            />
+
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: 'var(--ui-text-3)' }}>{isAr ? 'الموعد السريع:' : 'Quick day:'}</span>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('today')}>{isAr ? 'النهارده' : 'Today'}</button>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('tomorrow')}>{isAr ? 'بكرة' : 'Tomorrow'}</button>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('3d')}>{isAr ? 'بعد ٣ أيام' : 'In 3 days'}</button>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('week')}>{isAr ? 'الأسبوع القادم' : 'Next week'}</button>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('2w')}>{isAr ? 'بعد أسبوعين' : 'In 2 weeks'}</button>
+              <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('month')}>{isAr ? 'بعد شهر' : 'In 1 month'}</button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
+              <Input
+                type="date"
+                label={isAr ? 'تاريخ التنفيذ' : 'Day'}
+                value={day}
+                min={dayKeyFrom()}
+                onChange={(e) => setDay(e.target.value)}
+                required
+              />
+              <Input
+                type="time"
+                label={isAr ? 'الساعة' : 'Time'}
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {error && <p style={{ color: 'var(--ui-danger)', margin: 0, fontSize: '12px', fontWeight: 600 }}>{error}</p>}
       </form>
     </Modal>
   );
 }
+
+

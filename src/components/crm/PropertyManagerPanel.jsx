@@ -228,6 +228,52 @@ export default function PropertyManagerPanel({
   const [editingSnapshot, setEditingSnapshot] = useState(null);
   const submittingRef = useRef(false);
 
+  // Sync global flag so background alerts, topbar actions and SW messages never hijack the screen
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__oneline_is_editing_property = showAddModal;
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.__oneline_is_editing_property = false;
+      }
+    };
+  }, [showAddModal]);
+
+  // Draft persistence in localStorage: survives tab switches, notification clicks, or accidental page leaves
+  const [draftAvailable, setDraftAvailable] = useState(() => {
+    try {
+      const raw = localStorage.getItem('oneline_property_form_draft');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed?.form && Date.now() - (parsed.savedAt || 0) < 86_400_000) {
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleRestoreDraft = () => {
+    if (draftAvailable?.form) {
+      setForm(draftAvailable.form);
+      if (draftAvailable.editingPropertyId) {
+        setEditingPropertyId(draftAvailable.editingPropertyId);
+      }
+      setDraftAvailable(null);
+      triggerToast(isAr ? 'تمت استعادة مسودة العقار السابقة بنجاح!' : 'Draft restored!', 'success');
+    }
+  };
+
+  const handleDiscardDraft = () => {
+    try {
+      localStorage.removeItem('oneline_property_form_draft');
+    } catch {}
+    setDraftAvailable(null);
+    triggerToast(isAr ? 'تم مسح المسودة المحفوظة' : 'Draft discarded', 'info');
+  };
+
   const buildEditFormState = (prop) => ({
     ...DEFAULT_FORM_STATE,
     ...prop,
@@ -692,6 +738,8 @@ export default function PropertyManagerPanel({
             onUpdateProperty(dup.id, dupPatch);
           }
           triggerToast(isAr ? 'تم دمج تعديلاتك في العقار الموجود بنجاح ومنع التكرار!' : 'Merged edits into existing listing!', 'success');
+          try { localStorage.removeItem('oneline_property_form_draft'); } catch {}
+          if (typeof window !== 'undefined') window.__oneline_is_editing_property = false;
           setShowAddModal(false);
           return;
         }
@@ -704,6 +752,8 @@ export default function PropertyManagerPanel({
         };
         onAddProperty(newProp);
         triggerToast(isAr ? 'تمت إضافة العقار وتثبيت موقعه الفعلي على الخريطة بنجاح!' : 'New property added successfully!', 'success');
+        try { localStorage.removeItem('oneline_property_form_draft'); } catch {}
+        if (typeof window !== 'undefined') window.__oneline_is_editing_property = false;
 
         // 🎯 Auto-check matching clients in database
         const matched = findMatchingClientsForProperty(newProp, leads, demands);
@@ -1275,6 +1325,9 @@ export default function PropertyManagerPanel({
           isUploadingImages={isUploadingImages}
           setForm={setForm}
           setShowAddModal={setShowAddModal}
+          draftAvailable={draftAvailable}
+          onRestoreDraft={handleRestoreDraft}
+          onDiscardDraft={handleDiscardDraft}
           setShowMapPicker={setShowMapPicker}
           uploadProgressText={uploadProgressText}
         />

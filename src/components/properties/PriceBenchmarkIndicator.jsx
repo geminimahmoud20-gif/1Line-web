@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
-import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers, Scale, Tag, Send } from 'lucide-react';
 import { formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
 import { getAreaById, getAreas } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
 import { areaReferencePrice } from '../../utils/areaPricing';
 import { assetClass } from '../../utils/marketStats';
+import { evaluateListingPricing } from '../../utils/pricingEvaluation';
+import { nameProblem, phoneProblem, normalizeBookingPhone } from '../../utils/contactValidation';
+import { checkFormSpamProtection } from '../../utils/securityShield';
+import { saveLead } from '../../firebaseLazy';
 import './PriceBenchmarkIndicator.app.css';
 
-export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
+export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP', onSubmitOffer = null, triggerToast = null }) {
   const isAr = lang === 'ar';
   const [, setTick] = useState(0);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerSent, setOfferSent] = useState(false);
+  const [offerBusy, setOfferBusy] = useState(false);
+  const [offerErr, setOfferErr] = useState('');
+  const [offerForm, setOfferForm] = useState({ name: '', phone: '', offeredPrice: '', note: '' });
 
   // Live listen for area modifications from CRM
   useEffect(() => {
@@ -26,10 +36,171 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   // Only a real figure: a benchmark typed on the listing, the median of 3+ listings of the same kind
   // in the area, or the area's price when the team set it by hand. No built-in or seeded numbers:
   // without one there is no «below / above the market» verdict.
+  const areasList = getAreas();
   const reference = Number(property?.customBenchmarkPrice) > 0
     ? { ppm: Number(property.customBenchmarkPrice), source: 'listing', sample: 0 }
-    : areaReferencePrice(areaData, allListings, getAreas(), assetClass(property));
+    : areaReferencePrice(areaData, allListings, areasList, assetClass(property));
+  const pricing = evaluateListingPricing(property, { lang, areas: areasList, allListings });
   const districtAvg = reference?.ppm || 0;
+
+  const handleOfferSubmit = async (e) => {
+    e.preventDefault();
+    if (offerBusy || !property) return;
+    setOfferErr('');
+
+    const spam = checkFormSpamProtection('', 'property_price_offer');
+    if (!spam.allowed) {
+      setOfferErr(isAr ? spam.message_ar : spam.message_en);
+      return;
+    }
+    const nErr = nameProblem(offerForm.name, isAr);
+    if (nErr) {
+      setOfferErr(nErr);
+      return;
+    }
+    const fullPhone = normalizeBookingPhone(offerForm.phone);
+    const pErr = phoneProblem(fullPhone || offerForm.phone, null, isAr);
+    if (!fullPhone || pErr) {
+      setOfferErr(pErr || phoneProblem('', null, isAr));
+      return;
+    }
+    const proposed = Number(offerForm.offeredPrice);
+    if (!(proposed > 0)) {
+      setOfferErr(isAr ? 'اكتب السعر المقترح بالأرقام' : 'Enter a valid proposed price');
+      return;
+    }
+
+    setOfferBusy(true);
+    try {
+      const propTitle = isAr ? (property.title_ar || property.title_en || property.id) : (property.title_en || property.title_ar || property.id);
+      const record = {
+        name: offerForm.name.trim(),
+        phone: fullPhone,
+        whatsapp: fullPhone,
+        propertyId: property.id,
+        propertyTitle: propTitle,
+        propertyPrice: property.price,
+        offeredPrice: proposed,
+        area: property.areaKey || '',
+        propertyType: property.type || 'residential',
+        type: 'price_offer',
+        source: 'عرض سعر تفاوضي (صفحة العقار)',
+        notes: `عرض سعر تفاوضي على وحدة (${propTitle} - كود ${String(property.id).toUpperCase()}) | سعر المالك المعروض: ${Number(property.price || 0).toLocaleString('en-US')} ج.م | السعر المقترح من المشتري: ${proposed.toLocaleString('en-US')} ج.م${offerForm.note.trim() ? ` | ملاحظة المشتري: ${offerForm.note.trim()}` : ''}`,
+        createdAt: new Date().toISOString()
+      };
+      if (typeof onSubmitOffer === 'function') {
+        await onSubmitOffer(record);
+      } else {
+        await saveLead(record);
+      }
+      setOfferSent(true);
+      setOfferOpen(false);
+      if (typeof triggerToast === 'function') {
+        triggerToast(isAr ? 'تم إرسال عرض السعر بنجاح! سيتواصل معك مستشارنا.' : 'Your offer was submitted! Our advisor will reach out.', 'success');
+      }
+    } catch {
+      setOfferErr(isAr ? 'تعذر إرسال العرض حالياً، حاول مرة أخرى أو تواصل عبر واتساب.' : 'Could not send offer right now, please try WhatsApp.');
+    } finally {
+      setOfferBusy(false);
+    }
+  };
+
+  const renderTransparencyBox = () => {
+    if (!pricing.isOwnerPriced || !pricing.detailNote) return null;
+    const canOffer = !property?.isDemo && property?.status !== 'sold';
+    return (
+      <div className="owner-transparency-box" role="note">
+        <div className="owner-transparency-head">
+          <Scale size={16} className="text-gold" aria-hidden="true" />
+          <span>{pricing.detailNote.title}</span>
+        </div>
+        <p className="owner-transparency-body">{pricing.detailNote.body}</p>
+        {canOffer && (
+          offerSent ? (
+            <div className="owner-offer-success" role="status">
+              <CheckCircle2 size={16} aria-hidden="true" />
+              <span>{isAr ? 'تم استلام عرض السعر المقترح — سيتواصل معك مستشارنا لعرضه على المالك أو ترشيح بدائل بسعر السوق.' : 'Your counter-offer was received — our advisor will follow up shortly.'}</span>
+            </div>
+          ) : (
+            <>
+              <div className="owner-transparency-actions">
+                <button
+                  type="button"
+                  className="owner-offer-btn"
+                  onClick={() => setOfferOpen((v) => !v)}
+                  aria-expanded={offerOpen}
+                >
+                  <Tag size={14} aria-hidden="true" />
+                  <span>{isAr ? (offerOpen ? 'إغلاق نموذج العرض' : 'قدّم عرض سعر تفاوضي') : (offerOpen ? 'Close offer form' : 'Submit a counter-offer')}</span>
+                </button>
+                <Link to="/properties" className="owner-alt-link">
+                  <span>{isAr ? 'تصفح بدائل بسعر السوق' : 'Browse market-priced alternatives'}</span>
+                </Link>
+              </div>
+              {offerOpen && (
+                <form className="owner-offer-form" onSubmit={handleOfferSubmit} noValidate>
+                  <div className="owner-offer-grid">
+                    <label className="owner-offer-field">
+                      <span>{isAr ? 'الاسم *' : 'Name *'}</span>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        placeholder={isAr ? 'اسمك بالكامل' : 'Your name'}
+                        value={offerForm.name}
+                        onChange={(e) => setOfferForm((f) => ({ ...f, name: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <label className="owner-offer-field">
+                      <span>{isAr ? 'رقم الواتساب *' : 'WhatsApp *'}</span>
+                      <input
+                        type="tel"
+                        dir="ltr"
+                        placeholder="01012345678"
+                        value={offerForm.phone}
+                        onChange={(e) => setOfferForm((f) => ({ ...f, phone: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <label className="owner-offer-field">
+                      <span>{isAr ? 'السعر المقترح (ج.م) *' : 'Proposed price (EGP) *'}</span>
+                      <input
+                        type="number"
+                        min="10000"
+                        step="10000"
+                        dir="ltr"
+                        placeholder={isAr ? 'مثال: 2,100,000' : 'e.g. 2100000'}
+                        value={offerForm.offeredPrice}
+                        onChange={(e) => setOfferForm((f) => ({ ...f, offeredPrice: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <label className="owner-offer-field">
+                      <span>{isAr ? 'ملاحظة (اختياري)' : 'Note (optional)'}</span>
+                      <input
+                        type="text"
+                        maxLength={180}
+                        placeholder={isAr ? 'كاش أو تقسيط...' : 'Cash or installments...'}
+                        value={offerForm.note}
+                        onChange={(e) => setOfferForm((f) => ({ ...f, note: e.target.value }))}
+                      />
+                    </label>
+                  </div>
+                  {offerErr && <p style={{ margin: 0, fontSize: '0.78rem', color: '#b91c1c', fontWeight: 700 }} role="alert">{offerErr}</p>}
+                  <div>
+                    <button type="submit" className="owner-offer-btn" disabled={offerBusy}>
+                      <Send size={13} aria-hidden="true" />
+                      <span>{offerBusy ? (isAr ? 'جارٍ الإرسال…' : 'Sending…') : (isAr ? 'إرسال عرض السعر للمستشار' : 'Send offer to advisor')}</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
+          )
+        )}
+      </div>
+    );
+  };
   const referenceNote = !reference ? ''
     : reference.source === 'listings'
       ? (isAr ? `متوسط المنطقة = وسيط ${reference.sample} عروض مشابهة معروضة دلوقتي على 1Line، ويختلف حسب الدور والتشطيب والواجهة.` : `Area average = median of ${reference.sample} similar listings now on 1Line; floor, finishing and frontage change it.`)
@@ -142,6 +313,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               : 'Advisory Note: Total investment return is calculated from standalone commercial shop cash flows plus residential apartment capital value.'}
           </span>
         </div>
+        {renderTransparencyBox()}
       </div>
     );
   }
@@ -159,6 +331,12 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
             <BarChart3 size={18} className="text-gold" />
             <h4>{isAr ? `سعر المتر (حي ${currentDistrictName})` : `Price per m² (${currentDistrictName})`}</h4>
           </div>
+          {pricing.isOwnerPriced && (
+            <span className="benchmark-pill pill-owner">
+              <Tag size={13} />
+              <span>{isAr ? 'تسعير المالك' : 'Owner-priced'}</span>
+            </span>
+          )}
         </div>
         {perM && (
           <p style={{ margin: '10px 0 6px', fontWeight: 700 }}>
@@ -174,6 +352,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               ? 'متوسط الحي محسوب للشقق والفيلات بس. المحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط والترخيص، فمش بنقارنها بيه. اسأل مستشارنا عن صفقات مشابهة في نفس الشارع.'
               : 'The district average covers homes only. Shops, offices and land are priced by frontage, activity and zoning, so they are not compared with it. Ask us for comparable deals on the same street.')}
         </p>
+        {renderTransparencyBox()}
       </div>
     );
   }
@@ -203,8 +382,13 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
           <BarChart3 size={18} className="text-gold" />
           <h4>{isAr ? 'مؤشر عدالة السعر وتحليل القيمة (حي ' + currentDistrictName + ')' : `Price Benchmark & District Analysis (${currentDistrictName})`}</h4>
         </div>
-        <span className={`benchmark-pill ${isBelowMarket ? 'pill-opportunity' : isFairMarket ? 'pill-fair' : 'pill-premium'}`}>
-          {isBelowMarket ? (
+        <span className={`benchmark-pill ${pricing.isOwnerPriced ? 'pill-owner' : isBelowMarket ? 'pill-opportunity' : isFairMarket ? 'pill-fair' : 'pill-premium'}`}>
+          {pricing.isOwnerPriced ? (
+            <>
+              <Tag size={14} />
+              <span>{diffPercent > 0 ? (isAr ? `تسعير المالك (+${diffPercent}% عن المرجعي)` : `Owner-priced (+${diffPercent}% vs ref)`) : (isAr ? 'تسعير المالك' : 'Owner-priced')}</span>
+            </>
+          ) : isBelowMarket ? (
             <>
               <TrendingDown size={14} />
               <span>{isAr ? `أقل من متوسط الحي بـ ${Math.abs(diffPercent)}%` : `${Math.abs(diffPercent)}% below area average`}</span>
@@ -318,6 +502,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
           {referenceNote}
         </span>
       </div>
+      {renderTransparencyBox()}
     </div>
   );
 }

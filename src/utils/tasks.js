@@ -169,8 +169,8 @@ export const dueLabel = (task, isAr = true, now = Date.now()) => {
 const ENDED = new Set(['closed', 'lost', 'inactive']);
 /** Open tasks of a client who has since closed or been lost: nobody should keep chasing them */
 export function tasksOfEndedLeads(tasks = [], leads = []) {
-  const ended = new Set(leads.filter((l) => l && ENDED.has(l.status)).map((l) => l.id));
-  return tasks.filter((t) => t && t.status === 'open' && t.leadId && ended.has(t.leadId));
+  const ended = new Set(leads.filter((l) => l && ENDED.has(l.status)).map((l) => String(l.id)));
+  return tasks.filter((t) => t && t.status === 'open' && t.leadId && ended.has(String(t.leadId)));
 }
 /** The patch that closes such a task on its own (doneBy says it was not a person) */
 export const autoCompletion = (now = Date.now()) => ({ ...completion({ uid: 'auto' }, now), doneBy: 'auto' });

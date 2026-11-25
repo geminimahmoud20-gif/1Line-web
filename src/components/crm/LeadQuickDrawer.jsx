@@ -10,7 +10,8 @@ import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
 import { boardStagesFor, buyersForSeller } from '../../utils/leadPipeline';
 import { boardColumnOf } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
-import { validateStageTransition } from '../../services/stateMachineEngine';
+import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
+import { addTask } from '../../firebaseLazy';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
 import { leadScore, LEAD_SCORE_HIGH, isSellerLead, isAccountLead, firstContactPatch, leadBudget, isOpenLead } from '../../utils/crmLeadViews';
@@ -188,10 +189,34 @@ export default function LeadQuickDrawer({
     return (idx >= 0 && idx < STAGE_ORDER.length - 1) ? STAGE_ORDER[idx + 1] : (curr || 'new');
   };
 
+  const handleApproveHighValue = () => {
+    const nowIso = new Date().toISOString();
+    const agent = userDisplayName(currentUser) || 'د. محمود الباز';
+    onUpdateLead?.(lead.id, {
+      isFounderApproved: true,
+      founderApprovedAt: nowIso,
+      founderApprovedBy: agent,
+      _bypassGate: true,
+      _forceStage: true,
+      activityLogs: [
+        {
+          timestamp: nowIso,
+          action: 'تم اعتماد الصفقة الكبرى رسمياً بواسطة المؤسس (د. محمود الباز) ✍️',
+          kind: 'approval',
+          agent
+        },
+        ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])
+      ].slice(0, 100)
+    }, lead.version);
+    setInlineBlocker(null);
+    triggerToast?.(isAr ? 'تم اعتماد الصفقة الكبرى رسمياً من قِبل المؤسس د. محمود الباز' : 'High-value deal approved by Founder', 'success');
+  };
+
   const handleUpdateStatus = (newStatus, lostFields, forceBypass = false) => {
     if (!onUpdateLead) return;
     if (newStatus === 'lost' && !lostFields) { setLostOpen(true); return; }
 
+    let nextHandoff = null;
     if (!forceBypass) {
       if (!guardStage(lead, { status: newStatus, ...(newStatus === 'lost' ? { lostReason: lostFields?.lostReason || 'pending' } : {}) }, { role: activeRole, toast: triggerToast })) return;
 
@@ -210,6 +235,9 @@ export default function LeadQuickDrawer({
         triggerToast?.(validation.missingDeliverable, 'error');
         return;
       }
+      if (validation.nextTask) {
+        nextHandoff = validation.nextTask;
+      }
     }
 
     setInlineBlocker(null);
@@ -226,8 +254,16 @@ export default function LeadQuickDrawer({
       _forceStage: true,
       ...(newStatus === 'lost' ? { ...lostFields, lostAt: new Date().toISOString() } : (lead.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})),
       notes: updatedNotes,
-      lastActivityAt: new Date().toISOString()
+      lastActivityAt: new Date().toISOString(),
+      ...(nextHandoff ? { latestHandoffTask: nextHandoff } : {})
     };
+
+    if (nextHandoff) {
+      const crmTask = handoffToCrmTask(nextHandoff, lead, currentUser);
+      if (crmTask) {
+        addTask(crmTask).catch(() => {});
+      }
+    }
 
     onUpdateLead(lead.id, updates, lead.version);
     triggerToast?.(isAr ? `تم تحديث مرحلة العميل إلى "${stageObj?.label_ar}"` : `Stage updated to ${stageObj?.label_en}`, 'success');
@@ -275,9 +311,10 @@ export default function LeadQuickDrawer({
 
     if (newStage && newStage !== lead.status) {
       patch.status = newStage;
-      if (newStage === 'lost' && meta.lostReason) {
-        patch.lostReason = meta.lostReason;
+      if (newStage === 'lost') {
+        patch.lostReason = meta.lostReason || 'other';
         patch.lostAt = nowIso;
+        if (meta.lostNote) patch.lostNote = meta.lostNote;
       }
     }
 
@@ -286,8 +323,12 @@ export default function LeadQuickDrawer({
     }
 
     const stageLabel = stages.find(s => s.id === newStage)?.[isAr ? 'label_ar' : 'label_en'] || newStage;
-    const taskMsg = task ? (isAr ? ` وجدولة: ${task.title}` : ` & task scheduled`) : '';
-    triggerToast?.(isAr ? `تم تسجيل التواصل ونقل العميل إلى "${stageLabel}"${taskMsg}` : 'Contact logged & stage updated', 'success');
+    if (newStage === 'lost') {
+      triggerToast?.(isAr ? 'تم نقل العميل إلى "خسارة" وتسجيل السبب بنجاح' : 'Lead marked as lost', 'info');
+    } else {
+      const taskMsg = task ? (isAr ? ` وجدولة: ${task.title}` : ` & task scheduled`) : '';
+      triggerToast?.(isAr ? `تم تسجيل التواصل ونقل العميل إلى "${stageLabel}"${taskMsg}` : 'Contact logged & stage updated', 'success');
+    }
   };
 
   const markContacted = (channel) => {
@@ -644,6 +685,33 @@ export default function LeadQuickDrawer({
           <section className={`crm-ld__role is-${role.id}`} aria-label={isAr ? 'نوع العميل' : 'Client type'}>
             <Badge tone={role.tone}>{isAr ? role.ar : role.en}</Badge>
             {role.hint && isAr && <span className="crm-ld__role-hint">{role.hint}</span>}
+            {dealValue >= HIGH_VALUE_DEAL_THRESHOLD && (
+              lead.isFounderApproved ? (
+                <Badge tone="success">{isAr ? '✓ معتمدة من المؤسس (د. محمود الباز)' : '✓ Founder Approved'}</Badge>
+              ) : (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Badge tone="danger">{isAr ? '⚠️ بانتظار اعتماد المؤسس (+5M)' : 'Pending Founder Approval'}</Badge>
+                  {activeRole === 'super_admin' && (
+                    <button
+                      type="button"
+                      onClick={handleApproveHighValue}
+                      style={{
+                        background: 'linear-gradient(135deg, #0B1C36 0%, #1e3a8a 100%)',
+                        border: '1px solid #D4AF37',
+                        color: '#D4AF37',
+                        borderRadius: '6px',
+                        padding: '2px 8px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {isAr ? 'اعتماد الصفقة الآن ✍️' : 'Approve Now'}
+                    </button>
+                  )}
+                </div>
+              )
+            )}
             {missing.length > 0 && (
               <button type="button" className="crm-ld__role-missing" onClick={() => setActiveTab('client')} title={isAr ? 'افتح بيانات العميل وكمّلها' : 'Open the client details'}>
                 {isAr ? `ناقص: ${missing.map((m) => m.ar).join(' · ')}` : `Missing: ${missing.length}`}
@@ -808,7 +876,16 @@ export default function LeadQuickDrawer({
               <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', lineHeight: 1.5 }}>
                 {inlineBlocker.missingDeliverable}
               </p>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                {inlineBlocker.deliverableKey === 'founder_high_value_approval' && activeRole === 'super_admin' && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={handleApproveHighValue}
+                  >
+                    {isAr ? 'اعتماد الصفقة رسمياً (د. محمود الباز) ✍️' : 'Approve Deal (Founder)'}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="secondary"
@@ -818,7 +895,7 @@ export default function LeadQuickDrawer({
                 >
                   {isAr ? 'استكمال البيانات بالملف' : 'Fill details'}
                 </Button>
-                {activeRole === 'super_admin' && (
+                {activeRole === 'super_admin' && inlineBlocker.deliverableKey !== 'founder_high_value_approval' && (
                   <Button
                     size="sm"
                     variant="ghost"

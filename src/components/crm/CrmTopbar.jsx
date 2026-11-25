@@ -531,6 +531,18 @@ export default function CrmTopbar({
                           key={l.id}
                           className={`crm-notif-row is-${kind}`}
                           onClick={() => {
+                            if (typeof window !== 'undefined' && window.__oneline_is_editing_property) {
+                              if (triggerToast) {
+                                triggerToast(
+                                  isAr
+                                    ? 'لديك شاشة إدخال عقار مفتوحة. يرجى حفظها أو إغلاقها أولاً قبل فتح العميل.'
+                                    : 'Finish property entry before viewing client.',
+                                  'warning'
+                                );
+                              }
+                              setShowNotifMenu(false);
+                              return;
+                            }
                             window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: l.id, lead: l } }));
                             setShowNotifMenu(false);
                           }}
