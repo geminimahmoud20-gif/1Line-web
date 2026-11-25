@@ -575,6 +575,48 @@ export const fetchLeadById = async (leadId) => {
 };
 
 /**
+ * Query all requests across Firestore associated with a phone or WhatsApp number.
+ * Solves the memory-only limit of the 150 leads window, unifying the client's past requests.
+ */
+export const fetchClientOtherRequests = async (phoneOrWhatsapp, excludeLeadId = '') => {
+  if (!isFirebaseConfigured() || !db || !phoneOrWhatsapp) return [];
+  try {
+    const variants = phoneVariants(String(phoneOrWhatsapp));
+    if (!variants || variants.length === 0) return [];
+
+    const foundIds = new Set();
+    for (const field of ['phone', 'whatsapp', 'altPhone']) {
+      try {
+        const snap = await getDocs(query(collection(db, 'lead_contacts'), where(field, 'in', variants.slice(0, 10)), limit(20)));
+        snap.docs.forEach((d) => {
+          if (String(d.id) !== String(excludeLeadId)) foundIds.add(d.id);
+        });
+      } catch { /* rule limits or index */ }
+    }
+
+    if (foundIds.size === 0) return [];
+
+    const results = [];
+    const idList = Array.from(foundIds).slice(0, 15);
+    await Promise.all(
+      idList.map(async (id) => {
+        try {
+          const lSnap = await getDoc(doc(db, 'leads', id));
+          if (lSnap.exists()) {
+            results.push({ id, ...lSnap.data() });
+          }
+        } catch { /* skip */ }
+      })
+    );
+
+    return results.sort((a, b) => createdMillis(b) - createdMillis(a));
+  } catch (err) {
+    console.warn('fetchClientOtherRequests failed:', err);
+    return [];
+  }
+};
+
+/**
  * Every lead this account may read (no contact docs), for dashboard totals. The live list only
  * holds the newest 150, so numbers computed from it alone go wrong once there are more.
  * Paged by document id (500 a page) up to `max`. Returns { ok, leads, truncated }.

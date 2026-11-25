@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send, Repeat } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
-import { addTask, updateTask, removeTask } from '../../firebaseLazy';
+import { addTask, updateTask, removeTask, fetchLeadById } from '../../firebaseLazy';
 import {
-  PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
+  PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, RECURRENCE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
   dueFromPreset, dayKeyFrom, snoozed, pushAllPatch, completion, reopening, dueLabel,
-  workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch, focusTasks, doneThisWeek, daysLate
+  workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch, focusTasks, doneThisWeek, daysLate,
+  parseTaskNote, formatTaskNote, nextRecurringDue
 } from '../../utils/tasks';
 import { firstContactPatch } from '../../utils/crmLeadViews';
 import { auditContactUse } from '../../utils/contactAudit';
@@ -25,23 +26,43 @@ const SECTIONS = [
 const dayOnly = (v) => String(v || '').slice(0, 10);
 const timeOnly = (v) => (String(v || '').length > 10 ? String(v).slice(11, 16) : '');
 
-/** Inline editor for one task: the words, the day and time, how urgent, what kind, a note */
+/** Inline editor for one task: the words, the day and time, how urgent, what kind, a note, checklist and recurrence */
 function EditForm({ t, isAr, onSave, onCancel }) {
+  const parsed = useMemo(() => parseTaskNote(t.note), [t.note]);
   const [title, setTitle] = useState(t.title);
   const [day, setDay] = useState(dayOnly(t.dueAt));
   const [time, setTime] = useState(timeOnly(t.dueAt));
   const [priority, setPriority] = useState(t.priority || 'normal');
   const [kind, setKind] = useState(t.kind || 'other');
-  const [note, setNote] = useState(t.note || '');
+  const [plainNote, setPlainNote] = useState(parsed.plainNote);
+  const [recurrence, setRecurrence] = useState(parsed.recurrence || 'none');
+  const [checklist, setChecklist] = useState(parsed.checklist || []);
+  const [newSubtask, setNewSubtask] = useState('');
   const [problem, setProblem] = useState('');
+
+  const handleAddSubtask = (e) => {
+    e.preventDefault();
+    if (!newSubtask.trim()) return;
+    setChecklist([...checklist, { id: `chk-${Date.now()}`, done: false, text: newSubtask.trim() }]);
+    setNewSubtask('');
+  };
+
+  const handleRemoveSubtask = (idx) => {
+    setChecklist(checklist.filter((_, i) => i !== idx));
+  };
+
   const submit = (e) => {
     e.preventDefault();
-    const patch = editPatch({ title, dueAt: day && time ? `${day}T${time}` : day, priority, kind, note });
-    // A task keeps its title and its day
-    if (!patch) { setProblem(taskProblem({ title, dueAt: day && time ? `${day}T${time}` : day, me: { uid: 'x' } }, isAr) || (isAr ? 'اكتب المهمة وحدد ميعادها' : 'A task needs a title and a day')); return; }
+    const finalNote = formatTaskNote(plainNote, checklist, recurrence);
+    const patch = editPatch({ title, dueAt: day && time ? `${day}T${time}` : day, priority, kind, note: finalNote });
+    if (!patch) {
+      setProblem(taskProblem({ title, dueAt: day && time ? `${day}T${time}` : day, me: { uid: 'x' } }, isAr) || (isAr ? 'اكتب المهمة وحدد ميعادها' : 'A task needs a title and a day'));
+      return;
+    }
     setProblem('');
     onSave(patch);
   };
+
   return (
     <form className="tk-edit" onSubmit={submit}>
       {problem && <small role="alert" className="tk-problem">{problem}</small>}
@@ -55,8 +76,42 @@ function EditForm({ t, isAr, onSave, onCancel }) {
         <select className="tk-input" value={kind} onChange={(e) => setKind(e.target.value)} aria-label={isAr ? 'النوع' : 'Kind'}>
           {KINDS.map((k) => <option key={k.id} value={k.id}>{isAr ? k.ar : k.en}</option>)}
         </select>
+        <select className="tk-input" value={recurrence} onChange={(e) => setRecurrence(e.target.value)} aria-label={isAr ? 'التكرار' : 'Recurrence'}>
+          {RECURRENCE_OPTIONS.map((r) => <option key={r.id} value={r.id}>{isAr ? r.ar : r.en}</option>)}
+        </select>
       </div>
-      <textarea className="tk-input tk-textarea" rows={2} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} placeholder={isAr ? 'ملاحظة (اختياري)' : 'Note (optional)'} aria-label={isAr ? 'ملاحظة' : 'Note'} />
+      <textarea className="tk-input tk-textarea" rows={2} maxLength={1000} value={plainNote} onChange={(e) => setPlainNote(e.target.value)} placeholder={isAr ? 'ملاحظة (اختياري)' : 'Note (optional)'} aria-label={isAr ? 'ملاحظة' : 'Note'} />
+
+      {/* Subtasks inside EditForm */}
+      <div className="tk-checklist">
+        <div className="tk-checklist__head">
+          <span>{isAr ? 'المهام الفرعية (Checklist):' : 'Subtasks:'}</span>
+          <span>{checklist.length}</span>
+        </div>
+        {checklist.length > 0 && (
+          <ul className="tk-checklist__items">
+            {checklist.map((item, idx) => (
+              <li key={item.id || idx} className="tk-chk-item">
+                <span>• {item.text}</span>
+                <button type="button" className="ui-btn ui-btn--ghost ui-btn--xs" onClick={() => handleRemoveSubtask(idx)} aria-label={isAr ? 'حذف' : 'Remove'}>
+                  <X size={12} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="tk-chk-add">
+          <input
+            type="text"
+            value={newSubtask}
+            onChange={(e) => setNewSubtask(e.target.value)}
+            placeholder={isAr ? '+ أضف بنداً فرعياً...' : '+ Add subtask...'}
+            onKeyDown={(e) => { if (e.key === 'Enter') { handleAddSubtask(e); } }}
+          />
+          <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={handleAddSubtask}>{isAr ? 'أضف' : 'Add'}</button>
+        </div>
+      </div>
+
       <div className="tk-form-acts">
         <button type="submit" className="ui-btn ui-btn--primary ui-btn--sm">{isAr ? 'حفظ' : 'Save'}</button>
         <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" onClick={onCancel}>{isAr ? 'إلغاء' : 'Cancel'}</button>
@@ -77,6 +132,17 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
   const pr = PRIORITIES.find((p) => p.id === t.priority);
   const done = t.status === 'done';
   const hasPhone = Boolean(lead && (lead.phone || lead.whatsapp));
+
+  const parsed = useMemo(() => parseTaskNote(t.note), [t.note]);
+  const rec = RECURRENCE_OPTIONS.find((r) => r.id === parsed.recurrence);
+  const chkDone = parsed.checklist.filter((c) => c.done).length;
+
+  const handleToggleChecklist = (idx) => {
+    const nextChecklist = parsed.checklist.map((item, i) => (i === idx ? { ...item, done: !item.done } : item));
+    const nextNote = formatTaskNote(parsed.plainNote, nextChecklist, parsed.recurrence);
+    onSave(t, { note: nextNote });
+  };
+
   return (
     <li className={`tk-row ${done ? 'is-done' : ''} ${t.priority === 'high' && !done ? 'is-high' : ''}`}>
       <div className="tk-row__main">
@@ -89,6 +155,16 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
             <span className="tk-due"><Clock size={12} aria-hidden="true" /> {dueLabel(t, isAr, now)}</span>
             {pr && t.priority !== 'normal' && <span className={`tk-pill is-${t.priority}`}>{isAr ? pr.ar : pr.en}</span>}
             {kind && t.kind !== 'other' && <span className="tk-pill">{isAr ? kind.ar : kind.en}</span>}
+            {rec && rec.id !== 'none' && (
+              <span className="tk-pill is-rec" title={isAr ? `تكرار: ${rec.ar}` : `Repeats: ${rec.en}`}>
+                <Repeat size={11} aria-hidden="true" /> {isAr ? rec.ar : rec.en}
+              </span>
+            )}
+            {parsed.checklist.length > 0 && (
+              <span className="tk-pill" title={isAr ? 'المهام الفرعية' : 'Subtasks'}>
+                <ListChecks size={11} aria-hidden="true" /> {chkDone}/{parsed.checklist.length}
+              </span>
+            )}
             {team && t.assigneeName && <span className="tk-pill is-who">{t.assigneeName}</span>}
             {isDelegated(t) && t.assigneeUid === me?.uid && <span className="tk-pill is-from"><Send size={11} aria-hidden="true" /> {isAr ? `من ${t.createdByName || 'زميل'}` : `From ${t.createdByName || 'a colleague'}`}</span>}
             {isDelegated(t) && t.assigneeUid !== me?.uid && !done && (
@@ -100,6 +176,24 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
           </span>
         </button>
       </div>
+
+      {/* Interactive Subtasks Checklist */}
+      {parsed.checklist.length > 0 && !done && (
+        <div className="tk-checklist" onClick={(e) => e.stopPropagation()}>
+          <div className="tk-checklist__head">
+            <span>{isAr ? 'المهام الفرعية' : 'Subtasks'}</span>
+            <span>{chkDone} / {parsed.checklist.length}</span>
+          </div>
+          <ul className="tk-checklist__items">
+            {parsed.checklist.map((item, idx) => (
+              <li key={item.id || idx} className={`tk-chk-item ${item.done ? 'is-done' : ''}`} onClick={() => handleToggleChecklist(idx)}>
+                <input type="checkbox" checked={item.done} onChange={() => handleToggleChecklist(idx)} aria-label={item.text} />
+                <span>{item.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!done && (
         <div className="tk-quick">
@@ -113,7 +207,7 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
               <MessageSquare size={16} aria-hidden="true" /> {isAr ? 'واتساب' : 'WhatsApp'}
             </button>
           )}
-          {lead && <button type="button" className="tk-q" onClick={() => onOpenLead(t.leadId)}>{isAr ? 'افتح العميل' : 'Open client'}</button>}
+          {t.leadId && <button type="button" className="tk-q" onClick={() => onOpenLead(t.leadId)}>{isAr ? 'افتح العميل' : 'Open client'}</button>}
           <button type="button" className="tk-q" onClick={() => setMoving((v) => !v)} aria-expanded={moving}><CalendarClock size={16} aria-hidden="true" /> {isAr ? 'أجّل' : 'Move'}</button>
         </div>
       )}
@@ -130,7 +224,7 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
         <div className="tk-details">
           {editing ? <EditForm t={t} isAr={isAr} onSave={(patch) => { setEditing(false); onSave(t, patch); }} onCancel={() => setEditing(false)} /> : (
             <>
-              {t.note ? <p className="tk-note">{t.note}</p> : <p className="tk-note tk-note--empty">{isAr ? 'مفيش ملاحظة.' : 'No note.'}</p>}
+              {parsed.plainNote ? <p className="tk-note">{parsed.plainNote}</p> : <p className="tk-note tk-note--empty">{isAr ? 'مفيش ملاحظة.' : 'No note.'}</p>}
               <div className="tk-form-acts">
                 <button type="button" className="ui-btn ui-btn--secondary ui-btn--sm" onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> {isAr ? 'تعديل' : 'Edit'}</button>
                 {canDelete(t) && <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" onClick={() => onDelete(t)}><Trash2 size={14} aria-hidden="true" /> {isAr ? 'حذف' : 'Delete'}</button>}
@@ -143,7 +237,7 @@ function TaskRow({ t, lead, isAr, team, me, onTick, onMove, onSave, onDelete, on
   );
 }
 
-/** The quick-add form: starters, a title, when, how urgent, and (for a manager) who */
+/** The quick-add form: starters, a title, when, how urgent, recurrence, and (for a manager) who */
 export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAssigneeUid = '', lead = null, onAdded, triggerToast, compact = false }) {
   const [title, setTitle] = useState('');
   const [preset, setPreset] = useState('today');
@@ -151,6 +245,7 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAss
   const [time, setTime] = useState('');
   const [priority, setPriority] = useState('normal');
   const [kind, setKind] = useState('call');
+  const [recurrence, setRecurrence] = useState('none');
   const [note, setNote] = useState('');
   const [showNote, setShowNote] = useState(false);
   const [assigneeUid, setAssigneeUid] = useState(defaultAssigneeUid || '');
@@ -170,13 +265,14 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAss
     if (busy) return;
     const day = preset === 'custom' ? customDay : dueFromPreset(preset);
     const assignee = canAssign && assigneeUid ? members.find((m) => m.uid === assigneeUid) : null;
-    const payload = buildTask({ title, note, dueAt: day && time ? `${day}T${time}` : day, priority, kind, lead, assignee, me });
+    const formattedNote = formatTaskNote(note, [], recurrence);
+    const payload = buildTask({ title, note: formattedNote, dueAt: day && time ? `${day}T${time}` : day, priority, kind, lead, assignee, me });
     if (!payload) { triggerToast?.(taskProblem({ title, dueAt: day && time ? `${day}T${time}` : day, assignee, me }, isAr) || (isAr ? 'اكتب المهمة الأول' : 'Write the task first'), 'error'); return; }
     setBusy(true);
     const id = await addTask(payload);
     setBusy(false);
     if (!id) { triggerToast?.(isAr ? 'المهمة ماتحفظتش، جرّب تاني' : 'The task was not saved', 'error'); return; }
-    setTitle(''); setTime(''); setPriority('normal'); setNote(''); setShowNote(false);
+    setTitle(''); setTime(''); setPriority('normal'); setRecurrence('none'); setNote(''); setShowNote(false);
     if (compact) setOpen(false);
     triggerToast?.(payload.assigneeUid !== payload.createdBy
       ? (isAr ? `اتكلّف ${payload.assigneeName || 'زميلك'} بالمهمة، وهتلاقي إنجازها في «كلّفت بيها»` : 'Assigned')
@@ -208,6 +304,9 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, defaultAss
         </select>
         <select className="tk-input" value={kind} onChange={(e) => setKind(e.target.value)} aria-label={isAr ? 'النوع' : 'Kind'}>
           {KINDS.map((k) => <option key={k.id} value={k.id}>{isAr ? k.ar : k.en}</option>)}
+        </select>
+        <select className="tk-input" value={recurrence} onChange={(e) => setRecurrence(e.target.value)} aria-label={isAr ? 'التكرار' : 'Recurrence'}>
+          {RECURRENCE_OPTIONS.map((r) => <option key={r.id} value={r.id}>{isAr ? r.ar : r.en}</option>)}
         </select>
         {canAssign && members.length > 0 && (
           <select className="tk-input" value={assigneeUid} onChange={(e) => setAssigneeUid(e.target.value)} aria-label={isAr ? 'لمين' : 'Assign to'}>
@@ -259,17 +358,77 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
     const patch = seenPatch();
     unseen.forEach((t) => { updateTask(t.id, patch); });
   }, [view, unseen]);
+  const [extraLeads, setExtraLeads] = useState(new Map());
   const leadById = useMemo(() => new Map(leads.map((l) => [String(l.id), l])), [leads]);
+  const getLead = useCallback((id) => {
+    if (!id) return null;
+    return leadById.get(String(id)) || extraLeads.get(String(id)) || null;
+  }, [leadById, extraLeads]);
+
+  // Background resolver for missing task leads (up to 15 leads)
+  useEffect(() => {
+    const missingIds = Array.from(
+      new Set(
+        tasks
+          .filter((t) => t.leadId && !leadById.has(String(t.leadId)) && !extraLeads.has(String(t.leadId)))
+          .map((t) => String(t.leadId))
+      )
+    ).slice(0, 15);
+    if (missingIds.length === 0) return;
+    let cancelled = false;
+    Promise.all(missingIds.map((id) => fetchLeadById(id))).then((results) => {
+      if (cancelled) return;
+      setExtraLeads((prev) => {
+        const next = new Map(prev);
+        results.forEach((res) => {
+          if (res.status === 'ok' && res.lead) {
+            next.set(String(res.lead.id), res.lead);
+          }
+        });
+        return next;
+      });
+    });
+    return () => { cancelled = true; };
+  }, [tasks, leadById, extraLeads]);
+
   const filtering = Boolean(q || kind || priority || person);
 
   const [flowTask, setFlowTask] = useState(null);
   const tick = async (t) => {
     const done = t.status === 'done';
-    const lead = t.leadId ? leadById.get(String(t.leadId)) : null;
-    // A task behind a client asks what happened and what comes next before it closes
-    if (!done && lead && onUpdateLead) { setFlowTask(t); return; }
+    const lead = t.leadId ? getLead(t.leadId) : null;
+    const needsFlow = !done && lead && onUpdateLead && ['call', 'whatsapp', 'visit'].includes(t.kind);
+    if (needsFlow) {
+      setFlowTask(t);
+      return;
+    }
     const ok = await updateTask(t.id, done ? reopening() : completion(me));
-    if (!ok) triggerToast?.(isAr ? 'ماتحدّثتش، جرّب تاني' : 'Not updated', 'error');
+    if (!ok) {
+      triggerToast?.(isAr ? 'ماتحدّثتش، جرّب تاني' : 'Not updated', 'error');
+      return;
+    }
+    if (!done) {
+      const parsed = parseTaskNote(t.note);
+      if (parsed.recurrence && parsed.recurrence !== 'none') {
+        const nextDue = nextRecurringDue(t.dueAt, parsed.recurrence);
+        const nextPayload = buildTask({
+          title: t.title,
+          note: t.note,
+          dueAt: nextDue,
+          priority: t.priority,
+          kind: t.kind,
+          lead: t.leadId ? { id: t.leadId, name: t.leadName } : null,
+          assignee: { uid: t.assigneeUid, name: t.assigneeName },
+          me
+        });
+        if (nextPayload) {
+          addTask(nextPayload).then((newId) => {
+            if (newId) triggerToast?.(isAr ? 'تمت جدولة التكرار القادم تلقائياً' : 'Next recurring task scheduled', 'info');
+          });
+        }
+      }
+      triggerToast?.(isAr ? 'تم إنجاز المهمة' : 'Task completed', 'success');
+    }
   };
   const move = async (t, days) => { if (!(await updateTask(t.id, { dueAt: snoozed(t, days), updatedAt: new Date().toISOString() }))) triggerToast?.(isAr ? 'ماتأجّلتش' : 'Not moved', 'error'); };
   const save = async (t, patch) => { if (!(await updateTask(t.id, patch))) triggerToast?.(isAr ? 'التعديل ماتحفظش' : 'Not saved', 'error'); };
@@ -279,7 +438,23 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
     triggerToast?.(results.every(Boolean) ? (isAr ? `اتأجّلت ${results.length} مهمة لبكرة` : 'Moved to tomorrow') : (isAr ? 'بعض المهام ماتأجّلتش' : 'Some were not moved'), results.every(Boolean) ? 'success' : 'error');
   };
   const canDelete = (t) => canManage || t.createdBy === me?.uid;
-  const openLead = (id) => { const l = leadById.get(String(id)); if (l) onOpenLead?.(l); else triggerToast?.(isAr ? 'العميل مش في القايمة الحالية' : 'Client not in the current list', 'info'); };
+  const openLead = async (id) => {
+    const l = getLead(id);
+    if (l) {
+      onOpenLead?.(l);
+      return;
+    }
+    triggerToast?.(isAr ? 'جاري فتح ملف العميل...' : 'Opening client...', 'info');
+    const res = await fetchLeadById(id);
+    if (res.status === 'ok' && res.lead) {
+      setExtraLeads((prev) => new Map(prev).set(String(id), res.lead));
+      onOpenLead?.(res.lead);
+    } else if (res.status === 'denied') {
+      triggerToast?.(isAr ? 'غير مصرح بعرض عملاء هذا الفريق' : 'Access denied for this desk', 'error');
+    } else {
+      triggerToast?.(isAr ? 'تعذر العثور على ملف العميل (ربما تم حذفه)' : 'Client not found or deleted', 'error');
+    }
+  };
   // One tap to call counts as the first reply, like the call button on the clients list
   const call = (lead) => {
     auditContactUse(lead, 'call');
@@ -297,8 +472,8 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
 
   return (
     <div className="crm-table-container tk-panel">
-      {flowTask && leadById.get(String(flowTask.leadId)) && (
-        <TaskDoneFlow key={flowTask.id} task={flowTask} lead={leadById.get(String(flowTask.leadId))} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />
+      {flowTask && getLead(flowTask.leadId) && (
+        <TaskDoneFlow key={flowTask.id} task={flowTask} lead={getLead(flowTask.leadId)} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />
       )}
       <PageHeader
         title={view === 'team' ? (isAr ? 'مهام الفريق' : 'Team tasks') : view === 'assigned' ? (isAr ? 'اللي كلّفت بيه' : 'Tasks I gave') : (isAr ? 'مهامي' : 'My tasks')}
@@ -378,7 +553,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
           <h2 className="tk-focus__title"><Zap size={15} aria-hidden="true" />{isAr ? 'ابدأ بيها دلوقتي' : 'Start with these'}</h2>
           <ul className="tk-focus__list">
             {focusList.map((t) => {
-              const lead = t.leadId ? leadById.get(String(t.leadId)) : null;
+              const lead = t.leadId ? getLead(t.leadId) : null;
               const late = daysLate(t, now);
               return (
                 <li key={t.id} className={`tk-focus__row${late ? ' is-late' : ''}`}>
@@ -432,7 +607,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
             {s.id === 'overdue' && groups.overdue.length > 1 && <button type="button" className="tk-link tk-push" onClick={pushLate}>{isAr ? 'أجّل الكل لبكرة' : 'Move all to tomorrow'}</button>}
           </h3>
           <ul className="tk-list">
-            {groups[s.id].map((t) => <TaskRow key={t.id} t={t} lead={t.leadId ? leadById.get(String(t.leadId)) : null} {...rowProps} />)}
+            {groups[s.id].map((t) => <TaskRow key={t.id} t={t} lead={t.leadId ? getLead(t.leadId) : null} {...rowProps} />)}
           </ul>
         </section>
       ))}

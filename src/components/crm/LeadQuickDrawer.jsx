@@ -30,6 +30,7 @@ import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui
 import ClientDetails from './client-file/ClientDetails';
 import ClientJourney from './client-file/ClientJourney';
 import ClientTimeline from './client-file/ClientTimeline';
+import ClientDocuments from './client-file/ClientDocuments';
 import { buildTimeline } from '../../utils/clientTimeline';
 import './lead-drawer.css';
 import BrokerFile from './lead-profile/BrokerFile';
@@ -829,6 +830,7 @@ export default function LeadQuickDrawer({
             items={[
               { id: 'work', label: isAr ? 'الشغل' : 'Work' },
               { id: 'client', label: isAr ? 'العميل' : 'Client' },
+              { id: 'docs', label: isAr ? 'المستندات' : 'Docs', count: (lead?.documents || []).length || null },
               { id: 'team', label: isAr ? 'الفريق' : 'Team' },
               { id: 'history', label: isAr ? 'السجل' : 'History', count: historyCount || null },
               sellerFile
@@ -868,6 +870,16 @@ export default function LeadQuickDrawer({
 
           {activeTab === 'client' && (
             <ClientDetails key={lead.id} lead={lead} onUpdateLead={onUpdateLead} isAr={isAr} lang={isAr ? 'ar' : 'en'} triggerToast={triggerToast} userRole={activeRole} />
+          )}
+
+          {activeTab === 'docs' && (
+            <ClientDocuments
+              key={lead.id}
+              lead={lead}
+              isAr={isAr}
+              onUpdateLead={onUpdateLead}
+              triggerToast={triggerToast}
+            />
           )}
 
           {activeTab === 'history' && (

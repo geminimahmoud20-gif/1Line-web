@@ -193,6 +193,75 @@ export const SNOOZE_OPTIONS = [
   { id: 'week', ar: 'الأسبوع الجاي', en: 'Next week', days: 7 }
 ];
 
+export const RECURRENCE_OPTIONS = [
+  { id: 'none', ar: 'بدون تكرار', en: 'None', days: 0 },
+  { id: 'daily', ar: 'يومي', en: 'Daily', days: 1 },
+  { id: 'weekly', ar: 'أسبوعي', en: 'Weekly', days: 7 },
+  { id: 'monthly', ar: 'شهري', en: 'Monthly', days: 30 }
+];
+
+/** Parse plain note, interactive checklist items and recurrence from task note text */
+export function parseTaskNote(note = '') {
+  const lines = String(note || '').split('\n');
+  const checklist = [];
+  const plainLines = [];
+  let recurrence = 'none';
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    const recMatch = line.match(/^\[(?:repeat|تكرار):\s*(daily|weekly|monthly|none)\]$/i);
+    if (recMatch) {
+      recurrence = recMatch[1].toLowerCase();
+      continue;
+    }
+    const chkMatch = line.match(/^-\s*\[([ xX])\]\s*(.+)$/);
+    if (chkMatch) {
+      checklist.push({
+        id: `chk-${checklist.length}`,
+        done: chkMatch[1].toLowerCase() === 'x',
+        text: chkMatch[2].trim()
+      });
+      continue;
+    }
+    plainLines.push(raw);
+  }
+  return {
+    plainNote: plainLines.join('\n').trim(),
+    checklist,
+    recurrence
+  };
+}
+
+/** Formats note, checklist items and recurrence into a single string within the 1000-char limit */
+export function formatTaskNote(plainNote = '', checklist = [], recurrence = 'none') {
+  const parts = [];
+  if (recurrence && recurrence !== 'none') {
+    parts.push(`[repeat:${recurrence}]`);
+  }
+  if (plainNote && plainNote.trim()) {
+    parts.push(plainNote.trim());
+  }
+  if (Array.isArray(checklist) && checklist.length > 0) {
+    checklist.forEach((item) => {
+      if (item && item.text) {
+        parts.push(`- [${item.done ? 'x' : ' '}] ${item.text.trim()}`);
+      }
+    });
+  }
+  return parts.join('\n').slice(0, 1000);
+}
+
+/** Calculate next due date for recurring task */
+export function nextRecurringDue(dueAt, recurrence = 'daily', now = Date.now()) {
+  const rec = RECURRENCE_OPTIONS.find((r) => r.id === recurrence) || RECURRENCE_OPTIONS[1];
+  const days = rec.days || 1;
+  const time = String(dueAt || '').length > 10 ? String(dueAt).slice(10) : '';
+  const base = String(dueAt || '').slice(0, 10);
+  const startMs = base ? Date.parse(`${base}T12:00:00`) : now;
+  return `${dayKeyFrom(Number.isFinite(startMs) ? startMs : now, days)}${time}`;
+}
+
+
 /** Whole days a task is late (0 when it is not) */
 export function daysLate(task, now = Date.now()) {
   if (bucketOf(task, now) !== 'overdue') return 0;

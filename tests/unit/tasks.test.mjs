@@ -230,3 +230,22 @@ test('done this week counts only the last 7 days for that person', () => {
   const d = (days, uid = 'u') => ({ status: 'done', assigneeUid: uid, doneAt: new Date(now - days * 86400000).toISOString() });
   assert.equal(doneThisWeek([d(1), d(6), d(9), d(2, 'x')], 'u', now), 2);
 });
+
+import { parseTaskNote, formatTaskNote, nextRecurringDue, RECURRENCE_OPTIONS } from '../../src/utils/tasks.js';
+test('task note checklists and recurrence parsing and serialization', () => {
+  const note = '[repeat:weekly]\nملاحظة هامة\n- [ ] معاينة الموقع\n- [x] الاتصال بالحارس';
+  const parsed = parseTaskNote(note);
+  assert.equal(parsed.recurrence, 'weekly');
+  assert.equal(parsed.plainNote, 'ملاحظة هامة');
+  assert.equal(parsed.checklist.length, 2);
+  assert.equal(parsed.checklist[0].done, false);
+  assert.equal(parsed.checklist[1].done, true);
+
+  const formatted = formatTaskNote('ملاحظة هامة', parsed.checklist, 'weekly');
+  assert.equal(formatted, note);
+
+  const nextDue = nextRecurringDue('2026-11-15T10:00', 'weekly', Date.parse('2026-11-15T10:00:00'));
+  assert.equal(nextDue, '2026-11-22T10:00');
+  assert.ok(RECURRENCE_OPTIONS.length >= 4);
+});
+

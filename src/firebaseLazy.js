@@ -155,6 +155,8 @@ export const issueReceipt = lazyCall('issueReceipt');
 export const getCmsStorageStatus = lazyCall('getCmsStorageStatus');
 export const submitIntakeRecord = lazyCall('submitIntakeRecord');
 export const updateIntakeRecord = lazyCall('updateIntakeRecord');
+export const fetchLeadById = lazyCall('fetchLeadById');
+export const fetchClientOtherRequests = lazyCall('fetchClientOtherRequests');
 
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
 export const subscribeToClientDownloads = lazySubscribe('subscribeToClientDownloads');

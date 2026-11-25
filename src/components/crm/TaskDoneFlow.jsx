@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Modal, Button, Select } from '../ui';
 import { useTasks } from '../../hooks/useTasks';
-import { updateTask } from '../../firebaseLazy';
-import { completion } from '../../utils/tasks';
+import { updateTask, addTask } from '../../firebaseLazy';
+import { completion, parseTaskNote, nextRecurringDue, buildTask } from '../../utils/tasks';
 import { suggestNextStep, SKIP_LOG } from '../../utils/nextStep';
 import { OUTCOMES, STAGE_RULES, outcomeEntry, outcomeSave, outcomeById } from '../../utils/stageGate';
 import { lostReasonsFor, isSellerLead } from '../../utils/crmLeadViews';
@@ -58,6 +58,28 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
     onUpdateLead?.(lead.id, patch, lead.version);
     setOutcomeId(id);
     setBusy(false);
+
+    // Schedule next recurring task if defined
+    const parsed = parseTaskNote(task.note);
+    if (parsed.recurrence && parsed.recurrence !== 'none') {
+      const nextDue = nextRecurringDue(task.dueAt, parsed.recurrence);
+      const nextPayload = buildTask({
+        title: task.title,
+        note: task.note,
+        dueAt: nextDue,
+        priority: task.priority,
+        kind: task.kind,
+        lead: task.leadId ? { id: task.leadId, name: task.leadName } : null,
+        assignee: { uid: task.assigneeUid, name: task.assigneeName },
+        me
+      });
+      if (nextPayload) {
+        addTask(nextPayload).then((newId) => {
+          if (newId) triggerToast?.(isAr ? 'تمت جدولة التكرار القادم للمهمة تلقائياً' : 'Next recurring task scheduled', 'info');
+        });
+      }
+    }
+
     if (id === 'no_answer') {
       scheduleNextAttempt({ id: lead.id, name: lead.name }, patch.outcomeAttempts, me).then((t) => { if (t) triggerToast?.(isAr ? 'اتضافت مهمة المحاولة الجاية' : 'Next attempt added', 'info'); });
       onClose();
@@ -107,6 +129,9 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
               onClick={() => (o.kind === 'negative' ? (setNegative(o.id), setReason('')) : finish(o.id))}>{label}</Button>
           );
         })}
+        <Button variant="ghost" size="sm" disabled={busy} onClick={() => finish('')}>
+          {isAr ? 'إتمام المهمة فقط' : 'Complete task only'}
+        </Button>
       </div>
       {negative && (
         <form className="crm-ld__form" onSubmit={(e) => { e.preventDefault(); if (reason) finish(negative, { reason, lose: true }); }}>

@@ -166,12 +166,12 @@ export default function NextStepSheet({
       <form id={formId} onSubmit={save} className="crm-nextstep" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         
         {/* Section 1: What was done in contact */}
-        <div style={{ background: '#F8FAFC', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(20, 43, 73, 0.08)' }}>
+        <div style={{ background: 'var(--ui-surface-2)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0B1C36' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
               📞 {isAr ? 'أولاً: إيه اللي تم في التواصل؟' : '1. Contact Activity:'}
             </span>
-            <span style={{ fontSize: '11px', color: '#64748B' }}>
+            <span style={{ fontSize: '11px', color: 'var(--ui-text-3)' }}>
               {isAr ? '(الملاحظة اختيارية)' : '(Optional note)'}
             </span>
           </div>
@@ -188,9 +188,9 @@ export default function NextStepSheet({
                   gap: '5px',
                   padding: '5px 10px',
                   borderRadius: '6px',
-                  border: channel === ch.id ? '1px solid #0B1C36' : '1px solid rgba(20, 43, 73, 0.1)',
-                  background: channel === ch.id ? '#0B1C36' : '#FFFFFF',
-                  color: channel === ch.id ? '#FFFFFF' : '#334155',
+                  border: channel === ch.id ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
+                  background: channel === ch.id ? 'var(--ui-primary)' : 'var(--ui-surface)',
+                  color: channel === ch.id ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
                   fontSize: '11.5px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -212,7 +212,7 @@ export default function NextStepSheet({
               width: '100%',
               padding: '8px 10px',
               borderRadius: '6px',
-              border: '1px solid rgba(20, 43, 73, 0.15)',
+              border: '1px solid var(--ui-line)',
               fontSize: '12px',
               fontFamily: 'inherit',
               resize: 'vertical',
@@ -222,9 +222,9 @@ export default function NextStepSheet({
         </div>
 
         {/* Section 2: Target Deal Stage Selector */}
-        <div style={{ background: '#FFFFFF', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(20, 43, 73, 0.08)' }}>
+        <div style={{ background: 'var(--ui-surface)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0B1C36' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
               🎯 {isAr ? 'ثانياً: نقل العميل لمرحلة جديدة (للأمام أو للخلف):' : '2. Move to Stage (Forward or Backward):'}
             </span>
             <Badge tone="accent">{targetStageLabel}</Badge>
@@ -246,9 +246,9 @@ export default function NextStepSheet({
                     gap: '4px',
                     padding: '8px 4px',
                     borderRadius: '8px',
-                    border: isSelected ? '1px solid #0B1C36' : '1px solid rgba(20, 43, 73, 0.1)',
-                    background: isSelected ? 'linear-gradient(135deg, #0B1C36 0%, #16305A 100%)' : '#F8FAFC',
-                    color: isSelected ? '#FFFFFF' : '#334155',
+                    border: isSelected ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
+                    background: isSelected ? 'var(--ui-primary)' : 'var(--ui-surface-2)',
+                    color: isSelected ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
                     fontSize: '11.5px',
                     fontWeight: isSelected ? 700 : 600,
                     cursor: 'pointer',
@@ -266,8 +266,8 @@ export default function NextStepSheet({
                     borderRadius: '50%',
                     fontSize: '10px',
                     fontWeight: 800,
-                    background: isSelected ? '#D4AF37' : 'rgba(0, 0, 0, 0.06)',
-                    color: isSelected ? '#0B1C36' : 'inherit'
+                    background: isSelected ? 'var(--ui-accent)' : 'rgba(0, 0, 0, 0.06)',
+                    color: isSelected ? 'var(--ui-primary)' : 'inherit'
                   }}>
                     {idx + 1}
                   </span>
@@ -279,9 +279,9 @@ export default function NextStepSheet({
         </div>
 
         {/* Section 3: Next Event / Action */}
-        <div style={{ background: '#F8FAFC', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(20, 43, 73, 0.08)' }}>
+        <div style={{ background: 'var(--ui-surface-2)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--ui-line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0B1C36' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ui-primary)' }}>
               🗓️ {isAr ? 'ثالثاً: تسجيل الحدث القادم (المكالمة أو المعاينة أو الاجتماع):' : '3. Next Event (Call, Viewing, Meeting):'}
             </span>
           </div>
@@ -298,9 +298,9 @@ export default function NextStepSheet({
                   gap: '4px',
                   padding: '5px 10px',
                   borderRadius: '6px',
-                  border: kind === k.id ? '1px solid #0B1C36' : '1px solid rgba(20, 43, 73, 0.1)',
-                  background: kind === k.id ? '#0B1C36' : '#FFFFFF',
-                  color: kind === k.id ? '#FFFFFF' : '#334155',
+                  border: kind === k.id ? '1px solid var(--ui-primary)' : '1px solid var(--ui-line)',
+                  background: kind === k.id ? 'var(--ui-primary)' : 'var(--ui-surface)',
+                  color: kind === k.id ? 'var(--ui-on-primary)' : 'var(--ui-text-2)',
                   fontSize: '11.5px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -322,7 +322,7 @@ export default function NextStepSheet({
           />
 
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', color: '#64748B' }}>{isAr ? 'الموعد السريع:' : 'Quick day:'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--ui-text-3)' }}>{isAr ? 'الموعد السريع:' : 'Quick day:'}</span>
             <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('today')}>{isAr ? 'النهارده' : 'Today'}</button>
             <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('tomorrow')}>{isAr ? 'بكرة' : 'Tomorrow'}</button>
             <button type="button" className="ui-btn ui-btn--secondary ui-btn--xs" onClick={() => handlePresetDay('3d')}>{isAr ? 'بعد ٣ أيام' : 'In 3 days'}</button>
@@ -347,7 +347,7 @@ export default function NextStepSheet({
           </div>
         </div>
 
-        {error && <p style={{ color: '#B91C1C', margin: 0, fontSize: '12px', fontWeight: 600 }}>{error}</p>}
+        {error && <p style={{ color: 'var(--ui-danger)', margin: 0, fontSize: '12px', fontWeight: 600 }}>{error}</p>}
       </form>
     </Modal>
   );

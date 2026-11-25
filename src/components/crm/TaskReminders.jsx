@@ -7,6 +7,26 @@ const KEY = 'crm_task_reminded';
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } };
 const write = (m) => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch { /* private mode */ } };
 
+const playChime = () => {
+  try {
+    if (typeof window === 'undefined') return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch { /* audio autoplay restriction */ }
+};
+
 /**
  * Reminds the signed-in person of their own tasks shortly BEFORE they are due: a toast while the CRM is open,
  * plus a browser notification when the tab is in the background. Each task+due value is announced once.
@@ -26,6 +46,7 @@ export default function TaskReminders({ uid, triggerToast }) {
       if (known.current.has(t.id)) continue;
       known.current.add(t.id);
       const text = `${t.title}${t.leadName ? ` — ${t.leadName}` : ''} (${dueLabel(t, true)})`;
+      playChime();
       triggerToast?.(`${t.createdByName || 'زميلك'} كلّفك بمهمة: ${text}`, 'info');
       try {
         if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
@@ -42,6 +63,7 @@ export default function TaskReminders({ uid, triggerToast }) {
       const reminded = read();
       const due = dueReminders(all, uid, Date.now(), reminded);
       if (!due.length) return;
+      playChime();
       for (const t of due.slice(0, 3)) {
         const text = `${t.title}${t.leadName ? ` — ${t.leadName}` : ''} (${dueLabel(t, true)})`;
         toast?.(`تذكير: ${text}`, 'info');

@@ -6,7 +6,7 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { restoreLeads, mergeLeads, mergeDuplicateGroups } from '../firebaseLazy';
+import { restoreLeads, mergeLeads, mergeDuplicateGroups, fetchLeadById } from '../firebaseLazy';
 import { auditLeadDeleted, auditContactUse } from '../utils/contactAudit';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
@@ -216,17 +216,30 @@ export const CrmAdminPanel = ({
 
   // Open lead drawer directly when clicking desktop notifications or topbar alerts
   useEffect(() => {
-    const handleOpenFromEvent = (e) => {
+    let cancelled = false;
+    const handleOpenFromEvent = async (e) => {
       const targetLead = e.detail?.lead || leads.find((l) => l.id === e.detail?.leadId);
       if (targetLead) {
         setQuickDrawerLead(targetLead);
         if (adminTab !== 'leads' && adminTab !== 'inbox') {
           setAdminTab('leads');
         }
+      } else if (e.detail?.leadId) {
+        // If not in the loaded window, fetch dynamically from Firestore
+        const res = await fetchLeadById(e.detail.leadId);
+        if (!cancelled && res.status === 'ok' && res.lead) {
+          setQuickDrawerLead(res.lead);
+          if (adminTab !== 'leads' && adminTab !== 'inbox') {
+            setAdminTab('leads');
+          }
+        }
       }
     };
     window.addEventListener('oneline_open_lead', handleOpenFromEvent);
-    return () => window.removeEventListener('oneline_open_lead', handleOpenFromEvent);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('oneline_open_lead', handleOpenFromEvent);
+    };
   }, [leads, adminTab, setAdminTab]);
   // A client asked for before this screen was open (a team mention): open it once the list is here
   useEffect(() => {
