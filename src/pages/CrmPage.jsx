@@ -435,7 +435,7 @@ export default function CrmPage({
           const url = new URL(window.location.href);
           url.searchParams.delete('lead');
           window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
-        } catch {}
+        } catch { /* the ?lead= param just stays in the URL; not worth failing over */ }
       }, 3500);
       return () => clearTimeout(timeout);
     }
@@ -876,7 +876,7 @@ export default function CrmPage({
                     sessionStorage.setItem('crm_auth', 'true');
                     sessionStorage.removeItem(LOCKED_FLAG);
                     markCrmActive();
-                  } catch {}
+                  } catch { /* dev-mode shortcut only; a blocked sessionStorage just skips it */ }
                   setCrmAuthenticated(true);
                   if (triggerToast) triggerToast(isAr ? 'تم الدخول بوضع التطوير المباشر' : 'Logged in via Dev Mode', 'success');
                 }}
@@ -1013,6 +1013,7 @@ export default function CrmPage({
             sessionStorage.removeItem('crm_auth');
             if (onLogout) onLogout();
           }}
+          triggerToast={triggerToast}
           showGoLiveWizard={showGoLiveWizard}
           setShowGoLiveWizard={setShowGoLiveWizard}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}

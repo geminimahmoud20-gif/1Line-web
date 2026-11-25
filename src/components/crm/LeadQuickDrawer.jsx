@@ -7,7 +7,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
-import { boardStagesFor, buyersForSeller } from '../../utils/leadPipeline';
+import { boardStagesFor, buyersForSeller, askingPriceOf } from '../../utils/leadPipeline';
 import { boardColumnOf } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
@@ -156,7 +156,7 @@ export default function LeadQuickDrawer({
     return properties.find(p => String(p.sourceLeadId) === String(lead.id) && isActiveListing(p))
       || properties.find(p => String(p.sourceLeadId) === String(lead.id))
       || null;
-  }, [lead?.id, properties]);
+  }, [lead, properties]);
   const hasActiveLinkedProperty = Boolean(linkedProperty && isActiveListing(linkedProperty));
 
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
@@ -241,7 +241,6 @@ export default function LeadQuickDrawer({
     }
 
     setInlineBlocker(null);
-    setBlockerModal({ isOpen: false, blockerInfo: null });
 
     const stageObj = stages.find(s => s.id === newStatus);
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
@@ -528,7 +527,7 @@ export default function LeadQuickDrawer({
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
   const holderLower = String(holder || '').toLowerCase();
   
-  let cleanHolder = '';
+  let cleanHolder;
   if (holderLower.includes('elbaz') || holderLower.includes('moudelbaz') || holderLower.includes('mahmoud') || holderLower.includes('ahmoud')) {
     cleanHolder = isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz';
   } else {

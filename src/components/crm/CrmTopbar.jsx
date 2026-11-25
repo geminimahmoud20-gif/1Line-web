@@ -49,7 +49,8 @@ export default function CrmTopbar({
   onToggleMobileSidebar,
   onRequestOpen,
   canAdd = {},
-  onOpenCommandPalette
+  onOpenCommandPalette,
+  triggerToast
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);

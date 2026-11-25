@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Plus, Sparkles, Image as ImageIcon, Save, Upload, MapPin, Loader2 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { hasNoRooms, isLandType, isHouseType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';

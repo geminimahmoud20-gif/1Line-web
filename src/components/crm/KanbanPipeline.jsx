@@ -12,6 +12,7 @@ import { ownerMessageFor } from '../../utils/ownerMessages';
 import { clientRoleOf } from '../../utils/clientRole';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
+import StageDeliverableModal from './StageDeliverableModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
 import { addTask } from '../../firebaseLazy';
 import { guardStage } from '../../utils/stageGate';
@@ -115,6 +116,7 @@ export default function KanbanPipeline({
   const [leadToDelete, setLeadToDelete] = useState(null);
   // A lead dropped on «خسارة» asks why first
   const [lostFor, setLostFor] = useState(null);
+  const [blockerModal, setBlockerModal] = useState(null);
   // Two separate pipelines: requests (buyers) and offers (owners and brokers), each with its own stages and card
   const [filterType, setFilterType] = useState('buyer');
   const isPhone = useMediaQuery('(max-width: 640px)');
@@ -157,7 +159,7 @@ export default function KanbanPipeline({
     }
   });
   const toggleExecutiveSummary = () => setShowExecutiveSummary((prev) => {
-    try { localStorage.setItem('crm_kanban_exec_summary', prev ? '0' : '1'); } catch {}
+    try { localStorage.setItem('crm_kanban_exec_summary', prev ? '0' : '1'); } catch { /* storage unavailable */ }
     return !prev;
   });
 
@@ -561,6 +563,20 @@ export default function KanbanPipeline({
     }
   };
 
+  // Blocks a transition that is missing its mandatory deliverable, showing StageDeliverableModal instead
+  const stageOk = (lead, targetStageId) => {
+    const validation = validateStageTransition(lead, targetStageId, {
+      userRole: activeRole,
+      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+    });
+    if (!validation.allowed) {
+      setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
+      if (triggerToast) triggerToast(validation.missingDeliverable, 'error');
+      return false;
+    }
+    return true;
+  };
+
   // Quick Move to Previous Stage
   const handleMoveToPrevStage = (lead) => {
     const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
@@ -597,18 +613,11 @@ export default function KanbanPipeline({
     if (!stageOk(lead, targetStageId)) return;
     if (targetStageId === 'lost') { setLostFor(lead); return; }
     const prevStageId = lead.status || 'new';
+    // stageOk already confirmed this transition is allowed; re-run it only to read .nextTask
     const validation = validateStageTransition(lead, targetStageId, {
       userRole: activeRole,
       isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
     });
-
-    if (!validation.allowed) {
-      setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
-      if (triggerToast) {
-        triggerToast(validation.missingDeliverable, 'error');
-      }
-      return;
-    }
 
     if (onUpdateLead) {
       const updates = { 
@@ -1390,6 +1399,16 @@ export default function KanbanPipeline({
             triggerToast?.(isAr ? 'اتسجلت خسارة مع السبب' : 'Marked as lost', 'info');
             setLostFor(null);
           }}
+        />
+      )}
+
+      {blockerModal && (
+        <StageDeliverableModal
+          isOpen={blockerModal.isOpen}
+          blockerInfo={blockerModal.blockerInfo}
+          lead={blockerModal.lead}
+          onClose={() => setBlockerModal(null)}
+          onOpenDeliverableAction={(lead) => onOpenLead?.(lead)}
         />
       )}
     </div>

@@ -40,7 +40,7 @@ import PropertyOverviewTab from '../components/properties/detail/PropertyOvervie
 import { paymentTerms, hasInstallmentPlan, planSummary } from '../utils/paymentTerms';
 import { similarListings } from '../utils/similarListings';
 import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
-import { nameProblem, phoneProblem } from '../utils/contactValidation';
+import { nameProblem, phoneProblem, normalizeBookingPhone } from '../utils/contactValidation';
 import { blockedByApproval } from '../utils/publishApproval';
 import { reportLinkOpen } from '../utils/linkOpen';
 import './PropertyDetailPage.app.css';
@@ -50,17 +50,6 @@ const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Laye
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
-// "01012345678" / "1012345678" → +201012345678; "+9665…" / "009665…" kept international. null if invalid.
-const normalizeBookingPhone = (raw) => {
-  const s = String(raw || '')
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[\s\-().]/g, '');
-  if (/^(\+|00)\d{8,15}$/.test(s)) return `+${s.replace(/^(\+|00)/, '')}`;
-  if (/^01[0125]\d{8}$/.test(s)) return `+20${s.slice(1)}`;
-  if (/^1[0125]\d{8}$/.test(s)) return `+20${s}`;
-  return null;
 };
 
 // Office hours from siteConfig OFFICE_HOURS (Cairo time)

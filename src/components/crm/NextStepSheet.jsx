@@ -100,7 +100,7 @@ export default function NextStepSheet({
       setTitle(isAr ? `جلسة تفاوض وعروض مع ${firstName}` : `Negotiation with ${firstName}`);
     } else if (stId === 'inactive') {
       setTitle(isAr ? `متابعة وإعادة تنشيط: ${firstName}` : `Re-activate ${firstName}`);
-      setDay(dayKeyFrom(Date.now(), 14));
+      setDay(dayKeyFrom(undefined, 14));
     } else if (stId === 'closed') {
       setTitle(isAr ? `متابعة ما بعد التعاقد: ${firstName}` : `Post-closing follow up: ${firstName}`);
     }

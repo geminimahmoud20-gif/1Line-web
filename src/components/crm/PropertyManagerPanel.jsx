@@ -269,7 +269,7 @@ export default function PropertyManagerPanel({
   const handleDiscardDraft = () => {
     try {
       localStorage.removeItem('oneline_property_form_draft');
-    } catch {}
+    } catch { /* private mode or storage blocked: nothing to clean up then */ }
     setDraftAvailable(null);
     triggerToast(isAr ? 'تم مسح المسودة المحفوظة' : 'Draft discarded', 'info');
   };
@@ -738,7 +738,7 @@ export default function PropertyManagerPanel({
             onUpdateProperty(dup.id, dupPatch);
           }
           triggerToast(isAr ? 'تم دمج تعديلاتك في العقار الموجود بنجاح ومنع التكرار!' : 'Merged edits into existing listing!', 'success');
-          try { localStorage.removeItem('oneline_property_form_draft'); } catch {}
+          try { localStorage.removeItem('oneline_property_form_draft'); } catch { /* private mode or storage blocked: nothing to clean up then */ }
           if (typeof window !== 'undefined') window.__oneline_is_editing_property = false;
           setShowAddModal(false);
           return;
@@ -752,7 +752,7 @@ export default function PropertyManagerPanel({
         };
         onAddProperty(newProp);
         triggerToast(isAr ? 'تمت إضافة العقار وتثبيت موقعه الفعلي على الخريطة بنجاح!' : 'New property added successfully!', 'success');
-        try { localStorage.removeItem('oneline_property_form_draft'); } catch {}
+        try { localStorage.removeItem('oneline_property_form_draft'); } catch { /* private mode or storage blocked: nothing to clean up then */ }
         if (typeof window !== 'undefined') window.__oneline_is_editing_property = false;
 
         // 🎯 Auto-check matching clients in database
