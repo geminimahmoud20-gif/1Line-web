@@ -163,7 +163,7 @@ export default function PropertyManagerPanel({
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
   const confirm = useConfirm();
-  const { unsyncedProperties = {}, cloudPropertyIds, retryPropertySync, discardLocalProperty } = useProperties();
+  const { unsyncedProperties = {}, cloudPropertyIds, retryPropertySync, discardLocalProperty, handleUpdateLead } = useProperties();
   // Photos stored inside a listing (refused upload) → Blob, then save: the listing gets small
   // enough for the database without anyone retyping it or picking the photos again
   const [uploadingInline, setUploadingInline] = useState(null); // { id, done, total }
@@ -729,6 +729,31 @@ export default function PropertyManagerPanel({
     const field = rejectionField(text, me);
     const saved = await saveRejection(prop.id, field);
     if (saved) patchMeta(prop.id, { rejection: field });
+
+    // If this property was converted from a CRM lead, update the lead status on the Kanban to lost/rejected
+    if (prop.sourceLeadId && handleUpdateLead) {
+      const nowIso = new Date().toISOString();
+      const reasonText = text ? `تم رفض العقار من الإدارة: ${text}` : 'تم رفض العقار من قِبل الإدارة';
+      handleUpdateLead(prop.sourceLeadId, {
+        status: 'lost',
+        lostReason: 'property_rejected',
+        lostReasonDetails: reasonText,
+        lostAt: nowIso,
+        lastActivityAt: nowIso,
+        _bypassGate: true,
+        _forceStage: true,
+        activityLogs: [
+          {
+            timestamp: nowIso,
+            action: `تم رفض العقار (${prop.title_ar || prop.code || 'العقار'}) من قِبل الإدارة${text ? ` — السبب: ${text}` : ''}`,
+            kind: 'outcome',
+            outcome: 'not_fit',
+            agent: me.name
+          }
+        ]
+      });
+    }
+
     const toUid = propMeta[String(prop.id)]?.submittedByUid;
     const sent = toUid ? await sendRejectionNotice(rejectionNotice({ property: prop, toUid, text, manager: me })) : false;
     const who = propMeta[String(prop.id)]?.submittedByName;

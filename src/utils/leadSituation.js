@@ -50,7 +50,20 @@ export function listingByLead(properties = []) {
  */
 export function leadSituation(lead = {}, listing = null) {
   if (listing) {
-    return { kind: 'converted', tone: listing.status === 'sold' ? 'good' : 'info', label: `اتحوّل لعقار · ${LISTING_STATUS_AR[listing.status] || 'مسودة'}` };
+    const isRejected = listing.approval === 'rejected' || listing.status === 'rejected' || listing.isRejected === true;
+    if (isRejected) {
+      return {
+        kind: 'converted_rejected',
+        tone: 'bad',
+        label: 'اتحوّل لعقار · تم رفضه من الإدارة',
+        at: listing.rejectedAt || listing.updatedAt || null
+      };
+    }
+    return {
+      kind: 'converted',
+      tone: listing.status === 'sold' ? 'good' : 'info',
+      label: `اتحوّل لعقار · ${LISTING_STATUS_AR[listing.status] || 'مسودة'}`
+    };
   }
   let last = outcomesOf(lead).at(-1);
   if (!last && lead.lastOutcome) {

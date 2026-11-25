@@ -98,6 +98,7 @@ export const LOST_REASONS = [
   { id: 'sold_elsewhere', ar: 'باع من مكان تاني أو مع وسيط تاني', en: 'Sold elsewhere', side: 'seller' },
   { id: 'weak_marketing', ar: 'الوحدة ضعيفة تسويقيًا (شارع ضيق أو من غير ميزة قوية)', en: 'Weak to market (narrow street, no strong feature)', side: 'seller' },
   { id: 'out_of_scope', ar: 'العقار خارج نطاق شغلنا (منطقة أو نوع)', en: 'Outside our scope', side: 'seller' },
+  { id: 'property_rejected', ar: 'تم رفض العقار من الإدارة', en: 'Property rejected by management', side: 'seller' },
   // both
   { id: 'no_response', ar: 'مش بيرد', en: 'No response' },
   { id: 'changed_mind', ar: 'أجّل أو غيّر رأيه', en: 'Postponed / changed mind' },

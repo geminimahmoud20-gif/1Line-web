@@ -10,6 +10,14 @@ test('a client with a listing made from him says so, with the listing state', ()
   assert.equal(leadSituation({ id: 'L2' }, m.get('L2')).tone, 'good');
 });
 
+test('a client whose converted listing was rejected says so with bad tone', () => {
+  const m = listingByLead([{ id: 'p3', sourceLeadId: 'L3', status: 'hidden', approval: 'rejected' }]);
+  const s = leadSituation({ id: 'L3' }, m.get('L3'));
+  assert.equal(s.kind, 'converted_rejected');
+  assert.equal(s.tone, 'bad');
+  assert.match(s.label, /تم رفضه|مرفوض/);
+});
+
 test('otherwise the last logged outcome, with the reason when it was «غير مناسب»', () => {
   const l = { id: 'a', outcomes: [{ id: 'reached', at: at(30) }, { id: 'not_fit', at: at(2), reason: 'price' }] };
   const s = leadSituation(l);

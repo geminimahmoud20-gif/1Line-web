@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, AlertTriangle, CircleCheckBig, Sparkles } from 'lucide-react';
+import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, AlertTriangle, CircleCheckBig, Sparkles, ShieldAlert } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { areaNameOf } from '../../utils/areaLookup';
@@ -147,6 +147,11 @@ export default function LeadQuickDrawer({
     [lead, properties, demands]
   );
   const showBrokerFile = Boolean(lead) && (lead.type === 'broker' || brokerCount > 0);
+
+  const linkedProperty = useMemo(() => {
+    if (!lead?.id || !properties?.length) return null;
+    return properties.find(p => String(p.sourceLeadId) === String(lead.id)) || null;
+  }, [lead?.id, properties]);
 
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
   // Clock for the decision banner, fixed when the drawer opens
@@ -655,6 +660,34 @@ export default function LeadQuickDrawer({
               </div>
             </section>
           )}
+          {linkedProperty && (linkedProperty.approval === 'rejected' || linkedProperty.status === 'rejected') && (
+            <div style={{
+              margin: '0 0 12px',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#DC2626', fontSize: '12px', fontWeight: 700 }}>
+                <ShieldAlert size={16} />
+                <span>{isAr ? 'تم رفض العقار المربوط بهذا العميل من قِبل الإدارة.' : 'Property from this lead was rejected by management.'}</span>
+              </div>
+              {lead.status !== 'lost' && onUpdateLead && (
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--danger ui-btn--xs"
+                  onClick={() => handleUpdateStatus('lost', { lostReason: 'property_rejected', lostReasonDetails: 'تم رفض العقار من قِبل الإدارة' }, true)}
+                >
+                  {isAr ? 'نقل الصفقة إلى مرفوض / خسارة' : 'Mark Lost / Rejected'}
+                </button>
+              )}
+            </div>
+          )}
+
           <section className="crm-ld__summary" aria-label={isAr ? 'ملخص العميل' : 'Client summary'}>
             <div className="crm-ld__contact">
               <span className="crm-ld__phone"><Phone size={14} aria-hidden="true" /><PhoneText leadId={lead.id} value={phoneText === '—' ? '' : phoneText} surface="drawer" isAr={isAr} /></span>

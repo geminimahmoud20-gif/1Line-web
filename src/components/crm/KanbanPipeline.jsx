@@ -323,6 +323,25 @@ export default function KanbanPipeline({
     return () => clearInterval(t);
   }, []);
 
+  // Auto-sync status of leads whose converted listing was rejected by management
+  useEffect(() => {
+    if (!onUpdateLead || !propertiesByLead) return;
+    leads.forEach((l) => {
+      if (l.status !== 'lost') {
+        const prop = propertiesByLead.get(String(l.id));
+        if (prop && (prop.approval === 'rejected' || prop.status === 'rejected')) {
+          onUpdateLead(l.id, {
+            status: 'lost',
+            lostReason: 'property_rejected',
+            lostReasonDetails: 'تم رفض العقار من قِبل الإدارة',
+            _bypassGate: true,
+            _forceStage: true
+          });
+        }
+      }
+    });
+  }, [leads, propertiesByLead, onUpdateLead]);
+
   // Which deals need a decision today, and the money sitting in them
   const attention = useMemo(() => attentionSummary(filteredLeads.filter(isOpenLead), { now, worth: getLeadBudget, columnOf: (l) => boardColumnOf(l.status) }), [filteredLeads, now]);
   const decisions = useMemo(() => decisionList(filteredLeads.filter(isOpenLead), { now, worth: getLeadBudget, limit: 5 }), [filteredLeads, now]);
@@ -1050,7 +1069,9 @@ export default function KanbanPipeline({
                     // One reason per deal, with the next step; replaces the separate overdue/stalled boxes
                     const signal = attentionOf(lead, { now, value: budget });
                     const isOverdue = signal?.tone === 'danger';
-                    const situation = leadSituation(lead, propertiesByLead.get(String(lead.id)) || null);
+                    const linkedProp = propertiesByLead.get(String(lead.id)) || null;
+                    const isPropRejected = linkedProp?.approval === 'rejected' || linkedProp?.status === 'rejected';
+                    const situation = leadSituation(lead, linkedProp);
 
                     const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
                     const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
@@ -1086,6 +1107,21 @@ export default function KanbanPipeline({
                             >
                               <ShieldAlert size={11} aria-hidden="true" />
                               {isAr ? 'صفقة كبرى +5 مليون' : '5M+ deal'}
+                            </span>
+                          )}
+                          {isPropRejected && (
+                            <span
+                              className="kb-high-value-pill"
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.12)',
+                                borderColor: 'rgba(239, 68, 68, 0.35)',
+                                color: '#DC2626',
+                                fontWeight: 700
+                              }}
+                              title={isAr ? 'تم رفض العقار المربوط بهذا العميل من الإدارة' : 'Property was rejected by management'}
+                            >
+                              <ShieldAlert size={11} aria-hidden="true" />
+                              {isAr ? 'العقار مرفوض' : 'Property rejected'}
                             </span>
                           )}
                           {inStage && !signal && (
