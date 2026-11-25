@@ -22,7 +22,9 @@ export default function StageDeliverableModal({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 9999,
+      // Above the lead drawer (--ui-z-drawer): this modal opens from inside the drawer (LeadQuickDrawer)
+      // and must cover it, not peek out from behind it.
+      zIndex: 'var(--ui-z-modal, 9999)',
       padding: '16px'
     }}>
       <div className="crm-modal-card" style={{
