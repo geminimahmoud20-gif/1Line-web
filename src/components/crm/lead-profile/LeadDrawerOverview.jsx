@@ -237,7 +237,14 @@ export default function LeadDrawerOverview({
   const buyerBasics = [
     [L('نوع العقار', 'Type'), quickType],
     [L('المنطقة', 'Area'), quickArea],
-    [L('الميزانية', 'Budget'), leadBudget(lead || {}) > 0 && `${leadBudget(lead).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`]
+    [L('الميزانية', 'Budget'), leadBudget(lead || {}) > 0 && `${leadBudget(lead).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
+    [L('المقدم المتاح', 'Down payment'), (details.downPayment || lead?.downPayment) && `${Number(String(details.downPayment || lead?.downPayment).replace(/[^0-9.]/g, '') || 0).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
+    [L('القسط الشهري', 'Monthly installment'), (details.monthlyInstallment || lead?.monthlyInstallment) && `${Number(String(details.monthlyInstallment || lead?.monthlyInstallment).replace(/[^0-9.]/g, '') || 0).toLocaleString('en-US')} ${L('ج.م/شهر', 'EGP/mo')}`],
+    [L('طريقة السداد', 'Payment method'), (details.paymentMethod || details.financingType || lead?.financing) && (details.paymentMethod === 'cash' || lead?.financing === 'cash' ? L('كاش فوري', 'Cash') : (details.paymentMethod === 'installments' || lead?.financing === 'installments' ? L('تقسيط على دفعات', 'Installments') : L('تمويل عقاري', 'Mortgage')))],
+    [L('الغرض من الشراء', 'Purpose'), details.reasonForBuying || (details.purpose === 'live' ? L('سكن عائلي أساسي', 'Primary residence') : (details.purpose === 'invest' ? L('استثمار وعائد إيجاري', 'Investment') : details.purpose))],
+    [L('موعد الشراء', 'Timeframe'), details.timeframe === 'immediate' ? L('فوري وعاجل', 'Immediate') : (details.timeframe || details.moveInDate)],
+    [L('مصدر الدخل / التمويل', 'Funding source'), details.sourceOfFunds || details.incomeSource],
+    [L('عدد أفراد الأسرة', 'Family size'), details.familySize ? `${details.familySize} ${L('أفراد', 'members')}` : '']
   ].filter(([, v]) => Boolean(v));
   const briefFacts = isSeller ? sellerFacts : (matchFacts.length ? matchFacts : buyerBasics);
 

@@ -52,6 +52,12 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
     // No saved area stays empty (it used to become 'east', saved back on the next edit)
     area: (!lead?.details?.area || lead?.details?.area === 'undefined') ? (lead?.area || '') : lead.details.area,
     propertyType: (!lead?.details?.propertyType || lead?.details?.propertyType === 'undefined') ? 'apartment' : lead.details.propertyType,
+    size: lead?.details?.size || '',
+    floor: lead?.details?.floor || '',
+    rooms: lead?.details?.rooms || '',
+    downPayment: lead?.details?.downPayment || lead?.downPayment || '',
+    monthlyInstallment: lead?.details?.monthlyInstallment || lead?.monthlyInstallment || '',
+    purpose: lead?.details?.purpose || lead?.details?.reasonForBuying || '',
     financing: lead?.financing || 'cash',
     tags: Array.isArray(lead?.tags) ? lead.tags : [],
     nextActionDate: lead?.nextActionDate || '',
@@ -103,7 +109,21 @@ export default function ClientDetails({ lead, onUpdateLead, isAr, lang, triggerT
         propertyType: formData.propertyType,
         // The owner's price is also saved where the sales pipeline reads the asking price
         ...(sellerNow && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}),
-        details: { ...(lead.details || {}), budget: formData.budget, expectedPrice: formData.budget, area: formData.area, propertyType: formData.propertyType, ...(sellerNow && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {}) }
+        details: {
+          ...(lead.details || {}),
+          budget: formData.budget,
+          expectedPrice: formData.budget,
+          area: formData.area,
+          propertyType: formData.propertyType,
+          size: formData.size,
+          floor: formData.floor,
+          rooms: formData.rooms,
+          downPayment: formData.downPayment,
+          monthlyInstallment: formData.monthlyInstallment,
+          purpose: formData.purpose,
+          reasonForBuying: formData.purpose,
+          ...(sellerNow && askingPriceOf({ askingPrice: formData.budget }) > 0 ? { askingPrice: askingPriceOf({ askingPrice: formData.budget }) } : {})
+        }
       };
       const saved = onUpdateLead ? await onUpdateLead(lead.id, updated, lead.version) : true;
       if (saved === false) return;

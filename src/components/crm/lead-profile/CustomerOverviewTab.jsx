@@ -173,6 +173,103 @@ export default function CustomerOverviewTab({
             </select>
           </div>
 
+          {/* Property Type */}
+          <div className="form-group-item">
+            <label>{isSeller ? (isAr ? 'نوع العقار المعروض:' : 'Offered Property Type:') : (isAr ? 'نوع العقار المطلوب:' : 'Desired Property Type:')}</label>
+            <select
+              disabled={!isEditing}
+              value={formData.propertyType || 'apartment'}
+              onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+            >
+              <option value="apartment">{isAr ? 'شقة سكنية / دوبلكس' : 'Apartment / Duplex'}</option>
+              <option value="villa">{isAr ? 'فيلا / تاون هاوس' : 'Villa / Townhouse'}</option>
+              <option value="commercial">{isAr ? 'محل تجاري' : 'Commercial Shop'}</option>
+              <option value="office">{isAr ? 'مكتب إداري / عيادة' : 'Office / Clinic'}</option>
+              <option value="land">{isAr ? 'قطعة أرض' : 'Land Plot'}</option>
+              <option value="building">{isAr ? 'عمارة / مبنى كامل' : 'Full Building'}</option>
+              <option value="industrial_land">{isAr ? 'أرض صناعية' : 'Industrial Land'}</option>
+              <option value="agri_land">{isAr ? 'أرض زراعية / مزرعة' : 'Agricultural Land'}</option>
+              <option value="factory">{isAr ? 'مصنع / ورشة' : 'Factory / Workshop'}</option>
+              <option value="warehouse">{isAr ? 'مخزن / مستودع' : 'Warehouse'}</option>
+            </select>
+          </div>
+
+          {/* Size (Seller) or Down Payment (Buyer) */}
+          {isSeller ? (
+            <div className="form-group-item">
+              <label>{isAr ? 'المساحة (م²):' : 'Size (sqm):'}</label>
+              <input
+                type="number"
+                disabled={!isEditing}
+                placeholder="150"
+                value={formData.size || ''}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+              />
+            </div>
+          ) : (
+            <div className="form-group-item">
+              <label>{isAr ? 'المقدم المتاح (ج.م):' : 'Available Down Payment (EGP):'}</label>
+              <input
+                type="text"
+                disabled={!isEditing}
+                placeholder="مثال: 500,000"
+                value={formData.downPayment || ''}
+                onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })}
+              />
+            </div>
+          )}
+
+          {/* Floor & Rooms (Seller) or Monthly Installment & Purpose (Buyer) */}
+          {isSeller ? (
+            <>
+              <div className="form-group-item">
+                <label>{isAr ? 'الدور:' : 'Floor:'}</label>
+                <input
+                  type="text"
+                  disabled={!isEditing}
+                  placeholder="مثال: أرضي / الدور 3"
+                  value={formData.floor || ''}
+                  onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                />
+              </div>
+              <div className="form-group-item">
+                <label>{isAr ? 'عدد الغرف:' : 'Rooms Count:'}</label>
+                <input
+                  type="text"
+                  disabled={!isEditing}
+                  placeholder="مثال: 3 غرف ورسيبشن"
+                  value={formData.rooms || ''}
+                  onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="form-group-item">
+                <label>{isAr ? 'القسط الشهري الأقصى (ج.م):' : 'Max Monthly Installment:'}</label>
+                <input
+                  type="text"
+                  disabled={!isEditing}
+                  placeholder="مثال: 20,000"
+                  value={formData.monthlyInstallment || ''}
+                  onChange={(e) => setFormData({ ...formData, monthlyInstallment: e.target.value })}
+                />
+              </div>
+              <div className="form-group-item">
+                <label>{isAr ? 'الغرض من الشراء:' : 'Buying Purpose:'}</label>
+                <select
+                  disabled={!isEditing}
+                  value={formData.purpose || 'live'}
+                  onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                >
+                  <option value="live">{isAr ? 'سكن عائلي أساسي' : 'Primary Residence'}</option>
+                  <option value="invest">{isAr ? 'استثمار وتأجير' : 'Investment & Rental'}</option>
+                  <option value="commercial">{isAr ? 'تشغيل تجاري أو مقر عمل' : 'Business / Commercial'}</option>
+                </select>
+              </div>
+            </>
+          )}
+
           {/* Assigned Agent */}
           <div className="form-group-item">
             <label>{isAr ? 'المستشار المسؤول:' : 'Assigned Agent:'}</label>

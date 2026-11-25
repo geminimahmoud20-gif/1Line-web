@@ -87,9 +87,9 @@
 .kb-situation.is-warn .kb-situation__dot { background: var(--ui-warning, #f59e0b); }
 .kb-situation.is-warn .kb-situation__prefix { color: var(--ui-warning, #d97706); }
 
-.kb-situation.is-info { background: var(--ui-info-tint, rgba(59, 130, 246, 0.08)); border-color: rgba(59, 130, 246, 0.28); color: var(--ui-text); }
-.kb-situation.is-info .kb-situation__dot { background: var(--ui-info, #3b82f6); }
-.kb-situation.is-info .kb-situation__prefix { color: var(--ui-info, #2563eb); }
+.kb-situation.is-info { background: rgba(11, 28, 54, 0.06); border-color: rgba(11, 28, 54, 0.22); color: var(--ui-text); }
+.kb-situation.is-info .kb-situation__dot { background: #0B1C36; }
+.kb-situation.is-info .kb-situation__prefix { color: #0B1C36; }
 
 /* Quiet cards: actions appear on hover or focus (always there on touch screens and on cards that need action) */
 @media (hover: hover) and (pointer: fine) {
