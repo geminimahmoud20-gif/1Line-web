@@ -23,6 +23,7 @@ import { lostReasonsFor } from '../../../utils/crmLeadViews';
 import { useSiteSettings } from '../../../utils/siteSettings';
 import ReviewRequestCard from './ReviewRequestCard';
 import ClientRequestsCard from './ClientRequestsCard';
+import { findExistingLeadListing } from '../../../utils/listingDedupe';
 
 export default function LeadDrawerOverview({
   lead,
@@ -55,6 +56,7 @@ export default function LeadDrawerOverview({
   const scheduledDate = scheduledTime ? new Date(scheduledTime) : null;
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
   const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
+  const existingListing = isSeller ? findExistingLeadListing(properties, lead?.id, [lead?.convertedPropertyId, ...(Array.isArray(details.listingIds) ? details.listingIds : [])]) : null;
   const siteSettings = useSiteSettings();
   const L = (ar, en) => (isAr ? ar : en);
   const sellerRole = sellerRoleOf(lead);
@@ -616,7 +618,7 @@ export default function LeadDrawerOverview({
           {isSeller && onUpdateLead && <SellerAskingPrice key={lead.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />}
           {isSeller && onConvertToProperty && (
             <Button block icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
-              {L('اعمل منه مسودة عقار', 'Create a listing draft')}
+              {existingListing ? L('فتح وتعديل العقار المربوط', 'Edit linked listing') : L('اعمل منه مسودة عقار', 'Create a listing draft')}
             </Button>
           )}
         </section>

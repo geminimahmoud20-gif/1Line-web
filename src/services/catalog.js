@@ -3,7 +3,7 @@ import { canPublishInventoryUser, getUserClaims } from './auth.js';
 import { isManagerRole } from '../utils/stageGate.js';
 import { approvalStamp, STAFF_IDENTITY_FIELDS } from '../utils/publishApproval.js';
 
-import { collection, addDoc, doc, setDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc, runTransaction } from 'firebase/firestore';
 
 // ===================== PROPERTIES =====================
 
@@ -121,6 +121,35 @@ export const upsertCatalogItem = async (collectionName, item) => {
     return { ok: true, item: stamped };
   } catch (error) {
     console.error(`Firebase upsertCatalogItem [${collectionName}] error:`, error);
+    return { ok: false, reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Atomically merge a partial update (`patch`) into the latest server document using a Firestore
+ * transaction, so concurrent edits from two staff members never wipe out each other's changes.
+ */
+export const patchCatalogItem = async (collectionName, id, patch = {}, fallbackItem = null) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName) || id === undefined || id === null || !patch || typeof patch !== 'object') {
+    return { ok: false, reason: 'invalid' };
+  }
+  if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
+  const approver = await currentApprover();
+  const ref = doc(db, collectionName, String(id));
+  try {
+    const savedItem = await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const base = snap.exists() ? snap.data() : (fallbackItem && typeof fallbackItem === 'object' ? fallbackItem : { id });
+      const stamped = approvalStamp({ ...base, ...patch, id: base.id ?? id, deleted: false, updatedAt: new Date().toISOString() }, approver);
+      const { data, bytes } = toFirestorePayload(stamped);
+      if (bytes > MAX_DOC_BYTES) throw new Error('too-large');
+      tx.set(ref, data);
+      return stamped;
+    });
+    return { ok: true, item: savedItem };
+  } catch (error) {
+    if (error?.message === 'too-large') return { ok: false, reason: 'too-large' };
+    console.error(`Firebase patchCatalogItem [${collectionName}] error:`, error);
     return { ok: false, reason: error?.code || 'error' };
   }
 };

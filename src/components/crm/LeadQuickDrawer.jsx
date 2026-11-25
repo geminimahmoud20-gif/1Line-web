@@ -43,6 +43,7 @@ import { attentionOf, nextStepFor as stepFor } from '../../utils/dealSignals';
 import { clientRoleOf, missingFor } from '../../utils/clientRole';
 import { ownerMessages } from '../../utils/ownerMessages';
 import { stageSinceMs, toMs, daysLabel, shortMoney } from '../../utils/pipelineCards';
+import { isActiveListing } from '../../utils/listingDedupe';
 
 const SHORT_STEPPER_LABELS = {
   seller: {
@@ -151,8 +152,11 @@ export default function LeadQuickDrawer({
 
   const linkedProperty = useMemo(() => {
     if (!lead?.id || !properties?.length) return null;
-    return properties.find(p => String(p.sourceLeadId) === String(lead.id)) || null;
+    return properties.find(p => String(p.sourceLeadId) === String(lead.id) && isActiveListing(p))
+      || properties.find(p => String(p.sourceLeadId) === String(lead.id))
+      || null;
   }, [lead?.id, properties]);
+  const hasActiveLinkedProperty = Boolean(linkedProperty && isActiveListing(linkedProperty));
 
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
   // Clock for the decision banner, fixed when the drawer opens
@@ -375,6 +379,10 @@ export default function LeadQuickDrawer({
 
   const handleSafeConvertToProperty = async () => {
     if (!onConvertToProperty) return;
+    if (hasActiveLinkedProperty) {
+      onConvertToProperty(lead);
+      return;
+    }
     const details = lead.details || {};
     const size = parseInt(details.size, 10);
     const hasPrice = askingPriceOf(lead) > 0 || (lead.budget && Number(String(lead.budget).replace(/[^0-9]/g, '')) > 0);
@@ -625,7 +633,7 @@ export default function LeadQuickDrawer({
             )}
             {sellerFile && onConvertToProperty && (
               <Button variant="secondary" size="sm" icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
-                {isAr ? 'حوّله لعقار' : 'To listing'}
+                {hasActiveLinkedProperty ? (isAr ? 'تعديل العقار المربوط' : 'Edit linked listing') : (isAr ? 'حوّله لعقار' : 'To listing')}
               </Button>
             )}
           </>

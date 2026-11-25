@@ -23,6 +23,7 @@ import {
   deleteDemandDoc,
   subscribeToCatalog,
   upsertCatalogItem,
+  patchCatalogItem,
   stampSubmitter,
   upsertCatalogItems,
   currentApprover,
@@ -55,6 +56,7 @@ import { checkStageChange } from '../utils/stageGate';
 import { assignmentEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
 import { tidyListing } from '../utils/listingSpelling';
+import { findPotentialDuplicateListing, listingDiffPatch } from '../utils/listingDedupe';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
 // The cache keeps only what this device created (a visitor's own requests, offline drafts).
@@ -174,7 +176,34 @@ export function PropertiesProvider({ children }) {
     try { localStorage.setItem('oneline_properties', JSON.stringify(list)); } catch { /* quota / private mode */ }
   };
 
-  const handleAddProperty = useCallback((newProp) => {
+  const handleUpdateProperty = useCallback((id, updatedData) => {
+    const current = propertiesRef.current.find((p) => String(p.id) === String(id));
+    if (!current) return;
+    const patch = { ...updatedData, ...statusStamp(current, updatedData) };
+    const merged = { ...current, ...patch };
+    const updated = propertiesRef.current.map((p) => (String(p.id) === String(id) ? merged : p));
+    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
+    setProperties(updated);
+    persistProperties(updated);
+    reportCatalogSync(patchCatalogItem('properties', id, patch, merged), id);
+  }, [reportCatalogSync]);
+
+  const handleAddProperty = useCallback((rawProp) => {
+    const { _allowMultipleForLead, _openExisting, suggestedId, ...newProp } = rawProp || {};
+    const existingById = propertiesRef.current.find((p) => String(p.id) === String(newProp.id));
+    if (existingById) {
+      const diff = listingDiffPatch(existingById, newProp);
+      if (Object.keys(diff).length > 0) handleUpdateProperty(existingById.id, diff);
+      return;
+    }
+    if (!_allowMultipleForLead && newProp.sourceLeadId) {
+      const dup = findPotentialDuplicateListing(propertiesRef.current, newProp);
+      if (dup) {
+        const diff = listingDiffPatch(dup, newProp);
+        if (Object.keys(diff).length > 0) handleUpdateProperty(dup.id, diff);
+        return;
+      }
+    }
     const updated = [newProp, ...propertiesRef.current];
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
@@ -182,18 +211,7 @@ export function PropertiesProvider({ children }) {
     reportCatalogSync(upsertCatalogItem('properties', newProp), newProp.id);
     // Who added it (staff-only document: the listing itself is public)
     stampSubmitter(newProp.id);
-  }, [reportCatalogSync]);
-
-  const handleUpdateProperty = useCallback((id, updatedData) => {
-    const current = propertiesRef.current.find((p) => p.id === id);
-    if (!current) return;
-    const merged = { ...current, ...updatedData, ...statusStamp(current, updatedData) };
-    const updated = propertiesRef.current.map((p) => (p.id === id ? merged : p));
-    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
-    setProperties(updated);
-    persistProperties(updated);
-    reportCatalogSync(upsertCatalogItem('properties', merged), id);
-  }, [reportCatalogSync]);
+  }, [reportCatalogSync, handleUpdateProperty]);
 
   /** Sends this device's copy of a listing again (after a refused or offline save) */
   const retryPropertySync = useCallback((id) => {
@@ -1076,4 +1094,8 @@ export function useProperties() {
     throw new Error('useProperties must be used within a PropertiesProvider');
   }
   return context;
+}
+
+export function useOptionalProperties() {
+  return useContext(PropertiesContext);
 }

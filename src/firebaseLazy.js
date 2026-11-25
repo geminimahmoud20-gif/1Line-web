@@ -122,6 +122,7 @@ export const saveSettings = lazyCall('saveSettings');
 export const loadSettings = lazyCall('loadSettings');
 export const settingsExist = lazyCall('settingsExist');
 export const upsertCatalogItem = lazyCall('upsertCatalogItem');
+export const patchCatalogItem = lazyCall('patchCatalogItem');
 export const stampSubmitter = lazyCall('stampSubmitter');
 export const loadPropertyMeta = lazyCall('loadPropertyMeta');
 export const saveRejection = lazyCall('saveRejection');

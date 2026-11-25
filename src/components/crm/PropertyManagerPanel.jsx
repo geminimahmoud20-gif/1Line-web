@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building, Plus, Upload, Search, Star, ChevronDown, AlertTriangle, SlidersHorizontal, X, Trash2 } from 'lucide-react';
 import { PageHeader, Button, Card, Badge, Chip, EmptyState, SegmentedControl, Select, Input, useConfirm } from '../ui';
@@ -50,6 +50,7 @@ import { paymentTerms, paymentFields, paymentProblem, planPrice } from '../../ut
 import { areaFamily } from '../../utils/areaLookup';
 import { linkedContactLead, leadWithPhone, listingContactProblem, listingContactLead } from '../../utils/listingContact';
 import { tidyListing } from '../../utils/listingSpelling';
+import { findPotentialDuplicateListing, listingDiffPatch, analyzeConcurrentEdits } from '../../utils/listingDedupe';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -107,6 +108,8 @@ const DEFAULT_FORM_STATE = {
   // No legal record until the team actually reviews the documents (CRM → الموقف القانوني)
   legalStatus: null,
   customBenchmarkPrice: '',
+  pricingMode: 'auto',
+  ownerPriceNote_ar: '',
   nearbyAmenities: [],
   // Who offers the unit; the contact's name and phone are typed here but saved as a client, never on the listing
   listedBy: '',
@@ -222,49 +225,70 @@ export default function PropertyManagerPanel({
 
   const [form, setForm] = useState(DEFAULT_FORM_STATE);
   const [saving, setSaving] = useState(false);
+  const [editingSnapshot, setEditingSnapshot] = useState(null);
+  const submittingRef = useRef(false);
+
+  const buildEditFormState = (prop) => ({
+    ...DEFAULT_FORM_STATE,
+    ...prop,
+    // Older listings have no paymentType: read it from the installment they carry
+    paymentType: paymentTerms(prop).type,
+    installmentMonths: paymentTerms(prop).months || '',
+    installmentEvery: paymentTerms(prop).every || 1,
+    installmentAmount: paymentTerms(prop).amount || '',
+    bedrooms: hasNoRooms(prop.type) ? 0 : (prop.bedrooms || 0),
+    bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
+    status: prop.status || (prop.isArchived ? 'hidden' : 'published'),
+    contactName: '',
+    contactPhone: '',
+    privateNotes: null // null until loaded: saving before then must not wipe the saved notes
+  });
 
   // Handle external conversion request (from CRM Leads to Property)
   const [prevExternalData, setPrevExternalData] = useState(null);
   if (externalNewPropertyData && externalNewPropertyData !== prevExternalData) {
     setPrevExternalData(externalNewPropertyData);
-    setEditingPropertyId(null);
-    setForm({
-      ...DEFAULT_FORM_STATE,
-      ...externalNewPropertyData
-    });
+    if (externalNewPropertyData._openExisting && externalNewPropertyData.id) {
+      const liveProp = properties.find((p) => String(p.id) === String(externalNewPropertyData.id)) || externalNewPropertyData;
+      const initial = buildEditFormState(liveProp);
+      setEditingPropertyId(liveProp.id);
+      setEditingSnapshot({ ...initial, _baseUpdatedAt: liveProp.updatedAt || '' });
+      setForm(initial);
+    } else {
+      setEditingPropertyId(null);
+      setEditingSnapshot(null);
+      setForm({
+        ...DEFAULT_FORM_STATE,
+        ...externalNewPropertyData
+      });
+    }
     setShowAddModal(true);
   }
 
   useEffect(() => {
     if (externalNewPropertyData) {
+      if (externalNewPropertyData._openExisting && externalNewPropertyData.id) {
+        loadPropertyPrivateFull(externalNewPropertyData.id).then((priv) => {
+          if (priv) setForm((f) => (String(f.id) === String(externalNewPropertyData.id) && f.privateNotes === null ? { ...f, privateNotes: priv.notes, exclusive: priv.exclusive, exclusiveFrom: priv.exclusiveFrom, exclusiveUntil: priv.exclusiveUntil } : f));
+        });
+      }
       onClearExternalData?.();
     }
   }, [externalNewPropertyData, onClearExternalData]);
 
   const handleOpenAdd = () => {
     setEditingPropertyId(null);
+    setEditingSnapshot(null);
     setForm(DEFAULT_FORM_STATE);
     setShowAddModal(true);
   };
   useOpenRequest(openRequest, ['add_property'], () => { if (!readOnly) handleOpenAdd(); });
 
   const handleOpenEdit = (prop) => {
+    const initial = buildEditFormState(prop);
     setEditingPropertyId(prop.id);
-    setForm({
-      ...DEFAULT_FORM_STATE,
-      ...prop,
-      // Older listings have no paymentType: read it from the installment they carry
-      paymentType: paymentTerms(prop).type,
-      installmentMonths: paymentTerms(prop).months || '',
-      installmentEvery: paymentTerms(prop).every || 1,
-      installmentAmount: paymentTerms(prop).amount || '',
-      bedrooms: hasNoRooms(prop.type) ? 0 : (prop.bedrooms || 0),
-      bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
-      status: prop.status || (prop.isArchived ? 'hidden' : 'published'),
-      contactName: '',
-      contactPhone: '',
-      privateNotes: null // null until loaded: saving before then must not wipe the saved notes
-    });
+    setEditingSnapshot({ ...initial, _baseUpdatedAt: prop.updatedAt || '' });
+    setForm(initial);
     setShowAddModal(true);
     // the notes live in their own protected document: fill them in once loaded
     loadPropertyPrivateFull(prop.id).then((priv) => {
@@ -532,7 +556,7 @@ export default function PropertyManagerPanel({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (saving) return;
+    if (saving || submittingRef.current) return;
     // A plan says what is missing in it (the installment, the term…) before the general checks
     const payProblem = paymentProblem(form, isAr);
     if (payProblem) {
@@ -582,7 +606,7 @@ export default function PropertyManagerPanel({
 
     // Cleanse sector-specific attributes (land, shops, offices, farms and factories have 0 bedrooms)
     const isLand = isLandType(form.type);
-    const { contactName, contactPhone, privateNotes, exclusive, exclusiveFrom, exclusiveUntil, ...formFields } = form;
+    const { contactName, contactPhone, privateNotes, exclusive, exclusiveFrom, exclusiveUntil, suggestedId, _openExisting, _allowMultipleForLead, ...formFields } = form;
     const cleanForm = {
       ...formFields,
       ...paymentFields(form),
@@ -594,56 +618,106 @@ export default function PropertyManagerPanel({
       floor: isLand ? 0 : (parseInt(form.floor) || 0)
     };
 
-    // The contact typed on the form becomes a client in «العملاء» (or links to the one with that phone)
-    const propId = editingPropertyId || 'prop-' + Date.now();
-    if (String(contactPhone || '').trim() && !linkedLead) {
-      const known = leadWithPhone(contactPhone, leads);
-      if (known) {
-        cleanForm.sourceLeadId = known.id;
-      } else if (onAddContactLead) {
-        setSaving(true);
-        const res = await onAddContactLead([listingContactLead({ ...cleanForm, id: propId }, { name: contactName, phone: contactPhone, listedBy: form.listedBy || 'owner' })]);
-        setSaving(false);
-        if (res?.ok && res.ids?.[0]) cleanForm.sourceLeadId = res.ids[0];
-        else triggerToast(isAr ? 'الوحدة هتتحفظ، بس رقم صاحبها ما اتسجلش في العملاء. جرّب تاني من تعديل الوحدة.' : "The unit is saved but its contact wasn't added to clients. Try again from edit.", 'error');
+    submittingRef.current = true;
+    setSaving(true);
+    try {
+      const propId = editingPropertyId || suggestedId || ('prop-' + Date.now());
+      if (String(contactPhone || '').trim() && !linkedLead) {
+        const known = leadWithPhone(contactPhone, leads);
+        if (known) {
+          cleanForm.sourceLeadId = known.id;
+        } else if (onAddContactLead) {
+          const res = await onAddContactLead([listingContactLead({ ...cleanForm, id: propId }, { name: contactName, phone: contactPhone, listedBy: form.listedBy || 'owner' })]);
+          if (res?.ok && res.ids?.[0]) cleanForm.sourceLeadId = res.ids[0];
+          else triggerToast(isAr ? 'الوحدة هتتحفظ، بس رقم صاحبها ما اتسجلش في العملاء. جرّب تاني من تعديل الوحدة.' : "The unit is saved but its contact wasn't added to clients. Try again from edit.", 'error');
+        }
       }
-    }
 
-    // Internal notes go to their own staff-only document, whatever happens to the public listing
-    if (privateNotes !== null && (editingPropertyId || String(privateNotes || '').trim() || exclusive)) {
-      const terms = { exclusive, exclusiveFrom, exclusiveUntil };
-      savePropertyPrivate(propId, privateNotes, terms).then((ok) => {
-        if (!ok) { triggerToast(isAr ? 'الملاحظات الداخلية وبيانات الحصرية ما اتحفظوش. جرّب تاني من تعديل الوحدة.' : "The internal notes and exclusivity weren't saved. Try again from edit.", 'error'); return; }
-        // The list shows the new terms at once
-        setExclusiveMap((m) => {
-          const next = new Map(m || []);
-          if (exclusive) next.set(String(propId), { exclusive: true, exclusiveFrom, exclusiveUntil }); else next.delete(String(propId));
-          return next;
-        });
-      });
-    }
-
-    if (editingPropertyId) {
-      onUpdateProperty(editingPropertyId, { ...cleanForm, coordinates: finalCoords });
-      triggerToast(isAr ? 'تم تحديث بيانات العقار وموقعه على الخريطة بنجاح!' : 'Property updated successfully!', 'success');
-    } else {
-      const newProp = {
-        id: propId,
-        ...cleanForm,
-        coordinates: finalCoords
+      const savePrivateDoc = (targetId) => {
+        if (privateNotes !== null && (editingPropertyId || String(privateNotes || '').trim() || exclusive)) {
+          const terms = { exclusive, exclusiveFrom, exclusiveUntil };
+          savePropertyPrivate(targetId, privateNotes, terms).then((ok) => {
+            if (!ok) { triggerToast(isAr ? 'الملاحظات الداخلية وبيانات الحصرية ما اتحفظوش. جرّب تاني من تعديل الوحدة.' : "The internal notes and exclusivity weren't saved. Try again from edit.", 'error'); return; }
+            setExclusiveMap((m) => {
+              const next = new Map(m || []);
+              if (exclusive) next.set(String(targetId), { exclusive: true, exclusiveFrom, exclusiveUntil }); else next.delete(String(targetId));
+              return next;
+            });
+          });
+        }
       };
-      onAddProperty(newProp);
-      triggerToast(isAr ? 'تمت إضافة العقار وتثبيت موقعه الفعلي على الخريطة بنجاح!' : 'New property added successfully!', 'success');
 
-      // 🎯 Auto-check matching clients in database
-      const matched = findMatchingClientsForProperty(newProp, leads, demands);
-      if (matched.length > 0) {
-        setNotifierProperty(newProp);
-        setNotifierEventType('new_unit');
+      const nextValues = { ...cleanForm, coordinates: finalCoords };
+
+      if (editingPropertyId) {
+        const diffPatch = editingSnapshot ? listingDiffPatch(editingSnapshot, nextValues) : nextValues;
+        const latest = properties.find((p) => String(p.id) === String(editingPropertyId));
+        if (latest && editingSnapshot?._baseUpdatedAt && latest.updatedAt && latest.updatedAt !== editingSnapshot._baseUpdatedAt) {
+          const { hasConflicts } = analyzeConcurrentEdits(editingSnapshot, latest, diffPatch);
+          if (hasConflicts) {
+            const proceed = await confirm({
+              title: isAr ? 'تنبيه: تعديل متزامن على نفس الوحدة' : 'Concurrent edit detected',
+              tone: 'warning',
+              message: isAr
+                ? 'قام زميل آخر بتحديث بيانات هذا العقار أثناء فتحك للنموذج. هل تريد حفظ تعديلاتك ودمجها مع أحدث نسخة؟'
+                : 'A colleague updated this listing while you were editing it. Merge your changes into the latest version?',
+              confirmLabel: isAr ? 'احفظ وادمج التعديلات' : 'Merge & Save',
+              cancelLabel: isAr ? 'راجع البيانات أولاً' : 'Cancel'
+            });
+            if (!proceed) return;
+          }
+        }
+        savePrivateDoc(editingPropertyId);
+        if (Object.keys(diffPatch).length > 0) {
+          onUpdateProperty(editingPropertyId, diffPatch);
+        }
+        triggerToast(isAr ? 'تم تحديث بيانات العقار وموقعه على الخريطة بنجاح!' : 'Property updated successfully!', 'success');
+      } else {
+        const linkedLeadObj = linkedLead || leads.find((l) => String(l.id) === String(cleanForm.sourceLeadId || ''));
+        const dup = findPotentialDuplicateListing(properties, { ...cleanForm, id: propId, price: listPrice }, { isBroker: linkedLeadObj?.type === 'broker' });
+        if (dup) {
+          const mergeIntoExisting = await confirm({
+            title: isAr ? 'هذا العقار مسجّل بالفعل' : 'Listing already exists',
+            tone: 'warning',
+            message: isAr
+              ? `يوجد عقار مسجّل بالفعل لنفس العميل أو نفس المواصفات («${dup.title_ar || dup.id}»). هل تريد تحديث العقار الموجود بدلاً من إنشاء نسخة مكررة؟`
+              : `An active listing already exists («${dup.title_ar || dup.id}»). Update it instead of creating a duplicate?`,
+            confirmLabel: isAr ? 'تحديث العقار الموجود' : 'Update existing',
+            cancelLabel: isAr ? 'إلغاء' : 'Cancel'
+          });
+          if (!mergeIntoExisting) return;
+          const dupPatch = listingDiffPatch(dup, nextValues);
+          savePrivateDoc(dup.id);
+          if (Object.keys(dupPatch).length > 0) {
+            onUpdateProperty(dup.id, dupPatch);
+          }
+          triggerToast(isAr ? 'تم دمج تعديلاتك في العقار الموجود بنجاح ومنع التكرار!' : 'Merged edits into existing listing!', 'success');
+          setShowAddModal(false);
+          return;
+        }
+
+        savePrivateDoc(propId);
+        const newProp = {
+          id: propId,
+          ...cleanForm,
+          coordinates: finalCoords
+        };
+        onAddProperty(newProp);
+        triggerToast(isAr ? 'تمت إضافة العقار وتثبيت موقعه الفعلي على الخريطة بنجاح!' : 'New property added successfully!', 'success');
+
+        // 🎯 Auto-check matching clients in database
+        const matched = findMatchingClientsForProperty(newProp, leads, demands);
+        if (matched.length > 0) {
+          setNotifierProperty(newProp);
+          setNotifierEventType('new_unit');
+        }
       }
-    }
 
-    setShowAddModal(false);
+      setShowAddModal(false);
+    } finally {
+      submittingRef.current = false;
+      setSaving(false);
+    }
   };
 
   // Memoized status counts in a single pass $O(N)$

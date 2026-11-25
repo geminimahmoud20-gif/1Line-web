@@ -63,7 +63,8 @@ import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFaile
 import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
 import { handoverFromSeller } from '../utils/unitHandover';
 import { getAreas } from '../utils/areasData';
-import { formArea } from '../utils/areaLookup';
+import { formArea, areaNameOf } from '../utils/areaLookup';
+import { findExistingLeadListing } from '../utils/listingDedupe';
 import { userDisplayName } from '../utils/assignees';
 import { setActorName } from '../utils/actorName';
 import './CrmPage.app.css';
@@ -483,11 +484,30 @@ export default function CrmPage({
   const pendingDemandsCount = demands.filter(d => d.status === 'pending').length;
 
   const handleConvertToProperty = (lead) => {
+    const existing = findExistingLeadListing(properties, lead.id, [
+      lead.convertedPropertyId,
+      ...(Array.isArray(lead.details?.listingIds) ? lead.details.listingIds : [])
+    ]);
+    if (existing) {
+      setExternalPropertyData({ ...existing, _openExisting: true });
+      setActiveTab('properties');
+      if (triggerToast) {
+        triggerToast(
+          isAr
+            ? `العميل ده ليه عقار مسجّل بالفعل (${existing.title_ar || existing.id}) — اتفتحلك للتعديل بدل ما يتكرر.`
+            : `This client already has a listing (${existing.title_ar || existing.id}) — opened for editing instead of duplicating.`,
+          'info'
+        );
+      }
+      return;
+    }
+
     const details = lead.details || {};
     const priceVal = parseMoney(details.askingPrice) || parseMoney(details.expectedPrice) || parseMoney(details.price) || parseMoney(details.estimatedAvg) || 0;
     const typeVal = details.propertyType || lead.propertyType || 'apartment';
     // The seller's area when it is still in the list; else empty, and the listing form asks for one
     const areaVal = formArea(details.area || lead.area, getAreas());
+    const areaLabel = (areaVal ? areaNameOf(areaVal, getAreas(), true) : '') || (lead.area && !String(lead.area).startsWith('area_') ? lead.area : 'سوهاج');
     const sizeVal = parseInt(details.size, 10) || '';
     const roomsVal = parseInt(details.rooms, 10) || '';
     const floorVal = details.floor || '';
@@ -506,7 +526,9 @@ export default function CrmPage({
 
     // Listing starts hidden with seller's submitted specs & photos for staff review
     const prepopulated = {
-      title_ar: `عرض بيع: ${typeLabel} ${sizeVal ? `${sizeVal}م² ` : ''}في ${lead.area || 'سوهاج'}`,
+      // Deterministic id per non-broker lead so simultaneous clicks by two staff members write the same doc
+      ...(lead.type !== 'broker' ? { suggestedId: `prop-lead-${lead.id}` } : {}),
+      title_ar: `عرض بيع: ${typeLabel} ${sizeVal ? `${sizeVal}م² ` : ''}في ${areaLabel}`,
       title_en: `Owner listing: ${typeVal} ${sizeVal ? `${sizeVal} sqm` : ''}`,
       type: typeVal,
       areaKey: areaVal,
