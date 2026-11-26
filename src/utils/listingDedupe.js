@@ -6,7 +6,7 @@
 
 export const isActiveListing = (p) => Boolean(p) && !p.deleted && !p.isDeleted && p.status !== 'trash';
 
-const normText = (s) => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+export const normText = (s) => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
 // Same listing re-quoted at a slightly different asking price (common when two staff list the
 // same unit, or an owner's price shifts) still counts as a match; an unrelated unit never lands
@@ -69,6 +69,50 @@ export function findPotentialDuplicateListing(properties = [], candidate = {}, {
     }
   }
   return null;
+}
+
+/**
+ * Two active listings that look like the same unit entered twice: the CRM's catalog-wide
+ * "merge duplicates" tool (PropertyManagerPanel) offers to merge any pair this returns true
+ * for. areaKey alone covers a whole district, so two unrelated plots of the same type can
+ * share size/price/area by coincidence — a matching title is what actually says this is the
+ * same listing re-entered, not a coincidence, so it's required alongside specs unless a
+ * stronger identity signal (the same source lead, or the same contact phone) already agrees.
+ */
+export function isSameListingPair(p1, p2) {
+  if (!p1 || !p2) return false;
+  const sameLead = p1.sourceLeadId && p2.sourceLeadId && String(p1.sourceLeadId) === String(p2.sourceLeadId);
+  const phone1 = String(p1.contactPhone || p1.phone || '').replace(/[^0-9]/g, '');
+  const phone2 = String(p2.contactPhone || p2.phone || '').replace(/[^0-9]/g, '');
+  const samePhone = phone1.length >= 9 && phone1 === phone2;
+  const sameSpecs = Boolean(p1.areaKey) && p1.areaKey === p2.areaKey
+    && Number(p1.size) > 0 && Number(p1.size) === Number(p2.size)
+    && Number(p1.price) > 0 && Number(p1.price) === Number(p2.price)
+    && p1.type === p2.type;
+  const sameTitle = Boolean(normText(p1.title_ar)) && normText(p1.title_ar) === normText(p2.title_ar);
+  return Boolean(sameLead) || (samePhone && (sameSpecs || p1.type === p2.type)) || (sameSpecs && sameTitle);
+}
+
+/**
+ * Pairs up active listings across the whole catalog that isSameListingPair flags as the same
+ * unit. Returns a Map from listing id -> the other listing in its first-found match.
+ */
+export function findDuplicateListingPairs(properties = []) {
+  const map = new Map();
+  const list = properties || [];
+  for (let i = 0; i < list.length; i++) {
+    const p1 = list[i];
+    if (!isActiveListing(p1)) continue;
+    for (let j = i + 1; j < list.length; j++) {
+      const p2 = list[j];
+      if (!isActiveListing(p2)) continue;
+      if (isSameListingPair(p1, p2)) {
+        if (!map.has(String(p1.id))) map.set(String(p1.id), p2);
+        if (!map.has(String(p2.id))) map.set(String(p2.id), p1);
+      }
+    }
+  }
+  return map;
 }
 
 const sameValue = (a, b) => {

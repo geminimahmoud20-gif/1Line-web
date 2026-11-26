@@ -51,7 +51,7 @@ import { paymentTerms, paymentFields, paymentProblem, planPrice } from '../../ut
 import { areaFamily } from '../../utils/areaLookup';
 import { linkedContactLead, leadWithPhone, listingContactProblem, listingContactLead } from '../../utils/listingContact';
 import { tidyListing } from '../../utils/listingSpelling';
-import { findPotentialDuplicateListing, listingDiffPatch, analyzeConcurrentEdits, findExistingLeadListing } from '../../utils/listingDedupe';
+import { findPotentialDuplicateListing, listingDiffPatch, analyzeConcurrentEdits, findExistingLeadListing, findDuplicateListingPairs } from '../../utils/listingDedupe';
 import { buildPrepopulatedPropertyFromLead } from '../../utils/supplyGapMatcher';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
@@ -968,32 +968,7 @@ export default function PropertyManagerPanel({
   };
 
   // Detect duplicate listings across the catalog so managers can merge them with 1 click
-  const duplicatesMap = useMemo(() => {
-    const map = new Map();
-    for (let i = 0; i < properties.length; i++) {
-      const p1 = properties[i];
-      if (!p1 || p1.deleted) continue;
-      for (let j = i + 1; j < properties.length; j++) {
-        const p2 = properties[j];
-        if (!p2 || p2.deleted) continue;
-
-        const sameLead = p1.sourceLeadId && p2.sourceLeadId && String(p1.sourceLeadId) === String(p2.sourceLeadId);
-        const phone1 = String(p1.contactPhone || p1.phone || '').replace(/[^0-9]/g, '');
-        const phone2 = String(p2.contactPhone || p2.phone || '').replace(/[^0-9]/g, '');
-        const samePhone = phone1.length >= 9 && phone1 === phone2;
-        const sameSpecs = p1.areaKey && p1.areaKey === p2.areaKey 
-          && Number(p1.size) > 0 && Number(p1.size) === Number(p2.size)
-          && Number(p1.price) > 0 && Number(p1.price) === Number(p2.price)
-          && p1.type === p2.type;
-
-        if (sameLead || (samePhone && (sameSpecs || p1.type === p2.type)) || sameSpecs) {
-          if (!map.has(String(p1.id))) map.set(String(p1.id), p2);
-          if (!map.has(String(p2.id))) map.set(String(p2.id), p1);
-        }
-      }
-    }
-    return map;
-  }, [properties]);
+  const duplicatesMap = useMemo(() => findDuplicateListingPairs(properties), [properties]);
 
   const handleMergeDuplicates = async (propA, propB) => {
     if (!propA || !propB) return;
