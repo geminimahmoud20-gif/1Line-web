@@ -51,16 +51,16 @@ MAG=(165,25,105); MAGO=(235,95,130); PUR=(120,30,175); PURO=(200,110,230)
 
 # ---- purple district (top-left)
 poly_purple=[(0,0),(212,0),(110,57),(0,119)]
-paste_region(plot_layer(-29,26,15,2.2,3.2,5.5,PUR,PURO,gap=0.5,cx=100,cy=60),poly_purple)
+paste_region(plot_layer(-29,30,16,4,5,8,PUR,PURO,gap=1.2,green_p=0.05,cx=100,cy=60),poly_purple)
 # ---- main residential
 poly_main=[(3,126),(110,60),(213,0),(300,172),(352,338),(84,338),(79,270),(33,188)]
-paste_region(plot_layer(60,26,16,2.4,3.2,5.2,MAG,MAGO,cx=190,cy=170),poly_main)
+paste_region(plot_layer(60,30,16,4,5,8,MAG,MAGO,gap=1.2,green_p=0.05,cx=190,cy=170),poly_main)
 # ---- bottom orthogonal
 poly_bot=[(84,255),(300,255),(330,338),(84,338)]
-paste_region(plot_layer(0,22,11,3,3,5,MAG,MAGO,cx=200,cy=300),poly_bot)
+paste_region(plot_layer(0,30,16,4,5,8,MAG,MAGO,gap=1.2,green_p=0.05,cx=200,cy=300),poly_bot)
 # ---- left strip
 poly_left=[(0,178),(18,190),(47,280),(47,338),(0,338)]
-paste_region(plot_layer(62,18,14,3.5,3.2,5.2,MAG,MAGO,cx=20,cy=260),poly_left)
+paste_region(plot_layer(62,30,16,4,5,8,MAG,MAGO,gap=1.2,green_p=0.05,cx=20,cy=260),poly_left)
 
 d=ImageDraw.Draw(img)
 def line(pts,col,w=1.0): d.line(P(pts),fill=col,width=max(1,int(w*S)),joint='curve')
@@ -84,7 +84,7 @@ parks=[(43,27,20,14,-28,'مج ١٢'),(15,84,17,12,-20,None),(13,50,12,9,0,None),
  (127,218,17,11,30,None),(235,115,12,9,30,None),(235,185,22,13,-20,'مج ١٥'),(165,257,16,10,30,None),(250,255,16,10,-15,None),(215,252,10,8,0,'مج ١٦'),
  (3,255,10,10,0,None),(13,277,10,10,0,'مج ١٨'),(116,300,15,12,0,'مج ٢٠'),(228,310,15,10,0,'مج ٢١'),(110,315,14,10,0,None),(260,295,14,10,0,None),(148,290,16,9,0,None)]
 for cx,cy,w,h,a,lab in parks:
-    park(rect(cx,cy,w,h,a),lab,(cx,cy),4.2)
+    park(rect(cx,cy,w*1.3,h*1.3,a),lab,(cx,cy),6.5)
 # river label
 txt='مجرى مائي'
 tmp=Image.new('RGBA',(300*S,60*S),(0,0,0,0)); ImageDraw.Draw(tmp).text((150*S,30*S),'محور الشيخ زايد',fill=(255,255,255,255),font=F(4.4),anchor='mm',direction='rtl',language='ar')
@@ -169,7 +169,7 @@ for (u,v,w,h) in [(215,10,22,20),(235,0,22,24),(255,-8,25,30)]:
 lab=['محطة','مدرسة','سكني','خدمات','تجاري','ساحة','مسجد','حضانة']
 for u,v,w,h in blocks:
     x,y=rot(u+w/2,v+h/2)
-    d.text((x*S,y*S),random.choice(lab),fill=(255,255,255),font=F(3.2),anchor='mm',direction='rtl',language='ar')
+    d.text((x*S,y*S),random.choice(lab),fill=(255,255,255),font=F(5.5),anchor='mm',direction='rtl',language='ar')
 img=Image.composite(img,base_before,region_mask(zone))
 d=ImageDraw.Draw(img)
 # top-right yellow label rotated
@@ -193,11 +193,26 @@ line(yel+[yel[0]],(235,190,60),0.7)
 grn=[(383,273),(432,248),(455,297),(407,320)]
 line(grn+[grn[0]],(40,235,50),1.4)
 for i,t in enumerate(['منطقة محطة','معالجة الصرف','الصحي المرحلة','الأولى']):
-    d.text((418*S,(268+i*9)*S),t,fill=(235,60,60),font=F(3.6),anchor='mm',direction='rtl',language='ar')
+    d.text((418*S,(268+i*9)*S),t,fill=(235,60,60),font=F(4.6),anchor='mm',direction='rtl',language='ar')
 tmp=Image.new('RGBA',(300*S,60*S),(0,0,0,0)); t=ImageDraw.Draw(tmp)
 t.text((150*S,20*S),'محطة معالجة الصرف الصحي',fill=(235,190,60,255),font=F(5),anchor='mm',direction='rtl',language='ar')
 t.text((150*S,34*S),'للمرحلة الأولى',fill=(235,190,60,255),font=F(5),anchor='mm',direction='rtl',language='ar')
 tmp=tmp.rotate(28,expand=True,resample=Image.BICUBIC)
 img.paste(tmp,(int(490*S-tmp.width/2),int(262*S-tmp.height/2)),tmp)
+
+LH=70*S
+out=Image.new('RGB',(W,H+LH),(10,10,10)); out.paste(img,(0,0)); dd=ImageDraw.Draw(out)
+items=[(PUR,'مناطق سكنية - المرحلة الأولى'),(MAG,'قطع أراضي سكنية'),((80,225,60),'مناطق خضراء'),((60,210,215),'مناطق خدمية'),((235,170,40),'مركز المدينة'),((255,255,255),'مناطق خدمات وتجارية'),((235,60,60),'محطة معالجة الصرف')]
+x0=14*S
+for i,(c,t) in enumerate(items):
+    x=x0+(i%4)*136*S; y=H+(10+(i//4)*28)*S
+    dd.rectangle([x,y,x+16*S,y+11*S],fill=c if c!=(255,255,255) else None,outline=(255,255,255),width=S//2 or 1)
+    dd.text((x+22*S,y+5*S),t,fill=(255,255,255),font=F(5.5),anchor='lm',direction='rtl' if False else None,language='ar')
+dd.text((W-14*S,H+22*S),'مخطط عام',fill=(235,190,60),font=F(9),anchor='rm',direction='rtl',language='ar')
+dd.text((W-14*S,H+44*S),'1 Line Solutions',fill=(255,255,255),font=F(7),anchor='rm')
+# north arrow
+dd.polygon([(W-40*S,16*S),(W-32*S,40*S),(W-40*S,35*S),(W-48*S,40*S)],fill=(255,255,255))
+dd.text((W-40*S,10*S),'N',fill=(255,255,255),font=F(8),anchor='mm')
+img=out
 img.save('plan_redrawn.png')
 print(img.size)
