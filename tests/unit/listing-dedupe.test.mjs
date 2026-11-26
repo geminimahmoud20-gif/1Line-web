@@ -5,7 +5,9 @@ import {
   findExistingLeadListing,
   findPotentialDuplicateListing,
   listingDiffPatch,
-  analyzeConcurrentEdits
+  analyzeConcurrentEdits,
+  isSameListingPair,
+  findDuplicateListingPairs
 } from '../../src/utils/listingDedupe.js';
 
 test('findExistingLeadListing finds active listing by sourceLeadId and ignores trashed/deleted ones', () => {
@@ -131,4 +133,36 @@ test('analyzeConcurrentEdits detects conflict only when both colleagues edited t
   const conflicting = analyzeConcurrentEdits(original, serverLatest, { price: 1800000 });
   assert.equal(conflicting.hasConflicts, true);
   assert.deepEqual(conflicting.conflicts, ['price']);
+});
+
+test('isSameListingPair: two unrelated plots never match on area/size/price/type alone', () => {
+  // Two genuinely different land plots that happen to share district, size, price and type
+  const masa29 = { id: 'a', title_ar: 'Masa 29 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  const otherPlot = { id: 'b', title_ar: 'Block 31 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  assert.equal(isSameListingPair(masa29, otherPlot), false);
+});
+
+test('isSameListingPair: the same listing re-entered (same title and specs) is caught', () => {
+  const a = { id: 'a', title_ar: 'Masa 29 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  const b = { id: 'b', title_ar: '  masa 29   land plot  ', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  assert.equal(isSameListingPair(a, b), true);
+});
+
+test('isSameListingPair: the same source lead is a match on its own, titles aside', () => {
+  const a = { id: 'a', title_ar: 'شقة أ', sourceLeadId: 'L1', status: 'published' };
+  const b = { id: 'b', title_ar: 'شقة ب (نفس العميل)', sourceLeadId: 'L1', status: 'published' };
+  assert.equal(isSameListingPair(a, b), true);
+});
+
+test('findDuplicateListingPairs: maps only the genuinely matching pair across a catalog, ignoring trashed listings', () => {
+  const masa29 = { id: 'a', title_ar: 'Masa 29 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  const otherPlot = { id: 'b', title_ar: 'Block 31 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  const dup = { id: 'c', title_ar: 'Masa 29 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'published' };
+  const trashedDup = { id: 'd', title_ar: 'Masa 29 land plot', areaKey: 'new_sohag', size: 276, price: 1250000, type: 'land', status: 'trash' };
+  const map = findDuplicateListingPairs([masa29, otherPlot, dup, trashedDup]);
+  assert.equal(map.has('a'), true);
+  assert.equal(map.has('b'), false);
+  assert.equal(map.get('a').id, 'c');
+  assert.equal(map.get('c').id, 'a');
+  assert.equal(map.has('d'), false);
 });
