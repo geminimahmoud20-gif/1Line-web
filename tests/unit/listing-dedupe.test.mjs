@@ -60,6 +60,40 @@ test('findPotentialDuplicateListing catches duplicate conversions for same selle
   assert.equal(brokerSecondUnit, null);
 });
 
+test('findPotentialDuplicateListing catches the same unit re-listed by someone else at a close but not identical price', () => {
+  const existing = [{
+    id: 'prop-1',
+    title_ar: 'وصال هاوس | شقة أمام الإدارة الزراعية مباشرة على الطريق الرئيسى',
+    type: 'apartment',
+    areaKey: 'akhmin',
+    price: 1200000,
+    size: 110,
+    status: 'pending'
+  }];
+
+  // No shared lead, different submitter, 4% cheaper asking price — still the same unit
+  const closePrice = findPotentialDuplicateListing(existing, {
+    id: 'prop-2',
+    title_ar: 'وصال هاوس | شقة أمام الإدارة الزراعية مباشرة على الطريق الرئيسى',
+    type: 'apartment',
+    areaKey: 'akhmin',
+    price: 1250000,
+    size: 110
+  });
+  assert.equal(closePrice?.id, 'prop-1');
+
+  // A genuinely different price (25% off) is not flagged as the same unit
+  const farPrice = findPotentialDuplicateListing(existing, {
+    id: 'prop-3',
+    title_ar: 'وصال هاوس | شقة أمام الإدارة الزراعية مباشرة على الطريق الرئيسى',
+    type: 'apartment',
+    areaKey: 'akhmin',
+    price: 1500000,
+    size: 110
+  });
+  assert.equal(farPrice, null);
+});
+
 test('listingDiffPatch returns only modified fields so concurrent edits to other fields are preserved', () => {
   const original = {
     id: 'prop-1',
