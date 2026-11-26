@@ -8,6 +8,12 @@ export const isActiveListing = (p) => Boolean(p) && !p.deleted && !p.isDeleted &
 
 const normText = (s) => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
+// Same listing re-quoted at a slightly different asking price (common when two staff list the
+// same unit, or an owner's price shifts) still counts as a match; an unrelated unit never lands
+// this close by coincidence once the title, area and size already match.
+const PRICE_MATCH_TOLERANCE = 0.08;
+const pricesMatch = (a, b) => a > 0 && b > 0 && Math.abs(a - b) <= Math.max(a, b) * PRICE_MATCH_TOLERANCE;
+
 /**
  * Find an existing active (non-trashed, non-deleted) listing already linked to a CRM lead.
  */
@@ -56,7 +62,7 @@ export function findPotentialDuplicateListing(properties = [], candidate = {}, {
     if (
       candTitle && normText(p.title_ar) === candTitle
       && candArea && p.areaKey === candArea
-      && candPrice > 0 && Number(p.price) === candPrice
+      && pricesMatch(candPrice, Number(p.price) || 0)
       && (!candSize || !Number(p.size) || Number(p.size) === candSize)
     ) {
       return p;
