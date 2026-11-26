@@ -473,7 +473,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
   return (
     <div className="crm-table-container tk-panel">
       {flowTask && getLead(flowTask.leadId) && (
-        <TaskDoneFlow key={flowTask.id} task={flowTask} lead={getLead(flowTask.leadId)} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />
+        <TaskDoneFlow key={flowTask.id} task={flowTask} lead={getLead(flowTask.leadId)} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} isManager={canManage} />
       )}
       <PageHeader
         title={view === 'team' ? (isAr ? 'مهام الفريق' : 'Team tasks') : view === 'assigned' ? (isAr ? 'اللي كلّفت بيه' : 'Tasks I gave') : (isAr ? 'مهامي' : 'My tasks')}

@@ -13,6 +13,14 @@ const CATEGORIES = [
   { id: 'other', ar: 'مستندات أخرى', en: 'Other', tone: 'neutral', Icon: FolderOpen }
 ];
 
+// Documents are embedded as base64 directly on the lead's own Firestore document (no separate blob
+// storage for them yet), so the real ceiling is Firestore's 1 MiB per-document hard limit, not
+// whatever the upload box advertises. Base64 inflates a file by ~4/3; these budgets leave room for
+// the lead's other fields and for documents already attached (see services/catalog.js's
+// MAX_DOC_BYTES for the same reasoning applied to listings).
+const MAX_DOCUMENT_BYTES = 600 * 1024; // raw file size, before base64
+const MAX_TOTAL_DOCUMENT_BYTES = 800 * 1024; // combined base64 size of every attached document
+
 const fmtDate = (iso, isAr) => {
   if (!iso) return '';
   const d = new Date(iso);
@@ -48,8 +56,13 @@ export default function ClientDocuments({ lead, isAr = true, onUpdateLead, trigg
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      triggerToast?.(isAr ? 'أقصى حجم للملف هو 10 ميجابايت' : 'Max file size is 10MB', 'error');
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      triggerToast?.(
+        isAr
+          ? `أقصى حجم للملف ${Math.round(MAX_DOCUMENT_BYTES / 1024)} كيلوبايت (المستندات بتتخزن كاملة في ملف العميل)`
+          : `Max file size is ${Math.round(MAX_DOCUMENT_BYTES / 1024)}KB`,
+        'error'
+      );
       return;
     }
     setSelectedFile(file);
@@ -71,6 +84,11 @@ export default function ClientDocuments({ lead, isAr = true, onUpdateLead, trigg
     }
     if (!fileDataUrl && !selectedFile) {
       triggerToast?.(isAr ? 'اختر ملف المستند' : 'Choose a file to attach', 'error');
+      return;
+    }
+    const existingBytes = docs.reduce((sum, d) => sum + (d.url?.length || 0), 0);
+    if (existingBytes + fileDataUrl.length > MAX_TOTAL_DOCUMENT_BYTES) {
+      triggerToast?.(isAr ? 'إجمالي حجم مستندات العميل وصل للحد الأقصى. احذف مستنداً قديماً أولاً.' : 'Total document size limit reached. Delete an old document first.', 'error');
       return;
     }
 

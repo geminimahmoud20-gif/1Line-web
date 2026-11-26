@@ -748,7 +748,11 @@ export default function PropertyManagerPanel({
         const newProp = {
           id: propId,
           ...cleanForm,
-          coordinates: finalCoords
+          coordinates: finalCoords,
+          // The duplicate check just above already cleared this (with the right isBroker
+          // awareness); PropertiesContext's own, isBroker-unaware check would otherwise
+          // re-run and could wrongly merge a broker's second, genuinely different unit.
+          _allowMultipleForLead: true
         };
         onAddProperty(newProp);
         triggerToast(isAr ? 'تمت إضافة العقار وتثبيت موقعه الفعلي على الخريطة بنجاح!' : 'New property added successfully!', 'success');

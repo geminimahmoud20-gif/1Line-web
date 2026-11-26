@@ -19,8 +19,8 @@ export const PRICING_MODE_OPTIONS = [
   { value: 'hide', ar: 'إخفاء مؤشر التقييم على الموقع', en: 'Hide pricing evaluation on site' }
 ];
 
-const ABOVE_MARKET_THRESHOLD = 10; // > +10% above reference triggers owner_priced in auto mode
-const BELOW_MARKET_THRESHOLD = -5; // < -5% below reference triggers opportunity in auto mode
+export const ABOVE_MARKET_THRESHOLD = 10; // > +10% above reference triggers owner_priced in auto mode
+export const BELOW_MARKET_THRESHOLD = -5; // < -5% below reference triggers opportunity in auto mode
 
 /**
  * Resolves the real reference price per m² for a property, or null if none exists.

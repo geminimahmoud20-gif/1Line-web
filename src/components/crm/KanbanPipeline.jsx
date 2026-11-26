@@ -415,6 +415,7 @@ export default function KanbanPipeline({
       const targetLead = leads.find(l => l.id === leadId);
       if (targetLead && boardColumnOf(targetLead.status) === targetStageId) { setDraggedLeadId(null); return; }
       if (targetLead && targetStageId === 'lost') { setLostFor(targetLead); setDraggedLeadId(null); return; }
+      if (targetLead && !stageOk(targetLead, targetStageId)) { setDraggedLeadId(null); return; }
       if (targetLead && onUpdateLead) {
         const defOutcome = STAGE_DEFAULT_OUTCOMES[targetStageId];
         let outcomePatch = {};
@@ -458,31 +459,17 @@ export default function KanbanPipeline({
         onUpdateLead(leadId, updates, targetLead.version);
 
         if (triggerToast) {
-          if (!validation.allowed && validation.missingDeliverable) {
-            triggerToast(
-              isAr ? `تم النقل إلى ${stageTitle} · تنبيه: يرجى استكمال ${validation.missingDeliverable}` : `Moved to ${stageTitle} · Note: ${validation.missingDeliverable}`,
-              'info',
-              {
-                onUndo: () => {
-                  onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
-                },
-                undoLabel: isAr ? 'تراجع' : 'Undo',
-                duration: 6000
-              }
-            );
-          } else {
-            triggerToast(
-              isAr ? `تم نقل العميل بنجاح إلى مرحلة ${stageTitle}` : `Lead moved to ${stageTitle}`,
-              'success',
-              {
-                onUndo: () => {
-                  onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
-                },
-                undoLabel: isAr ? 'تراجع' : 'Undo',
-                duration: 6000
-              }
-            );
-          }
+          triggerToast(
+            isAr ? `تم نقل العميل بنجاح إلى مرحلة ${stageTitle}` : `Lead moved to ${stageTitle}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -495,6 +482,7 @@ export default function KanbanPipeline({
     if (currentIndex >= 0 && currentIndex < PROGRESS_COUNT - 1) {
       const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
+      if (!stageOk(lead, nextStage.id)) return;
 
       const defOutcome = STAGE_DEFAULT_OUTCOMES[nextStage.id];
       let outcomePatch = {};
@@ -532,31 +520,17 @@ export default function KanbanPipeline({
         onUpdateLead(lead.id, updates, lead.version);
 
         if (triggerToast) {
-          if (!validation.allowed && validation.missingDeliverable) {
-            triggerToast(
-              isAr ? `تم النقل إلى ${stageTitle} · تنبيه: يرجى استكمال ${validation.missingDeliverable}` : `Moved to ${stageTitle} · Note: ${validation.missingDeliverable}`,
-              'info',
-              {
-                onUndo: () => {
-                  onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
-                },
-                undoLabel: isAr ? 'تراجع' : 'Undo',
-                duration: 6000
-              }
-            );
-          } else {
-            triggerToast(
-              isAr ? `تم نقل العميل إلى مرحلة: ${stageTitle}` : `Moved to ${stageTitle}`,
-              'success',
-              {
-                onUndo: () => {
-                  onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
-                },
-                undoLabel: isAr ? 'تراجع' : 'Undo',
-                duration: 6000
-              }
-            );
-          }
+          triggerToast(
+            isAr ? `تم نقل العميل إلى مرحلة: ${stageTitle}` : `Moved to ${stageTitle}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }

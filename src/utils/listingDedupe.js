@@ -81,7 +81,7 @@ const sameValue = (a, b) => {
   }
 };
 
-const DIFF_IGNORED = new Set(['id', 'updatedAt', 'createdAt', 'approvedAt', 'submittedAt', 'rejectedAt', 'approval', 'deleted', 'isDemo', 'contactName', 'contactPhone', 'privateNotes', 'exclusive', 'exclusiveFrom', 'exclusiveUntil']);
+const DIFF_IGNORED = new Set(['id', 'updatedAt', 'createdAt', 'approvedAt', 'submittedAt', 'rejectedAt', 'approval', 'deleted', 'isDemo', 'contactName', 'contactPhone', 'privateNotes', 'exclusive', 'exclusiveFrom', 'exclusiveUntil', '_baseUpdatedAt']);
 
 /**
  * Compute ONLY the fields that changed between `original` (when Edit opened) and `next` (when Saved),

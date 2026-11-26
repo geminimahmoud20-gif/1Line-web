@@ -3,22 +3,9 @@
 // Implements Dr. Mahmoud Elbaz / 1Line Official Company Playbook rules.
 
 import { createHandoffTask } from '../models/schema.js';
-import { LOST_REASONS } from '../utils/crmLeadViews.js';
+import { LOST_REASONS, isSellerLead } from '../utils/crmLeadViews.js';
 
 export const HIGH_VALUE_DEAL_THRESHOLD = 5_000_000; // 5 Million EGP threshold requires Founder Sign-off
-
-/**
- * Checks whether a lead represents a property seller/owner rather than a buyer.
- */
-export function isSellerLead(lead = {}) {
-  const type = String(lead?.type || '').trim().toLowerCase();
-  if (type === 'seller' || type === 'owner') return true;
-  if (lead?.landingPage === '/sell') return true;
-  if (lead?.details?.isSeller || lead?.isSeller) return true;
-  if (lead?.details?.askingPrice || lead?.askingPrice) return true;
-  if (lead?.details?.propertyType && (lead?.details?.size || lead?.details?.address)) return true;
-  return false;
-}
 
 export const SELLER_STAGE_DEFINITIONS = {
   // ── SELLER / LISTING PIPELINE ──────────────────────────────────────────────
@@ -182,7 +169,11 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     return { allowed: true, reason: null, nextTask: null };
   }
 
-  const isSeller = isSellerLead(lead);
+  // A broker lead manages a listing on someone else's behalf, so it follows the seller pipeline even when
+  // isSellerLead's other signals (sellerRole, listingIds+listedBy...) haven't been recorded on it yet. An
+  // investor lead is still fundamentally buying, so the buyer pipeline (which accepts "استثمار" as a purpose)
+  // already fits it without a special case.
+  const isSeller = isSellerLead(lead) || String(lead?.type || '').trim().toLowerCase() === 'broker';
 
   // ── SELLER PIPELINE VALIDATIONS ──────────────────────────────────────────
   if (isSeller) {
