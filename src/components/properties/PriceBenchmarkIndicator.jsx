@@ -6,7 +6,7 @@ import { getAreaById, getAreas } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
 import { areaReferencePrice } from '../../utils/areaPricing';
 import { assetClass } from '../../utils/marketStats';
-import { evaluateListingPricing } from '../../utils/pricingEvaluation';
+import { evaluateListingPricing, ABOVE_MARKET_THRESHOLD, BELOW_MARKET_THRESHOLD } from '../../utils/pricingEvaluation';
 import { nameProblem, phoneProblem, normalizeBookingPhone } from '../../utils/contactValidation';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { saveLead } from '../../firebaseLazy';
@@ -20,6 +20,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   const [offerBusy, setOfferBusy] = useState(false);
   const [offerErr, setOfferErr] = useState('');
   const [offerForm, setOfferForm] = useState({ name: '', phone: '', offeredPrice: '', note: '' });
+  const [offerHpField, setOfferHpField] = useState('');
 
   // Live listen for area modifications from CRM
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
     if (offerBusy || !property) return;
     setOfferErr('');
 
-    const spam = checkFormSpamProtection('', 'property_price_offer');
+    const spam = checkFormSpamProtection(offerHpField, 'property_price_offer');
     if (!spam.allowed) {
       setOfferErr(isAr ? spam.message_ar : spam.message_en);
       return;
@@ -139,6 +140,16 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               </div>
               {offerOpen && (
                 <form className="owner-offer-form" onSubmit={handleOfferSubmit} noValidate>
+                  <input
+                    type="text"
+                    name="user_offer_ref_hp"
+                    value={offerHpField}
+                    onChange={(e) => setOfferHpField(e.target.value)}
+                    tabIndex="-1"
+                    autoComplete="off"
+                    aria-hidden="true"
+                    style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0 }}
+                  />
                   <div className="owner-offer-grid">
                     <label className="owner-offer-field">
                       <span>{isAr ? 'الاسم *' : 'Name *'}</span>
@@ -365,8 +376,8 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
 
   if (!property) return null;
 
-  const isBelowMarket = diffPercent < -5;
-  const isFairMarket = diffPercent >= -5 && diffPercent <= 8;
+  const isBelowMarket = diffPercent < BELOW_MARKET_THRESHOLD;
+  const isFairMarket = diffPercent >= BELOW_MARKET_THRESHOLD && diffPercent <= ABOVE_MARKET_THRESHOLD;
 
   // Calculate pointer position on 0-100% scale
   // 0% = -25% below avg, 50% = exactly avg, 100% = +25% above avg

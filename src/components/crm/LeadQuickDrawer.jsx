@@ -8,7 +8,7 @@ import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
 import { boardStagesFor, buyersForSeller, askingPriceOf } from '../../utils/leadPipeline';
-import { boardColumnOf } from '../../utils/dealStages';
+import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
 import { addTask } from '../../firebaseLazy';
@@ -182,10 +182,9 @@ export default function LeadQuickDrawer({
   // The old «توقيع وحجز» step sits in the «إغلاق» chip (boardColumnOf)
   const currentColumn = boardColumnOf(lead.status);
 
-  const STAGE_ORDER = ['new', 'contacted', 'site_visit', 'negotiating', 'closed'];
   const nextStageFor = (curr) => {
-    const idx = STAGE_ORDER.indexOf(curr);
-    return (idx >= 0 && idx < STAGE_ORDER.length - 1) ? STAGE_ORDER[idx + 1] : (curr || 'new');
+    const idx = PROGRESS_STAGE_IDS.indexOf(curr);
+    return (idx >= 0 && idx < PROGRESS_STAGE_IDS.length - 1) ? PROGRESS_STAGE_IDS[idx + 1] : (curr || 'new');
   };
 
   const handleApproveHighValue = () => {
@@ -299,33 +298,56 @@ export default function LeadQuickDrawer({
     const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
 
     const patch = {
-      _bypassGate: true,
-      _forceStage: true,
       activityLogs: newLogs,
       notes: updatedNotes,
       lastActivityAt: nowIso,
       lastContactedAt: nowIso
     };
 
-    if (newStage && newStage !== lead.status) {
+    const changingStage = newStage && newStage !== lead.status;
+    if (changingStage) {
+      const stagePatch = { status: newStage, ...(newStage === 'lost' ? { lostReason: meta.lostReason || 'other' } : {}) };
+      if (!guardStage(lead, stagePatch, { role: activeRole, toast: triggerToast })) return;
+
+      const validation = validateStageTransition(lead, newStage, {
+        userRole: activeRole,
+        lostReason: meta.lostReason || (newStage === 'lost' ? 'other' : undefined),
+        isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+      });
+      if (!validation.allowed) {
+        setInlineBlocker({ targetStatus: newStage, deliverableKey: validation.deliverableKey, missingDeliverable: validation.missingDeliverable });
+        triggerToast?.(validation.missingDeliverable, 'error');
+        return;
+      }
+
+      patch._bypassGate = true;
+      patch._forceStage = true;
       patch.status = newStage;
       if (newStage === 'lost') {
         patch.lostReason = meta.lostReason || 'other';
         patch.lostAt = nowIso;
         if (meta.lostNote) patch.lostNote = meta.lostNote;
       }
+      if (validation.nextTask) {
+        patch.latestHandoffTask = validation.nextTask;
+        const crmTask = handoffToCrmTask(validation.nextTask, lead, currentUser);
+        if (crmTask) addTask(crmTask).catch(() => {});
+      }
     }
 
     if (onUpdateLead) {
       onUpdateLead(lead.id, patch, lead.version);
     }
+    setInlineBlocker(null);
 
     const stageLabel = stages.find(s => s.id === newStage)?.[isAr ? 'label_ar' : 'label_en'] || newStage;
     if (newStage === 'lost') {
       triggerToast?.(isAr ? 'تم نقل العميل إلى "خسارة" وتسجيل السبب بنجاح' : 'Lead marked as lost', 'info');
-    } else {
+    } else if (changingStage) {
       const taskMsg = task ? (isAr ? ` وجدولة: ${task.title}` : ` & task scheduled`) : '';
       triggerToast?.(isAr ? `تم تسجيل التواصل ونقل العميل إلى "${stageLabel}"${taskMsg}` : 'Contact logged & stage updated', 'success');
+    } else {
+      triggerToast?.(isAr ? 'تم تسجيل التواصل بنجاح' : 'Contact logged', 'success');
     }
   };
 
@@ -926,6 +948,7 @@ export default function LeadQuickDrawer({
           {activeTab === 'work' && (
             <LeadDrawerOverview
               view="work"
+              activeRole={activeRole}
               onOpenClient={() => setActiveTab('client')}
               allLeads={allLeads.length ? allLeads : filteredLeads}
               lead={lead}
@@ -1003,7 +1026,7 @@ export default function LeadQuickDrawer({
           )}
 
           {activeTab === 'team' && (
-            <LeadTeamPanel key={lead.id} lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} members={members} canAssign={mayAssignTasks} />
+            <LeadTeamPanel key={lead.id} lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} members={members} canAssign={mayAssignTasks} activeRole={activeRole} />
           )}
 
         </div>

@@ -4,6 +4,7 @@ import { buildTask, dayKeyFrom, KINDS, dueFromPreset } from '../../utils/tasks';
 import { suggestNextStep, composeDue } from '../../utils/nextStep';
 import { isSellerLead, localDayKey, lostReasonsFor } from '../../utils/crmLeadViews';
 import { boardStagesFor } from '../../utils/leadPipeline';
+import { PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import { addTask } from '../../firebaseLazy';
 import { MessageSquare, Phone, Calendar, Building, FileText } from 'lucide-react';
 
@@ -14,8 +15,6 @@ const CONTACT_CHANNELS = [
   { id: 'meeting', label_ar: 'اجتماع في المكتب', label_en: 'Office Meeting', icon: <Building size={14} /> },
   { id: 'note', label_ar: 'ملاحظة داخلية', label_en: 'Internal Note', icon: <FileText size={14} /> }
 ];
-
-const STAGE_ORDER = ['new', 'contacted', 'site_visit', 'negotiating', 'closed'];
 
 export default function NextStepSheet({
   lead,
@@ -40,8 +39,8 @@ export default function NextStepSheet({
   }, [stages, lead]);
 
   // Determine default target stage
-  const currentIdx = STAGE_ORDER.indexOf(currentStageId);
-  const defaultNextStage = propTargetStage || (currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1 ? STAGE_ORDER[currentIdx + 1] : currentStageId);
+  const currentIdx = PROGRESS_STAGE_IDS.indexOf(currentStageId);
+  const defaultNextStage = propTargetStage || (currentIdx >= 0 && currentIdx < PROGRESS_STAGE_IDS.length - 1 ? PROGRESS_STAGE_IDS[currentIdx + 1] : currentStageId);
 
   const [selectedStage, setSelectedStage] = useState(defaultNextStage);
   const [channel, setChannel] = useState(initialChannel || 'whatsapp');

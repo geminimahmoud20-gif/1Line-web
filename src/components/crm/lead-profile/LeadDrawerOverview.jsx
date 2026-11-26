@@ -48,7 +48,8 @@ export default function LeadDrawerOverview({
   agentName = '',
   view = 'work',
   onOpenClient,
-  allLeads = []
+  allLeads = [],
+  activeRole
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -428,7 +429,7 @@ export default function LeadDrawerOverview({
       {lead?.status === 'closed' && <ReviewRequestCard lead={lead} egWhatsapp={egWhatsapp} googleUrl={siteSettings.reviews?.googleUrl || ''} isAr={isAr} onUpdateLead={onUpdateLead} />}
 
       {/* 1. What to do next, and what just happened */}
-      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} />
+      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} activeRole={activeRole} />
 
       <section className="crm-ld__block" aria-labelledby="crm-ld-call">
         <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('حصل إيه؟', 'What happened?')}</h3>

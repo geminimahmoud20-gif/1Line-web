@@ -75,6 +75,12 @@ test('listingDiffPatch returns only modified fields so concurrent edits to other
   };
   const patch = listingDiffPatch(original, editedByUserA);
   assert.deepEqual(patch, { title_ar: 'شقة سكنية بإطلالة بانورامية' });
+
+  // _baseUpdatedAt is a synthetic field the edit form stamps onto its own snapshot for
+  // concurrent-edit detection only; it must never leak into the saved patch.
+  const withBaseStamp = { ...original, _baseUpdatedAt: '2026-01-01T00:00:00.000Z' };
+  const patchWithNoRealChange = listingDiffPatch(withBaseStamp, original);
+  assert.deepEqual(patchWithNoRealChange, {});
   assert.equal('price' in patch, false);
   assert.equal('approval' in patch, false);
 });

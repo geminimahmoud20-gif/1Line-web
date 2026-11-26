@@ -11,7 +11,7 @@ import './lead-team.css';
  * «الفريق»: everything the team does around one client in one place: who has the client and who else has worked it,
  * the tasks on the client (a manager gives one to the owner from here), and the comments between colleagues.
  */
-export default function LeadTeamPanel({ lead, isAr, triggerToast, onUpdateLead, members = [], canAssign = false }) {
+export default function LeadTeamPanel({ lead, isAr, triggerToast, onUpdateLead, members = [], canAssign = false, activeRole }) {
   const L = (ar, en) => (isAr ? ar : en);
   const { tasks } = useTasks();
   const people = useMemo(() => participantsOf(lead, tasks), [lead, tasks]);
@@ -42,7 +42,7 @@ export default function LeadTeamPanel({ lead, isAr, triggerToast, onUpdateLead, 
         {others.length > 0 && <Badge tone="neutral">{L(`${others.length + (owner ? 1 : 0)} على العميل`, `${others.length + (owner ? 1 : 0)} people`)}</Badge>}
       </section>
 
-      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} members={members} canAssign={canAssign} title={L('مهام العميل', 'Client tasks')} />
+      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} members={members} canAssign={canAssign} title={L('مهام العميل', 'Client tasks')} activeRole={activeRole} />
 
       <section className="lt__comments" aria-label={L('تعليقات الفريق', 'Team comments')}>
         <h3 className="lt__h">{L('تعليقات الفريق', 'Team comments')}</h3>

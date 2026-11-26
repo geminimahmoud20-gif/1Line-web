@@ -11,7 +11,7 @@ import { isSellerLead } from '../../../utils/crmLeadViews';
 import { addTask } from '../../../firebaseLazy';
 
 /** The open tasks behind one client, and a quick way to add the next one */
-export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title, members = [], canAssign = false }) {
+export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title, members = [], canAssign = false, activeRole }) {
   const { currentUser } = useAuth();
   const { tasks } = useTasks();
   const me = useMemo(() => ({
@@ -127,7 +127,7 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
           </div>
         </div>
       )}
-      {flowTask && <TaskDoneFlow key={flowTask.id} task={flowTask} lead={lead} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />}
+      {flowTask && <TaskDoneFlow key={flowTask.id} task={flowTask} lead={lead} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} activeRole={activeRole} />}
       <TaskForm key={lead.id} isAr={isAr} me={me} members={members} canAssign={canAssign} defaultAssigneeUid={ownerUid} lead={{ id: lead.id, name: lead.name }} triggerToast={triggerToast} compact />
     </section>
   );

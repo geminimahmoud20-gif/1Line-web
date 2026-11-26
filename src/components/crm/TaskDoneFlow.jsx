@@ -4,9 +4,10 @@ import { useTasks } from '../../hooks/useTasks';
 import { updateTask, addTask } from '../../firebaseLazy';
 import { completion, parseTaskNote, nextRecurringDue, buildTask } from '../../utils/tasks';
 import { suggestNextStep, SKIP_LOG } from '../../utils/nextStep';
-import { OUTCOMES, STAGE_RULES, outcomeEntry, outcomeSave, outcomeById } from '../../utils/stageGate';
+import { OUTCOMES, STAGE_RULES, outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { lostReasonsFor, isSellerLead } from '../../utils/crmLeadViews';
 import { scheduleNextAttempt } from '../../utils/retryCall';
+import { validateStageTransition, handoffToCrmTask } from '../../services/stateMachineEngine';
 import NextStepSheet from './NextStepSheet';
 
 const SELLER_OUTCOME_LABELS = {
@@ -30,7 +31,7 @@ const NEEDS_OUTCOME = new Set(['call', 'whatsapp', 'visit']);
  * skipped on purpose). The task stays open until the first part is answered, so a tick never leaves a client with
  * neither a result nor a next action.
  */
-export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead, triggerToast, onClose }) {
+export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead, triggerToast, onClose, activeRole, isManager = false }) {
   const { tasks } = useTasks();
   const needsOutcome = NEEDS_OUTCOME.has(task.kind);
   const [step, setStep] = useState(needsOutcome ? 'outcome' : 'closing');
@@ -95,6 +96,36 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
     onClose();
   };
 
+  // Validates and builds the stage-change patch shared by onSaved/onStageOnly; null (and a toast) if the gate blocks it
+  const applyStageChange = (newStage, meta = {}) => {
+    const stagePatch = { status: newStage, ...(newStage === 'lost' ? { lostReason: meta.lostReason || 'other' } : {}) };
+    if (!guardStage(lead, stagePatch, { role: activeRole, isManager, toast: triggerToast })) return null;
+
+    const validation = validateStageTransition(lead, newStage, {
+      userRole: activeRole,
+      lostReason: meta.lostReason || (newStage === 'lost' ? 'other' : undefined),
+      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+    });
+    if (!validation.allowed) {
+      triggerToast?.(validation.missingDeliverable, 'error');
+      return null;
+    }
+    if (validation.nextTask) {
+      const crmTask = handoffToCrmTask(validation.nextTask, lead, me);
+      if (crmTask) addTask(crmTask).catch(() => {});
+    }
+
+    return {
+      status: newStage,
+      _bypassGate: true,
+      _forceStage: true,
+      lastActivityAt: new Date().toISOString(),
+      ...(validation.nextTask ? { latestHandoffTask: validation.nextTask } : {}),
+      ...(newStage === 'lost' ? { lostReason: meta.lostReason || 'other', lostNote: meta.lostNote || '', lostAt: new Date().toISOString() } : {}),
+      ...(meta.note ? { notes: `[${meta.channel || 'تواصل'}] ${meta.note}\n${lead.notes || ''}` } : {})
+    };
+  };
+
   if (step === 'next') {
     return (
       <NextStepSheet
@@ -104,28 +135,18 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
         isAr={isAr}
         onSaved={(t, meta = {}) => {
           if (meta.newStage && meta.newStage !== lead.status) {
-            onUpdateLead?.(lead.id, {
-              status: meta.newStage,
-              _bypassGate: true,
-              _forceStage: true,
-              lastActivityAt: new Date().toISOString(),
-              ...(meta.newStage === 'lost' ? { lostReason: meta.lostReason || 'other', lostNote: meta.lostNote || '', lostAt: new Date().toISOString() } : {}),
-              ...(meta.note ? { notes: `[${meta.channel || 'تواصل'}] ${meta.note}\n${lead.notes || ''}` } : {})
-            }, lead.version);
+            const patch = applyStageChange(meta.newStage, meta);
+            if (!patch) return;
+            onUpdateLead?.(lead.id, patch, lead.version);
           }
           triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t?.title || 'مهمة'}` : 'Next step saved', 'success');
           onClose();
         }}
         onStageOnly={(newStage, meta = {}) => {
           if (newStage && newStage !== lead.status) {
-            onUpdateLead?.(lead.id, {
-              status: newStage,
-              _bypassGate: true,
-              _forceStage: true,
-              lastActivityAt: new Date().toISOString(),
-              ...(newStage === 'lost' ? { lostReason: meta.lostReason || 'other', lostNote: meta.lostNote || '', lostAt: new Date().toISOString() } : {}),
-              ...(meta.note ? { notes: `[${meta.channel || 'تواصل'}] ${meta.note}\n${lead.notes || ''}` } : {})
-            }, lead.version);
+            const patch = applyStageChange(newStage, meta);
+            if (!patch) return;
+            onUpdateLead?.(lead.id, patch, lead.version);
             triggerToast?.(isAr ? 'تم تحديث مرحلة العميل بنجاح' : 'Stage updated successfully', 'success');
           }
           onClose();
