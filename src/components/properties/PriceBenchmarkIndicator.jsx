@@ -4,8 +4,6 @@ import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Buildin
 import { formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
 import { getAreaById, getAreas } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
-import { areaReferencePrice } from '../../utils/areaPricing';
-import { assetClass } from '../../utils/marketStats';
 import { evaluateListingPricing, resolveReferencePrice, ABOVE_MARKET_THRESHOLD, BELOW_MARKET_THRESHOLD } from '../../utils/pricingEvaluation';
 import { nameProblem, phoneProblem, normalizeBookingPhone } from '../../utils/contactValidation';
 import { checkFormSpamProtection } from '../../utils/securityShield';

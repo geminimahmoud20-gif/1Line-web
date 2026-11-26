@@ -25,7 +25,7 @@ import { compressImage } from '../../utils/imageUploadService';
 import { resolveReferencePrice } from '../../utils/pricingEvaluation';
 import { areaNameOf } from '../../utils/areaLookup';
 import { getAreas } from '../../data/propertiesData';
-import { userDisplayName } from '../../utils/userDisplayName';
+import { userDisplayName } from '../../utils/assignees';
 import './field-inspection.css';
 
 export default function FieldInspectionModal({
@@ -81,8 +81,8 @@ export default function FieldInspectionModal({
   // 4. Structural & Finishing Condition
   const [finishingLevel, setFinishingLevel] = useState(() => existingReport?.finishingLevel || details.finishing || 'super_lux'); // 'super_lux' | 'lux' | 'semi_finished' | 'red_brick'
   const [wallsCondition, setWallsCondition] = useState(() => existingReport?.wallsCondition || 'sound'); // 'sound' | 'hairline_cracks' | 'structural_cracks' | 'moisture'
-  const [orientation, setOrientation] = useState(() => existingReport?.orientation || 'maritime'); // 'maritime' (بحري) | 'southern' (قبلي) | 'eastern' | 'western'
-  const [viewQuality, setViewQuality] = useState(() => existingReport?.viewQuality || 'panoramic'); // 'panoramic' | 'street' | 'internal'
+  const [orientation, _setOrientation] = useState(() => existingReport?.orientation || 'maritime'); // 'maritime' (بحري) | 'southern' (قبلي) | 'eastern' | 'western'
+  const [viewQuality, _setViewQuality] = useState(() => existingReport?.viewQuality || 'panoramic'); // 'panoramic' | 'street' | 'internal'
 
   // 5. Legal Clearance & Reconciliation
   const [deedType, setDeedType] = useState(() => existingReport?.deedType || 'registered'); // 'registered' | 'court_validity' | 'authority_allocation' | 'poa'

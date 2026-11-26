@@ -6,22 +6,17 @@ import {
   Building2,
   Users,
   Camera,
-  ArrowLeft,
-  ArrowRight,
   ExternalLink,
   MessageCircle,
-  PhoneCall,
   CheckCircle2,
   TrendingUp,
   MapPin,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import { Card, CardHeader, Button, Badge } from '../ui';
-import {
-  matchSellerLeadsToSupplyDeficits,
-  buildPrepopulatedPropertyFromLead
-} from '../../utils/supplyGapMatcher';
+import { Card, Button, Badge } from '../ui';
+import { matchSellerLeadsToSupplyDeficits } from '../../utils/supplyGapMatcher';
+import './supply-gap-opportunity.css';
 
 const money = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
 const shortMoney = (n, isAr) => {
@@ -87,41 +82,23 @@ export default function SupplyGapOpportunityPanel({
   };
 
   return (
-    <div className="crm-supply-gap-opp" style={{ marginBottom: '24px' }}>
+    <div className="crm-supply-gap-opp sgo-wrap">
       <Card>
         {/* Header with Luxury Accent */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '14px',
-          borderBottom: '1px solid var(--crm-border, #E2E8F0)',
-          paddingBottom: '16px',
-          marginBottom: '16px'
-        }}>
+        <div className="sgo-header">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(212, 175, 55, 0.15)',
-                color: '#D4AF37',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            <div className="sgo-header-row">
+              <div className="sgo-header-icon">
                 <Sparkles size={18} />
               </div>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--crm-text, #0B1C36)' }}>
+              <h3 className="sgo-title">
                 {L('محرك سد العجز: مطابقة استمارات البائعين مع نقص المعروض', 'Supply Gap Auto-Matcher: Seller Intake vs Inventory Deficit')}
               </h3>
               <Badge tone="gold" size="sm">
                 {L('أتمتة ذكية', 'Smart Automation')}
               </Badge>
             </div>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--crm-text-muted, #64748B)' }}>
+            <p className="sgo-desc">
               {L(
                 'يكتشف النظام المناطق التي تعاني من عجز في الوحدات المعروضة، ويطابقها تلقائياً مع وحدات البائعين غير المنشورة في CRM لمراجعتها وتحويلها لوحدات معروضة بضغطة زر واحدة.',
                 'Detects supply shortages across districts and auto-matches unconverted seller leads ready for 1-click publishing.'
@@ -130,7 +107,7 @@ export default function SupplyGapOpportunityPanel({
           </div>
 
           {/* Quick Filter Buttons */}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div className="sgo-filters">
             <Button
               size="sm"
               variant={filterMode === 'with_candidates' ? 'primary' : 'secondary'}
@@ -156,53 +133,33 @@ export default function SupplyGapOpportunityPanel({
         </div>
 
         {/* Executive Stats Banner */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            borderRadius: '10px',
-            padding: '12px 14px'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: '#991B1B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="sgo-stats-grid">
+          <div className="sgo-stat-card sgo-stat-card--danger">
+            <div className="sgo-stat-label sgo-stat-label--danger">
               <AlertOctagon size={14} />
               {L('مناطق تعاني من عجز حاد', 'Critical Deficit Areas')}
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
+            <div className="sgo-stat-value sgo-stat-value--danger">
               {criticalDeficitCount} {L('مناطق', 'areas')}
             </div>
           </div>
 
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            borderRadius: '10px',
-            padding: '12px 14px'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: '#065F46', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="sgo-stat-card sgo-stat-card--positive">
+            <div className="sgo-stat-label sgo-stat-label--positive">
               <Building2 size={14} />
               {L('وحدات مرشحة لسد العجز', 'Matched Candidate Units')}
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#059669', marginTop: '4px' }}>
+            <div className="sgo-stat-value sgo-stat-value--positive">
               {totalOpportunityCount} {L('وحدات مسجلة', 'units')}
             </div>
           </div>
 
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.02) 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
-            borderRadius: '10px',
-            padding: '12px 14px'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: '#854D0E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="sgo-stat-card sgo-stat-card--warn">
+            <div className="sgo-stat-label sgo-stat-label--warn">
               <TrendingUp size={14} />
               {L('قيمة المعروض غير المستغل', 'Hidden Supply Value')}
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#B45309', marginTop: '4px' }}>
+            <div className="sgo-stat-value sgo-stat-value--warn">
               {shortMoney(totalOpportunityValue, isAr)}
             </div>
           </div>
@@ -210,151 +167,82 @@ export default function SupplyGapOpportunityPanel({
 
         {/* Deficit Areas List */}
         {displayedDeficits.length === 0 ? (
-          <div style={{
-            padding: '30px',
-            textAlign: 'center',
-            backgroundColor: 'var(--crm-bg-subtle, #F8FAFC)',
-            borderRadius: '10px',
-            border: '1px dashed var(--crm-border, #CBD5E1)'
-          }}>
-            <CheckCircle2 size={36} color="#10B981" style={{ margin: '0 auto 10px' }} />
-            <h4 style={{ margin: '0 0 6px', color: 'var(--crm-text, #0B1C36)' }}>
+          <div className="sgo-empty">
+            <CheckCircle2 size={36} color="var(--crm-positive)" className="sgo-empty-icon" />
+            <h4 className="sgo-empty-title">
               {L('لا يوجد عجز معروض بحاجة للمطابقة حالياً', 'No matching deficits at this filter')}
             </h4>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--crm-text-muted, #64748B)' }}>
+            <p className="sgo-empty-text">
               {L('جميع المناطق المعروضة مغطاة أو تم تحويل وحدات البائعين بها بنجاح.', 'All areas have adequate inventory or available seller leads were already listed.')}
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="sgo-deficit-list">
             {displayedDeficits.map((areaDeficit) => {
               const isExpanded = expandedAreaId === areaDeficit.areaId || (expandedAreaId === null && areaDeficit.matchingCount > 0);
               const isCritical = areaDeficit.severity === 'critical';
 
               return (
-                <div
-                  key={areaDeficit.areaId}
-                  style={{
-                    border: isCritical ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--crm-border, #E2E8F0)',
-                    borderRadius: '10px',
-                    backgroundColor: isCritical ? 'rgba(254, 242, 242, 0.4)' : '#FFFFFF',
-                    overflow: 'hidden',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                  }}
-                >
+                <div key={areaDeficit.areaId} className={`sgo-area-card ${isCritical ? 'is-critical' : ''}`}>
                   {/* Area Card Header */}
                   <div
                     onClick={() => setExpandedAreaId(isExpanded ? '__none' : areaDeficit.areaId)}
-                    style={{
-                      padding: '14px 18px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      borderBottom: isExpanded ? '1px solid var(--crm-border, #E2E8F0)' : 'none',
-                      backgroundColor: isCritical ? 'rgba(254, 226, 226, 0.3)' : '#F8FAFC'
-                    }}
+                    className={`sgo-area-head ${isCritical ? 'is-critical' : ''} ${isExpanded ? 'is-expanded' : ''}`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <MapPin size={18} color={isCritical ? '#DC2626' : '#2563EB'} />
-                      <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--crm-text, #0B1C36)' }}>
+                    <div className="sgo-area-head-left">
+                      <MapPin size={18} color={isCritical ? 'var(--crm-danger)' : 'var(--crm-info)'} />
+                      <span className="sgo-area-name">
                         {areaDeficit.areaName}
                       </span>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        backgroundColor: isCritical ? '#FEE2E2' : '#FEF3C7',
-                        color: isCritical ? '#991B1B' : '#92400E'
-                      }}>
+                      <span className={`sgo-pill ${isCritical ? 'sgo-pill--critical' : 'sgo-pill--warn'}`}>
                         {areaDeficit.activeSupply === 0 ? L('عجز كلي (0 معروض)', 'Zero stock') : L(`معروض ${areaDeficit.activeSupply} فقط`, `${areaDeficit.activeSupply} live units`)}
                       </span>
                       {areaDeficit.buyerDemandsCount > 0 && (
-                        <span style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          backgroundColor: '#EFF6FF',
-                          color: '#1D4ED8',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
+                        <span className="sgo-pill sgo-pill--info">
                           <Users size={12} />
                           {areaDeficit.buyerDemandsCount} {L('طلبات شراء نشطة', 'buyer demands')}
                         </span>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="sgo-area-head-right">
                       {areaDeficit.matchingCount > 0 ? (
-                        <span style={{
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          color: '#059669',
-                          backgroundColor: '#D1FAE5',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
+                        <span className="sgo-match-pill">
                           <Sparkles size={14} />
                           {areaDeficit.matchingCount} {L('استمارة عميل مطابقة لسد العجز', 'matching seller leads')}
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                        <span className="sgo-no-intake">
                           {L('لا توجد استمارات حالياً', 'No seller intake')}
                         </span>
                       )}
-                      {isExpanded ? <ChevronUp size={18} color="#64748B" /> : <ChevronDown size={18} color="#64748B" />}
+                      {isExpanded ? <ChevronUp size={18} color="var(--crm-muted)" /> : <ChevronDown size={18} color="var(--crm-muted)" />}
                     </div>
                   </div>
 
                   {/* Area Body: Matching Candidate Leads */}
                   {isExpanded && (
-                    <div style={{ padding: '16px 18px', backgroundColor: '#FFFFFF' }}>
+                    <div className="sgo-area-body">
                       {areaDeficit.matchingCount > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '4px' }}>
+                        <div className="sgo-candidates-wrap">
+                          <div className="sgo-candidates-intro">
                             {L(
                               `وجدنا ${areaDeficit.matchingCount} عملاء مسجلين وحدات مطابقة لم تُعرض بعد في ${areaDeficit.areaName}. اضغط على «مراجعة وتحويل» لفتح نموذج العقار مباشرة واكتمال بياناته ونشره:`,
                               `Found ${areaDeficit.matchingCount} candidate seller units in ${areaDeficit.areaName} awaiting review and publishing:`
                             )}
                           </div>
 
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                            gap: '12px'
-                          }}>
+                          <div className="sgo-candidates-grid">
                             {areaDeficit.matchingLeads.map((cand) => (
-                              <div
-                                key={cand.leadId}
-                                style={{
-                                  border: '1px solid #E2E8F0',
-                                  borderRadius: '8px',
-                                  padding: '12px 14px',
-                                  backgroundColor: '#F8FAFC',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'space-between',
-                                  gap: '10px',
-                                  transition: 'all 0.15s ease'
-                                }}
-                              >
+                              <div key={cand.leadId} className="sgo-candidate-card">
                                 {/* Candidate Top */}
                                 <div>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                  <div className="sgo-candidate-top-row">
                                     <div>
-                                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--crm-text, #0B1C36)' }}>
+                                      <div className="sgo-candidate-name">
                                         {cand.leadName}
                                       </div>
-                                      <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                                      <div className="sgo-candidate-phone">
                                         {cand.phone || L('رقم غير مسجل', 'No phone')}
                                       </div>
                                     </div>
@@ -364,56 +252,36 @@ export default function SupplyGapOpportunityPanel({
                                   </div>
 
                                   {/* Specs Pill Row */}
-                                  <div style={{
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '6px',
-                                    fontSize: '0.8rem',
-                                    color: '#334155',
-                                    margin: '8px 0'
-                                  }}>
+                                  <div className="sgo-specs-row">
                                     {cand.size > 0 && (
-                                      <span style={{ background: '#E2E8F0', padding: '2px 6px', borderRadius: '4px' }}>
+                                      <span className="sgo-spec-pill">
                                         {cand.size} م²
                                       </span>
                                     )}
                                     {cand.rooms > 0 && (
-                                      <span style={{ background: '#E2E8F0', padding: '2px 6px', borderRadius: '4px' }}>
+                                      <span className="sgo-spec-pill">
                                         {cand.rooms} غرف
                                       </span>
                                     )}
                                     {cand.floor && (
-                                      <span style={{ background: '#E2E8F0', padding: '2px 6px', borderRadius: '4px' }}>
+                                      <span className="sgo-spec-pill">
                                         دور {cand.floor}
                                       </span>
                                     )}
                                     {cand.finishing && (
-                                      <span style={{ background: '#E2E8F0', padding: '2px 6px', borderRadius: '4px' }}>
+                                      <span className="sgo-spec-pill">
                                         {cand.finishing}
                                       </span>
                                     )}
                                   </div>
 
                                   {/* Price and Photos */}
-                                  <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginTop: '8px',
-                                    fontSize: '0.85rem'
-                                  }}>
-                                    <div style={{ fontWeight: 700, color: '#059669' }}>
+                                  <div className="sgo-price-row">
+                                    <div className="sgo-price">
                                       {cand.askingPrice > 0 ? `${money(cand.askingPrice)} ج.م` : L('سعر غير محدد', 'Price not set')}
                                     </div>
 
-                                    <div style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      color: cand.images.length > 0 ? '#0284C7' : '#94A3B8',
-                                      fontSize: '0.8rem',
-                                      fontWeight: 600
-                                    }}>
+                                    <div className={`sgo-photos ${cand.images.length > 0 ? 'has-photos' : ''}`}>
                                       <Camera size={14} />
                                       {cand.images.length > 0 ? `${cand.images.length} ${L('صور', 'photos')}` : L('بدون صور', 'No photos')}
                                     </div>
@@ -421,19 +289,14 @@ export default function SupplyGapOpportunityPanel({
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div style={{
-                                  display: 'flex',
-                                  gap: '6px',
-                                  borderTop: '1px solid #E2E8F0',
-                                  paddingTop: '10px'
-                                }}>
+                                <div className="sgo-candidate-actions">
                                   <Button
                                     size="sm"
                                     variant="primary"
-                                    style={{ flex: 1, backgroundColor: '#0B1C36', color: '#D4AF37' }}
+                                    className="sgo-convert-btn"
                                     onClick={() => handleConvertCandidate(cand)}
                                   >
-                                    <Sparkles size={14} style={{ marginInlineEnd: '4px' }} />
+                                    <Sparkles size={14} className="sgo-convert-btn-icon" />
                                     {L('مراجعة وتحويل لوحدة معروضة 🚀', 'Review & Convert 🚀')}
                                   </Button>
 
@@ -452,7 +315,7 @@ export default function SupplyGapOpportunityPanel({
                                     <Button
                                       size="sm"
                                       variant="secondary"
-                                      style={{ color: '#059669' }}
+                                      className="sgo-whatsapp-btn"
                                       onClick={() => handleOpenWhatsApp(cand.phone, cand)}
                                       title={L('مراسلة عبر واتساب', 'Chat on WhatsApp')}
                                     >
@@ -466,21 +329,13 @@ export default function SupplyGapOpportunityPanel({
                         </div>
                       ) : (
                         /* Sourcing Advisory when no leads exist for deficit */
-                        <div style={{
-                          padding: '16px',
-                          borderRadius: '8px',
-                          backgroundColor: '#FFFBEB',
-                          border: '1px solid #FDE68A',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px'
-                        }}>
-                          <AlertTriangle size={20} color="#D97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div className="sgo-advisory">
+                          <AlertTriangle size={20} color="var(--crm-warn)" className="sgo-advisory-icon" />
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#92400E', marginBottom: '2px' }}>
+                            <div className="sgo-advisory-title">
                               {L('توجيه استقطاب عقاري مطلوب (Sourcing Advisory)', 'Inventory Sourcing Advisory')}
                             </div>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#B45309', lineHeight: 1.5 }}>
+                            <p className="sgo-advisory-text">
                               {L(
                                 `المنطقة تعاني من عجز في المعروض ولم يسجل أي بائع وحدات بها مؤخراً. نقترح على فريق التسويق إطلاق حملة استقطاب ملاك وبائعين في (${areaDeficit.areaName}) لتلبية طلبات الشراء الحالية وسد فجوة المخزون.`,
                                 `No seller leads currently recorded for ${areaDeficit.areaName}. We recommend launching targeted seller ads to supply active buyers in this sector.`

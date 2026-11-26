@@ -1,4 +1,4 @@
-import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass, Edit3, FileText, MapPin, CheckCircle2 } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass, Edit3, FileText, MapPin } from 'lucide-react';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
@@ -548,10 +548,10 @@ export default function LeadDrawerOverview({
       )}
 
       {/* 📋 Field Inspection & Valuation Block */}
-      <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-inspection" style={{ borderRight: '3px solid #D4AF37' }}>
+      <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-inspection" style={{ borderRight: '3px solid var(--crm-accent)' }}>
         <div className="crm-ld__block-head">
-          <h3 id="crm-ld-inspection" className="crm-ld__h" style={{ color: '#0B1C36', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FileText size={16} aria-hidden="true" style={{ color: '#D4AF37' }} />
+          <h3 id="crm-ld-inspection" className="crm-ld__h" style={{ color: 'var(--crm-ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FileText size={16} aria-hidden="true" style={{ color: 'var(--crm-accent)' }} />
             {L('الفحص الميداني والتثمين', 'Field Inspection & Valuation')}
           </h3>
           {lead.siteVisitReport ? (
@@ -561,13 +561,13 @@ export default function LeadDrawerOverview({
           )}
         </div>
         {lead.siteVisitReport ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', flexWrap: 'wrap', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: 'var(--crm-text-sm)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--crm-body)', flexWrap: 'wrap', gap: '4px' }}>
               <span>{L('سعر المتر الميداني:', 'Price/sqm:')} <strong>{Number(lead.siteVisitReport.valuation?.askingPerSqm || 0).toLocaleString('en-US')} ج.م/م²</strong></span>
               <span style={{ fontWeight: 600 }}>{lead.siteVisitReport.valuation?.valuationText}</span>
             </div>
             {lead.siteVisitReport.gps?.lat && (
-              <span style={{ fontSize: '12px', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                 <MapPin size={12} /> {L('موقع GPS موثق', 'Verified GPS')} ({lead.siteVisitReport.gps.lat}, {lead.siteVisitReport.gps.lng})
               </span>
             )}
@@ -579,7 +579,7 @@ export default function LeadDrawerOverview({
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
+            <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
               {L('سجّل فحص المرافق، الحالة الإنشائية، سند الملكية وتثمين 1Line الميداني واجتياز شروط مرحلة المعاينة.', 'Record utilities, structure, deed clearance, and 1Line valuation.')}
             </p>
             <div className="crm-ld__row">

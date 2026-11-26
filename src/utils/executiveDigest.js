@@ -4,7 +4,7 @@
 //  2. 9:00 AM Executive Morning Briefing Generator for Founders & GMs
 // =============================================================
 
-import { leadCommission, STAGE_PROBABILITY, dealValue } from './commission.js';
+import { leadCommission } from './commission.js';
 import { checkSlaEscalations } from './tasks.js';
 import { calculateDaysOnMarket } from './propertyDeepReports.js';
 import { toMs } from './crmLeadViews.js';

@@ -6,8 +6,6 @@ import {
   Car,
   ShieldAlert,
   Coins,
-  CheckCircle2,
-  AlertTriangle,
   ChevronDown,
   ChevronUp,
   Copy
@@ -44,11 +42,11 @@ export default function ExecutiveDigestWidget({
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #0B1C36 0%, #152C4F 100%)',
+      background: 'linear-gradient(135deg, var(--crm-ink) 0%, var(--crm-navy-light) 100%)',
       borderRadius: '16px',
       padding: '18px 20px',
-      color: '#FFFFFF',
-      border: '1.5px solid #D4AF37',
+      color: 'var(--crm-card)',
+      border: '1.5px solid var(--crm-accent)',
       boxShadow: '0 10px 25px -5px rgba(11, 28, 54, 0.3)',
       marginBottom: '20px',
       display: 'flex',
@@ -63,19 +61,19 @@ export default function ExecutiveDigestWidget({
             height: '36px',
             borderRadius: '10px',
             background: 'rgba(212, 175, 55, 0.2)',
-            border: '1px solid #D4AF37',
+            border: '1px solid var(--crm-accent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#D4AF37'
+            color: 'var(--crm-accent)'
           }}>
             <Sun size={20} />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#FFFFFF' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-card)' }}>
               {L('ملخص الصباح التنفيذي (Daily Executive Digest)', 'Daily Executive Digest')}
             </h3>
-            <span style={{ fontSize: '12px', color: '#CBD5E1' }}>{digest.dateStr}</span>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-line-strong)' }}>{digest.dateStr}</span>
           </div>
         </div>
 
@@ -83,7 +81,7 @@ export default function ExecutiveDigestWidget({
           <Button
             size="sm"
             variant="ghost"
-            style={{ color: '#D4AF37', border: '1px solid rgba(212, 175, 55, 0.4)' }}
+            style={{ color: 'var(--crm-accent)', border: '1px solid rgba(212, 175, 55, 0.4)' }}
             icon={<Copy size={14} />}
             onClick={handleCopyOnly}
           >
@@ -96,11 +94,11 @@ export default function ExecutiveDigestWidget({
             style={{
               padding: '8px 14px',
               borderRadius: '8px',
-              background: '#25D366',
-              color: '#FFFFFF',
+              background: 'rgb(37, 211, 102)',
+              color: 'var(--crm-card)',
               border: 'none',
               fontWeight: 700,
-              fontSize: '12px',
+              fontSize: 'var(--crm-text-xs)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -121,20 +119,20 @@ export default function ExecutiveDigestWidget({
       }}>
         {/* New Leads */}
         <div style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Users size={12} /> {L('عملاء آخر 24 س', 'New (24h)')}
           </span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#38BDF8', marginTop: '2px' }}>
+          <div style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: 'var(--crm-info)', marginTop: '2px' }}>
             {digest.newLeadsCount}
           </div>
         </div>
 
         {/* Visits Today */}
         <div style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Car size={12} /> {L('معاينات اليوم', 'Visits Today')}
           </span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#34D399', marginTop: '2px' }}>
+          <div style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: 'var(--crm-positive)', marginTop: '2px' }}>
             {digest.visitsTodayCount}
           </div>
         </div>
@@ -146,20 +144,20 @@ export default function ExecutiveDigestWidget({
           padding: '10px 14px',
           border: digest.sla.criticalCount > 0 ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.1)'
         }}>
-          <span style={{ fontSize: '11px', color: digest.sla.criticalCount > 0 ? '#FCA5A5' : '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: digest.sla.criticalCount > 0 ? 'var(--crm-danger)' : 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <ShieldAlert size={12} /> {L('تنبيهات SLA الحرجة', 'Critical SLA')}
           </span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: digest.sla.criticalCount > 0 ? '#F87171' : '#A7F3D0', marginTop: '2px' }}>
+          <div style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: digest.sla.criticalCount > 0 ? 'var(--crm-danger)' : 'var(--crm-positive-line)', marginTop: '2px' }}>
             {digest.sla.criticalCount}
           </div>
         </div>
 
         {/* 30d Cashflow */}
         <div style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Coins size={12} /> {L('سيولة 30 يوم متوقعة', '30d Expected')}
           </span>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#D4AF37', marginTop: '2px' }}>
+          <div style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: 'var(--crm-accent)', marginTop: '2px' }}>
             {digest.cashflow.horizon30d.toLocaleString('en-US')} ج.م
           </div>
         </div>
@@ -173,8 +171,8 @@ export default function ExecutiveDigestWidget({
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#D4AF37',
-            fontSize: '12px',
+            color: 'var(--crm-accent)',
+            fontSize: 'var(--crm-text-xs)',
             fontWeight: 700,
             cursor: 'pointer',
             display: 'inline-flex',
@@ -192,12 +190,12 @@ export default function ExecutiveDigestWidget({
             margin: '10px 0 0',
             whiteSpace: 'pre-wrap',
             fontFamily: 'inherit',
-            fontSize: '11px',
+            fontSize: 'var(--crm-text-xs)',
             background: 'rgba(0, 0, 0, 0.35)',
             border: '1px solid rgba(212, 175, 55, 0.3)',
             borderRadius: '8px',
             padding: '12px',
-            color: '#E2E8F0',
+            color: 'var(--crm-line)',
             maxHeight: '260px',
             overflowY: 'auto'
           }}>

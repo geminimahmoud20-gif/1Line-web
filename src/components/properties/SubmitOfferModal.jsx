@@ -5,10 +5,7 @@ import {
   X,
   Send,
   MessageCircle,
-  Building2,
   ShieldCheck,
-  Scale,
-  Sparkles,
   AlertCircle
 } from 'lucide-react';
 import { normalizeBookingPhone, phoneProblem, nameProblem } from '../../utils/contactValidation';
@@ -25,11 +22,6 @@ export default function SubmitOfferModal({
   onSubmitOffer,
   triggerToast
 }) {
-  if (!isOpen || !property) return null;
-
-  const L = (ar, en) => (isAr ? ar : en);
-  const listPrice = Number(property.price) || 0;
-
   const [proposedPrice, setProposedPrice] = useState('');
   const [selectedDiscount, setSelectedDiscount] = useState(null);
   const [name, setName] = useState('');
@@ -39,6 +31,11 @@ export default function SubmitOfferModal({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState(false);
+
+  if (!isOpen || !property) return null;
+
+  const L = (ar, en) => (isAr ? ar : en);
+  const listPrice = Number(property.price) || 0;
 
   // Quick discount calculation chips
   const quickDiscounts = [
@@ -145,7 +142,7 @@ export default function SubmitOfferModal({
     const msg = isAr
       ? `مرحباً 1Line، قدمت عرض سعر تفاوضي بقيمة ${money(proposedPrice)} ج.م على عقار كود (${String(property.id).toUpperCase()}: ${propTitle}) وأود المتابعة معكم.`
       : `Hello 1Line, I submitted a counter-offer of ${money(proposedPrice)} EGP on property (${String(property.id).toUpperCase()}).`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (

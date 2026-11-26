@@ -7,14 +7,13 @@
 
 import { isActiveListing, findExistingLeadListing } from './listingDedupe.js';
 import { blockedByApproval } from './publishApproval.js';
-import { listingStatus, NO_AREA } from './listingReview.js';
+import { listingStatus } from './listingReview.js';
 import {
   mainAreas,
   mainAreaOf,
   placeAreas,
   findArea,
   areaNameOf,
-  areaPathName,
   formArea,
   areaFromText,
   recordInArea,

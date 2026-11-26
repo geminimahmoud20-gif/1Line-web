@@ -4,7 +4,6 @@ export default function SystemBackupTab({
   handleExportLeadsJson,
   handleImportLeadsJson,
   isAr,
-  leads,
   exporting = false
 }) {
   return (
