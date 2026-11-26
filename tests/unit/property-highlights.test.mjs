@@ -56,3 +56,26 @@ test('getQuickHighlights: caps highlights at 3 to prevent card layout breakage',
   const highlights = getQuickHighlights(property, true);
   assert.equal(highlights.length, 3);
 });
+
+test('getQuickHighlights: a land plot with floor:0 (the form\'s unused default) never shows "ground floor"', () => {
+  const landPlot = {
+    id: 'prop-5',
+    type: 'land',
+    title_ar: 'قطعة أرض مميزة مرخصة ومحفورة',
+    frontage: 'غربية',
+    floor: 0,
+    status: 'published'
+  };
+  const highlights = getQuickHighlights(landPlot, true);
+  assert.ok(!highlights.some((h) => h.label.includes('دور أرضي')), 'a vacant plot has no floor');
+
+  const apartment = {
+    id: 'prop-6',
+    type: 'apartment',
+    title_ar: 'شقة في الدور الأرضي',
+    floor: 0,
+    status: 'published'
+  };
+  const apartmentHighlights = getQuickHighlights(apartment, true);
+  assert.ok(apartmentHighlights.some((h) => h.label === 'دور أرضي'), 'an actual ground-floor apartment still gets the chip');
+});

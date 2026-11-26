@@ -2,11 +2,12 @@
  * 1Line — Property Card Quick Highlights
  * Derives and formats high-converting quick chips displayed directly under the price
  * (e.g., [استلام فوري] • [نصف تشطيب] • [دور أرضي بحديقة]).
- * 
+ *
  * Supports both:
  * 1. Manual CRM override via `property.quickHighlights` (array of strings or comma-separated).
  * 2. Smart automatic fallback from property metadata (handover, finishing, floor, garden, orientation).
  */
+import { hasNoRooms } from './propertyKinds.js';
 
 export const PRESET_HIGHLIGHTS = [
   { id: 'immediate_handover', ar: 'استلام فوري', en: 'Ready to move', tone: 'delivery' },
@@ -122,8 +123,12 @@ export function getQuickHighlights(property, isAr = true) {
   const title = String(property.title_ar || property.title_en || '');
   const desc = String(property.description_ar || property.description_en || '');
   const floorNum = Number(property.floor);
+  // "floor 0" only means "ground floor" for units that actually have floors; for land, offices,
+  // shops and similar it's just the unused default, and would otherwise show a nonsensical
+  // "ground floor" chip on a plot of land.
+  const canHaveFloor = !hasNoRooms(property.type);
 
-  if (floorNum === 0 || title.includes('حديقة') || desc.includes('حديقة')) {
+  if ((canHaveFloor && floorNum === 0) || title.includes('حديقة') || desc.includes('حديقة')) {
     if (title.includes('حديقة') || desc.includes('حديقة')) {
       items.push({ label: isAr ? 'دور أرضي بحديقة' : 'Ground + Garden', tone: 'feature' });
     } else {

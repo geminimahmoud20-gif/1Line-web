@@ -221,7 +221,7 @@ export default function PropertyCard({
     specs.push({ key: 'kind', Icon: Briefcase, value: formatOfficeSpec(property.adminType_ar, lang), label: property.floor !== undefined ? floorLabel(property.floor, isAr) : (isAr ? 'النوع' : 'Type') });
   } else if (isLand) {
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
-    else specs.push({ key: 'kind', Icon: Building, value: formatLandSpec(property.landType_ar, lang), label: isAr ? 'النوع' : 'Type' });
+    if (property.landType_ar) specs.push({ key: 'kind', Icon: Building, value: formatLandSpec(property.landType_ar, lang), label: isAr ? 'النوع' : 'Type' });
   } else {
     if (property.bedrooms > 0) specs.push({ key: 'beds', Icon: BedDouble, value: property.bedrooms, label: countWord('room', property.bedrooms, isAr) });
     if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: countWord('bath', property.bathrooms, isAr) });
