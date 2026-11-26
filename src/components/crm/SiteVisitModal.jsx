@@ -5,8 +5,7 @@ import {
   X,
   Calendar,
   ExternalLink,
-  FileText,
-  ShieldCheck
+  FileText
 } from 'lucide-react';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';

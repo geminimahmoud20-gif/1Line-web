@@ -58,7 +58,7 @@ export default function GoLiveWizardModal({
     try {
       const cloudLeads = await fetchAllLeadsForBackup();
       if (Array.isArray(cloudLeads) && cloudLeads.length > 0) fullLeads = cloudLeads;
-    } catch {}
+    } catch { /* fall back to the in-memory leads already loaded */ }
     const backup = {
       exportedAt: new Date().toISOString(),
       platform: '1Line Real Estate Sohag',

@@ -111,6 +111,14 @@ export function PropertiesProvider({ children }) {
     return DEMO_PROPERTIES;
   });
 
+  // Synced after each render; handlers also set it immediately so back-to-back updates see each other
+  const propertiesRef = useRef(properties);
+  useEffect(() => { propertiesRef.current = properties; }, [properties]);
+
+  const persistProperties = (list) => {
+    try { localStorage.setItem('oneline_properties', JSON.stringify(list)); } catch { /* quota / private mode */ }
+  };
+
   // Listings saved here but not in the database: { [id]: reason }. Shown on the CRM row with a
   // retry, so a refused write isn't only a toast that disappears.
   const [syncIssues, setSyncIssues] = useState(() => {
@@ -159,15 +167,11 @@ export function PropertiesProvider({ children }) {
         return;
       }
       const isAr = lang === 'ar';
-      if (res?.reason === 'too-large') {
-        if (collectionName === 'properties') {
-          setProperties((prev) => {
-            const filtered = prev.filter((p) => String(p.id) !== String(id));
-            persistProperties(filtered);
-            propertiesRef.current = filtered;
-            return filtered;
-          });
-        }
+      if (res?.reason === 'too-large' && collectionName === 'properties') {
+        const filtered = propertiesRef.current.filter((p) => String(p.id) !== String(id));
+        propertiesRef.current = filtered;
+        setProperties(filtered);
+        persistProperties(filtered);
       }
       const msg = res?.reason === 'too-large'
         ? (isAr ? 'لم يُحفظ على السحابة: حجم البيانات/الصور المضمّنة أكبر من الحد المسموح (1MB). تم إلغاء التسجيل المحلي؛ ارفع الصور كروابط أو قلل حجمها.' : 'Not saved: item exceeds 1MB Firestore limit. Local record reverted.')
@@ -177,14 +181,6 @@ export function PropertiesProvider({ children }) {
       triggerToast(msg, 'error');
     }).catch(() => {});
   }, [lang, triggerToast, markSync, applyApproval]);
-
-  // Synced after each render; handlers also set it immediately so back-to-back updates see each other
-  const propertiesRef = useRef(properties);
-  useEffect(() => { propertiesRef.current = properties; }, [properties]);
-
-  const persistProperties = (list) => {
-    try { localStorage.setItem('oneline_properties', JSON.stringify(list)); } catch { /* quota / private mode */ }
-  };
 
   const handleUpdateProperty = useCallback((id, updatedData) => {
     const current = propertiesRef.current.find((p) => String(p.id) === String(id));

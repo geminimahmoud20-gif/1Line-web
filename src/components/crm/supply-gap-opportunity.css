@@ -1,0 +1,92 @@
+/* SupplyGapOpportunityPanel — extracted from inline styles so the CRM hard-coded-style
+   ratchet (tests/unit/design-tokens.test.mjs) doesn't grow with every new report tab. */
+
+.sgo-wrap { margin-bottom: 24px; }
+
+.sgo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  border-bottom: 1px solid var(--crm-line);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+.sgo-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sgo-header-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background-color: var(--crm-accent-soft);
+  color: var(--crm-accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.sgo-title { margin: 0; font-size: var(--crm-text-lg); font-weight: 700; color: var(--crm-ink); }
+.sgo-desc { margin: 0; font-size: var(--crm-text-base); color: var(--crm-muted); }
+.sgo-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.sgo-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.sgo-stat-card { border-radius: 10px; padding: 12px 14px; }
+.sgo-stat-card--danger { background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%); border: 1px solid rgba(239, 68, 68, 0.2); }
+.sgo-stat-card--positive { background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%); border: 1px solid rgba(16, 185, 129, 0.2); }
+.sgo-stat-card--warn { background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.02) 100%); border: 1px solid rgba(212, 175, 55, 0.3); }
+.sgo-stat-label { font-size: var(--crm-text-sm); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.sgo-stat-label--danger { color: var(--crm-danger); }
+.sgo-stat-label--positive { color: var(--crm-positive); }
+.sgo-stat-label--warn { color: var(--crm-warn); }
+.sgo-stat-value { font-size: var(--crm-text-xl); font-weight: 800; margin-top: 4px; }
+.sgo-stat-value--danger { color: var(--crm-danger); }
+.sgo-stat-value--positive { color: var(--crm-positive); }
+.sgo-stat-value--warn { color: var(--crm-warn); }
+
+.sgo-empty { padding: 30px; text-align: center; background-color: var(--crm-canvas); border-radius: 10px; border: 1px dashed var(--crm-line-strong); }
+.sgo-empty-icon { margin: 0 auto 10px; }
+.sgo-empty-title { margin: 0 0 6px; color: var(--crm-ink); }
+.sgo-empty-text { margin: 0; font-size: var(--crm-text-base); color: var(--crm-muted); }
+
+.sgo-deficit-list { display: flex; flex-direction: column; gap: 14px; }
+
+.sgo-area-card { border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); border: 1px solid var(--crm-line); background-color: var(--crm-card); }
+.sgo-area-card.is-critical { border-color: rgba(239, 68, 68, 0.3); background-color: rgba(254, 242, 242, 0.4); }
+
+.sgo-area-head { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; cursor: pointer; background-color: var(--crm-canvas); }
+.sgo-area-head.is-critical { background-color: rgba(254, 226, 226, 0.3); }
+.sgo-area-head.is-expanded { border-bottom: 1px solid var(--crm-line); }
+.sgo-area-head-left { display: flex; align-items: center; gap: 10px; }
+.sgo-area-head-right { display: flex; align-items: center; gap: 10px; }
+.sgo-area-name { font-size: var(--crm-text-lg); font-weight: 700; color: var(--crm-ink); }
+
+.sgo-pill { font-size: var(--crm-text-xs); font-weight: 600; padding: 2px 8px; border-radius: 12px; }
+.sgo-pill--critical { background-color: var(--crm-danger-soft); color: var(--crm-danger); }
+.sgo-pill--warn { background-color: var(--crm-warn-soft); color: var(--crm-warn); }
+.sgo-pill--info { background-color: var(--crm-info-soft); color: var(--crm-info); display: flex; align-items: center; gap: 4px; }
+
+.sgo-match-pill { font-size: var(--crm-text-base); font-weight: 700; color: var(--crm-positive); background-color: var(--crm-positive-soft); padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
+.sgo-no-intake { font-size: var(--crm-text-sm); color: var(--crm-muted); }
+
+.sgo-area-body { padding: 16px 18px; background-color: var(--crm-card); }
+.sgo-candidates-intro { font-size: var(--crm-text-base); color: var(--crm-muted); margin-bottom: 4px; }
+.sgo-candidates-wrap { display: flex; flex-direction: column; gap: 12px; }
+.sgo-candidates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+
+.sgo-candidate-card { border: 1px solid var(--crm-line); border-radius: 8px; padding: 12px 14px; background-color: var(--crm-canvas); display: flex; flex-direction: column; justify-content: space-between; gap: 10px; transition: all 0.15s ease; }
+.sgo-candidate-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.sgo-candidate-name { font-weight: 700; font-size: var(--crm-text-md); color: var(--crm-ink); }
+.sgo-candidate-phone { font-size: var(--crm-text-sm); color: var(--crm-muted); }
+
+.sgo-specs-row { display: flex; flex-wrap: wrap; gap: 6px; font-size: var(--crm-text-sm); color: var(--crm-body); margin: 8px 0; }
+.sgo-spec-pill { background: var(--crm-line); padding: 2px 6px; border-radius: 4px; }
+
+.sgo-price-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: var(--crm-text-base); }
+.sgo-price { font-weight: 700; color: var(--crm-positive); }
+.sgo-photos { display: flex; align-items: center; gap: 4px; font-size: var(--crm-text-sm); font-weight: 600; color: var(--crm-muted); }
+.sgo-photos.has-photos { color: var(--crm-info); }
+
+.sgo-candidate-actions { display: flex; gap: 6px; border-top: 1px solid var(--crm-line); padding-top: 10px; }
+.sgo-convert-btn { flex: 1; background-color: var(--crm-ink); color: var(--crm-accent); }
+.sgo-convert-btn-icon { margin-inline-end: 4px; }
+.sgo-whatsapp-btn { color: var(--crm-positive); }
+
+.sgo-advisory { padding: 16px; border-radius: 8px; background-color: var(--crm-warn-soft); border: 1px solid var(--crm-warn-line); display: flex; align-items: flex-start; gap: 12px; }
+.sgo-advisory-icon { flex-shrink: 0; margin-top: 2px; }
+.sgo-advisory-title { font-weight: 700; font-size: var(--crm-text-base); color: var(--crm-warn); margin-bottom: 2px; }
+.sgo-advisory-text { margin: 0; font-size: var(--crm-text-base); color: var(--crm-warn); line-height: 1.5; }

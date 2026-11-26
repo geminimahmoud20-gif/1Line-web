@@ -805,7 +805,7 @@ export default function PropertyFormModal({
                   }}
                 />
                 {autoRef?.ppm > 0 && !form.customBenchmarkPrice && (
-                  <div style={{ fontSize: '0.78rem', color: '#D4AF37', marginTop: '6px', lineHeight: 1.4, padding: '4px 8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent)', marginTop: '6px', lineHeight: 1.4, padding: '4px 8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px' }}>
                     {isAr
                       ? `💡 السعر المرجعي المحسوب تلقائياً لهذه الوحدة: ${autoRef.ppm.toLocaleString('en-US')} ج.م/م² (${autoRef.isAdjusted ? `معدل +${autoRef.totalPercent}% حسب التشطيب والدور والإطلالة والخدمات` : 'متوسط أساسي للمنطقة'})`
                       : `💡 Dynamic benchmark for this unit: ${autoRef.ppm.toLocaleString('en-US')} EGP/m² (${autoRef.isAdjusted ? `+${autoRef.totalPercent}% spec-adjusted` : 'district base'})`}

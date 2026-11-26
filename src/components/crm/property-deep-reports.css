@@ -1,0 +1,127 @@
+/* PropertyDeepReportsPanel — extracted from inline styles so the CRM hard-coded-style
+   ratchet (tests/unit/design-tokens.test.mjs) doesn't grow with every new report tab. */
+
+.pdr-root { display: flex; flex-direction: column; gap: 16px; }
+
+.pdr-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--crm-card);
+  border-radius: 12px;
+  border: 1px solid var(--crm-line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.pdr-tab {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--crm-muted);
+  font-weight: 700;
+  font-size: var(--crm-text-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pdr-tab.is-active { background: var(--crm-ink); color: var(--crm-accent); }
+
+.pdr-tab-badge {
+  background: var(--crm-danger);
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: var(--crm-text-xs);
+  margin-right: 4px;
+}
+
+.pdr-section { display: flex; flex-direction: column; gap: 14px; }
+
+.pdr-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+
+.pdr-kpi-card {
+  background: var(--crm-card);
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--crm-line);
+  border-right: 4px solid var(--crm-line);
+}
+.pdr-kpi-card--info { border-right-color: var(--crm-info); }
+.pdr-kpi-card--positive { border-right-color: var(--crm-positive); }
+.pdr-kpi-card--warn { border-right-color: var(--crm-warn); }
+.pdr-kpi-card--danger { border-right-color: var(--crm-danger); }
+
+.pdr-kpi-label { font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.pdr-kpi-value { font-size: var(--crm-text-xl); font-weight: 800; color: var(--crm-ink); margin-top: 4px; }
+.pdr-kpi-value--positive { color: var(--crm-positive); }
+.pdr-kpi-value--warn { color: var(--crm-warn); }
+.pdr-kpi-value--danger { color: var(--crm-danger); }
+
+.pdr-warn-box { background: var(--crm-warn-soft); border: 1px solid var(--crm-warn-line); border-radius: 10px; padding: 14px; }
+.pdr-warn-head { display: flex; align-items: center; gap: 8px; color: var(--crm-warn); font-weight: 700; margin-bottom: 8px; }
+
+.pdr-list { display: flex; flex-direction: column; gap: 8px; }
+.pdr-list--tight { gap: 6px; }
+
+.pdr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--crm-canvas);
+  border: 1px solid var(--crm-line);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pdr-row--flat {
+  background: var(--crm-card);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: var(--crm-text-sm);
+}
+.pdr-row--critical { background: var(--crm-danger-soft); border-color: var(--crm-danger-line); }
+
+.pdr-row-title { color: var(--crm-ink); display: block; font-size: var(--crm-text-sm); font-weight: 600; }
+.pdr-row-meta { font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.pdr-row-side { display: flex; align-items: center; gap: 10px; }
+.pdr-row-flag { font-size: var(--crm-text-xs); color: var(--crm-danger); font-weight: 600; }
+
+.pdr-card { background: var(--crm-card); border-radius: 12px; border: 1px solid var(--crm-line); padding: 16px; }
+.pdr-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.pdr-card-title { margin: 0; color: var(--crm-ink); font-size: var(--crm-text-md); }
+.pdr-card-sub { margin: 4px 0 0; font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.pdr-card-empty { color: var(--crm-muted); font-size: var(--crm-text-sm); }
+
+.pdr-select {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--crm-line-strong);
+  font-size: var(--crm-text-sm);
+}
+
+.pdr-cma-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.pdr-cma-stat { background: var(--crm-canvas); padding: 12px; border-radius: 8px; border: 1px solid var(--crm-line); }
+.pdr-cma-stat-value { font-size: var(--crm-text-lg); font-weight: 800; color: var(--crm-ink); }
+.pdr-cma-stat-value--danger { color: var(--crm-danger); }
+.pdr-cma-stat-value--positive { color: var(--crm-positive); }
+
+.pdr-cma-preview { background: var(--crm-subtle); border: 1px solid var(--crm-line-strong); border-radius: 8px; padding: 14px; }
+.pdr-cma-preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.pdr-cma-label { font-size: var(--crm-text-xs); font-weight: 700; color: var(--crm-body); }
+.pdr-cma-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: var(--crm-text-xs);
+  color: var(--crm-ink);
+  background: var(--crm-card);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--crm-line);
+}

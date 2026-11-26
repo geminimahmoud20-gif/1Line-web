@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send, Repeat, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send, Repeat, ShieldAlert } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { addTask, updateTask, removeTask, fetchLeadById } from '../../firebaseLazy';
 import {
@@ -493,8 +493,8 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
       {/* SLA Escalation Alert Banner */}
       {slaStatus.criticalCount > 0 && (
         <div style={{
-          background: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
-          border: '1.5px solid #EF4444',
+          background: 'linear-gradient(135deg, var(--crm-danger-soft) 0%, var(--crm-danger-soft) 100%)',
+          border: '1.5px solid var(--crm-danger)',
           borderRadius: '12px',
           padding: '14px 16px',
           marginBottom: '16px',
@@ -502,13 +502,13 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
           flexDirection: 'column',
           gap: '8px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#991B1B' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--crm-danger)' }}>
             <ShieldAlert size={20} />
-            <strong style={{ fontSize: '14px' }}>
+            <strong style={{ fontSize: 'var(--crm-text-base)' }}>
               {isAr ? `⚠️ تنبيه تصعيد إداري عاجل (SLA): ${slaStatus.criticalCount} مهام حرجة متأخرة تجاوزت المهلة المحددة` : `SLA Alert: ${slaStatus.criticalCount} critical tasks overdue`}
             </strong>
           </div>
-          <p style={{ margin: 0, fontSize: '12px', color: '#B91C1C' }}>
+          <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-danger)' }}>
             {isAr
               ? 'يوجد مهام لصفقات كبرى (5+ مليون) أو مهام عاجلة جداً متأخرة لأكثر من 24 ساعة بدون تنفيذ وتتطلب متابعة أو تدخلاً إدارياً فورياً.'
               : 'Tasks for high-value deals or urgent priority exceed the SLA limit.'}
@@ -516,12 +516,12 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
             {slaStatus.escalatedTasks.slice(0, 3).map((t) => (
               <span key={t.id} style={{
-                background: '#FFFFFF',
-                border: '1px solid #FECACA',
+                background: 'var(--crm-card)',
+                border: '1px solid var(--crm-danger-line)',
                 borderRadius: '6px',
                 padding: '4px 8px',
-                fontSize: '11px',
-                color: '#7F1D1D',
+                fontSize: 'var(--crm-text-xs)',
+                color: 'var(--crm-danger)',
                 fontWeight: 600
               }}>
                 {t.title} ({t.assigneeName || 'المسؤول'}) · متأخرة {t.overdueHours} س
