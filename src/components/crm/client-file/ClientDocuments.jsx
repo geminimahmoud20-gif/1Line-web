@@ -36,7 +36,9 @@ export default function ClientDocuments({ lead, isAr = true, onUpdateLead, trigg
   const [fileDataUrl, setFileDataUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const docs = useMemo(() => (Array.isArray(lead?.documents) ? lead.documents : []), [lead?.documents]);
+  // Dependency is `lead` (not `lead?.documents`): that's what the compiler infers from this access,
+  // and a narrower manual array here made it skip optimizing the component entirely.
+  const docs = useMemo(() => (Array.isArray(lead?.documents) ? lead.documents : []), [lead]);
 
   const filteredDocs = useMemo(() => {
     if (filter === 'all') return docs;

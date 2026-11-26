@@ -71,7 +71,7 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
       )}
       {open.length === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
-          <span style={{ fontSize: '11px', color: 'var(--ui-text-3)', fontWeight: 600 }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--ui-text-3)', fontWeight: 600 }}>
             {isAr ? '⚡ مهام سريعة بنقرة واحدة:' : '⚡ Quick 1-tap tasks:'}
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

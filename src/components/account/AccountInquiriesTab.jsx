@@ -1,4 +1,4 @@
-import { LEAD_TYPE_NAMES, PROPERTY_TYPE_NAMES, STAGE_CONFIG, getAreaDisplayName, getLeadTypeDisplayName, getPropertyTypeDisplayName } from '../../pages/ClientAccountPageData';
+import { STAGE_CONFIG, getAreaDisplayName, getLeadTypeDisplayName, getPropertyTypeDisplayName } from '../../pages/ClientAccountPageData';
 import { Link } from 'react-router-dom';
 import { Building, Sparkles, FileText, MapPin, ExternalLink, MessageSquare, Calendar, Clock, Car, Tag, Ruler, Coins } from 'lucide-react';
 import './AccountInquiriesTab.app.css';

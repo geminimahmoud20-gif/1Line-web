@@ -53,7 +53,7 @@ import { stageHistoryAfter, initialStageHistory } from '../utils/stageHistory';
 import { changeEntry } from '../utils/leadChangeLog';
 import { getActorName } from '../utils/actorName';
 import { checkStageChange } from '../utils/stageGate';
-import { assignmentEvent } from '../utils/auditEvents';
+import { assignmentEvent, propertyEditEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
 import { tidyListing } from '../utils/listingSpelling';
 import { findPotentialDuplicateListing, listingDiffPatch } from '../utils/listingDedupe';
@@ -185,11 +185,13 @@ export function PropertiesProvider({ children }) {
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
+    const edit = propertyEditEvent(current, patch);
+    if (edit) logAuditEvent(edit).catch(() => {});
     reportCatalogSync(patchCatalogItem('properties', id, patch, merged), id);
   }, [reportCatalogSync]);
 
   const handleAddProperty = useCallback((rawProp) => {
-    const { _allowMultipleForLead, _openExisting, suggestedId, ...newProp } = rawProp || {};
+    const { _allowMultipleForLead, _openExisting, suggestedId: _suggestedId, ...newProp } = rawProp || {};
     const existingById = propertiesRef.current.find((p) => String(p.id) === String(newProp.id));
     if (existingById) {
       const diff = listingDiffPatch(existingById, newProp);

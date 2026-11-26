@@ -129,6 +129,15 @@ export function phoneProblem(raw, countryCode = null, isAr = true) {
 
 export const isValidMobile = (raw, countryCode = null) => phoneProblem(raw, countryCode) === '';
 
+// "01012345678" / "1012345678" → +201012345678; "+9665…" / "009665…" kept international. null if invalid.
+export const normalizeBookingPhone = (raw) => {
+  const s = toLatinDigits(raw).replace(/[\s\-().]/g, '');
+  if (/^(\+|00)\d{8,15}$/.test(s)) return `+${s.replace(/^(\+|00)/, '')}`;
+  if (/^01[0125]\d{8}$/.test(s)) return `+20${s.slice(1)}`;
+  if (/^1[0125]\d{8}$/.test(s)) return `+20${s}`;
+  return null;
+};
+
 // ── Email ────────────────────────────────────────────────────────────────
 
 // Throwaway inboxes and the usual misspellings of the big providers

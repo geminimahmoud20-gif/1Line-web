@@ -21,7 +21,10 @@ export const AUDIT_LABELS = {
   LEAD_DELETED: { ar: 'حذف عميل', en: 'Deleted a client' },
   ROLE_SAVED: { ar: 'غيّر صلاحيات دور', en: 'Changed a role’s permissions' },
   ROLE_DELETED: { ar: 'حذف دور', en: 'Deleted a role' },
-  DATA_EXPORTED: { ar: 'صدّر بيانات', en: 'Exported data' }
+  DATA_EXPORTED: { ar: 'صدّر بيانات', en: 'Exported data' },
+  PROPERTY_EDITED: { ar: 'عدّل عقار', en: 'Edited a listing' },
+  PROPERTY_APPROVED: { ar: 'وافق على نشر عقار', en: 'Approved a listing' },
+  PROPERTY_REJECTED: { ar: 'رفض نشر عقار', en: 'Rejected a listing' }
 };
 
 export const auditLabel = (action, isAr = true) => {
@@ -86,6 +89,27 @@ export function assignmentEvent(before, fields) {
   return { actionType: 'LEAD_REASSIGNED', targetCollection: 'leads', targetId: String(before.id), details: { from, to } };
 }
 
+// Bookkeeping fields a save always carries alongside the real change; not worth listing on their own
+const PROPERTY_NOISE_FIELDS = new Set(['statusChangedAt', 'soldAt', 'updatedAt', 'lastActivityAt']);
+
+/**
+ * The audit entry for a property edit: who changed it and which fields (never the values — a
+ * listing can carry long descriptions or embedded images). A manager's approval/rejection gets
+ * its own, more specific action so it reads clearly in the log.
+ */
+export function propertyEditEvent(current, patch) {
+  if (!current?.id || !patch) return null;
+  const fields = Object.keys(patch).filter((k) => !PROPERTY_NOISE_FIELDS.has(k));
+  if (!fields.length) return null;
+  if (patch.approval === 'approved' && current.approval !== 'approved') {
+    return { actionType: 'PROPERTY_APPROVED', targetCollection: 'properties', targetId: String(current.id), details: {} };
+  }
+  if (patch.approval === 'rejected' && current.approval !== 'rejected') {
+    return { actionType: 'PROPERTY_REJECTED', targetCollection: 'properties', targetId: String(current.id), details: {} };
+  }
+  return { actionType: 'PROPERTY_EDITED', targetCollection: 'properties', targetId: String(current.id), details: { fields: fields.slice(0, 20) } };
+}
+
 /** A single client deleted: only the id (no name, phone or notes) */
 export function leadDeletedEvent(leadId) {
   if (!leadId) return null;
@@ -141,6 +165,8 @@ export function describeAudit(entry = {}, isAr = true) {
   }
   if (action === 'ROLE_DELETED') return `${entry.targetId || ''}${d.fallback ? ` → ${d.fallback}` : ''}`;
   if (action === 'DATA_EXPORTED') return `${entry.targetCollection || ''} · ${d.format || ''} · ${d.count ?? 0}`;
+  if (action === 'PROPERTY_EDITED') return `${entry.targetId || ''}${d.fields?.length ? ` · ${d.fields.join(', ')}` : ''}`;
+  if (action === 'PROPERTY_APPROVED' || action === 'PROPERTY_REJECTED') return `${entry.targetId || ''}`;
   const bits = [entry.targetCollection, entry.targetId && entry.targetId !== 'global' ? entry.targetId : ''].filter(Boolean);
   return bits.join(' · ');
 }

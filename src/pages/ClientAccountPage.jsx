@@ -13,7 +13,7 @@ import { clientOwnedListings, interestedBuyersFor } from '../utils/clientListing
 import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
 import AccountListingsTab from '../components/account/AccountListingsTab';
 import AccountCompareTab from '../components/account/AccountCompareTab';
-import { LEAD_TYPE_NAMES, getLeadTypeDisplayName } from './ClientAccountPageData';
+import { getLeadTypeDisplayName } from './ClientAccountPageData';
 import '../styles/client-auth-modes.css';
 import { siteLink } from '../config/siteConfig';
 import './ClientAccountPage.app.css';

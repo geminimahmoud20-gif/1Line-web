@@ -54,3 +54,24 @@ test('a deleted client is logged by id only; a role change lists what was gained
   assert.match(describeAudit({ action: 'DATA_EXPORTED', targetCollection: '1Line_Properties', details: exp.details }), /1Line_Properties · excel · 12/);
   assert.equal(auditLabel('LEAD_DELETED'), 'حذف عميل');
 });
+
+test('a property edit is logged by changed field names, never values; approval changes get their own action', async () => {
+  const { propertyEditEvent, describeAudit, auditLabel } = await import('../../src/utils/auditEvents.js');
+  const before = { id: 'prop-1', price: 1000000, approval: 'pending' };
+  const edited = propertyEditEvent(before, { price: 1200000, floor: 3 });
+  assert.deepEqual(edited, { actionType: 'PROPERTY_EDITED', targetCollection: 'properties', targetId: 'prop-1', details: { fields: ['price', 'floor'] } });
+  assert.ok(!JSON.stringify(edited).includes('1200000'));
+
+  const approved = propertyEditEvent(before, { approval: 'approved', approvedAt: '2026-01-01' });
+  assert.deepEqual(approved, { actionType: 'PROPERTY_APPROVED', targetCollection: 'properties', targetId: 'prop-1', details: {} });
+
+  const rejected = propertyEditEvent({ ...before, approval: 'approved' }, { approval: 'rejected', rejectedAt: '2026-01-01' });
+  assert.equal(rejected.actionType, 'PROPERTY_REJECTED');
+
+  // Bookkeeping-only patch (e.g. just a status-change timestamp) is not worth an entry
+  assert.equal(propertyEditEvent(before, { statusChangedAt: '2026-01-01' }), null);
+  assert.equal(propertyEditEvent(null, { price: 1 }), null);
+
+  assert.equal(describeAudit({ action: 'PROPERTY_EDITED', targetId: 'prop-1', details: { fields: ['price', 'floor'] } }), 'prop-1 · price, floor');
+  assert.equal(auditLabel('PROPERTY_APPROVED'), 'وافق على نشر عقار');
+});

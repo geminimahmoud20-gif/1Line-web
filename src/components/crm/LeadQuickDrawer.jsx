@@ -7,7 +7,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
-import { boardStagesFor, buyersForSeller } from '../../utils/leadPipeline';
+import { boardStagesFor, buyersForSeller, askingPriceOf } from '../../utils/leadPipeline';
 import { boardColumnOf } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
@@ -23,11 +23,10 @@ import NextStepSheet from './NextStepSheet';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { sourceText } from '../../utils/crmLabels';
-import { deletePrompt } from '../../utils/deleteConfirm';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { scoreForBuyer } from '../../utils/matchingEngine';
 import { liveListings } from '../../utils/marketStats';
-import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
+import { Drawer, Button, IconButton, Badge, Tabs, useConfirm } from '../ui';
 import ClientDetails from './client-file/ClientDetails';
 import ClientJourney from './client-file/ClientJourney';
 import ClientTimeline from './client-file/ClientTimeline';
@@ -156,7 +155,7 @@ export default function LeadQuickDrawer({
     return properties.find(p => String(p.sourceLeadId) === String(lead.id) && isActiveListing(p))
       || properties.find(p => String(p.sourceLeadId) === String(lead.id))
       || null;
-  }, [lead?.id, properties]);
+  }, [lead, properties]);
   const hasActiveLinkedProperty = Boolean(linkedProperty && isActiveListing(linkedProperty));
 
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
@@ -241,7 +240,6 @@ export default function LeadQuickDrawer({
     }
 
     setInlineBlocker(null);
-    setBlockerModal({ isOpen: false, blockerInfo: null });
 
     const stageObj = stages.find(s => s.id === newStatus);
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
@@ -528,7 +526,7 @@ export default function LeadQuickDrawer({
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
   const holderLower = String(holder || '').toLowerCase();
   
-  let cleanHolder = '';
+  let cleanHolder;
   if (holderLower.includes('elbaz') || holderLower.includes('moudelbaz') || holderLower.includes('mahmoud') || holderLower.includes('ahmoud')) {
     cleanHolder = isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz';
   } else {
@@ -696,12 +694,12 @@ export default function LeadQuickDrawer({
                       type="button"
                       onClick={handleApproveHighValue}
                       style={{
-                        background: 'linear-gradient(135deg, #0B1C36 0%, #1e3a8a 100%)',
-                        border: '1px solid #D4AF37',
-                        color: '#D4AF37',
+                        background: 'var(--crm-danger)',
+                        border: '1px solid var(--crm-accent)',
+                        color: 'var(--crm-on-dark)',
                         borderRadius: '6px',
                         padding: '2px 8px',
-                        fontSize: '11px',
+                        fontSize: 'var(--crm-text-xs)',
                         fontWeight: 700,
                         cursor: 'pointer'
                       }}
@@ -749,7 +747,7 @@ export default function LeadQuickDrawer({
               justifyContent: 'space-between',
               gap: '10px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#DC2626', fontSize: '12px', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--crm-danger)', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                 <ShieldAlert size={16} />
                 <span>{isAr ? 'تم رفض العقار المربوط بهذا العميل من قِبل الإدارة.' : 'Property from this lead was rejected by management.'}</span>
               </div>
@@ -868,7 +866,7 @@ export default function LeadQuickDrawer({
                 <button
                   type="button"
                   onClick={() => setInlineBlocker(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)', padding: '2px', fontSize: '14px' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)', padding: '2px', fontSize: 'var(--crm-text-base)' }}
                 >
                   ✕
                 </button>
