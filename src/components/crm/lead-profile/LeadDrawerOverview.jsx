@@ -1,4 +1,4 @@
-import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass, Edit3 } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass, Edit3, FileText, MapPin, CheckCircle2 } from 'lucide-react';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
@@ -49,7 +49,8 @@ export default function LeadDrawerOverview({
   view = 'work',
   onOpenClient,
   allLeads = [],
-  activeRole
+  activeRole,
+  onOpenInspection = () => {}
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -545,6 +546,50 @@ export default function LeadDrawerOverview({
           </div>
         </section>
       )}
+
+      {/* 📋 Field Inspection & Valuation Block */}
+      <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-inspection" style={{ borderRight: '3px solid #D4AF37' }}>
+        <div className="crm-ld__block-head">
+          <h3 id="crm-ld-inspection" className="crm-ld__h" style={{ color: '#0B1C36', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FileText size={16} aria-hidden="true" style={{ color: '#D4AF37' }} />
+            {L('الفحص الميداني والتثمين', 'Field Inspection & Valuation')}
+          </h3>
+          {lead.siteVisitReport ? (
+            <Badge tone="accent">{L('تقرير معتمد ✅', 'Report Approved')}</Badge>
+          ) : (
+            <Badge tone="muted">{L('بانتظار المعاينة', 'Pending Viewing')}</Badge>
+          )}
+        </div>
+        {lead.siteVisitReport ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', flexWrap: 'wrap', gap: '4px' }}>
+              <span>{L('سعر المتر الميداني:', 'Price/sqm:')} <strong>{Number(lead.siteVisitReport.valuation?.askingPerSqm || 0).toLocaleString('en-US')} ج.م/م²</strong></span>
+              <span style={{ fontWeight: 600 }}>{lead.siteVisitReport.valuation?.valuationText}</span>
+            </div>
+            {lead.siteVisitReport.gps?.lat && (
+              <span style={{ fontSize: '12px', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <MapPin size={12} /> {L('موقع GPS موثق', 'Verified GPS')} ({lead.siteVisitReport.gps.lat}, {lead.siteVisitReport.gps.lng})
+              </span>
+            )}
+            <div className="crm-ld__row" style={{ marginTop: '6px' }}>
+              <Button variant="secondary" size="sm" icon={<FileText size={14} />} onClick={onOpenInspection}>
+                {L('عرض وتعديل تقرير الفحص 📋', 'View / Edit Inspection Report')}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
+              {L('سجّل فحص المرافق، الحالة الإنشائية، سند الملكية وتثمين 1Line الميداني واجتياز شروط مرحلة المعاينة.', 'Record utilities, structure, deed clearance, and 1Line valuation.')}
+            </p>
+            <div className="crm-ld__row">
+              <Button variant="primary" size="sm" icon={<FileText size={14} />} onClick={onOpenInspection}>
+                {L('فتح استمارة الفحص الميداني والتثمين 📋', 'Open Field Inspection Form')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </section>
       </>
       )}
 

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Building2, BarChart3, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
+import { Building2, BarChart3, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap, FileText } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
+import FieldInspectionModal from './FieldInspectionModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
@@ -26,6 +27,7 @@ import { stageSinceMs, isStalled, daysLabel, shortMoney, moneyScale, STALE_DAYS,
 import PhoneText from './PhoneText';
 import { attentionOf, decisionList, attentionSummary, sortByAttention, BIG_DEAL } from '../../utils/dealSignals';
 import { leadSituation, listingByLead } from '../../utils/leadSituation';
+import { generatePlaybookTasksForStage } from '../../utils/tasks';
 
 const CARDS_PER_STAGE = 5;
 
@@ -109,9 +111,10 @@ export default function KanbanPipeline({
 }) {
   // Leads sharing a phone: the same person asking more than once shows up as several cards, so say so on each
   const sameNumber = useMemo(() => duplicatesById(leads), [leads]);
-  const propertiesByLead = useMemo(() => listingByLead(properties), [properties]);
+  const propertiesByLead = useMemo(() => listingByLead(properties, leads), [properties, leads]);
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
+  const [inspectionLead, setInspectionLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
   // A lead dropped on «خسارة» asks why first
   const [lostFor, setLostFor] = useState(null);
@@ -455,6 +458,11 @@ export default function KanbanPipeline({
           if (crmTask) {
             addTask(crmTask).catch(() => {});
           }
+        }
+        // Spawn automated Playbook Tasks for this stage
+        const playbookTasks = generatePlaybookTasksForStage(targetLead, targetStageId, currentUser);
+        if (playbookTasks.length > 0) {
+          playbookTasks.forEach((pt) => { addTask(pt).catch(() => {}); });
         }
         onUpdateLead(leadId, updates, targetLead.version);
 
@@ -1216,6 +1224,10 @@ export default function KanbanPipeline({
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
                             <div className="kb-menu">
+                              <button type="button" onClick={(e) => { closeMenu(e); setInspectionLead(lead); }}>
+                                <FileText size={14} aria-hidden="true" />
+                                <span>{lead.siteVisitReport ? (isAr ? 'عرض تقرير الفحص والتثمين 📋' : 'View Inspection Report') : (isAr ? 'استمارة الفحص الميداني والتثمين 📋' : 'Field Inspection & Valuation 📋')}</span>
+                              </button>
                               {stageIndex >= 0 && stageIndex < PROGRESS_COUNT - 1 && (
                                 <button type="button" onClick={(e) => { closeMenu(e); handleMoveToNextStage(lead); }}>
                                   {isAr ? <ChevronLeft size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
@@ -1300,6 +1312,20 @@ export default function KanbanPipeline({
           onScheduleVisit={handleScheduleVisit}
           lang={lang}
           triggerToast={triggerToast}
+        />
+      )}
+
+      {/* Field Inspection & Valuation Modal */}
+      {inspectionLead && (
+        <FieldInspectionModal
+          isOpen={Boolean(inspectionLead)}
+          onClose={() => setInspectionLead(null)}
+          lead={inspectionLead}
+          properties={properties}
+          onSaveReport={onUpdateLead}
+          lang={lang}
+          triggerToast={triggerToast}
+          currentUser={currentUser}
         />
       )}
 

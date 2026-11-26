@@ -58,30 +58,28 @@ export function listingByLead(properties = [], leads = []) {
  *   tone: 'good' | 'bad' | 'warn' | 'neutral'
  */
 export function leadSituation(lead = {}, listing = null) {
+  const isRejected = (listing && (listing.approval === 'rejected' || listing.status === 'rejected' || listing.isRejected === true))
+    || lead?.lostReason === 'property_rejected'
+    || lead?.rejectionReason
+    || lead?.details?.propertyRejected;
+
+  if (isRejected) {
+    return {
+      kind: 'converted_rejected',
+      tone: 'bad',
+      label: 'اتحوّل لعقار · تم رفضه من الإدارة',
+      at: listing?.rejectedAt || lead?.lostAt || listing?.updatedAt || lead?.lastOutcomeAt || null
+    };
+  }
+
   if (listing) {
-    const isRejected = listing.approval === 'rejected' || listing.status === 'rejected' || listing.isRejected === true;
-    if (isRejected) {
-      return {
-        kind: 'converted_rejected',
-        tone: 'bad',
-        label: 'اتحوّل لعقار · تم رفضه من الإدارة',
-        at: listing.rejectedAt || listing.updatedAt || null
-      };
-    }
     return {
       kind: 'converted',
       tone: listing.status === 'sold' ? 'good' : 'info',
       label: `اتحوّل لعقار · ${LISTING_STATUS_AR[listing.status] || 'مسودة'}`
     };
   }
-  if (lead?.lostReason === 'property_rejected' || lead?.rejectionReason) {
-    return {
-      kind: 'converted_rejected',
-      tone: 'bad',
-      label: 'اتحوّل لعقار · تم رفضه من الإدارة',
-      at: lead.lostAt || lead.lastOutcomeAt || lead.updatedAt || null
-    };
-  }
+
   let last = outcomesOf(lead).at(-1);
   if (!last && lead.lastOutcome) {
     last = {

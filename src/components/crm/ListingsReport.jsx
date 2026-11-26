@@ -6,6 +6,8 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { propertyTypeLabel } from '../../utils/placeLabels';
 import SupplyGapReport from './SupplyGapReport';
 import DemandGapReport from './DemandGapReport';
+import PropertyDeepReportsPanel from './PropertyDeepReportsPanel';
+import SupplyGapOpportunityPanel from './SupplyGapOpportunityPanel';
 
 const money = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
 const short = (n, isAr) => {
@@ -21,7 +23,16 @@ const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
  * CRM → العقارات → التقارير: where the listings stand, what holds the review queue back, and how
  * each area and type compares. Every figure opens the list already filtered (onOpenList).
  */
-export default function ListingsReport({ properties, areas, isAr, onOpenList, leads = [] }) {
+export default function ListingsReport({
+  properties,
+  areas,
+  isAr,
+  onOpenList,
+  leads = [],
+  demands = [],
+  onConvertToProperty = null,
+  onOpenLead = null
+}) {
   const L = (ar, en) => (isAr ? ar : en);
   const typeLabel = (id) => {
     const t = PROPERTY_TYPES.find((x) => x.id === id);
@@ -67,12 +78,28 @@ export default function ListingsReport({ properties, areas, isAr, onOpenList, le
         />
       </KpiRow>
 
+      {/* Deep Analytics: DOM, Demand Density, Exclusivity, CMA */}
+      <div style={{ margin: '14px 0' }}>
+        <PropertyDeepReportsPanel properties={properties} leads={leads} lang={isAr ? 'ar' : 'en'} />
+      </div>
+
       {r.readyHidden > 0 && (
         <div className="crm-lrep__cta" role="status">
           <span>{L(`${r.readyHidden} عقار بياناتهم كاملة ومستنيين النشر.`, `${r.readyHidden} complete listings are waiting to be published.`)}</span>
           <Button size="sm" onClick={() => onOpenList({ status: 'hidden', readiness: 'ready' })}>{L('اعرضهم وانشرهم', 'Review and publish')}</Button>
         </div>
       )}
+
+      {/* 🚀 Intelligent Supply Gap Auto-Matching with Unconverted Seller Intake */}
+      <SupplyGapOpportunityPanel
+        properties={properties}
+        leads={leads}
+        demands={demands}
+        areas={areas}
+        lang={isAr ? 'ar' : 'en'}
+        onConvertToProperty={onConvertToProperty}
+        onOpenLead={onOpenLead}
+      />
 
       <SupplyGapReport properties={properties} areas={areas} isAr={isAr} onOpenArea={(id) => onOpenList({ area: id })} />
 

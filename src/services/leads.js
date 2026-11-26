@@ -431,26 +431,93 @@ const restoredCreatedAt = (value) => {
   if (typeof value === 'string' || typeof value === 'number') return value;
   return serverTimestamp();
 };
+
+/**
+ * Loads the complete leads database from Firestore (all documents + matching contacts)
+ * for a true 100% full backup export. Returns an array of all leads or null on failure/offline.
+ */
+export const fetchAllLeadsForBackup = async () => {
+  if (!isFirebaseConfigured() || !db) return null;
+  try {
+    const leadsSnap = await getDocs(query(collection(db, 'leads'), orderBy('createdAt', 'desc')));
+    if (leadsSnap.empty) return [];
+    const leadDocs = leadsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    // Fetch matching lead_contacts docs in chunks of 30 to re-attach private contact numbers
+    const ids = leadDocs.map((l) => l.id);
+    const contactsMap = new Map();
+    for (let i = 0; i < ids.length; i += 30) {
+      const chunk = ids.slice(i, i + 30);
+      try {
+        const cSnap = await getDocs(query(collection(db, 'lead_contacts'), where(documentId(), 'in', chunk)));
+        cSnap.docs.forEach((cd) => contactsMap.set(cd.id, cd.data()));
+      } catch (err) {
+        console.warn('Backup fetch contacts chunk warning:', err);
+      }
+    }
+
+    return leadDocs.map((l) => {
+      const merged = { ...l };
+      if (LEAD_CONTACT_FIELDS.some((f) => f in l)) merged._inlineContact = true;
+      const c = contactsMap.get(String(l.id));
+      if (c) {
+        LEAD_CONTACT_FIELDS.forEach((f) => {
+          if (c[f]) merged[f] = c[f];
+        });
+      }
+      return merged;
+    });
+  } catch (err) {
+    console.error('Firebase fetchAllLeadsForBackup error:', err);
+    return null;
+  }
+};
+
 export const restoreLeads = async (leads = []) => {
   if (!isFirebaseConfigured() || !db) return { ok: false, restored: 0, skipped: 0, invalid: 0, reason: 'not-configured' };
+
+  // Issue 2: Verify user authentication and staff identity before allowing batch restore writes
+  if (!auth?.currentUser) {
+    return { ok: false, restored: 0, skipped: 0, invalid: 0, reason: 'unauthorized' };
+  }
+
   const valid = leads.filter((l) => l && typeof l === 'object' && RESTORE_ID_RE.test(String(l.id || '')) && String(l.name || '').trim().length >= 2);
   const invalid = leads.length - valid.length;
+
+  // Issue 3: Deduplicate valid leads by id up-front so duplicates in the same backup file are not counted twice
+  const seenIds = new Set();
+  const uniqueValid = [];
+  let intraFileDuplicates = 0;
+  for (const l of valid) {
+    const id = String(l.id);
+    if (seenIds.has(id)) {
+      intraFileDuplicates += 1;
+    } else {
+      seenIds.add(id);
+      uniqueValid.push(l);
+    }
+  }
+
   let restored = 0;
-  let skipped = 0;
+  let skipped = intraFileDuplicates;
+  const writtenInSession = new Set();
+
   try {
-    for (let i = 0; i < valid.length; i += 30) {
-      const chunk = valid.slice(i, i + 30);
+    for (let i = 0; i < uniqueValid.length; i += 30) {
+      const chunk = uniqueValid.slice(i, i + 30);
       const existing = await getDocs(query(collection(db, 'leads'), where(documentId(), 'in', chunk.map((l) => String(l.id)))));
       const present = new Set(existing.docs.map((d) => d.id));
       const batch = writeBatch(db);
       let writes = 0;
       for (const raw of chunk) {
         const id = String(raw.id);
-        if (present.has(id)) { skipped += 1; continue; }
+        if (present.has(id) || writtenInSession.has(id)) { skipped += 1; continue; }
         const { lead, contact } = splitLeadFields(raw);
         const payload = { ...lead, createdAt: restoredCreatedAt(raw.createdAt), restoredAt: serverTimestamp() };
         batch.set(doc(db, 'leads', id), payload);
         batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
+        writtenInSession.add(id);
+        present.add(id);
         writes += 1;
       }
       if (writes) await batch.commit();

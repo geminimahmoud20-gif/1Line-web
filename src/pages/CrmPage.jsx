@@ -65,6 +65,7 @@ import { handoverFromSeller } from '../utils/unitHandover';
 import { getAreas } from '../utils/areasData';
 import { formArea, areaNameOf } from '../utils/areaLookup';
 import { findExistingLeadListing } from '../utils/listingDedupe';
+import { buildPrepopulatedPropertyFromLead } from '../utils/supplyGapMatcher';
 import { userDisplayName } from '../utils/assignees';
 import { setActorName } from '../utils/actorName';
 import './CrmPage.app.css';
@@ -529,51 +530,8 @@ export default function CrmPage({
       return;
     }
 
-    const details = lead.details || {};
-    const priceVal = parseMoney(details.askingPrice) || parseMoney(details.expectedPrice) || parseMoney(details.price) || parseMoney(details.estimatedAvg) || 0;
-    const typeVal = details.propertyType || lead.propertyType || 'apartment';
-    // The seller's area when it is still in the list; else empty, and the listing form asks for one
-    const areaVal = formArea(details.area || lead.area, getAreas());
-    const areaLabel = (areaVal ? areaNameOf(areaVal, getAreas(), true) : '') || (lead.area && !String(lead.area).startsWith('area_') ? lead.area : 'سوهاج');
-    const sizeVal = parseInt(details.size, 10) || '';
-    const roomsVal = parseInt(details.rooms, 10) || '';
-    const floorVal = details.floor || '';
-    const finishVal = details.finishingLabelAr || details.finishing || '';
-    const imagesVal = Array.isArray(details.images) && details.images.length > 0 ? details.images : [];
-
-    const typeLabels = {
-      apartment: 'شقة سكنية',
-      villa: 'فيلا / منزل مستقل',
-      commercial: 'محل تجاري',
-      retail: 'محل تجاري',
-      office: 'مكتب إداري / عيادة',
-      land: 'قطعة أرض'
-    };
-    const typeLabel = typeLabels[typeVal] || 'عقار';
-
-    // Listing starts hidden with seller's submitted specs & photos for staff review
-    const prepopulated = {
-      // Deterministic id per non-broker lead so simultaneous clicks by two staff members write the same doc
-      ...(lead.type !== 'broker' ? { suggestedId: `prop-lead-${lead.id}` } : {}),
-      title_ar: `عرض بيع: ${typeLabel} ${sizeVal ? `${sizeVal}م² ` : ''}في ${areaLabel}`,
-      title_en: `Owner listing: ${typeVal} ${sizeVal ? `${sizeVal} sqm` : ''}`,
-      type: typeVal,
-      areaKey: areaVal,
-      price: priceVal || '',
-      size: sizeVal,
-      bedrooms: roomsVal,
-      floor: floorVal,
-      ...handoverFromSeller(details.finishing, finishVal),
-      images: imagesVal,
-      // What the owner ticked on /sell: building facts for the specs, the rest as features
-      building: Object.keys(buildingFromSellerFeatures(details.features)).length ? buildingFromSellerFeatures(details.features) : null,
-      features_ar: Array.isArray(details.featuresAr) ? details.featuresAr : [],
-      description_ar: lead.notes || (details.legalSummaryAr ? `الموقف القانوني: ${details.legalSummaryAr}` : ''),
-      description_en: '',
-      status: 'hidden',
-      featured: false,
-      sourceLeadId: lead.id
-    };
+    const prepopulated = buildPrepopulatedPropertyFromLead(lead, getAreas());
+    const imagesVal = Array.isArray(prepopulated?.images) ? prepopulated.images : [];
 
     setExternalPropertyData(prepopulated);
     setActiveTab('properties');
@@ -1095,11 +1053,13 @@ export default function CrmPage({
               onDeleteProperty={guard(can.deleteInventory, onDeleteProperty)}
               onImportProperties={can.editListings ? handleImportProperties : undefined}
               onImportLeads={can.importLeads ? handleImportLeads : undefined}
-              onAddContactLead={can.editListings ? handleImportLeads : undefined}
+              onAddContactLead={can.editLeads ? onAddNewLead : undefined}
+              onUpdateLead={onUpdateLead}
               lang={lang}
               triggerToast={triggerToast}
               externalNewPropertyData={externalPropertyData}
               onClearExternalData={() => setExternalPropertyData(null)}
+              onConvertToProperty={handleConvertToProperty}
             />
           ) : activeTab === 'demands' ? (
             <DemandsManagerPanel

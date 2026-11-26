@@ -448,22 +448,26 @@ export function escalationLevel(l, now = Date.now()) {
   return waited > responseSlaMs(l) ? 1 : 0;
 }
 
-/** Map normalised phone -> ids, for phones held by two or more active leads. A pair a staff member
+/** Map normalised phone or email -> ids, for contacts held by two or more active leads. A pair a staff member
  *  already looked at and confirmed is really two different deals (l.dupReviewed holds the other id)
  *  is not flagged again — an id stays in the group only while it still has an unreviewed counterpart. */
 export function findDuplicateGroups(leads = []) {
   const byId = new Map(leads.map((l) => [l.id, l]));
-  const byPhone = new Map();
+  const byContact = new Map();
   for (const l of leads) {
     if (!l || l.isArchived) continue;
     const keys = new Set([phoneKey(l.phone), phoneKey(l.whatsapp)].filter(Boolean));
+    const em = l.email && String(l.email).trim().toLowerCase();
+    if (em && em.includes('@')) {
+      keys.add(`email:${em}`);
+    }
     for (const k of keys) {
-      if (!byPhone.has(k)) byPhone.set(k, []);
-      byPhone.get(k).push(l.id);
+      if (!byContact.has(k)) byContact.set(k, []);
+      byContact.get(k).push(l.id);
     }
   }
   const groups = new Map();
-  for (const [k, ids] of byPhone) {
+  for (const [k, ids] of byContact) {
     const kept = ids.filter((id) => {
       const reviewed = new Set(byId.get(id)?.dupReviewed || []);
       return ids.some((other) => other !== id && !reviewed.has(other));

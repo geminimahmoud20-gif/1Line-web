@@ -10,6 +10,7 @@ import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
 import { boardStagesFor, buyersForSeller, askingPriceOf } from '../../utils/leadPipeline';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
+import FieldInspectionModal from './FieldInspectionModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
 import { addTask } from '../../firebaseLazy';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -86,6 +87,7 @@ export default function LeadQuickDrawer({
   const [viewingDateTime, setViewingDateTime] = useState('');
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
+  const [inspectionOpen, setInspectionOpen] = useState(false);
   const [localTab, setLocalTab] = useState('work'); // 'work' | 'client' | 'team' | 'history' | 'matching' | 'broker'
   const members = useTeamMembers(allLeads);
   const activeTab = tabProp || localTab;
@@ -971,6 +973,7 @@ export default function LeadQuickDrawer({
               newNote={newNote}
               setNewNote={setNewNote}
               onAddNote={handleAddNote}
+              onOpenInspection={() => setInspectionOpen(true)}
             />
           )}
 
@@ -1064,6 +1067,18 @@ export default function LeadQuickDrawer({
           isAr={isAr}
           onCancel={() => setLostOpen(false)}
           onConfirm={(fields) => { setLostOpen(false); handleUpdateStatus('lost', fields); }}
+        />
+      )}
+      {inspectionOpen && (
+        <FieldInspectionModal
+          isOpen={inspectionOpen}
+          onClose={() => setInspectionOpen(false)}
+          lead={lead}
+          properties={properties}
+          onSaveReport={onUpdateLead}
+          lang={isAr ? 'ar' : 'en'}
+          triggerToast={triggerToast}
+          currentUser={currentUser}
         />
       )}
     </>

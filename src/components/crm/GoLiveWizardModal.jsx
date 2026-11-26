@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Rocket, CheckCircle2, AlertTriangle, X, Download } from 'lucide-react';
 import { getFounderSettings, saveFounderSettings } from '../../utils/founderCmsData';
+import { fetchAllLeadsForBackup } from '../../firebaseLazy';
 
 export default function GoLiveWizardModal({
   isOpen,
@@ -52,11 +53,16 @@ export default function GoLiveWizardModal({
   };
 
   // Safe Demo Cleansing: Download backup first, then purge
-  const handleDownloadBackup = () => {
+  const handleDownloadBackup = async () => {
+    let fullLeads = leads;
+    try {
+      const cloudLeads = await fetchAllLeadsForBackup();
+      if (Array.isArray(cloudLeads) && cloudLeads.length > 0) fullLeads = cloudLeads;
+    } catch {}
     const backup = {
       exportedAt: new Date().toISOString(),
       platform: '1Line Real Estate Sohag',
-      leads,
+      leads: fullLeads,
       properties,
       demands,
       founderSettings
@@ -66,8 +72,13 @@ export default function GoLiveWizardModal({
     const a = document.createElement('a');
     a.href = url;
     a.download = `OneLine_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
     a.click();
-    if (triggerToast) triggerToast(isAr ? 'تم تنزيل النسخة الاحتياطية بنجاح' : 'Backup downloaded successfully', 'success');
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 2000);
+    if (triggerToast) triggerToast(isAr ? 'تم تنزيل النسخة الاحتياطية الكاملة بنجاح' : 'Backup downloaded successfully', 'success');
   };
 
   return (

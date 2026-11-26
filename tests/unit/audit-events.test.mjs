@@ -75,3 +75,18 @@ test('a property edit is logged by changed field names, never values; approval c
   assert.equal(describeAudit({ action: 'PROPERTY_EDITED', targetId: 'prop-1', details: { fields: ['price', 'floor'] } }), 'prop-1 · price, floor');
   assert.equal(auditLabel('PROPERTY_APPROVED'), 'وافق على نشر عقار');
 });
+
+test('backup restore and data import audit records have labels and descriptions', async () => {
+  const { backupRestoredEvent, dataImportedEvent, describeAudit, auditLabel } = await import('../../src/utils/auditEvents.js');
+  const b = backupRestoredEvent('leads', { restored: 15, skipped: 2, invalid: 0, fileName: 'leads_backup.json' });
+  assert.equal(b.actionType, 'BACKUP_RESTORED');
+  assert.equal(b.targetCollection, 'leads');
+  assert.deepEqual(b.details, { restored: 15, skipped: 2, invalid: 0, fileName: 'leads_backup.json' });
+  assert.equal(auditLabel('BACKUP_RESTORED'), 'استعاد نسخة احتياطية');
+  assert.match(describeAudit({ action: 'BACKUP_RESTORED', targetCollection: 'leads', details: b.details }), /leads · استعادة 15/);
+
+  const imp = dataImportedEvent('properties', { count: 30, fileName: 'inventory.xlsx' });
+  assert.equal(imp.actionType, 'DATA_IMPORTED');
+  assert.equal(auditLabel('DATA_IMPORTED'), 'استورد بيانات');
+  assert.match(describeAudit({ action: 'DATA_IMPORTED', targetCollection: 'properties', details: imp.details }), /properties · استيراد 30/);
+});

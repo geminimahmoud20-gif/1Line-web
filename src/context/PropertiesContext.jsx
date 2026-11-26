@@ -159,8 +159,18 @@ export function PropertiesProvider({ children }) {
         return;
       }
       const isAr = lang === 'ar';
+      if (res?.reason === 'too-large') {
+        if (collectionName === 'properties') {
+          setProperties((prev) => {
+            const filtered = prev.filter((p) => String(p.id) !== String(id));
+            persistProperties(filtered);
+            propertiesRef.current = filtered;
+            return filtered;
+          });
+        }
+      }
       const msg = res?.reason === 'too-large'
-        ? (isAr ? 'لم يُنشر على الموقع: حجم البيانات/الصور المضمّنة أكبر من الحد المسموح (1MB). ارفع الصور كروابط بدلاً من تضمينها.' : 'Not published: item exceeds 1MB — use image URLs.')
+        ? (isAr ? 'لم يُحفظ على السحابة: حجم البيانات/الصور المضمّنة أكبر من الحد المسموح (1MB). تم إلغاء التسجيل المحلي؛ ارفع الصور كروابط أو قلل حجمها.' : 'Not saved: item exceeds 1MB Firestore limit. Local record reverted.')
         : res?.reason === 'permission-denied'
           ? (isAr ? 'تم الحفظ على هذا الجهاز فقط — حسابك لا يملك صلاحية النشر السحابي.' : 'Saved on this device only — no cloud permission.')
           : (isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّر النشر السحابي، أعد المحاولة عند توفر الاتصال.' : 'Saved on this device only — cloud sync failed.');

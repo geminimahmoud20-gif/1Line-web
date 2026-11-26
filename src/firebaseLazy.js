@@ -133,6 +133,7 @@ export const currentLeadManager = lazyCall('currentLeadManager');
 export const stripStaffIdentity = lazyCall('stripStaffIdentity');
 export const importLeads = lazyCall('importLeads');
 export const restoreLeads = lazyCall('restoreLeads');
+export const fetchAllLeadsForBackup = lazyCall('fetchAllLeadsForBackup');
 export const mergeLeads = lazyCall('mergeLeads');
 export const mergeDuplicateGroups = lazyCall('mergeDuplicateGroups');
 export const loadAllLeadsForStats = lazyCall('loadAllLeadsForStats');

@@ -12,6 +12,9 @@ import MarketingMonthlyPanel from './MarketingMonthlyPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
+import PropertyDeepReportsPanel from './PropertyDeepReportsPanel';
+import SupplyGapOpportunityPanel from './SupplyGapOpportunityPanel';
+import { getAreas } from '../../utils/areasData';
 import MoneyReportPanel from './MoneyReportPanel';
 import FlowReportPanel from './FlowReportPanel';
 import ReportControls from './ReportControls';
@@ -47,7 +50,22 @@ const LINKS = [
 ];
 
 /** «مركز التقارير»: one place and one date range / comparison for every report (managers) */
-export default function ReportsHub({ leads = [], coverage = null, properties = [], demands = [], intake = [], members = [], me, canManage = false, areaNames = {}, lang = 'ar', onOpenTab, onOpenLead, triggerToast }) {
+export default function ReportsHub({
+  leads = [],
+  coverage = null,
+  properties = [],
+  demands = [],
+  intake = [],
+  members = [],
+  me,
+  canManage = false,
+  areaNames = {},
+  lang = 'ar',
+  onOpenTab,
+  onOpenLead,
+  onConvertToProperty = null,
+  triggerToast
+}) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const [now] = useState(() => Date.now());
@@ -143,7 +161,7 @@ export default function ReportsHub({ leads = [], coverage = null, properties = [
 
       <div ref={bodyRef} className="pr-hub__body">
       <SectionBoundary name={`report:${tab}`} resetKey={tab} isAr={isAr}>
-      {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} />}
+      {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} properties={properties} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} triggerToast={triggerToast} />}
       {tab === 'sales' && (
         <>
           <PerformanceReportPanel leads={leads} lang={lang} range={range} prevRange={prevRange} now={now} hide={['team', 'sources']} />
@@ -165,6 +183,17 @@ export default function ReportsHub({ leads = [], coverage = null, properties = [
       )}
       {tab === 'stock' && (
         <>
+          <SupplyGapOpportunityPanel
+            properties={properties}
+            leads={leads}
+            demands={demands}
+            areas={getAreas()}
+            lang={lang}
+            onConvertToProperty={onConvertToProperty}
+            onOpenLead={onOpenLead}
+            triggerToast={triggerToast}
+          />
+          <PropertyDeepReportsPanel properties={properties} leads={leads} lang={lang} triggerToast={triggerToast} />
           <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />
           <OperationsReportsPanel part="demand" demands={demands} intake={intake} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />
         </>

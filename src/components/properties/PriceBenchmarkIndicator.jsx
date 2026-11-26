@@ -6,13 +6,13 @@ import { getAreaById, getAreas } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
 import { areaReferencePrice } from '../../utils/areaPricing';
 import { assetClass } from '../../utils/marketStats';
-import { evaluateListingPricing, ABOVE_MARKET_THRESHOLD, BELOW_MARKET_THRESHOLD } from '../../utils/pricingEvaluation';
+import { evaluateListingPricing, resolveReferencePrice, ABOVE_MARKET_THRESHOLD, BELOW_MARKET_THRESHOLD } from '../../utils/pricingEvaluation';
 import { nameProblem, phoneProblem, normalizeBookingPhone } from '../../utils/contactValidation';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { saveLead } from '../../firebaseLazy';
 import './PriceBenchmarkIndicator.app.css';
 
-export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP', onSubmitOffer = null, triggerToast = null }) {
+export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP', onSubmitOffer = null, triggerToast = null, onOpenOfferModal = null }) {
   const isAr = lang === 'ar';
   const [, setTick] = useState(0);
   const [offerOpen, setOfferOpen] = useState(false);
@@ -38,9 +38,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   // in the area, or the area's price when the team set it by hand. No built-in or seeded numbers:
   // without one there is no «below / above the market» verdict.
   const areasList = getAreas();
-  const reference = Number(property?.customBenchmarkPrice) > 0
-    ? { ppm: Number(property.customBenchmarkPrice), source: 'listing', sample: 0 }
-    : areaReferencePrice(areaData, allListings, areasList, assetClass(property));
+  const reference = resolveReferencePrice(property, areasList, allListings);
   const pricing = evaluateListingPricing(property, { lang, areas: areasList, allListings });
   const districtAvg = reference?.ppm || 0;
 
@@ -108,7 +106,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
 
   const renderTransparencyBox = () => {
     if (!pricing.isOwnerPriced || !pricing.detailNote) return null;
-    const canOffer = !property?.isDemo && property?.status !== 'sold';
+    const canOffer = property?.status !== 'sold';
     return (
       <div className="owner-transparency-box" role="note">
         <div className="owner-transparency-head">
@@ -128,11 +126,17 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
                 <button
                   type="button"
                   className="owner-offer-btn"
-                  onClick={() => setOfferOpen((v) => !v)}
+                  onClick={() => {
+                    if (typeof onOpenOfferModal === 'function') {
+                      onOpenOfferModal();
+                    } else {
+                      setOfferOpen((v) => !v);
+                    }
+                  }}
                   aria-expanded={offerOpen}
                 >
                   <Tag size={14} aria-hidden="true" />
-                  <span>{isAr ? (offerOpen ? 'إغلاق نموذج العرض' : 'قدّم عرض سعر تفاوضي') : (offerOpen ? 'Close offer form' : 'Submit a counter-offer')}</span>
+                  <span>{isAr ? (offerOpen ? 'إغلاق نموذج العرض' : 'قدّم عرض سعر تفاوضي 🤝') : (offerOpen ? 'Close offer form' : 'Submit a counter-offer 🤝')}</span>
                 </button>
                 <Link to="/properties" className="owner-alt-link">
                   <span>{isAr ? 'تصفح بدائل بسعر السوق' : 'Browse market-priced alternatives'}</span>
@@ -324,7 +328,31 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               : 'Advisory Note: Total investment return is calculated from standalone commercial shop cash flows plus residential apartment capital value.'}
           </span>
         </div>
-        {renderTransparencyBox()}
+        {reference?.isAdjusted && Array.isArray(reference?.breakdown) && reference.breakdown.length > 0 && (
+        <div style={{
+          marginTop: '12px',
+          padding: '10px 14px',
+          background: 'rgba(212, 175, 55, 0.08)',
+          border: '1px solid rgba(212, 175, 55, 0.25)',
+          borderRadius: '8px',
+          fontSize: '0.78rem',
+          color: 'var(--text-secondary)'
+        }}>
+          <strong style={{ color: '#854d0e', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <BarChart3 size={14} />
+            <span>{isAr ? 'عوامل التمايز المحددة للسعر المرجعي لهذه الوحدة:' : 'Unit-Specific Valuation Factors:'}</span>
+          </strong>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {reference.breakdown.map((b, i) => (
+              <span key={i} style={{ background: '#ffffff', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600 }}>
+                {isAr ? b.labelAr : b.labelEn}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {renderTransparencyBox()}
       </div>
     );
   }
@@ -363,7 +391,31 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               ? 'متوسط الحي محسوب للشقق والفيلات بس. المحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط والترخيص، فمش بنقارنها بيه. اسأل مستشارنا عن صفقات مشابهة في نفس الشارع.'
               : 'The district average covers homes only. Shops, offices and land are priced by frontage, activity and zoning, so they are not compared with it. Ask us for comparable deals on the same street.')}
         </p>
-        {renderTransparencyBox()}
+        {reference?.isAdjusted && Array.isArray(reference?.breakdown) && reference.breakdown.length > 0 && (
+        <div style={{
+          marginTop: '12px',
+          padding: '10px 14px',
+          background: 'rgba(212, 175, 55, 0.08)',
+          border: '1px solid rgba(212, 175, 55, 0.25)',
+          borderRadius: '8px',
+          fontSize: '0.78rem',
+          color: 'var(--text-secondary)'
+        }}>
+          <strong style={{ color: '#854d0e', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <BarChart3 size={14} />
+            <span>{isAr ? 'عوامل التمايز المحددة للسعر المرجعي لهذه الوحدة:' : 'Unit-Specific Valuation Factors:'}</span>
+          </strong>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {reference.breakdown.map((b, i) => (
+              <span key={i} style={{ background: '#ffffff', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600 }}>
+                {isAr ? b.labelAr : b.labelEn}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {renderTransparencyBox()}
       </div>
     );
   }
@@ -431,7 +483,9 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
           position: 'relative',
           height: '10px',
           borderRadius: '999px',
-          background: 'linear-gradient(90deg, #10b981 0%, #34d399 30%, #0b4ea2 50%, #38bdf8 70%, #f59e0b 88%, #ef4444 100%)',
+          background: isAr
+            ? 'linear-gradient(270deg, #10b981 0%, #34d399 28%, #0b4ea2 50%, #f59e0b 72%, #ef4444 100%)'
+            : 'linear-gradient(90deg, #10b981 0%, #34d399 28%, #0b4ea2 50%, #f59e0b 72%, #ef4444 100%)',
           boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
         }}>
           {/* Indicator Pointer Needle */}
@@ -440,8 +494,15 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
             style={{
               position: 'absolute',
               top: '-6px',
-              left: isAr ? `${100 - gaugePercent}%` : `${gaugePercent}%`,
-              transform: 'translateX(-50%)',
+              ...(isAr ? {
+                right: `${gaugePercent}%`,
+                left: 'auto',
+                transform: 'translateX(50%)'
+              } : {
+                left: `${gaugePercent}%`,
+                right: 'auto',
+                transform: 'translateX(-50%)'
+              }),
               width: '22px',
               height: '22px',
               borderRadius: '50%',
@@ -451,7 +512,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'left 0.4s ease'
+              transition: 'all 0.4s ease'
             }}
             title={isAr ? `موقع العقار: ${diffPercent > 0 ? '+' : ''}${diffPercent}% عن متوسط الحي` : `Position: ${diffPercent > 0 ? '+' : ''}${diffPercent}% vs avg`}
           >
@@ -481,10 +542,19 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
         </div>
 
         <div className="benchmark-metric-box">
-          <span className="metric-lbl">{isAr ? `متوسط م² بحي ${currentDistrictName}` : `${currentDistrictName} Avg / Sqm`}</span>
+          <span className="metric-lbl">
+            {reference?.isAdjusted
+              ? (isAr ? 'السعر المرجعي العادل للوحدة' : 'Adjusted Fair Benchmark')
+              : (isAr ? `متوسط م² بحي ${currentDistrictName}` : `${currentDistrictName} Avg / Sqm`)}
+          </span>
           <strong className="metric-val text-muted">
             {convertedAvgPricePerM.primary} {convertedAvgPricePerM.symbol}/م²
           </strong>
+          {reference?.isAdjusted && (
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {isAr ? `(الأساس: ${Number(reference.basePpm || 0).toLocaleString('en-US')} + ${reference.totalPercent}% مواصفات)` : `(Base: ${reference.basePpm} + ${reference.totalPercent}%)`}
+            </span>
+          )}
         </div>
 
         <div className="benchmark-metric-box">
@@ -513,6 +583,30 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
           {referenceNote}
         </span>
       </div>
+      {reference?.isAdjusted && Array.isArray(reference?.breakdown) && reference.breakdown.length > 0 && (
+        <div style={{
+          marginTop: '12px',
+          padding: '10px 14px',
+          background: 'rgba(212, 175, 55, 0.08)',
+          border: '1px solid rgba(212, 175, 55, 0.25)',
+          borderRadius: '8px',
+          fontSize: '0.78rem',
+          color: 'var(--text-secondary)'
+        }}>
+          <strong style={{ color: '#854d0e', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <BarChart3 size={14} />
+            <span>{isAr ? 'عوامل التمايز المحددة للسعر المرجعي لهذه الوحدة:' : 'Unit-Specific Valuation Factors:'}</span>
+          </strong>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {reference.breakdown.map((b, i) => (
+              <span key={i} style={{ background: '#ffffff', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 600 }}>
+                {isAr ? b.labelAr : b.labelEn}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {renderTransparencyBox()}
     </div>
   );

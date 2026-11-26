@@ -24,7 +24,9 @@ export const AUDIT_LABELS = {
   DATA_EXPORTED: { ar: 'صدّر بيانات', en: 'Exported data' },
   PROPERTY_EDITED: { ar: 'عدّل عقار', en: 'Edited a listing' },
   PROPERTY_APPROVED: { ar: 'وافق على نشر عقار', en: 'Approved a listing' },
-  PROPERTY_REJECTED: { ar: 'رفض نشر عقار', en: 'Rejected a listing' }
+  PROPERTY_REJECTED: { ar: 'رفض نشر عقار', en: 'Rejected a listing' },
+  BACKUP_RESTORED: { ar: 'استعاد نسخة احتياطية', en: 'Restored backup' },
+  DATA_IMPORTED: { ar: 'استورد بيانات', en: 'Imported data' }
 };
 
 export const auditLabel = (action, isAr = true) => {
@@ -140,6 +142,26 @@ export function dataExportEvent(scope, format, count) {
   return { actionType: 'DATA_EXPORTED', targetCollection: String(scope).slice(0, 40), targetId: String(format || 'file'), details: { format: String(format || ''), count: Number(count) || 0 } };
 }
 
+/** Backup restore record */
+export function backupRestoredEvent(entity, { restored = 0, skipped = 0, invalid = 0, fileName = '' } = {}) {
+  return {
+    actionType: 'BACKUP_RESTORED',
+    targetCollection: entity || 'leads',
+    targetId: 'backup',
+    details: { restored: Number(restored) || 0, skipped: Number(skipped) || 0, invalid: Number(invalid) || 0, fileName: String(fileName || '').slice(0, 80) }
+  };
+}
+
+/** Data import (spreadsheet/JSON) record */
+export function dataImportedEvent(entity, { count = 0, fileName = '' } = {}) {
+  return {
+    actionType: 'DATA_IMPORTED',
+    targetCollection: entity || 'properties',
+    targetId: 'import',
+    details: { count: Number(count) || 0, fileName: String(fileName || '').slice(0, 80) }
+  };
+}
+
 // One entry per client and channel per minute, however many times it is tapped
 const recent = new Map();
 export function shouldLogContact(leadId, channel, now = Date.now()) {
@@ -167,6 +189,8 @@ export function describeAudit(entry = {}, isAr = true) {
   if (action === 'DATA_EXPORTED') return `${entry.targetCollection || ''} · ${d.format || ''} · ${d.count ?? 0}`;
   if (action === 'PROPERTY_EDITED') return `${entry.targetId || ''}${d.fields?.length ? ` · ${d.fields.join(', ')}` : ''}`;
   if (action === 'PROPERTY_APPROVED' || action === 'PROPERTY_REJECTED') return `${entry.targetId || ''}`;
+  if (action === 'BACKUP_RESTORED') return `${entry.targetCollection || 'leads'} · ${isAr ? 'استعادة' : 'Restored'} ${d.restored ?? 0}${d.fileName ? ` (${d.fileName})` : ''}`;
+  if (action === 'DATA_IMPORTED') return `${entry.targetCollection || 'data'} · ${isAr ? 'استيراد' : 'Imported'} ${d.count ?? 0}${d.fileName ? ` (${d.fileName})` : ''}`;
   const bits = [entry.targetCollection, entry.targetId && entry.targetId !== 'global' ? entry.targetId : ''].filter(Boolean);
   return bits.join(' · ');
 }

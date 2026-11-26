@@ -8,6 +8,7 @@ import { areaReferencePrice } from './areaPricing.js';
 import { getAreas, getAreaById } from './areasData.js';
 import { assetClass } from './marketStats.js';
 import { isMultiUnitOrBuilding, isResidentialProperty } from './currencyAndBenchmark.js';
+import { calculateAdjustedReferencePrice } from './propertyBenchmarkAdjuster.js';
 
 export const PRICING_MODES = ['auto', 'opportunity', 'market_aligned', 'owner_priced', 'hide'];
 
@@ -24,12 +25,21 @@ export const BELOW_MARKET_THRESHOLD = -5; // < -5% below reference triggers oppo
 
 /**
  * Resolves the real reference price per m² for a property, or null if none exists.
+ * Applies multi-factor hedonic adjustments (finishing, floor, elevator, view, amenities, utilities)
+ * so high-spec units are not unfairly compared against bare-bones district averages.
  */
 export function resolveReferencePrice(property, areas = null, allListings = null) {
   if (!property) return null;
   const custom = Number(property.customBenchmarkPrice);
   if (custom > 0) {
-    return { ppm: custom, source: 'listing', sample: 0 };
+    return {
+      ppm: custom,
+      basePpm: custom,
+      source: 'listing',
+      sample: 0,
+      isAdjusted: true,
+      breakdown: [{ category: 'custom_override', percent: 0, labelAr: 'سعر مقارن مخصص لهذا العقار', labelEn: 'Custom listing benchmark' }]
+    };
   }
   if (!isResidentialProperty(property) || isMultiUnitOrBuilding(property)) {
     return null;
@@ -37,7 +47,27 @@ export function resolveReferencePrice(property, areas = null, allListings = null
   const areaList = Array.isArray(areas) ? areas : getAreas();
   const areaData = areaList.find((a) => a?.id === property.areaKey) || getAreaById(property.areaKey || '');
   const listings = Array.isArray(allListings) ? allListings : [];
-  return areaReferencePrice(areaData, listings, areaList, assetClass(property));
+  const baseRef = areaReferencePrice(areaData, listings, areaList, assetClass(property));
+  if (!baseRef || !baseRef.ppm) return null;
+
+  // Dynamic Hedonic Adjustment based on unit attributes
+  const dynamicAdj = calculateAdjustedReferencePrice(property, baseRef.ppm);
+  if (dynamicAdj) {
+    return {
+      ppm: dynamicAdj.adjustedPpm,
+      basePpm: dynamicAdj.basePpm,
+      deltaPpm: dynamicAdj.deltaPpm,
+      totalPercent: dynamicAdj.totalPercent,
+      breakdown: dynamicAdj.breakdown,
+      summaryAr: dynamicAdj.summaryAr,
+      summaryEn: dynamicAdj.summaryEn,
+      source: dynamicAdj.isAdjusted ? 'multi_factor_adjusted' : baseRef.source,
+      sample: baseRef.sample,
+      isAdjusted: dynamicAdj.isAdjusted
+    };
+  }
+
+  return baseRef;
 }
 
 /**
@@ -82,7 +112,7 @@ export function evaluateListingPricing(property, options = {}) {
   }
 
   if (status === 'none') {
-    return { status: 'none', mode, diffPercent, referencePpm, propertyPpm, isOwnerPriced: false, cardBadge: null, detailNote: null };
+    return { status: 'none', mode, diffPercent, referencePpm, propertyPpm, isOwnerPriced: false, cardBadge: null, detailNote: null, adjustedReference: ref, baseDistrictPpm: ref?.basePpm || referencePpm };
   }
 
   if (status === 'opportunity') {
@@ -93,6 +123,8 @@ export function evaluateListingPricing(property, options = {}) {
       diffPercent,
       referencePpm,
       propertyPpm,
+      baseDistrictPpm: ref?.basePpm || referencePpm,
+      adjustedReference: ref,
       isOwnerPriced: false,
       cardBadge: {
         tone: 'opportunity',
@@ -112,6 +144,8 @@ export function evaluateListingPricing(property, options = {}) {
       diffPercent,
       referencePpm,
       propertyPpm,
+      baseDistrictPpm: ref?.basePpm || referencePpm,
+      adjustedReference: ref,
       isOwnerPriced: false,
       cardBadge: {
         tone: 'fair',
@@ -132,6 +166,8 @@ export function evaluateListingPricing(property, options = {}) {
     diffPercent,
     referencePpm,
     propertyPpm,
+    baseDistrictPpm: ref?.basePpm || referencePpm,
+    adjustedReference: ref,
     isOwnerPriced: true,
     cardBadge: {
       tone: 'owner',

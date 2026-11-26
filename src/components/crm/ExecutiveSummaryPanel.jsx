@@ -4,6 +4,7 @@ import { useTasks } from '../../hooks/useTasks';
 import { periodMetrics, compareMetrics, dailySeries, cohortReports, sellerPerformance, insights, metricLeads, biggestDrop, STAGE_LABELS } from '../../utils/performanceReport';
 import { dateText } from '../../utils/reportPeriods';
 import { KpiRow, KpiTile, AreaChart, Drawer, EmptyState } from '../ui';
+import ExecutiveDigestWidget from './ExecutiveDigestWidget';
 import './executive-summary.css';
 
 // Points change for a percentage, % change for a count; null when there is nothing to compare with
@@ -14,7 +15,7 @@ const pctDelta = (v) => (v.prev == null ? undefined : v.change ?? undefined);
  * «الملخص التنفيذي»: the six numbers that matter, what changed and why, how far clients get and where they
  * fall out. Every number opens the clients behind it. Range and comparison come from the hub's controls.
  */
-export default function ExecutiveSummaryPanel({ leads = [], range, prevRange = null, now, lang = 'ar', onOpenLead }) {
+export default function ExecutiveSummaryPanel({ leads = [], properties = [], range, prevRange = null, now, lang = 'ar', onOpenLead, triggerToast }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const { tasks } = useTasks();
@@ -45,6 +46,7 @@ export default function ExecutiveSummaryPanel({ leads = [], range, prevRange = n
 
   return (
     <section className="xs" aria-label={L('الملخص التنفيذي', 'Executive summary')}>
+      <ExecutiveDigestWidget leads={leads} properties={properties} tasks={tasks} lang={lang} triggerToast={triggerToast} />
       <KpiRow label={L('أهم الأرقام', 'Key figures')}>
         <KpiTile label={L('عملاء جدد', 'New clients')} value={d.v.newLeads.cur} tone="info" icon={<Users size={16} />}
           delta={pctDelta(d.v.newLeads)} deltaLabel="%" hint={vsText} trend={newSeries} onClick={() => open('newLeads', L('العملاء الجدد', 'New clients'))} />

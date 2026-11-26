@@ -4,7 +4,8 @@ export default function SystemBackupTab({
   handleExportLeadsJson,
   handleImportLeadsJson,
   isAr,
-  leads
+  leads,
+  exporting = false
 }) {
   return (
     <div className="crm-dashboard-stack animate-fadeIn">
@@ -51,10 +52,15 @@ export default function SystemBackupTab({
               type="button" 
               className="crm-btn-primary-gold" 
               onClick={handleExportLeadsJson}
+              disabled={exporting}
               style={{ width: '100%', justifyContent: 'center' }}
             >
               <Database size={15} />
-              <span>{isAr ? `تحميل ملف النسخة الاحتياطية (${leads.length} عميل)` : 'Download JSON Backup'}</span>
+              <span>
+                {exporting
+                  ? (isAr ? 'جاري تجهيز النسخة الكاملة من السحابة...' : 'Preparing full cloud backup...')
+                  : (isAr ? 'تحميل النسخة الاحتياطية الكاملة (JSON)' : 'Download Full JSON Backup')}
+              </span>
             </button>
           </div>
 

@@ -447,3 +447,24 @@ test('pipelineOverviewOf falls back to the lead id when neither phone nor whatsa
   ];
   assert.equal(pipelineOverviewOf(open).activeCount, 2);
 });
+
+test('findDuplicateGroups detects email-only duplicate clients', async () => {
+  const { findDuplicateGroups } = await import('../../src/utils/crmLeadViews.js');
+  const sample = [
+    { id: '1', name: 'أحمد', email: 'ahmed@test.com' },
+    { id: '2', name: 'أحمد علي', email: 'AHMED@test.com' },
+    { id: '3', name: 'محمود', phone: '01012345678' },
+    { id: '4', name: 'محمود شاكر', phone: '01012345678' },
+    { id: '5', name: 'فريد', email: 'unique@test.com' }
+  ];
+
+  const groups = findDuplicateGroups(sample);
+  assert.equal(groups.size, 2);
+  const emailGroup = groups.get('email:ahmed@test.com');
+  assert.ok(emailGroup);
+  assert.deepEqual(emailGroup.sort(), ['1', '2']);
+
+  const phoneGroup = groups.get('01012345678');
+  assert.ok(phoneGroup);
+  assert.deepEqual(phoneGroup.sort(), ['3', '4']);
+});

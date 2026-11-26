@@ -32,13 +32,16 @@ export const saveProperty = async (property) => {
 // removed by the admin don't reappear from the bundled data on the next load.
 
 const CATALOG_COLLECTIONS = new Set(['properties', 'projects']);
-const MAX_DOC_BYTES = 900 * 1024; // Firestore hard limit is 1 MiB per document
+export const MAX_DOC_BYTES = 900 * 1024; // Firestore hard limit is 1 MiB per document
 
 /** Strips undefined/functions (Firestore rejects them) and measures the payload. */
-const toFirestorePayload = (item) => {
-  const json = JSON.stringify(item);
-  return { data: JSON.parse(json), bytes: new Blob([json]).size };
+export const toFirestorePayload = (item) => {
+  const json = JSON.stringify(item || {});
+  const size = typeof Blob !== 'undefined' ? new Blob([json]).size : Buffer.byteLength(json, 'utf8');
+  return { data: JSON.parse(json), bytes: size };
 };
+
+export const isPayloadTooLarge = (item) => toFirestorePayload(item).bytes > MAX_DOC_BYTES;
 
 /**
  * Real-time listener for a catalog collection. Returns an unsubscribe function or null.

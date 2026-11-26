@@ -209,3 +209,67 @@ test('export writes the area by name and it imports back to the same area', asyn
   assert.equal(row['المنطقة (الحي)'], 'غرب سوهاج');
   assert.equal(mapAreaKey(row['المنطقة (الحي)'], areas), 'west');
 });
+
+test('planNativeProperties supports duplicates option: skip leaves existing properties untouched', async () => {
+  const { planNativeProperties } = await import('../../src/utils/transfer/importPlan.js');
+  const existing = [{ id: 'p1', title_ar: 'شقة حالية' }];
+  const incoming = [
+    { id: 'p1', title_ar: 'شقة معدلة في النسخة' },
+    { id: 'p2', title_ar: 'شقة جديدة' }
+  ];
+
+  // When duplicates: 'skip', existing id is skipped
+  const planSkip = planNativeProperties(incoming, existing, { duplicates: 'skip' });
+  assert.equal(planSkip.items[0].action, 'skip');
+  assert.equal(planSkip.items[1].action, 'new');
+
+  // When duplicates: 'update' (default), existing id is updated
+  const planUpdate = planNativeProperties(incoming, existing, { duplicates: 'update' });
+  assert.equal(planUpdate.items[0].action, 'update');
+  assert.equal(planUpdate.items[1].action, 'new');
+});
+
+test('planNativeLeads normalizes stage, type, and deduplicates email-only leads', async () => {
+  const { planNativeLeads } = await import('../../src/utils/transfer/importPlan.js');
+  const existing = [{ id: 'l1', name: 'عميل مسجل', email: 'exist@example.com' }];
+  const incoming = [
+    // 1. Valid with unknown stage and type: falls back to canonical 'new' and 'buyer'
+    { name: 'عميل تجريبي', phone: '01011111111', status: 'unknown_stage', type: 'aliens' },
+    // 2. Email-only lead matching existing lead email: skipped as duplicate
+    { name: 'عميل إيميل مكرر', email: 'EXIST@example.com' },
+    // 3. Email-only lead valid and unique
+    { name: 'عميل إيميل فريد', email: 'unique@example.com' },
+    // 4. Repeated email within the same import payload: second skipped
+    { name: 'عميل إيميل مكرر دفعة', email: 'unique@example.com' },
+    // 5. Invalid: name < 2 chars
+    { name: 'ع', phone: '01022222222' },
+    // 6. Invalid: missing both phone and email
+    { name: 'بدون وسيلة تواصل' }
+  ];
+
+  const plan = planNativeLeads(incoming, existing);
+  assert.equal(plan.items[0].action, 'new');
+  assert.equal(plan.items[0].lead.status, 'new'); // normalized from unknown_stage
+  assert.equal(plan.items[0].lead.type, 'buyer'); // normalized from aliens
+
+  assert.equal(plan.items[1].action, 'skip'); // duplicate email with existing
+  assert.match(plan.items[1].reason, /مسجل بالفعل/);
+
+  assert.equal(plan.items[2].action, 'new'); // valid unique email-only
+
+  assert.equal(plan.items[3].action, 'skip'); // duplicate email inside batch
+  assert.match(plan.items[3].reason, /مكرر في الملف/);
+
+  assert.equal(plan.items[4].action, 'skip'); // short name
+  assert.match(plan.items[4].reason, /غير صالح/);
+
+  assert.equal(plan.items[5].action, 'skip'); // missing phone/email
+  assert.match(plan.items[5].reason, /هاتف أو بريد/);
+});
+
+test('isPayloadTooLarge detects documents exceeding 900KB', async () => {
+  const { isPayloadTooLarge, MAX_DOC_BYTES } = await import('../../src/services/catalog.js');
+  assert.equal(isPayloadTooLarge({ id: 'p1', title: 'small' }), false);
+  const largeStr = 'x'.repeat(MAX_DOC_BYTES + 100);
+  assert.equal(isPayloadTooLarge({ id: 'p2', description: largeStr }), true);
+});

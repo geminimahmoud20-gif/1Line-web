@@ -422,3 +422,164 @@ export function doneThisWeek(tasks = [], uid, now = Date.now()) {
   }
   return n;
 }
+
+// =============================================================
+//  Stage Playbook Task Templates (قوالب المهام التلقائية لمراحل الصفقات)
+// =============================================================
+export const STAGE_TASK_PLAYBOOKS = {
+  site_visit: [
+    {
+      titleSuffix: 'تأكيد موعد المعاينة وإرسال اللوكيشن للعميل',
+      kind: 'whatsapp',
+      priority: 'high',
+      dueOffsetHours: 4,
+      note: 'تأكيد الحضور وإرسال إحداثيات Google Maps للموقع والتنبيه على المستشار المرافق.'
+    },
+    {
+      titleSuffix: 'تجهيز ملف فحص العقار وسند الملكية والبروشور',
+      kind: 'docs',
+      priority: 'normal',
+      dueOffsetHours: 8,
+      note: 'طباعة أو تجهيز ملف الوحدة القانوني وصور المعاينة ونموذج 10 للتصالح.'
+    },
+    {
+      titleSuffix: 'استيفاء استمارة الفحص الميداني والتثمين المعتمد',
+      kind: 'visit',
+      priority: 'high',
+      dueOffsetHours: 24,
+      note: 'تثبيت الـ GPS وفحص المرافق (عدادات، غاز، مصعد) واعتماد تقرير الفحص الميداني.'
+    },
+    {
+      titleSuffix: 'متابعة ما بعد المعاينة وتقييم عرض الشراء',
+      kind: 'call',
+      priority: 'normal',
+      dueOffsetHours: 48,
+      note: 'استطلاع رأي العميل حول الوحدة وسرعة تقديم عرض مالي للمالك قبل مرور 48 ساعة.'
+    }
+  ],
+  negotiating: [
+    {
+      titleSuffix: 'إعداد مذكرة عرض الشراء والتفاوض مع المالك',
+      kind: 'meeting',
+      priority: 'high',
+      dueOffsetHours: 12,
+      note: 'تحديد هامش السعر وطريقة السداد (كاش/أقساط) والاتفاق على موعد جلسة التفاوض.'
+    },
+    {
+      titleSuffix: 'مراجعة الموقف القانوني والتصالح والتوكيلات الرسمية',
+      kind: 'docs',
+      priority: 'high',
+      dueOffsetHours: 24,
+      note: 'فحص أصول المستندات في الشهر العقاري أو جهاز المدينة والتأكد من خلو الذمة المالية.'
+    }
+  ],
+  contacted: [
+    {
+      titleSuffix: 'إرسال 3 عروض عقارية مطابقة لمواصفات وميزانية العميل',
+      kind: 'whatsapp',
+      priority: 'normal',
+      dueOffsetHours: 4,
+      note: 'ترشيح وحدات مفحوصة ومطابقة لطلب العميل وحثه على حجز موعد معاينة ميدانية.'
+    },
+    {
+      titleSuffix: 'متابعة تفاعل العميل مع العروض المرشحة',
+      kind: 'call',
+      priority: 'normal',
+      dueOffsetHours: 24,
+      note: 'استيضاح أي تعديل في المواصفات وتحديد موعد أقرب جولة ميدانية.'
+    }
+  ]
+};
+
+/**
+ * Generates an array of ready-to-save task objects for a stage transition
+ */
+export function generatePlaybookTasksForStage(lead = {}, targetStage = '', actor = {}, now = Date.now()) {
+  const templates = STAGE_TASK_PLAYBOOKS[targetStage];
+  if (!Array.isArray(templates) || templates.length === 0) return [];
+
+  const leadName = String(lead.name || 'العميل').trim();
+  const assignee = lead.assignedToUid
+    ? { uid: lead.assignedToUid, name: lead.assignedTo || 'المسؤول' }
+    : (actor?.uid ? actor : { uid: 'system', name: '1Line OS' });
+
+  return templates.map((tmpl) => {
+    const dueTime = new Date(now + tmpl.dueOffsetHours * 3600 * 1000);
+    const dueAt = dueTime.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+    return buildTask({
+      title: `[${leadName}] ${tmpl.titleSuffix}`,
+      note: tmpl.note,
+      dueAt,
+      priority: tmpl.priority,
+      kind: tmpl.kind,
+      lead,
+      assignee,
+      me: actor?.uid ? actor : assignee,
+      now
+    });
+  }).filter(Boolean);
+}
+
+// =============================================================
+//  SLA Escalation Engine (محرك كشف وتصعيد المهام المتأخرة الحساسة)
+// =============================================================
+export function checkSlaEscalations(tasks = [], leads = [], now = Date.now()) {
+  const leadsById = new Map((leads || []).map((l) => [String(l.id), l]));
+  const escalatedTasks = [];
+  const assigneeOverdueCount = new Map();
+
+  for (const t of tasks) {
+    if (!t || t.status === 'done' || !t.dueAt) continue;
+    const l = t.leadId ? leadsById.get(String(t.leadId)) : null;
+    const dealVal = Number(l?.dealValue || l?.budget || l?.details?.askingPrice || 0);
+    const isBigDeal = dealVal >= 5_000_000;
+    const dueMs = Date.parse(t.dueAt);
+    if (!Number.isFinite(dueMs) || dueMs >= now) continue;
+
+    const overdueHours = Math.round((now - dueMs) / (3600 * 1000));
+    let severity = null;
+    let reason = '';
+
+    // Critical: High priority overdue >= 24h OR Big Deal (>= 5M) overdue >= 12h
+    if (isBigDeal && overdueHours >= 12) {
+      severity = 'critical';
+      reason = `مهمة لصفقة كبرى (${(dealVal / 1e6).toFixed(1)} مليون) متأخرة ${overdueHours} ساعة`;
+    } else if (t.priority === 'high' && overdueHours >= 24) {
+      severity = 'critical';
+      reason = `مهمة عاجلة متأخرة لأكثر من 24 ساعة (${overdueHours} ساعة)`;
+    } else if (overdueHours >= 48) {
+      severity = 'warning';
+      reason = `مهمة عادية متأخرة لأكثر من يومين (${overdueHours} ساعة)`;
+    }
+
+    if (severity) {
+      escalatedTasks.push({
+        ...t,
+        severity,
+        overdueHours,
+        escalationReason: reason,
+        dealValue: dealVal,
+        isBigDeal
+      });
+
+      const uid = t.assigneeUid || 'unassigned';
+      assigneeOverdueCount.set(uid, (assigneeOverdueCount.get(uid) || 0) + (severity === 'critical' ? 2 : 1));
+    }
+  }
+
+  // Assignees with score >= 3 are SLA-locked (prevent new lead distribution)
+  const lockedAssignees = new Set();
+  for (const [uid, score] of assigneeOverdueCount.entries()) {
+    if (score >= 3 && uid !== 'unassigned' && uid !== 'system') {
+      lockedAssignees.add(uid);
+    }
+  }
+
+  return {
+    escalatedTasks: escalatedTasks.sort((a, b) => (b.severity === 'critical' ? 1 : 0) - (a.severity === 'critical' ? 1 : 0) || b.overdueHours - a.overdueHours),
+    criticalCount: escalatedTasks.filter((t) => t.severity === 'critical').length,
+    warningCount: escalatedTasks.filter((t) => t.severity === 'warning').length,
+    lockedAssignees,
+    isSlaBreached: escalatedTasks.some((t) => t.severity === 'critical')
+  };
+}

@@ -94,7 +94,9 @@ export default function PropertyTableRow({
   canApprove = false,
   meta = null,
   exclusive = null,
-  onRequestReject
+  onRequestReject,
+  potentialDuplicate = null,
+  onMergeDuplicates = null
 }) {
   const [busy, setBusy] = useState(false);
   const [brochureError, setBrochureError] = useState(false);
@@ -183,6 +185,16 @@ export default function PropertyTableRow({
             )}
             {prop.badge_ar && <Badge>{isAr ? prop.badge_ar : prop.badge_en}</Badge>}
           </span>
+          {potentialDuplicate && !isTrash && (
+            <span className="crm-prow__dup" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', margin: '4px 0' }}>
+              <Badge tone="warning">⚠️ {isAr ? 'عقار مكرر محتمل' : 'Potential Duplicate'}</Badge>
+              {onMergeDuplicates && (
+                <Button size="sm" variant="secondary" onClick={() => onMergeDuplicates(prop, potentialDuplicate)}>
+                  {isAr ? 'دمج مع العقار الآخر' : 'Merge'}
+                </Button>
+              )}
+            </span>
+          )}
           {!isTrash && blockedByApproval(prop) && (
             <span className="crm-prow__approval" role="status">
               <Badge tone={prop.approval === 'rejected' ? 'danger' : 'warning'} icon={prop.approval === 'rejected' ? <X size={11} aria-hidden="true" /> : <Hourglass size={11} aria-hidden="true" />}>

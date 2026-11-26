@@ -6,8 +6,8 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { restoreLeads, mergeLeads, mergeDuplicateGroups, fetchLeadById } from '../firebaseLazy';
-import { auditLeadDeleted, auditContactUse } from '../utils/contactAudit';
+import { restoreLeads, fetchAllLeadsForBackup, mergeLeads, mergeDuplicateGroups, fetchLeadById } from '../firebaseLazy';
+import { auditLeadDeleted, auditContactUse, auditBackupRestored } from '../utils/contactAudit';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
 import { memberDesk } from '../utils/inboxView';
@@ -531,18 +531,32 @@ export const CrmAdminPanel = ({
   };
 
   // Full Leads Database JSON Backup
-  const handleExportLeadsJson = () => {
+  const [exportingBackup, setExportingBackup] = useState(false);
+  const handleExportLeadsJson = async () => {
     if (!canExport) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير النسخ الاحتياطية (تتطلب صلاحية Super Admin أو المالية)' : 'Unauthorized: requires Admin or Finance', 'error');
       }
       return;
     }
+    setExportingBackup(true);
+    let fullLeads = leads;
+    try {
+      const cloudLeads = await fetchAllLeadsForBackup();
+      if (Array.isArray(cloudLeads) && cloudLeads.length > 0) {
+        fullLeads = cloudLeads;
+      }
+    } catch (err) {
+      console.warn('Backup cloud fetch fallback to memory:', err);
+    } finally {
+      setExportingBackup(false);
+    }
+
     const backupData = {
       platform: '1Line Real Estate CRM Leads',
       timestamp: new Date().toISOString(),
-      leadsCount: leads.length,
-      leads: leads
+      leadsCount: fullLeads.length,
+      leads: fullLeads
     };
     const jsonStr = JSON.stringify(backupData, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -552,13 +566,21 @@ export const CrmAdminPanel = ({
     link.download = `OneLine_Leads_Backup_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    triggerToast(isAr ? 'تم تنزيل ملف النسخة الاحتياطية لبيانات العملاء بنجاح!' : 'Leads backup downloaded!', 'success');
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 2000);
+    triggerToast(isAr ? `تم تنزيل النسخة الاحتياطية الكاملة (${fullLeads.length} عميل) بنجاح!` : `Full backup downloaded (${fullLeads.length} leads)!`, 'success');
   };
 
   // Full Leads Database JSON Restore
   const handleImportLeadsJson = (e) => {
+    if (!isSuperRole && !canExport) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'غير مصرح لك باستعادة النسخ الاحتياطية (تتطلب صلاحية Super Admin)' : 'Unauthorized: requires Super Admin', 'error');
+      }
+      return;
+    }
     const file = e.target.files[0];
     if (!file) return;
 
@@ -575,6 +597,7 @@ export const CrmAdminPanel = ({
                 triggerToast(isAr ? `فشلت الاستعادة (${res.reason}). اتستعاد ${res.restored} قبل الخطأ.` : `Restore failed (${res.reason}); ${res.restored} restored before the error.`, 'error');
                 return;
               }
+              auditBackupRestored('leads', { restored: res.restored, skipped: res.skipped, invalid: res.invalid, fileName: file.name });
               triggerToast(isAr
                 ? `اتستعاد ${res.restored} عميل • ${res.skipped} موجودين أصلاً${res.invalid ? ` • ${res.invalid} سجل غير صالح` : ''}`
                 : `Restored ${res.restored} • ${res.skipped} already present${res.invalid ? ` • ${res.invalid} invalid` : ''}`, res.restored ? 'success' : 'info');
@@ -756,7 +779,7 @@ export const CrmAdminPanel = ({
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
   // What happened last with each client (turned into a listing, «غير مناسب», no answer…): the status cell and two filters
   const situations = useMemo(() => situationKinds(leads, properties), [leads, properties]);
-  const situationByListing = useMemo(() => listingByLead(properties), [properties]);
+  const situationByListing = useMemo(() => listingByLead(properties, leads), [properties, leads]);
   const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
     myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
     areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, ownerFilter, searchQuery, duplicateIds, situationById: situations
@@ -1031,6 +1054,7 @@ export const CrmAdminPanel = ({
             lang={lang}
             onOpenTab={onSwitchTab}
             onOpenLead={(l) => setQuickDrawerLead(l)}
+            onConvertToProperty={onConvertToProperty}
           />
         ) : (
           <div className="crm-table-container">{isAr ? 'مركز التقارير للمدير العام ومديري المبيعات.' : 'Reports are for admins and sales managers.'}</div>
@@ -1097,7 +1121,7 @@ export const CrmAdminPanel = ({
       )}
 
       {/* 🏛️ TAB 9: CORPORATE & FOUNDER CMS */}
-      {/* Company identity, backups and automation: super admin only (writes are admin-only in the rules too) */}
+      {/* Company identity, backups and automation: super admin only. (Note: Firestore rules allow public lead creation for web forms, so backup restoration must enforce super admin client-side and via staff role check) */}
       {['founder_cms', 'system_backup', 'automation'].includes(adminTab) && !isSuperRole && (
         <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
           {isAr ? 'القسم ده للمدير العام بس.' : 'This section is for the super admin only.'}
@@ -1117,6 +1141,7 @@ export const CrmAdminPanel = ({
           handleImportLeadsJson={handleImportLeadsJson}
           isAr={isAr}
           leads={leads}
+          exporting={exportingBackup}
         />
       )}
 

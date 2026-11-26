@@ -328,16 +328,18 @@
   top: calc(100% + 10px);
   right: 0;
   min-width: 290px;
-  background: rgba(255, 255, 255, 0.96);
+  background-color: #ffffff;
+  background: #ffffff;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(11, 78, 162, 0.16);
   border-radius: 18px;
   padding: 8px;
   box-shadow: 
-    0 20px 45px -8px rgba(11, 78, 162, 0.16), 
-    0 4px 14px rgba(0, 0, 0, 0.04);
-  z-index: 1200;
+    0 25px 50px -10px rgba(11, 78, 162, 0.25), 
+    0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 2500;
+  isolation: isolate;
   animation: dropdownGlassIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top center;
 }
@@ -4025,6 +4027,12 @@ body.dark,
 @keyframes slideUpToast {
   from { opacity: 0; transform: translateY(25px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#pd-tabpanel,
+.tab-pane-content,
+.price-benchmark-card {
+  scroll-margin-top: 140px;
 }
 
 /* --- Detail Section Tabs Bar (Solves Scrolling & Overload) --- */

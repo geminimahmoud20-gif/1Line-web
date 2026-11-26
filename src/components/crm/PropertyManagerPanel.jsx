@@ -25,6 +25,7 @@ import ThumbBackfillCard from './ThumbBackfillCard';
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
 import { loadPropertyPrivateFull, loadExclusiveMap, savePropertyPrivate } from '../../services/propertyPrivate';
+import { isPayloadTooLarge } from '../../services/catalog';
 import { exclusiveStatus, todayKey } from '../../utils/exclusivity';
 import PropertyTableRow from './PropertyTableRow';
 import NotesModal from './NotesModal';
@@ -50,7 +51,8 @@ import { paymentTerms, paymentFields, paymentProblem, planPrice } from '../../ut
 import { areaFamily } from '../../utils/areaLookup';
 import { linkedContactLead, leadWithPhone, listingContactProblem, listingContactLead } from '../../utils/listingContact';
 import { tidyListing } from '../../utils/listingSpelling';
-import { findPotentialDuplicateListing, listingDiffPatch, analyzeConcurrentEdits } from '../../utils/listingDedupe';
+import { findPotentialDuplicateListing, listingDiffPatch, analyzeConcurrentEdits, findExistingLeadListing } from '../../utils/listingDedupe';
+import { buildPrepopulatedPropertyFromLead } from '../../utils/supplyGapMatcher';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -132,6 +134,7 @@ export default function PropertyManagerPanel({
   onImportProperties,
   onImportLeads,
   onAddContactLead,
+  onUpdateLead,
   lang = 'ar',
   triggerToast,
   externalNewPropertyData = null,
@@ -140,7 +143,8 @@ export default function PropertyManagerPanel({
   readOnly = false,
   projects = [],
   shareRef = '',
-  canApprove = false
+  canApprove = false,
+  onConvertToProperty = null
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -327,6 +331,52 @@ export default function PropertyManagerPanel({
     setEditingSnapshot(null);
     setForm(DEFAULT_FORM_STATE);
     setShowAddModal(true);
+  };
+
+  const handleConvertFromReport = (lead) => {
+    if (onConvertToProperty) {
+      onConvertToProperty(lead);
+      return;
+    }
+    const existing = findExistingLeadListing(properties, lead.id, [
+      lead.convertedPropertyId,
+      ...(Array.isArray(lead.details?.listingIds) ? lead.details.listingIds : [])
+    ]);
+    if (existing) {
+      const initial = buildEditFormState(existing);
+      setEditingPropertyId(existing.id);
+      setEditingSnapshot({ ...initial, _baseUpdatedAt: existing.updatedAt || '' });
+      setForm(initial);
+      setView('list');
+      setShowAddModal(true);
+      if (triggerToast) {
+        triggerToast(
+          isAr
+            ? `العميل ده ليه عقار مسجّل بالفعل (${existing.title_ar || existing.id}) — اتفتحلك للتعديل بدل ما يتكرر.`
+            : `This client already has a listing (${existing.title_ar || existing.id}) — opened for editing instead of duplicating.`,
+          'info'
+        );
+      }
+      return;
+    }
+
+    const prepopulated = buildPrepopulatedPropertyFromLead(lead, areas);
+    setEditingPropertyId(null);
+    setEditingSnapshot(null);
+    setForm({
+      ...DEFAULT_FORM_STATE,
+      ...prepopulated
+    });
+    setView('list');
+    setShowAddModal(true);
+    if (triggerToast) {
+      triggerToast(
+        isAr
+          ? 'تم استيراد بيانات الوحدة وصورها من استمارة العميل بنجاح! راجع البيانات واضغط نشر.'
+          : 'Listing draft imported from client intake! Review and publish.',
+        'success'
+      );
+    }
   };
   useOpenRequest(openRequest, ['add_property'], () => { if (!readOnly) handleOpenAdd(); });
 
@@ -664,6 +714,16 @@ export default function PropertyManagerPanel({
       floor: isLand ? 0 : (parseInt(form.floor) || 0)
     };
 
+    if (isPayloadTooLarge(cleanForm)) {
+      triggerToast(
+        isAr
+          ? 'حجم بيانات العقار يتجاوز الحد المسموح (900 كيلوبايت). يرجى تقليل الصور أو الملاحظات.'
+          : 'Property data size exceeds 900KB limit. Please reduce photos or text.',
+        'error'
+      );
+      return;
+    }
+
     submittingRef.current = true;
     setSaving(true);
     try {
@@ -673,8 +733,10 @@ export default function PropertyManagerPanel({
         if (known) {
           cleanForm.sourceLeadId = known.id;
         } else if (onAddContactLead) {
-          const res = await onAddContactLead([listingContactLead({ ...cleanForm, id: propId }, { name: contactName, phone: contactPhone, listedBy: form.listedBy || 'owner' })]);
-          if (res?.ok && res.ids?.[0]) cleanForm.sourceLeadId = res.ids[0];
+          const contactLead = listingContactLead({ ...cleanForm, id: propId }, { name: contactName, phone: contactPhone, listedBy: form.listedBy || 'owner' });
+          const res = await onAddContactLead(contactLead);
+          const newLeadId = res?.id || (res?.ok && res.ids?.[0]);
+          if (newLeadId) cleanForm.sourceLeadId = newLeadId;
           else triggerToast(isAr ? 'الوحدة هتتحفظ، بس رقم صاحبها ما اتسجلش في العملاء. جرّب تاني من تعديل الوحدة.' : "The unit is saved but its contact wasn't added to clients. Try again from edit.", 'error');
         }
       }
@@ -859,10 +921,16 @@ export default function PropertyManagerPanel({
     if (saved) patchMeta(prop.id, { rejection: field });
 
     // If this property was converted from a CRM lead, update the lead status on the Kanban to lost/rejected
-    if (prop.sourceLeadId && handleUpdateLead) {
+    const leadUpdater = onUpdateLead || handleUpdateLead;
+    const targetLead = (prop.sourceLeadId && leads.find((l) => String(l.id) === String(prop.sourceLeadId)))
+      || leads.find((l) => String(l.convertedPropertyId) === String(prop.id) || String(l.details?.convertedPropertyId) === String(prop.id) || (Array.isArray(l.details?.listingIds) && l.details.listingIds.includes(prop.id)))
+      || (prop.contactPhone && leadWithPhone(prop.contactPhone, leads))
+      || (prop.phone && leadWithPhone(prop.phone, leads));
+
+    if (targetLead && leadUpdater) {
       const nowIso = new Date().toISOString();
       const reasonText = text ? `تم رفض العقار من الإدارة: ${text}` : 'تم رفض العقار من قِبل الإدارة';
-      handleUpdateLead(prop.sourceLeadId, {
+      leadUpdater(targetLead.id, {
         status: 'lost',
         lostReason: 'property_rejected',
         lostReasonDetails: reasonText,
@@ -870,14 +938,20 @@ export default function PropertyManagerPanel({
         lastActivityAt: nowIso,
         _bypassGate: true,
         _forceStage: true,
+        details: {
+          ...(targetLead.details || {}),
+          propertyRejected: true,
+          rejectionReason: text || 'رفض من الإدارة'
+        },
         activityLogs: [
           {
             timestamp: nowIso,
-            action: `تم رفض العقار (${prop.title_ar || prop.code || 'العقار'}) من قِبل الإدارة${text ? ` — السبب: ${text}` : ''}`,
+            action: `تم رفض العقار (${prop.title_ar || prop.code || prop.id || 'العقار'}) من قِبل الإدارة${text ? ` — السبب: ${text}` : ''}`,
             kind: 'outcome',
             outcome: 'not_fit',
             agent: me.name
-          }
+          },
+          ...(targetLead.activityLogs || [])
         ]
       });
     }
@@ -891,6 +965,79 @@ export default function PropertyManagerPanel({
         : (isAr ? 'اترفض ومش هيظهر على الموقع. مفيش مسؤول مسجّل لإشعاره: كلّمه بنفسك' : 'Rejected. Nobody to notify: tell the owner yourself'),
       sent ? 'success' : 'info'
     );
+  };
+
+  // Detect duplicate listings across the catalog so managers can merge them with 1 click
+  const duplicatesMap = useMemo(() => {
+    const map = new Map();
+    for (let i = 0; i < properties.length; i++) {
+      const p1 = properties[i];
+      if (!p1 || p1.deleted) continue;
+      for (let j = i + 1; j < properties.length; j++) {
+        const p2 = properties[j];
+        if (!p2 || p2.deleted) continue;
+
+        const sameLead = p1.sourceLeadId && p2.sourceLeadId && String(p1.sourceLeadId) === String(p2.sourceLeadId);
+        const phone1 = String(p1.contactPhone || p1.phone || '').replace(/[^0-9]/g, '');
+        const phone2 = String(p2.contactPhone || p2.phone || '').replace(/[^0-9]/g, '');
+        const samePhone = phone1.length >= 9 && phone1 === phone2;
+        const sameSpecs = p1.areaKey && p1.areaKey === p2.areaKey 
+          && Number(p1.size) > 0 && Number(p1.size) === Number(p2.size)
+          && Number(p1.price) > 0 && Number(p1.price) === Number(p2.price)
+          && p1.type === p2.type;
+
+        if (sameLead || (samePhone && (sameSpecs || p1.type === p2.type)) || sameSpecs) {
+          if (!map.has(String(p1.id))) map.set(String(p1.id), p2);
+          if (!map.has(String(p2.id))) map.set(String(p2.id), p1);
+        }
+      }
+    }
+    return map;
+  }, [properties]);
+
+  const handleMergeDuplicates = async (propA, propB) => {
+    if (!propA || !propB) return;
+    const primary = (propA.images && propA.images.length >= (propB.images?.length || 0)) ? propA : propB;
+    const secondary = primary.id === propA.id ? propB : propA;
+
+    const proceed = await confirm({
+      title: isAr ? 'دمج نسختي العقار المكرر' : 'Merge Duplicate Listings',
+      tone: 'warning',
+      message: isAr
+        ? `هل تريد دمج العقارين المكررين («${primary.title_ar || primary.id}» و «${secondary.title_ar || secondary.id}»)؟ سيتم جمع الصور والمواصفات في عقار واحد وحذف النسخة المكررة.`
+        : `Merge listings («${primary.id}» and «${secondary.id}»)? Consolidated into primary listing and duplicate removed.`,
+      confirmLabel: isAr ? 'دمج الآن وحذف التكرار' : 'Merge & Remove Duplicate',
+      cancelLabel: isAr ? 'إلغاء' : 'Cancel'
+    });
+    if (!proceed) return;
+
+    const allImages = [...(primary.images || [])];
+    (secondary.images || []).forEach((img) => {
+      if (!allImages.includes(img)) allImages.push(img);
+    });
+
+    const mergedPatch = {
+      images: allImages,
+      notes: [primary.notes, secondary.notes].filter(Boolean).join(' | '),
+      features_ar: [...new Set([...(primary.features_ar || []), ...(secondary.features_ar || [])])],
+      updatedAt: new Date().toISOString()
+    };
+
+    onUpdateProperty(primary.id, mergedPatch);
+    if (onDeleteProperty) {
+      onDeleteProperty(secondary.id);
+    }
+
+    const updater = onUpdateLead || handleUpdateLead;
+    if (updater && (secondary.sourceLeadId || primary.sourceLeadId)) {
+      const leadId = secondary.sourceLeadId || primary.sourceLeadId;
+      updater(leadId, {
+        convertedPropertyId: primary.id,
+        _bypassGate: true
+      });
+    }
+
+    triggerToast(isAr ? 'تم دمج العقار المكرر بنجاح وتوحيد بياناته!' : 'Duplicate listing merged successfully!', 'success');
   };
 
   // Selection (bulk actions) only ever holds rows that are on screen
@@ -1071,7 +1218,15 @@ export default function PropertyManagerPanel({
       />
 
       {view === 'report' ? (
-        <ListingsReport properties={properties} areas={areas} leads={leads} isAr={isAr} onOpenList={openList} />
+        <ListingsReport
+          properties={properties}
+          areas={areas}
+          leads={leads}
+          demands={demands}
+          isAr={isAr}
+          onOpenList={openList}
+          onConvertToProperty={handleConvertFromReport}
+        />
       ) : (
         <>
           {legacyCount > 0 && issueFilter !== 'legacy' && (
@@ -1283,6 +1438,8 @@ export default function PropertyManagerPanel({
                       canApprove={canApprove && !readOnly}
                       meta={propMeta[String(prop.id)] || null}
                       onRequestReject={setRejecting}
+                      potentialDuplicate={duplicatesMap.get(String(prop.id)) || null}
+                      onMergeDuplicates={handleMergeDuplicates}
                     />
                   ))
                 )}

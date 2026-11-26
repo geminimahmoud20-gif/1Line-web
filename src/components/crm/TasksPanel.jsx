@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send, Repeat } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDown, Zap, Phone, MessageSquare, Search, Pencil, CalendarClock, X, Eye, EyeOff, Send, Repeat, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { addTask, updateTask, removeTask, fetchLeadById } from '../../firebaseLazy';
 import {
   PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, RECURRENCE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
   dueFromPreset, dayKeyFrom, snoozed, pushAllPatch, completion, reopening, dueLabel,
   workload, isDelegated, assignedByMe, newAssignmentsFor, seenPatch, focusTasks, doneThisWeek, daysLate,
-  parseTaskNote, formatTaskNote, nextRecurringDue
+  parseTaskNote, formatTaskNote, nextRecurringDue, checkSlaEscalations
 } from '../../utils/tasks';
 import { firstContactPatch } from '../../utils/crmLeadViews';
 import { auditContactUse } from '../../utils/contactAudit';
@@ -351,6 +351,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
   const counts = taskCounts(mine, scopeUid, now);
   const progress = useMemo(() => dayProgress(mine, scopeUid, now), [mine, scopeUid, now]);
   const people = useMemo(() => (canManage ? workload(tasks, members, now) : []), [canManage, tasks, members, now]);
+  const slaStatus = useMemo(() => checkSlaEscalations(tasks, leads, now), [tasks, leads, now]);
   // Opening the list is how an assignee «sees» what a colleague gave them (the assigner reads it as seen)
   const unseen = useMemo(() => newAssignmentsFor(tasks, me?.uid), [tasks, me?.uid]);
   useEffect(() => {
@@ -488,6 +489,47 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
           </div>
         ) : null}
       />
+
+      {/* SLA Escalation Alert Banner */}
+      {slaStatus.criticalCount > 0 && (
+        <div style={{
+          background: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
+          border: '1.5px solid #EF4444',
+          borderRadius: '12px',
+          padding: '14px 16px',
+          marginBottom: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#991B1B' }}>
+            <ShieldAlert size={20} />
+            <strong style={{ fontSize: '14px' }}>
+              {isAr ? `⚠️ تنبيه تصعيد إداري عاجل (SLA): ${slaStatus.criticalCount} مهام حرجة متأخرة تجاوزت المهلة المحددة` : `SLA Alert: ${slaStatus.criticalCount} critical tasks overdue`}
+            </strong>
+          </div>
+          <p style={{ margin: 0, fontSize: '12px', color: '#B91C1C' }}>
+            {isAr
+              ? 'يوجد مهام لصفقات كبرى (5+ مليون) أو مهام عاجلة جداً متأخرة لأكثر من 24 ساعة بدون تنفيذ وتتطلب متابعة أو تدخلاً إدارياً فورياً.'
+              : 'Tasks for high-value deals or urgent priority exceed the SLA limit.'}
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+            {slaStatus.escalatedTasks.slice(0, 3).map((t) => (
+              <span key={t.id} style={{
+                background: '#FFFFFF',
+                border: '1px solid #FECACA',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '11px',
+                color: '#7F1D1D',
+                fontWeight: 600
+              }}>
+                {t.title} ({t.assigneeName || 'المسؤول'}) · متأخرة {t.overdueHours} س
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {view !== 'mine' && people.length > 0 && (
         <section className="tk-load" aria-label={isAr ? 'حمل الفريق' : 'Team workload'}>

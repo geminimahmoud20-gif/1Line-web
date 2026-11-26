@@ -146,20 +146,26 @@ export function planPropertyImport({ headers, rows, mapping, existing = [], exis
 }
 
 /**
- * Clients plan: rows without a phone/email are skipped; a phone already in the CRM or repeated
+ * Clients plan: rows without a phone/email are skipped; a phone or email already in the CRM or repeated
  * in the file is skipped (the first one is kept).
  */
 export function planLeadImport({ headers, rows, mapping, existingLeads = [], areas = [], now = new Date() }) {
-  const known = new Set(existingLeads.map((l) => normalizePhone(l?.phone || l?.whatsapp)).filter(Boolean));
-  const seen = new Map();
+  const knownPhones = new Set(existingLeads.map((l) => normalizePhone(l?.phone || l?.whatsapp)).filter(Boolean));
+  const knownEmails = new Set(existingLeads.map((l) => String(l?.email || '').trim().toLowerCase()).filter((e) => e && e.includes('@')));
+  const seenPhones = new Map();
+  const seenEmails = new Map();
   const items = rows.map((row, i) => {
     const { values } = mapRow(headers, row, mapping);
     const r = rowToLead(values, { areas, now });
     if (r.skip) return { action: 'skip', reason: r.skip, rowIndex: i, lead: { name: String(values.name || '').trim() }, warnings: [] };
     const phone = r.lead.phone;
-    if (phone && known.has(phone)) return { action: 'skip', reason: 'مسجل بالفعل في العملاء', rowIndex: i, lead: r.lead, warnings: r.warnings };
-    if (phone && seen.has(phone)) return { action: 'skip', reason: `مكرر في الملف (سطر ${seen.get(phone) + 2})`, rowIndex: i, lead: r.lead, warnings: r.warnings };
-    if (phone) seen.set(phone, i);
+    const email = String(r.lead.email || '').trim().toLowerCase();
+    if (phone && knownPhones.has(phone)) return { action: 'skip', reason: 'مسجل بالفعل في العملاء (نفس الهاتف)', rowIndex: i, lead: r.lead, warnings: r.warnings };
+    if (email && email.includes('@') && knownEmails.has(email)) return { action: 'skip', reason: 'مسجل بالفعل في العملاء (نفس البريد)', rowIndex: i, lead: r.lead, warnings: r.warnings };
+    if (phone && seenPhones.has(phone)) return { action: 'skip', reason: `مكرر في الملف (سطر ${seenPhones.get(phone) + 2})`, rowIndex: i, lead: r.lead, warnings: r.warnings };
+    if (email && email.includes('@') && seenEmails.has(email)) return { action: 'skip', reason: `مكرر بالبريد في الملف (سطر ${seenEmails.get(email) + 2})`, rowIndex: i, lead: r.lead, warnings: r.warnings };
+    if (phone) seenPhones.set(phone, i);
+    if (email && email.includes('@')) seenEmails.set(email, i);
     return { action: 'new', rowIndex: i, lead: r.lead, warnings: r.warnings };
   });
   return {
@@ -175,7 +181,7 @@ export function planLeadImport({ headers, rows, mapping, existingLeads = [], are
 
 /**
  * A 1Line JSON backup / export: objects already in 1Line's own shape. Properties are restored
- * as they are (merged by id); leads lose ids and client-only fields and come in as new clients.
+ * as they are (merged by id or skipped if duplicates='skip'); leads lose ids and client-only fields and come in as new clients.
  */
 export function looksNative(objects = [], entity) {
   if (!objects.length) return false;
@@ -184,24 +190,93 @@ export function looksNative(objects = [], entity) {
   return sample.every((o) => o.name && (o.phone || o.whatsapp || o.email));
 }
 
-export function planNativeProperties(objects, existing = []) {
+export function planNativeProperties(objects, existing = [], { duplicates = 'update' } = {}) {
   const ids = new Set(existing.map((p) => String(p.id)));
   const items = objects.map((o, i) => {
     const property = { ...o, id: String(o.id), isDemo: false };
     delete property._cloud;
-    return { action: ids.has(property.id) ? 'update' : 'new', rowIndex: i, property, warnings: [] };
+    const exists = ids.has(property.id);
+    if (exists && duplicates === 'skip') {
+      return { action: 'skip', reason: 'موجود بالفعل (تم الاحتفاظ بالنسخة الحالية)', rowIndex: i, property, warnings: [] };
+    }
+    return { action: exists ? 'update' : 'new', rowIndex: i, property, warnings: [] };
   });
-  return { items, owners: [], counts: { new: items.filter((x) => x.action === 'new').length, update: items.filter((x) => x.action === 'update').length, skip: 0, warnings: 0, owners: 0 } };
+  return {
+    items,
+    owners: [],
+    counts: {
+      new: items.filter((x) => x.action === 'new').length,
+      update: items.filter((x) => x.action === 'update').length,
+      skip: items.filter((x) => x.action === 'skip').length,
+      warnings: 0,
+      owners: 0
+    }
+  };
 }
 
+const VALID_LEAD_STATUSES = new Set(['new', 'contacted', 'site_visit', 'negotiating', 'closing', 'closed', 'lost', 'inactive']);
+const VALID_LEAD_TYPES = new Set(['buyer', 'seller', 'broker', 'investor', 'request']);
+
 export function planNativeLeads(objects, existingLeads = []) {
-  const known = new Set(existingLeads.map((l) => normalizePhone(l?.phone || l?.whatsapp)).filter(Boolean));
+  const knownPhones = new Set(existingLeads.map((l) => normalizePhone(l?.phone || l?.whatsapp)).filter(Boolean));
+  const knownEmails = new Set(existingLeads.map((l) => String(l?.email || '').trim().toLowerCase()).filter((e) => e && e.includes('@')));
+  const seenPhones = new Map();
+  const seenEmails = new Map();
+
   const items = objects.map((o, i) => {
     const { id: _id, _cloud, _inlineContact, createdAt: _createdAt, queuedAt: _q, ...lead } = o;
+    const warnings = [];
+
+    const name = String(lead.name || '').trim();
     const phone = normalizePhone(lead.phone || lead.whatsapp);
-    if (phone && known.has(phone)) return { action: 'skip', reason: 'مسجل بالفعل في العملاء', rowIndex: i, lead, warnings: [] };
-    if (phone) known.add(phone);
-    return { action: 'new', rowIndex: i, lead: { ...lead, phone: phone || lead.phone || '', status: lead.status || 'new' }, warnings: [] };
+    const email = String(lead.email || '').trim().toLowerCase();
+
+    if (name.length < 2) {
+      return { action: 'skip', reason: 'اسم العميل غير صالح أو مفقود', rowIndex: i, lead, warnings: [] };
+    }
+    if (!phone && (!email || !email.includes('@'))) {
+      return { action: 'skip', reason: 'لا يوجد هاتف أو بريد إلكتروني صالح للتواصل', rowIndex: i, lead, warnings: [] };
+    }
+
+    if (phone && knownPhones.has(phone)) return { action: 'skip', reason: 'مسجل بالفعل في العملاء (نفس الهاتف)', rowIndex: i, lead, warnings: [] };
+    if (email && email.includes('@') && knownEmails.has(email)) return { action: 'skip', reason: 'مسجل بالفعل في العملاء (نفس البريد)', rowIndex: i, lead, warnings: [] };
+    if (phone && seenPhones.has(phone)) return { action: 'skip', reason: `رقم الهاتف مكرر في الملف (سطر ${seenPhones.get(phone) + 1})`, rowIndex: i, lead, warnings: [] };
+    if (email && email.includes('@') && seenEmails.has(email)) return { action: 'skip', reason: `البريد مكرر في الملف (سطر ${seenEmails.get(email) + 1})`, rowIndex: i, lead, warnings: [] };
+
+    if (phone) seenPhones.set(phone, i);
+    if (email && email.includes('@')) seenEmails.set(email, i);
+
+    let status = String(lead.status || '').toLowerCase().trim();
+    if (!VALID_LEAD_STATUSES.has(status)) {
+      if (status) warnings.push(`المرحلة "${lead.status}" غير صالحة وتم تحويلها إلى "عميل محتمل"`);
+      status = 'new';
+    }
+
+    let type = String(lead.type || '').toLowerCase().trim();
+    if (!VALID_LEAD_TYPES.has(type)) {
+      if (type) warnings.push(`النوع "${lead.type}" غير معروف وتم تحويله إلى "مشتري"`);
+      type = 'buyer';
+    }
+
+    const cleanLead = {
+      ...lead,
+      name,
+      phone: phone || lead.phone || '',
+      email: email || '',
+      status,
+      type
+    };
+
+    return { action: 'new', rowIndex: i, lead: cleanLead, warnings };
   });
-  return { items, counts: { new: items.filter((x) => x.action === 'new').length, update: 0, skip: items.filter((x) => x.action === 'skip').length, warnings: 0 } };
+
+  return {
+    items,
+    counts: {
+      new: items.filter((x) => x.action === 'new').length,
+      update: 0,
+      skip: items.filter((x) => x.action === 'skip').length,
+      warnings: items.filter((x) => x.warnings?.length > 0).length
+    }
+  };
 }

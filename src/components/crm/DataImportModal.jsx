@@ -5,6 +5,7 @@ import { PROPERTY_FIELDS, IGNORE, INTERNAL_HINTS, autoMapColumns, propertyToRow 
 import { LEAD_FIELDS, leadToRow } from '../../utils/transfer/leadSchema';
 import { planPropertyImport, planLeadImport, looksNative, planNativeProperties, planNativeLeads } from '../../utils/transfer/importPlan';
 import { exportRows } from '../../utils/transfer/exportTable';
+import { auditDataImported } from '../../utils/contactAudit';
 import './data-transfer.css';
 
 const TYPE_AR = { apartment: 'شقة', villa: 'فيلا / منزل', commercial: 'تجاري', office: 'إداري / طبي', land: 'أرض' };
@@ -80,7 +81,7 @@ export default function DataImportModal({ entity = 'properties', existing = [], 
 
   const livePlan = useMemo(() => {
     if (!table || step !== 'review') return null;
-    if (native) return isProps ? planNativeProperties(table.objects, existing) : planNativeLeads(table.objects, existingLeads);
+    if (native) return isProps ? planNativeProperties(table.objects, existing, { duplicates }) : planNativeLeads(table.objects, existingLeads);
     return isProps
       ? planPropertyImport({ headers: table.headers, rows: table.rows, mapping, existing, existingLeads, areas, statusMode, duplicates, withOwners: withOwners && canImportOwners })
       : planLeadImport({ headers: table.headers, rows: table.rows, mapping, existingLeads, areas });
@@ -102,6 +103,9 @@ export default function DataImportModal({ entity = 'properties', existing = [], 
       const res = await onImport(plan);
       let ownersRes = null;
       if (isProps && plan.owners?.length && onImportOwners) ownersRes = await onImportOwners(plan.owners);
+      if (res?.ok) {
+        auditDataImported(entity, { count: (plan.counts?.new || 0) + (plan.counts?.update || 0), fileName });
+      }
       setResult({ main: res, owners: ownersRes });
       setStep('done');
     } catch (e) {
@@ -205,19 +209,21 @@ export default function DataImportModal({ entity = 'properties', existing = [], 
                   {isProps && canImportOwners && <div className="is-owner"><b>{plan.counts.owners}</b><span>مالك → عميل بائع</span></div>}
                 </div>
 
-                {isProps && !native && (
+                {isProps && (
                   <div className="dx-options">
+                    {!native && (
+                      <fieldset>
+                        <legend>حالة العقارات الجديدة</legend>
+                        <label><input type="radio" name="dx-status" checked={statusMode === 'review'} onChange={() => setStatusMode('review')} /> مخفية لحد ما تراجعها وتضيف الصور <em>(مستحسن)</em></label>
+                        <label><input type="radio" name="dx-status" checked={statusMode === 'file'} onChange={() => setStatusMode('file')} /> حسب الحالة في الملف (المعروض يتنشر فوراً)</label>
+                      </fieldset>
+                    )}
                     <fieldset>
-                      <legend>حالة العقارات الجديدة</legend>
-                      <label><input type="radio" name="dx-status" checked={statusMode === 'review'} onChange={() => setStatusMode('review')} /> مخفية لحد ما تراجعها وتضيف الصور <em>(مستحسن)</em></label>
-                      <label><input type="radio" name="dx-status" checked={statusMode === 'file'} onChange={() => setStatusMode('file')} /> حسب الحالة في الملف (المعروض يتنشر فوراً)</label>
+                      <legend>{native ? 'عقار بنفس المعرف (ID) موجود بالفعل' : 'عقار بنفس الكود موجود بالفعل'}</legend>
+                      <label><input type="radio" name="dx-dup" checked={duplicates === 'update'} onChange={() => setDuplicates('update')} /> حدّث بياناته من الملف {native ? '' : '(الصور والعروض تفضل زي ما هي)'}</label>
+                      <label><input type="radio" name="dx-dup" checked={duplicates === 'skip'} onChange={() => setDuplicates('skip')} /> سيبه زي ما هو (احتفظ بالنسخة الحالية دون تعديل)</label>
                     </fieldset>
-                    <fieldset>
-                      <legend>عقار بنفس الكود موجود بالفعل</legend>
-                      <label><input type="radio" name="dx-dup" checked={duplicates === 'update'} onChange={() => setDuplicates('update')} /> حدّث بياناته من الملف (الصور والعروض تفضل زي ما هي)</label>
-                      <label><input type="radio" name="dx-dup" checked={duplicates === 'skip'} onChange={() => setDuplicates('skip')} /> سيبه زي ما هو</label>
-                    </fieldset>
-                    {canImportOwners && Object.values(mapping).includes('ownerPhone') && (
+                    {!native && canImportOwners && Object.values(mapping).includes('ownerPhone') && (
                       <label className="dx-check"><input type="checkbox" checked={withOwners} onChange={(e) => setWithOwners(e.target.checked)} /> سجّل الملاك اللي ليهم رقم كعملاء «بائعين» في قسم العملاء <Lock size={13} aria-hidden="true" /></label>
                     )}
                   </div>

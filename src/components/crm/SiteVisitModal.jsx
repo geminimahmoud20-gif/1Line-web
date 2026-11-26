@@ -4,12 +4,15 @@ import {
   Car,
   X,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  ShieldCheck
 } from 'lucide-react';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarHelper';
 import { CONTACT } from '../../config/siteConfig';
+import FieldInspectionModal from './FieldInspectionModal';
 
 export default function SiteVisitModal({
   isOpen,
@@ -21,6 +24,7 @@ export default function SiteVisitModal({
   triggerToast
 }) {
   const defaultPropId = lead?.details?.targetPropertyId || (properties.length > 0 ? properties[0].id : '');
+  const [modalMode, setModalMode] = useState('schedule'); // 'schedule' | 'inspection'
   const [selectedPropertyId, setSelectedPropertyId] = useState(defaultPropId);
   const [visitDate, setVisitDate] = useState(() => {
     const tomorrow = new Date();
@@ -36,8 +40,22 @@ export default function SiteVisitModal({
   if (!isOpen || !lead) return null;
 
   const isAr = lang === 'ar';
-
   const selectedProperty = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
+
+  if (modalMode === 'inspection') {
+    return (
+      <FieldInspectionModal
+        isOpen={isOpen}
+        onClose={onClose}
+        lead={lead}
+        property={selectedProperty}
+        properties={properties}
+        onSaveReport={onScheduleVisit}
+        lang={lang}
+        triggerToast={triggerToast}
+      />
+    );
+  }
 
   const handleConfirmSchedule = (e) => {
     e.preventDefault();
@@ -99,11 +117,33 @@ export default function SiteVisitModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Car size={20} style={{ color: 'var(--crm-accent-text)' }} />
             <h3 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
-              {isAr ? `جدولة وتأكيد معاينة ميدانية: ${lead.name}` : `Schedule Site Visit: ${lead.name}`}
+              {isAr ? `معاينة ميدانية: ${lead.name}` : `Site Visit: ${lead.name}`}
             </h3>
           </div>
           <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close" style={{ color: 'var(--crm-muted)' }}>
             <X size={18} />
+          </button>
+        </div>
+
+        {/* Tab switcher: Schedule vs Field Inspection Form */}
+        <div style={{ display: 'flex', gap: '8px', padding: '12px 20px 0', borderBottom: '1px solid var(--crm-line)', background: 'var(--crm-bg)' }}>
+          <button
+            type="button"
+            className={`fi-pill ${modalMode === 'schedule' ? 'is-active' : ''}`}
+            onClick={() => setModalMode('schedule')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Calendar size={14} />
+            <span>{isAr ? '📅 حجز وتأكيد موعد المعاينة' : 'Schedule Visit'}</span>
+          </button>
+          <button
+            type="button"
+            className={`fi-pill ${modalMode === 'inspection' ? 'is-active' : ''}`}
+            onClick={() => setModalMode('inspection')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <FileText size={14} />
+            <span>{isAr ? '📋 استمارة الفحص الميداني والتثمين' : 'Inspection & Valuation'}</span>
           </button>
         </div>
 

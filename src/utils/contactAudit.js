@@ -1,4 +1,4 @@
-import { contactUseEvent, phoneRevealEvent, phoneCopyEvent, shouldLogContact, leadDeletedEvent, roleChangeEvent, roleDeletedEvent, dataExportEvent } from './auditEvents.js';
+import { contactUseEvent, phoneRevealEvent, phoneCopyEvent, shouldLogContact, leadDeletedEvent, roleChangeEvent, roleDeletedEvent, dataExportEvent, backupRestoredEvent, dataImportedEvent } from './auditEvents.js';
 import { logAuditEvent } from '../firebaseLazy';
 import { markCallStarted } from './pendingCall.js';
 
@@ -19,6 +19,8 @@ export const auditLeadDeleted = (leadId) => send(leadDeletedEvent(leadId));
 export const auditRoleSaved = (before, after) => send(roleChangeEvent(before, after));
 export const auditRoleDeleted = (roleId, fallbackRoleId) => send(roleDeletedEvent(roleId, fallbackRoleId));
 export const auditDataExport = (scope, format, count) => send(dataExportEvent(scope, format, count));
+export const auditBackupRestored = (entity, details) => send(backupRestoredEvent(entity, details));
+export const auditDataImported = (entity, details) => send(dataImportedEvent(entity, details));
 
 /** «إظهار» on a masked number / the copy button. Throttled like the call buttons; never throws. */
 export function auditPhoneReveal(leadId, surface) {

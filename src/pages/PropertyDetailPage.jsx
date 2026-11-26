@@ -28,6 +28,7 @@ import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding } from '../utils/currencyAndBenchmark';
 import { evaluateListingPricing } from '../utils/pricingEvaluation';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
+import SubmitOfferModal from '../components/properties/SubmitOfferModal';
 import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
 import { useUIModal } from '../context/UIModalContext';
@@ -79,6 +80,7 @@ export default function PropertyDetailPage({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [bookingConfirmationOpen, setBookingConfirmationOpen] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState(null);
@@ -374,15 +376,12 @@ export default function PropertyDetailPage({
         <button
           type="button"
           className="benchmark-hero-pill is-premium"
-          onClick={() => {
-            setActiveTab('valuation');
-            setTimeout(() => document.getElementById('pd-tabpanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-          }}
+          onClick={() => setShowOfferModal(true)}
           title={pricing.cardBadge?.hint}
           style={{ cursor: 'pointer' }}
         >
           <Tag size={13} />
-          <span>{isAr ? 'تسعير المالك · قدّم عرضك' : 'Owner-priced · Make an offer'}</span>
+          <span>{isAr ? 'تسعير المالك · قدّم عرضك 🤝' : 'Owner-priced · Make an offer 🤝'}</span>
         </button>
       ) : benchmark && benchmark.badgeType !== 'premium' && (
         <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
@@ -664,6 +663,7 @@ export default function PropertyDetailPage({
                     currency={currency}
                     onSubmitOffer={onAddNewLead}
                     triggerToast={triggerToast}
+                    onOpenOfferModal={() => setShowOfferModal(true)}
                   />
 
                   {/* 📈 Historical Price Trends & Capital Growth Chart */}
@@ -959,6 +959,16 @@ export default function PropertyDetailPage({
           lang={lang}
         />
 
+        {/* 🤝 Counter-Offer / Negotiation Modal */}
+        <SubmitOfferModal
+          isOpen={showOfferModal}
+          onClose={() => setShowOfferModal(false)}
+          property={property}
+          isAr={isAr}
+          onSubmitOffer={onAddNewLead}
+          triggerToast={triggerToast}
+        />
+
         {/* 📱 Sticky Mobile Quick Action Bar (Solves Scrolling on Phones) */}
         <div className="mobile-detail-sticky-bar">
           <div className="mobile-sticky-price">
@@ -969,15 +979,41 @@ export default function PropertyDetailPage({
           <div className="mobile-sticky-actions">
             {/* A sold unit can't be reserved: call and WhatsApp stay for "something similar" */}
             {property.status !== 'sold' && (
-              <button
-                type="button"
-                className="btn btn-deposit-mini"
-                onClick={() => setDepositModalOpen(true)}
-                title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
-              >
-                <ShieldCheck size={16} />
-                <span>{isAr ? 'حجز' : 'Reserve'}</span>
-              </button>
+              <>
+                {pricing.isOwnerPriced && (
+                  <button
+                    type="button"
+                    className="btn btn-offer-mini"
+                    onClick={() => setShowOfferModal(true)}
+                    title={isAr ? 'قدّم عرض سعر تفاوضي' : 'Make an offer'}
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontSize: '0.8rem',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Tag size={14} />
+                    <span>{isAr ? 'قدّم عرض' : 'Offer'}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-deposit-mini"
+                  onClick={() => setDepositModalOpen(true)}
+                  title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
+                >
+                  <ShieldCheck size={16} />
+                  <span>{isAr ? 'حجز' : 'Reserve'}</span>
+                </button>
+              </>
             )}
 
             <a

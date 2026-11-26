@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Plus, Sparkles, Image as ImageIcon, Save, Upload, MapPin, Loader2 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { hasNoRooms, isLandType, isHouseType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';
@@ -8,7 +8,7 @@ import BuildingFieldsEditor from './BuildingFieldsEditor';
 import HandoverFieldsEditor from './HandoverFieldsEditor';
 import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
-import { PRICING_MODE_OPTIONS } from '../../utils/pricingEvaluation';
+import { PRICING_MODE_OPTIONS, resolveReferencePrice } from '../../utils/pricingEvaluation';
 import PhotoManager from './PhotoManager';
 import ListingContactFields from './ListingContactFields';
 import { FormStep, FormChecklist } from './PropertyFormSteps';
@@ -58,6 +58,14 @@ export default function PropertyFormModal({
     (form?.description && String(form.description).trim()) ||
     (form?.description_ar && String(form.description_ar).trim())
   );
+
+  const autoRef = useMemo(() => {
+    try {
+      return resolveReferencePrice(form, areas);
+    } catch {
+      return null;
+    }
+  }, [form, areas]);
 
   // Auto-save draft debounced to localStorage whenever dirty content changes
   useEffect(() => {
@@ -796,6 +804,13 @@ export default function PropertyFormModal({
                     fontSize: 'var(--crm-text-base)'
                   }}
                 />
+                {autoRef?.ppm > 0 && !form.customBenchmarkPrice && (
+                  <div style={{ fontSize: '0.78rem', color: '#D4AF37', marginTop: '6px', lineHeight: 1.4, padding: '4px 8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px' }}>
+                    {isAr
+                      ? `💡 السعر المرجعي المحسوب تلقائياً لهذه الوحدة: ${autoRef.ppm.toLocaleString('en-US')} ج.م/م² (${autoRef.isAdjusted ? `معدل +${autoRef.totalPercent}% حسب التشطيب والدور والإطلالة والخدمات` : 'متوسط أساسي للمنطقة'})`
+                      : `💡 Dynamic benchmark for this unit: ${autoRef.ppm.toLocaleString('en-US')} EGP/m² (${autoRef.isAdjusted ? `+${autoRef.totalPercent}% spec-adjusted` : 'district base'})`}
+                  </div>
+                )}
               </div>
 
               {/* Custom Amenities List */}
