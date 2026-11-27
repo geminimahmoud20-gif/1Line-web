@@ -347,11 +347,27 @@
 .ui-bars__note { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ── KPI tile: a tinted icon chip in the tile's tone, and a trend line in the same tone ── */
-.ui-kpi__icon { width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: var(--ui-r-md); background: var(--tone-tint, var(--ui-accent-tint)); color: var(--tone, var(--ui-accent)); flex: none; }
+.ui-kpi__icon {
+  width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: var(--ui-r-lg);
+  background: var(--tone-tint, var(--ui-accent-tint)); color: var(--tone, var(--ui-accent)); flex: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone, var(--ui-accent)) 22%, transparent);
+}
 .ui-kpi .ui-spark { color: var(--tone, var(--ui-accent)); }
 .ui-kpi__delta--bad { color: var(--ui-danger); }
 .ui-kpi__delta--good { color: var(--ui-success); }
 .ui-kpi__delta--flat { color: var(--ui-text-3); }
+
+/* ── KPI tile: a soft tone wash and top accent so each tile reads its colour at a glance ── */
+.ui-kpi {
+  position: relative;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--tone, var(--ui-accent)) 7%, transparent) 0%, transparent 60%),
+    var(--ui-surface);
+  box-shadow: var(--ui-sh-1), inset 0 2px 0 0 color-mix(in srgb, var(--tone, var(--ui-accent)) 55%, transparent);
+}
+.ui-kpi.ui-card--interactive:hover {
+  box-shadow: var(--ui-sh-2), inset 0 2px 0 0 var(--tone, var(--ui-accent));
+}
 
 /* ---- Viz.jsx: meter, ring gauge, stacked bar, column chart, icon badge ---- */
 .ui-meter { display: grid; gap: var(--ui-s-1); min-width: 0; }
@@ -382,6 +398,6 @@
 .ui-cols__tip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--ui-text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ui-cols__label { margin-top: 6px; text-align: center; font-size: var(--ui-fs-1); color: var(--ui-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.ui-iconbadge { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 40px; height: 40px; border-radius: var(--ui-r-md); background: var(--tone-tint); color: var(--tone); }
+.ui-iconbadge { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 40px; height: 40px; border-radius: var(--ui-r-md); background: var(--tone-tint); color: var(--tone); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 22%, transparent); }
 .ui-iconbadge--sm { width: 32px; height: 32px; }
 .ui-iconbadge--lg { width: 48px; height: 48px; }
