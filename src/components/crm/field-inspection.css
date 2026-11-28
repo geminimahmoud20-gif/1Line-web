@@ -6,7 +6,11 @@
   inset: 0;
   background: rgba(11, 28, 54, 0.75);
   backdrop-filter: blur(6px);
-  z-index: 10000;
+  /* The CRM lead drawer this modal opens from (LeadQuickDrawer) sits at --ui-z-drawer (11000 in
+     the CRM context); a hardcoded 10000 here put this modal underneath it - "opening" it changed
+     nothing visible because it was rendering, just hidden behind the drawer. --ui-z-modal is the
+     same token every other CRM modal (ui/Modal, e.g. LostReasonModal) already uses to clear it. */
+  z-index: var(--ui-z-modal, 12100);
   display: flex;
   justify-content: center;
   align-items: flex-end; /* Mobile bottom sheet style */
