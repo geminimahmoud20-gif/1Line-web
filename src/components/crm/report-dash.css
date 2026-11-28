@@ -15,6 +15,14 @@
 .rd-alert strong { font-size: var(--ui-fs-4); }
 .rd-alert p { margin: 2px 0 0; font-size: var(--ui-fs-2); color: var(--ui-text-2); }
 
+/* Decision center: a list of cross-report alerts, each with a jump-to-tab action */
+.rd-list--insights { gap: var(--ui-s-3); }
+.rd-alert--insight { align-items: flex-start; }
+.rd-alert__body { flex: 1; min-width: 0; }
+.rd-alert__go { border: 0; background: none; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--tone); font-weight: var(--ui-fw-bold); font-size: var(--ui-fs-2); white-space: nowrap; font-family: var(--ui-font); }
+.rd-alert__go:hover { text-decoration: underline; }
+.rd-alert__go:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); border-radius: var(--ui-r-sm); }
+
 /* Rows: an icon or avatar, a title with a sub line, and something on the far side */
 .rd-list { list-style: none; margin: 0; padding: 0; display: grid; }
 .rd-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--ui-s-3); padding: var(--ui-s-2) 0; border-bottom: 1px solid var(--ui-line); }

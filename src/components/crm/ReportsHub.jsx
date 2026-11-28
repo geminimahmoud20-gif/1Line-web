@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer, Hourglass, Network, Gauge } from 'lucide-react';
+import { Users, Building, Target, ShieldAlert, Megaphone, Trophy, Calculator, ChevronLeft, ChevronRight, Banknote, LayoutDashboard, Plus, X, Bookmark, Printer, Hourglass, Network, Gauge, Compass } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import { loadViews, saveView, removeView } from '../../utils/reportViews';
 import PerformanceReportPanel from './PerformanceReportPanel';
@@ -14,6 +14,7 @@ import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
 import PropertyDeepReportsPanel from './PropertyDeepReportsPanel';
 import SupplyGapOpportunityPanel from './SupplyGapOpportunityPanel';
+import DecisionCenterPanel from './DecisionCenterPanel';
 import { getAreas } from '../../utils/areasData';
 import MoneyReportPanel from './MoneyReportPanel';
 import FlowReportPanel from './FlowReportPanel';
@@ -27,7 +28,7 @@ import './performance-report.css';
 import './executive-summary.css';
 
 // Grouped by the question a manager asks, not by the data behind it
-const TABS = [
+const BASE_TABS = [
   { id: 'summary', icon: LayoutDashboard, ar: 'الملخص', en: 'Summary', q_ar: 'الشغل ماشي إزاي؟' },
   { id: 'kpi', icon: Gauge, ar: 'المؤشرات', en: 'KPIs', q_ar: 'إحنا قريبين من الأهداف؟' },
   { id: 'sales', icon: Banknote, ar: 'المبيعات والفلوس', en: 'Sales & money', q_ar: 'بنبيع قد إيه وبنكسب كام؟' },
@@ -39,9 +40,11 @@ const TABS = [
   { id: 'risk', icon: ShieldAlert, ar: 'الخسارة والمخاطر', en: 'Losses & risk', q_ar: 'بنخسر عملاء ليه؟' },
   { id: 'goals', icon: Target, ar: 'الأهداف', en: 'Goals', q_ar: 'هنوصل للهدف؟' }
 ];
+// Founder-only: cross-references every report above into one ranked list of decisions
+const DECISIONS_TAB = { id: 'decisions', icon: Compass, ar: 'مركز القرار', en: 'Decisions', q_ar: 'إيه أهم قرار محتاج آخده دلوقتي؟' };
 // Old tab ids (a saved view from before) open their new home
 const LEGACY = { money: 'sales', portfolio: 'stock', demand: 'stock', calls: 'team', lost: 'risk' };
-const NO_RANGE = new Set(['goals', 'flow', 'org', 'kpi']);
+const NO_RANGE = new Set(['goals', 'flow', 'org', 'kpi', 'decisions']);
 
 // The reports that live on their own screens, one tap away
 const LINKS = [
@@ -61,6 +64,7 @@ export default function ReportsHub({
   canManage = false,
   areaNames = {},
   lang = 'ar',
+  isFounder = false,
   onOpenTab,
   onOpenLead,
   onConvertToProperty = null,
@@ -68,6 +72,7 @@ export default function ReportsHub({
 }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
+  const TABS = useMemo(() => (isFounder ? [DECISIONS_TAB, ...BASE_TABS] : BASE_TABS), [isFounder]);
   const [now] = useState(() => Date.now());
   const [tab, setTab] = useState('summary');
   const [preset, setPreset] = useState('30');
@@ -161,6 +166,7 @@ export default function ReportsHub({
 
       <div ref={bodyRef} className="pr-hub__body">
       <SectionBoundary name={`report:${tab}`} resetKey={tab} isAr={isAr}>
+      {tab === 'decisions' && <DecisionCenterPanel leads={leads} properties={properties} demands={demands} members={members} lang={lang} onJumpTab={setTab} />}
       {tab === 'summary' && <ExecutiveSummaryPanel leads={leads} properties={properties} range={range} prevRange={prevRange} now={now} lang={lang} onOpenLead={onOpenLead} triggerToast={triggerToast} />}
       {tab === 'sales' && (
         <>
