@@ -230,8 +230,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .site-header .cta-btn-text {
   white-space: nowrap;
 }
+/* .header-container caps at ~1320px (min(1320px, 100vw - 32px) above), so a wider viewport never
+   gives the nav extra room; the label stays icon-only at every width instead of only below 1440px,
+   where it used to reappear and - together with the account button's own label - overflow the
+   nav on every ordinary desktop/laptop/monitor width (see mobile-polish.css's account-text rule). */
+.site-header .search-btn-label { display: none; }
 @media (max-width: 1440px) {
-  .site-header .search-btn-label { display: none; }
   .site-header .header-actions { gap: 6px; }
 }
 @media (max-width: 1280px) {

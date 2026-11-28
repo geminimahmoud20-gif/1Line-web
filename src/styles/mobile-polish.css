@@ -297,8 +297,13 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
 .gallery-empty-state strong { color: #F8FAFC; font-size: 1rem; }
 .gallery-empty-state span { font-size: 0.88rem; line-height: 1.6; }
 
-/* Desktop 1141–1440px: the nav ran under "حسابي". The account button shows its icon only at this width. */
-@media (max-width: 1440px) and (min-width: 1141px) {
+/* Desktop, any width: the nav ran under "حسابي" — .header-container caps at ~1320px
+   (luxury-system.css), so a wider screen never gives the header extra room; past 1440px the
+   search button's own label (luxury-system.css) reappears at the same boundary and the two
+   together never fit, which is why this used to only guard 1141-1440px and still clipped "عن
+   الشركة" on every ordinary laptop/monitor width above that. The account button shows its icon
+   only everywhere on desktop now. */
+@media (min-width: 1141px) {
   html .header-client-account-btn .account-text { display: none !important; }
 }
 
