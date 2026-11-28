@@ -330,13 +330,19 @@ export default function KanbanPipeline({
     return () => clearInterval(t);
   }, []);
 
-  // Auto-sync status of leads whose converted listing was rejected by management
+  // Auto-sync status of leads whose converted listing was rejected by management. `autoSyncedRef`
+  // remembers which leads this tab already sent to «خسارة» so the effect never re-fires the same
+  // write while the optimistic update is still in flight (every stage save on the board changes the
+  // whole `leads` array reference, re-running this effect over every lead, every time) - that pile-up
+  // of redundant onUpdateLead calls was freezing the UI on save.
+  const autoSyncedRef = useRef(new Set());
   useEffect(() => {
     if (!onUpdateLead || !propertiesByLead) return;
     leads.forEach((l) => {
-      if (l.status !== 'lost') {
+      if (l.status !== 'lost' && !autoSyncedRef.current.has(l.id)) {
         const prop = propertiesByLead.get(String(l.id));
         if (prop && (prop.approval === 'rejected' || prop.status === 'rejected')) {
+          autoSyncedRef.current.add(l.id);
           onUpdateLead(l.id, {
             status: 'lost',
             lostReason: 'property_rejected',
