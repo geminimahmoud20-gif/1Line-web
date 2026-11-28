@@ -96,6 +96,36 @@
   .crm-kanban__search { flex: 1 1 100%; }
 }
 
+/* Area/size/price filter: one chip-sized trigger next to the other toolbar chips - the popover
+   it opens (reusing the card "…" menu's .kb-more/.kb-menu plumbing: placeMenu, and the
+   document-wide outside-click/Esc/scroll close in KanbanPipeline.jsx) takes no layout space
+   until opened, so the toolbar's own width never grows. */
+.crm-kanban__filter { position: relative; }
+.crm-kanban__filter > summary {
+  list-style: none;
+}
+.crm-kanban__filter > summary::-webkit-details-marker { display: none; }
+.crm-kanban__filter[open] > summary {
+  background: var(--ui-primary); border-color: var(--ui-primary); color: var(--ui-on-primary);
+}
+.crm-kanban__filter[open] > summary .ui-count {
+  background: color-mix(in srgb, var(--ui-on-primary) 20%, transparent); color: var(--ui-on-primary);
+}
+.kb-menu--filter {
+  width: 260px;
+  padding: 14px;
+  gap: 10px;
+}
+.kb-menu--filter .ui-field { margin: 0; }
+.kb-menu--filter__row { display: flex; gap: 8px; }
+.kb-menu--filter__row .ui-field { flex: 1; min-width: 0; }
+.kb-menu--filter__clear {
+  border: none; background: none; padding: 4px 2px; margin: 0;
+  font: var(--ui-fw-semibold) var(--ui-fs-2) / 1 var(--ui-font); color: var(--ui-text-3);
+  text-decoration: underline; cursor: pointer; text-align: start;
+}
+.kb-menu--filter__clear:hover { color: var(--ui-text); }
+
 /* Board layout controls: compact view, collapse/expand all, top scrollbar, "show more" per column */
 .crm-kanban__topscroll {
   overflow-x: auto; overflow-y: hidden; height: 14px; margin-bottom: var(--ui-s-2);

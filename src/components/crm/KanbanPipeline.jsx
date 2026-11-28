@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Building2, BarChart3, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap, FileText } from 'lucide-react';
+import { Building2, BarChart3, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus, ArrowLeft, ArrowRight, Zap, FileText, Filter } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import FieldInspectionModal from './FieldInspectionModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
+import AreaOptions from '../common/AreaOptions';
+import { EMPTY_KANBAN_FILTERS, hasActiveKanbanFilters, activeKanbanFilterCount, matchesKanbanFilters } from '../../utils/kanbanFilters';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { leadScore, isOpenLead, isSellerLead, isAccountLead, duplicatesById, pipelineOverviewOf, phoneMatchesQuery } from '../../utils/crmLeadViews';
@@ -17,7 +19,7 @@ import StageDeliverableModal from './StageDeliverableModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD, handoffToCrmTask } from '../../services/stateMachineEngine';
 import { addTask } from '../../firebaseLazy';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
-import { PageHeader, KpiRow, KpiTile, Chip, Button, useConfirm } from '../ui';
+import { PageHeader, KpiRow, KpiTile, Chip, Button, Field, Input, useConfirm } from '../ui';
 import { archivePrompt } from '../../utils/deleteConfirm';
 import './kanban-redesign.css';
 import './kanban-mobile.css';
@@ -127,6 +129,7 @@ export default function KanbanPipeline({
   const PIPELINE_STAGES = (filterType === 'seller' || filterType === 'broker') ? SELLER_COLUMNS : BASE_STAGES;
   const phoneStageId = PIPELINE_STAGES.some((st) => st.id === phoneStage) ? phoneStage : PIPELINE_STAGES[0].id;
   const [searchQuery, setSearchQuery] = useState('');
+  const [kanbanFilters, setKanbanFilters] = useState(EMPTY_KANBAN_FILTERS);
   // «محتاج قرار»: show only the deals that need a person today
   const [onlyAttention, setOnlyAttention] = useState(false);
   const [collapsedStages, setCollapsedStages] = useState(() => {
@@ -319,9 +322,10 @@ export default function KanbanPipeline({
         const propTypeMatch = normalizeArabicText(l.propertyType || l.details?.propertyType).includes(q);
         if (!nameMatch && !phoneMatch && !areaMatch && !propTypeMatch) return false;
       }
+      if (!matchesKanbanFilters(l, kanbanFilters, allAreas, getLeadBudget(l))) return false;
       return true;
     });
-  }, [leads, filterType, searchQuery]);
+  }, [leads, filterType, searchQuery, kanbanFilters, allAreas]);
 
   // Clock for overdue calculations
   const [now, setNow] = useState(() => Date.now());
@@ -917,6 +921,64 @@ export default function KanbanPipeline({
               {isAr ? 'فتح الأعمدة' : 'Expand all'}
             </Chip>
           )}
+          <details className="kb-more crm-kanban__filter" onToggle={placeMenu}>
+            <summary className="ui-chip" aria-label={isAr ? 'فلتر المنطقة والمساحة والسعر' : 'Area, size & price filter'}>
+              <Filter size={14} aria-hidden="true" />
+              {isAr ? 'فلتر' : 'Filter'}
+              {activeKanbanFilterCount(kanbanFilters) > 0 && (
+                <span className="ui-count">{activeKanbanFilterCount(kanbanFilters)}</span>
+              )}
+            </summary>
+            <div className="kb-menu kb-menu--filter">
+              <Field label={isAr ? 'المنطقة' : 'Area'} hideLabel>
+                <select
+                  className="ui-select"
+                  value={kanbanFilters.areaId}
+                  onChange={(e) => setKanbanFilters((f) => ({ ...f, areaId: e.target.value }))}
+                >
+                  <option value="">{isAr ? 'كل المناطق' : 'All areas'}</option>
+                  <AreaOptions areas={allAreas} isAr={isAr} />
+                </select>
+              </Field>
+              <div className="kb-menu--filter__row">
+                <Input
+                  type="number" min="0" inputMode="numeric"
+                  label={isAr ? 'أقل مساحة (م²)' : 'Min size (m²)'}
+                  value={kanbanFilters.minSize}
+                  onChange={(e) => setKanbanFilters((f) => ({ ...f, minSize: e.target.value }))}
+                />
+                <Input
+                  type="number" min="0" inputMode="numeric"
+                  label={isAr ? 'أعلى مساحة (م²)' : 'Max size (m²)'}
+                  value={kanbanFilters.maxSize}
+                  onChange={(e) => setKanbanFilters((f) => ({ ...f, maxSize: e.target.value }))}
+                />
+              </div>
+              <div className="kb-menu--filter__row">
+                <Input
+                  type="number" min="0" inputMode="numeric"
+                  label={isAr ? 'أقل سعر (ج.م)' : 'Min price (EGP)'}
+                  value={kanbanFilters.minPrice}
+                  onChange={(e) => setKanbanFilters((f) => ({ ...f, minPrice: e.target.value }))}
+                />
+                <Input
+                  type="number" min="0" inputMode="numeric"
+                  label={isAr ? 'أعلى سعر (ج.م)' : 'Max price (EGP)'}
+                  value={kanbanFilters.maxPrice}
+                  onChange={(e) => setKanbanFilters((f) => ({ ...f, maxPrice: e.target.value }))}
+                />
+              </div>
+              {hasActiveKanbanFilters(kanbanFilters) && (
+                <button
+                  type="button"
+                  className="kb-menu--filter__clear"
+                  onClick={() => setKanbanFilters(EMPTY_KANBAN_FILTERS)}
+                >
+                  {isAr ? 'مسح الفلاتر' : 'Clear filters'}
+                </button>
+              )}
+            </div>
+          </details>
         </div>
       </div>
 
