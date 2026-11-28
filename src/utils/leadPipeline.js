@@ -45,6 +45,27 @@ export const boardStagesFor = (lead) => {
 /** 'seller' for an owner who came to sell or value a property, otherwise 'buyer' */
 export const pipelineKind = (lead) => (isSellerLead(lead || {}) ? 'seller' : 'buyer');
 
+// A seller lead still short of being listed: once their unit is actually on the site, being asked for
+// a phone-call outcome before the board reflects that (utils/stageGate's lock) would just leave the
+// card stuck a step behind reality.
+const PRE_LISTED_STATUSES = new Set(['new', 'contacted', 'site_visit']);
+
+/**
+ * The patch that moves a seller's lead on to «معروض للبيع» (negotiating) the moment a property is
+ * created from them - or null when nothing should change (not a seller lead, or already at/past that
+ * stage, so a later re-save of the same listing never pushes it backward or resets it).
+ * `_bypassGate` skips the manual activity-outcome lock: the listing going live is stronger proof than
+ * a logged call, and `_logAction` says so plainly in the lead's own activity log.
+ */
+export function listingCreatedLeadPatch(lead) {
+  if (!lead || !isSellerLead(lead) || !PRE_LISTED_STATUSES.has(lead.status || 'new')) return null;
+  return {
+    status: 'negotiating',
+    _bypassGate: true,
+    _logAction: 'اتنقل تلقائياً لمرحلة «معروض للبيع» - العقار بقى فعلاً على المنصة'
+  };
+}
+
 /** The stages this lead moves through (without «lost», which every pipeline has) */
 export const stagesFor = (lead) => (pipelineKind(lead) === 'seller' ? SELLER_STAGES : BUYER_STAGES);
 
