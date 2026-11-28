@@ -1049,6 +1049,7 @@ export const CrmAdminPanel = ({
             members={teamMembers}
             me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
             canManage
+            isFounder={isSuperRole}
             triggerToast={triggerToast}
             areaNames={Object.fromEntries(getAreas().map((a) => [a.id, a.name_ar || a.id]))}
             lang={lang}
