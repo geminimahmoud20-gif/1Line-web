@@ -18,6 +18,26 @@ import { STAGE_LABELS } from './performanceReport.js';
 const SEVERITY_RANK = { critical: 0, warning: 1, info: 2 };
 export const sortInsights = (list) => [...list].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
 
+/** The sections the network map draws, in a fixed order (fixed layout, not computed from the data) */
+export const DECISION_CATEGORIES = ['marketing', 'flow', 'team', 'risk', 'stock', 'kpi'];
+
+/**
+ * One row per section: its worst insight's severity (or 'ok' when it has none right now) and how
+ * many insights it has. Powers the section map — each node's colour and number come straight from
+ * here, so the map and the list below it can never disagree.
+ */
+export function categorySummary(insights = []) {
+  const rank = { critical: 0, warning: 1, info: 2 };
+  const rows = Object.fromEntries(DECISION_CATEGORIES.map((c) => [c, { category: c, severity: null, count: 0 }]));
+  for (const ins of insights) {
+    const row = rows[ins.category];
+    if (!row) continue;
+    row.count += 1;
+    if (row.severity === null || rank[ins.severity] < rank[row.severity]) row.severity = ins.severity;
+  }
+  return DECISION_CATEGORIES.map((c) => ({ ...rows[c], severity: rows[c].severity || 'ok' }));
+}
+
 const KPI_GROUP_RANK = { speed: 0, conversion: 1, flow: 2, capacity: 3, marketing: 4 };
 const MIN_SOURCE_LEADS = 5;
 const SPREAD_TO_FLAG_PCT = 15;

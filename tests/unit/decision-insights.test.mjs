@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDecisionInsights, sortInsights } from '../../src/utils/decisionInsights.js';
+import { buildDecisionInsights, sortInsights, categorySummary, DECISION_CATEGORIES } from '../../src/utils/decisionInsights.js';
 
 const AREAS = [{ id: 'sohag', name_ar: 'سوهاج' }];
 const NOW = Date.parse('2026-06-15T12:00:00Z');
@@ -113,4 +113,32 @@ test('sortInsights puts critical first, then warning, then info', () => {
     { id: 'b', severity: 'warning' },
   ]);
   assert.deepEqual(sorted.map((i) => i.id), ['a', 'b', 'c']);
+});
+
+test('categorySummary: a section with no insights reads as ok with zero count', () => {
+  const rows = categorySummary([]);
+  assert.deepEqual(rows.map((r) => r.category), DECISION_CATEGORIES);
+  for (const r of rows) {
+    assert.equal(r.severity, 'ok');
+    assert.equal(r.count, 0);
+  }
+});
+
+test('categorySummary: a section takes its worst insight\'s severity and counts all of them', () => {
+  const insights = [
+    { category: 'marketing', severity: 'info' },
+    { category: 'marketing', severity: 'critical' },
+    { category: 'marketing', severity: 'warning' },
+    { category: 'team', severity: 'warning' },
+  ];
+  const rows = categorySummary(insights);
+  const marketing = rows.find((r) => r.category === 'marketing');
+  const team = rows.find((r) => r.category === 'team');
+  const stock = rows.find((r) => r.category === 'stock');
+  assert.equal(marketing.severity, 'critical');
+  assert.equal(marketing.count, 3);
+  assert.equal(team.severity, 'warning');
+  assert.equal(team.count, 1);
+  assert.equal(stock.severity, 'ok');
+  assert.equal(stock.count, 0);
 });
