@@ -10,6 +10,7 @@ import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import AreaOptions from '../common/AreaOptions';
 import { nameProblem, nameNote, phoneProblem } from '../../utils/contactValidation';
+import { matchAnswersFromManualIntake } from '../../utils/buyerMatch';
 
 export default function AddLeadModal({
   isOpen,
@@ -51,6 +52,9 @@ export default function AddLeadModal({
     area: '', // nothing preselected: 'east' was saved even after the area was deleted
     propertyType: 'apartment',
     financing: 'cash',
+    minSize: '',
+    down: '',
+    monthly: '',
     assignedTo: DESK_BY_ROLE[userRole] || 'Sales Advisor Team',
     source: 'اتصال مباشر / هاتف',
     nextActionNote: 'مكالمة هاتفية لتأكيد المواصفات والميزانية',
@@ -119,6 +123,19 @@ export default function AddLeadModal({
 
     try {
       isSubmittingRef.current = true;
+      // Buyers and investors get a matchAnswers (the same shape the public «رشح لي عقاري» wizard and
+      // the drawer's own «طلب العميل» editor write), so matching works right from creation instead of
+      // waiting for someone to fill it in later from the Matching tab.
+      const matchAnswers = matchAnswersFromManualIntake({
+        type: formData.type,
+        propertyType: formData.propertyType,
+        area: formData.area,
+        financing: formData.financing,
+        budget: formData.budget,
+        down: formData.down,
+        monthly: formData.monthly,
+        minSize: formData.minSize
+      });
       const leadPayload = {
         name: nameTrimmed,
         phone: formData.phone.trim() || whatsappTrimmed,
@@ -142,7 +159,8 @@ export default function AddLeadModal({
           budget: formData.budget,
           expectedPrice: formData.budget,
           area: formData.area,
-          propertyType: formData.propertyType
+          propertyType: formData.propertyType,
+          ...(matchAnswers ? { matchAnswers } : {})
         }
       };
 
@@ -286,16 +304,66 @@ export default function AddLeadModal({
               </select>
             </div>
 
-            {/* Budget */}
+            {/* Payment method */}
             <div className="form-group-item">
-              <label>{isAr ? 'الميزانية المالية المتوقعة (ج.م):' : 'Budget (EGP):'}</label>
-              <input
-                type="text"
-                placeholder="مثال: 3,500,000"
-                value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-              />
+              <label>{isAr ? 'طريقة السداد:' : 'Payment method:'}</label>
+              <select
+                value={formData.financing}
+                onChange={(e) => setFormData({ ...formData, financing: e.target.value })}
+              >
+                <option value="cash">{isAr ? 'كاش فوري' : 'Cash'}</option>
+                <option value="installments">{isAr ? 'تقسيط على دفعات' : 'Installments'}</option>
+                <option value="mortgage">{isAr ? 'تمويل عقاري' : 'Mortgage'}</option>
+              </select>
             </div>
+
+            {/* Budget (cash) or down payment + monthly installment */}
+            {formData.financing === 'cash' ? (
+              <div className="form-group-item">
+                <label>{isAr ? 'الميزانية المالية المتوقعة (ج.م):' : 'Budget (EGP):'}</label>
+                <input
+                  type="text"
+                  placeholder="مثال: 3,500,000"
+                  value={formData.budget}
+                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                />
+              </div>
+            ) : (
+              <>
+                <div className="form-group-item">
+                  <label>{isAr ? 'أقصى مقدم (ج.م):' : 'Max down payment (EGP):'}</label>
+                  <input
+                    type="text"
+                    placeholder="مثال: 500,000"
+                    value={formData.down}
+                    onChange={(e) => setFormData({ ...formData, down: e.target.value })}
+                  />
+                </div>
+                <div className="form-group-item">
+                  <label>{isAr ? 'أقصى قسط شهري (ج.م):' : 'Max monthly instalment (EGP):'}</label>
+                  <input
+                    type="text"
+                    placeholder="مثال: 25,000"
+                    value={formData.monthly}
+                    onChange={(e) => setFormData({ ...formData, monthly: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Minimum size the client needs — lets the matching engine fit units to a buyer/investor */}
+            {(formData.type === 'buyer' || formData.type === 'investor') && (
+              <div className="form-group-item">
+                <label>{isAr ? 'أقل مساحة مطلوبة (م²):' : 'Min size needed (m²):'}</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="مثال: 120"
+                  value={formData.minSize}
+                  onChange={(e) => setFormData({ ...formData, minSize: e.target.value })}
+                />
+              </div>
+            )}
 
             {/* Temperature */}
             <div className="form-group-item">
