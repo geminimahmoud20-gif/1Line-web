@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pipelineKind, stagesFor, askingPriceOf, buyersForSeller, SELLER_STAGES, BUYER_STAGES } from '../../src/utils/leadPipeline.js';
+import { pipelineKind, stagesFor, askingPriceOf, buyersForSeller, SELLER_STAGES, BUYER_STAGES, listingCreatedLeadPatch } from '../../src/utils/leadPipeline.js';
 import { validateStageTransition } from '../../src/services/stateMachineEngine.js';
 import { findMatchingClientsForProperty } from '../../src/utils/matchingEngine.js';
 
@@ -42,4 +42,22 @@ test('owners are never offered as buyers, and an owner sees the buyers who fit t
   assert.deepEqual(ids, ['b1']);
   const found = buyersForSeller({ ...owner, askingPrice: 2100000 }, [owner, buyer], []);
   assert.deepEqual(found.map((m) => m.id), ['b1']);
+});
+
+test('listingCreatedLeadPatch moves a seller lead to «معروض للبيع» the moment its unit is listed', () => {
+  for (const status of ['new', 'contacted', 'site_visit']) {
+    const patch = listingCreatedLeadPatch({ ...owner, status });
+    assert.ok(patch, `expected a patch from status ${status}`);
+    assert.equal(patch.status, 'negotiating');
+    assert.equal(patch._bypassGate, true);
+    assert.ok(patch._logAction);
+  }
+});
+
+test('listingCreatedLeadPatch does nothing for a buyer, or a seller already at/past negotiating', () => {
+  assert.equal(listingCreatedLeadPatch(buyer), null);
+  assert.equal(listingCreatedLeadPatch(null), null);
+  for (const status of ['negotiating', 'closing', 'closed', 'lost', 'inactive']) {
+    assert.equal(listingCreatedLeadPatch({ ...owner, status }), null);
+  }
 });

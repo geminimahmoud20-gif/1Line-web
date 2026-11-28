@@ -57,6 +57,7 @@ import { assignmentEvent, propertyEditEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
 import { tidyListing } from '../utils/listingSpelling';
 import { findPotentialDuplicateListing, listingDiffPatch } from '../utils/listingDedupe';
+import { listingCreatedLeadPatch } from '../utils/leadPipeline';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
 // The cache keeps only what this device created (a visitor's own requests, offline drafts).
@@ -195,31 +196,6 @@ export function PropertiesProvider({ children }) {
     if (edit) logAuditEvent(edit).catch(() => {});
     reportCatalogSync(patchCatalogItem('properties', id, patch, merged), id);
   }, [reportCatalogSync]);
-
-  const handleAddProperty = useCallback((rawProp) => {
-    const { _allowMultipleForLead, _openExisting, suggestedId: _suggestedId, ...newProp } = rawProp || {};
-    const existingById = propertiesRef.current.find((p) => String(p.id) === String(newProp.id));
-    if (existingById) {
-      const diff = listingDiffPatch(existingById, newProp);
-      if (Object.keys(diff).length > 0) handleUpdateProperty(existingById.id, diff);
-      return;
-    }
-    if (!_allowMultipleForLead && newProp.sourceLeadId) {
-      const dup = findPotentialDuplicateListing(propertiesRef.current, newProp);
-      if (dup) {
-        const diff = listingDiffPatch(dup, newProp);
-        if (Object.keys(diff).length > 0) handleUpdateProperty(dup.id, diff);
-        return;
-      }
-    }
-    const updated = [newProp, ...propertiesRef.current];
-    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
-    setProperties(updated);
-    persistProperties(updated);
-    reportCatalogSync(upsertCatalogItem('properties', newProp), newProp.id);
-    // Who added it (staff-only document: the listing itself is public)
-    stampSubmitter(newProp.id);
-  }, [reportCatalogSync, handleUpdateProperty]);
 
   /** Sends this device's copy of a listing again (after a refused or offline save) */
   const retryPropertySync = useCallback((id) => {
@@ -986,6 +962,40 @@ export function PropertiesProvider({ children }) {
 
     return true;
   }, [lang, triggerToast]);
+
+  const handleAddProperty = useCallback((rawProp) => {
+    const { _allowMultipleForLead, _openExisting, suggestedId: _suggestedId, ...newProp } = rawProp || {};
+    const existingById = propertiesRef.current.find((p) => String(p.id) === String(newProp.id));
+    if (existingById) {
+      const diff = listingDiffPatch(existingById, newProp);
+      if (Object.keys(diff).length > 0) handleUpdateProperty(existingById.id, diff);
+      return;
+    }
+    if (!_allowMultipleForLead && newProp.sourceLeadId) {
+      const dup = findPotentialDuplicateListing(propertiesRef.current, newProp);
+      if (dup) {
+        const diff = listingDiffPatch(dup, newProp);
+        if (Object.keys(diff).length > 0) handleUpdateProperty(dup.id, diff);
+        return;
+      }
+    }
+    const updated = [newProp, ...propertiesRef.current];
+    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
+    setProperties(updated);
+    persistProperties(updated);
+    reportCatalogSync(upsertCatalogItem('properties', newProp), newProp.id);
+    // Who added it (staff-only document: the listing itself is public)
+    stampSubmitter(newProp.id);
+
+    // The owner's lead card moves itself to «معروض للبيع» the moment their unit actually goes live -
+    // waiting for someone to also log a viewing/offer outcome by hand would leave it stuck behind the
+    // stage lock (utils/stageGate) even though the unit being listed is already stronger proof than that.
+    if (newProp.sourceLeadId) {
+      const sellerLead = leadsRef.current.find((l) => String(l.id) === String(newProp.sourceLeadId));
+      const patch = listingCreatedLeadPatch(sellerLead);
+      if (patch) handleUpdateLead(sellerLead.id, patch);
+    }
+  }, [reportCatalogSync, handleUpdateProperty, handleUpdateLead]);
 
   const handleDeleteLead = useCallback(async (idOrIds) => {
     const ids = Array.isArray(idOrIds) ? idOrIds.map(String) : [String(idOrIds)];
