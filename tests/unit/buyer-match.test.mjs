@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { matchUnit, rankHomes, answersMessage } from '../../src/utils/buyerMatch.js';
+import { matchUnit, rankHomes, answersMessage, matchAnswersFromManualIntake } from '../../src/utils/buyerMatch.js';
 
 const areas = [{ id: 'new', name_ar: 'سوهاج الجديدة' }, { id: 'd5', name_ar: 'الحي الخامس', parentId: 'new' }, { id: 'east', name_ar: 'شرق' }];
 const flat = (extra = {}) => ({ type: 'apartment', title_ar: 'شقة', status: 'published', price: 2_000_000, size: 140, bedrooms: 3, areaKey: 'd5', completionStatus: 'ready', finishing: 'full', ...extra });
@@ -100,4 +100,41 @@ test('the buyer’s answers become readable rows for the client profile', async 
   assert.deepEqual(answersFacts(undefined), []);
   assert.deepEqual(answersFacts({}), []);
   assert.equal(Object.fromEntries(answersFacts({ kind: 'land', payment: 'cash', budget: '900000', anyArea: true }))['الميزانية (كاش)'], '900,000 ج.م');
+});
+
+test('matchAnswersFromManualIntake: sellers and brokers get no match answers', () => {
+  assert.equal(matchAnswersFromManualIntake({ type: 'seller' }), null);
+  assert.equal(matchAnswersFromManualIntake({ type: 'broker' }), null);
+  assert.equal(matchAnswersFromManualIntake({ type: 'request' }), null);
+});
+
+test('matchAnswersFromManualIntake: a cash buyer gets kind/area/budget, no down/monthly', () => {
+  const a = matchAnswersFromManualIntake({
+    type: 'buyer', propertyType: 'villa', area: 'd5', financing: 'cash', budget: '3,500,000', minSize: '250'
+  });
+  assert.equal(a.kind, 'villa');
+  assert.deepEqual(a.areas, ['d5']);
+  assert.equal(a.payment, 'cash');
+  assert.equal(a.budget, '3500000');
+  assert.equal(a.down, '');
+  assert.equal(a.monthly, '');
+  assert.equal(a.minSize, '250');
+});
+
+test('matchAnswersFromManualIntake: an installment buyer gets down/monthly, no cash budget', () => {
+  const a = matchAnswersFromManualIntake({
+    type: 'investor', propertyType: 'apartment', area: 'new', financing: 'installments', down: '500,000', monthly: '25,000', budget: '9,000,000'
+  });
+  assert.equal(a.kind, 'residential');
+  assert.equal(a.payment, 'installments');
+  assert.equal(a.down, '500000');
+  assert.equal(a.monthly, '25000');
+  assert.equal(a.budget, '');
+});
+
+test('matchAnswersFromManualIntake: a mortgage buyer is treated as installments', () => {
+  const a = matchAnswersFromManualIntake({ type: 'buyer', propertyType: 'land', area: 'east', financing: 'mortgage', down: '200000' });
+  assert.equal(a.kind, 'land');
+  assert.equal(a.payment, 'installments');
+  assert.equal(a.down, '200000');
 });

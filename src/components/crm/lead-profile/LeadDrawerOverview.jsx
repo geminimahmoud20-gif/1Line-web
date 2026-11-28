@@ -547,7 +547,8 @@ export default function LeadDrawerOverview({
         </section>
       )}
 
-      {/* 📋 Field Inspection & Valuation Block */}
+      {/* 📋 Field Inspection & Valuation Block — a seller's property is inspected and valued, never a buyer's own file */}
+      {isSeller && (
       <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-inspection" style={{ borderRight: '3px solid var(--crm-accent)' }}>
         <div className="crm-ld__block-head">
           <h3 id="crm-ld-inspection" className="crm-ld__h" style={{ color: 'var(--crm-ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -590,6 +591,7 @@ export default function LeadDrawerOverview({
           </div>
         )}
       </section>
+      )}
       </>
       )}
 

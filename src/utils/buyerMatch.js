@@ -263,6 +263,35 @@ export function hardFit(p, answers = {}, areas = [], { stretch = 0.1 } = {}) {
   };
 }
 
+// propertyType (the catalog in data/propertiesData.js) -> this file's own kind id, so a manually
+// registered buyer's request matches the same way a website «رشح لي عقاري» answer does.
+const KIND_BY_PROPERTY_TYPE = {
+  apartment: 'residential', villa: 'villa', building: 'building', commercial: 'commercial',
+  office: 'administrative', land: 'land', agri_land: 'agricultural', farm: 'agricultural',
+  factory: 'industrial', warehouse: 'industrial', industrial_land: 'industrial'
+};
+const digits = (v) => String(v ?? '').replace(/[^\d.]/g, '');
+
+/**
+ * The matchAnswers a quick manual intake (AddLeadModal) can already give: not a buyer or investor ->
+ * null (sellers/brokers/special requests have nothing to match). Otherwise the same shape cleanAnswers
+ * expects, built from the few fields that form already collects (one area, one property type, a
+ * payment method and either a cash budget or a down payment + monthly instalment, and a minimum size).
+ */
+export function matchAnswersFromManualIntake({ type, propertyType, area, financing, budget, down, monthly, minSize } = {}) {
+  if (type !== 'buyer' && type !== 'investor') return null;
+  const payment = financing === 'cash' ? 'cash' : 'installments';
+  return cleanAnswers({
+    kind: KIND_BY_PROPERTY_TYPE[propertyType] || '',
+    areas: [area].filter(Boolean),
+    payment,
+    budget: payment === 'cash' ? digits(budget) : '',
+    down: payment === 'installments' ? digits(down) : '',
+    monthly: payment === 'installments' ? digits(monthly) : '',
+    minSize: digits(minSize)
+  });
+}
+
 /** The answers worth keeping on a lead: only the questions' own values, as plain strings and lists */
 export function cleanAnswers(a = {}) {
   const text = (v, max = 40) => String(v ?? '').replace(/[^\p{L}\p{N}_ .-]/gu, '').slice(0, max);
