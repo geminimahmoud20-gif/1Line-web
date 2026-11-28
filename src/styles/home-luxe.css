@@ -2171,6 +2171,13 @@
     min-width: 0;
     scroll-snap-align: start;
   }
+  /* property-card.css sets height:100% for the desktop grid, where the grid row stretches the
+     card to match its row. That isn't the literal keyword `auto`, so it blocks align-items:stretch
+     from equalizing the cards here, leaving each one at its own content height - taller cards
+     (an offer banner, a longer title, extra highlight pills) show their button lower than the rest. */
+  .homepage-wrapper .properties-grid-4.hx-market-rail > .property-card-modern.pcx {
+    height: auto;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════
