@@ -14,12 +14,18 @@ import { detectAreaSupplyDeficits } from './supplyGapMatcher.js';
 import { findDuplicateListingPairs } from './listingDedupe.js';
 import { getOfferListings } from './propertyOffers.js';
 import { STAGE_LABELS } from './performanceReport.js';
+import { commissionForecast } from './commission.js';
 
 const SEVERITY_RANK = { critical: 0, warning: 1, info: 2 };
 export const sortInsights = (list) => [...list].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
 
-/** The sections the network map draws, in a fixed order (fixed layout, not computed from the data) */
-export const DECISION_CATEGORIES = ['marketing', 'flow', 'team', 'risk', 'stock', 'kpi'];
+/**
+ * The company's five departments, in a fixed order (fixed layout, not computed from the data) —
+ * every insight below is filed under whichever of these actually owns that decision, not the
+ * report tab it reads from (several, like the lost-reason or off-target KPI rules, read one
+ * report but belong to a different department than that report's own tab).
+ */
+export const DECISION_CATEGORIES = ['marketing', 'sales', 'ops', 'finance', 'hr'];
 
 /**
  * One row per section: its worst insight's severity (or 'ok' when it has none right now) and how
@@ -39,9 +45,11 @@ export function categorySummary(insights = []) {
 }
 
 const KPI_GROUP_RANK = { speed: 0, conversion: 1, flow: 2, capacity: 3, marketing: 4 };
+const KPI_GROUP_CATEGORY = { speed: 'sales', conversion: 'sales', flow: 'sales', capacity: 'hr', marketing: 'marketing' };
 const MIN_SOURCE_LEADS = 5;
 const SPREAD_TO_FLAG_PCT = 15;
 const MIN_LOST_REASON = 3;
+const MIN_MISSING_VALUE = 3;
 
 /**
  * properties/demands/leads/members: the live CRM lists.
@@ -64,13 +72,13 @@ export function buildDecisionInsights({
   const insights = [];
   const push = (insight) => insights.push(insight);
 
-  // 1) Stock: areas with a critical or high supply deficit against live buyer demand
+  // 1) Ops: areas with a critical or high supply deficit against live buyer demand
   const deficits = detectAreaSupplyDeficits(properties, demands, areas).filter((d) => d.severity === 'critical' || d.severity === 'high');
   deficits.slice(0, 3).forEach((d) => {
     push({
       id: `stock-deficit-${d.areaId}`,
       severity: d.severity === 'critical' ? 'critical' : 'warning',
-      category: 'stock',
+      category: 'ops',
       title_ar: `عجز معروض في ${d.areaName}`,
       detail_ar: d.deficitReason,
       action_ar: d.buyerDemandsCount > 0
@@ -80,14 +88,14 @@ export function buildDecisionInsights({
     });
   });
 
-  // 2) Flow: the pipeline stage holding the most late clients
+  // 2) Sales: the pipeline stage holding the most late clients
   const flow = flowReport(leads, { now });
   if (flow.bottleneck && flow.bottleneck.latePct >= 20) {
     const label = STAGE_LABELS[flow.bottleneck.id]?.ar || flow.bottleneck.id;
     push({
       id: 'flow-bottleneck',
       severity: flow.bottleneck.latePct >= 40 ? 'critical' : 'warning',
-      category: 'flow',
+      category: 'sales',
       title_ar: `عملاء متكدسين في مرحلة «${label}»`,
       detail_ar: `${flow.bottleneck.late} من ${flow.bottleneck.count} عميل عدّوا الوقت المسموح للمرحلة دي (${flow.bottleneck.latePct}%)، أطول انتظار ${flow.bottleneck.oldestDays} يوم.`,
       action_ar: 'راجع العملاء المتأخرين في المرحلة دي وحدد ليه واقفين',
@@ -95,7 +103,7 @@ export function buildDecisionInsights({
     });
   }
 
-  // 3) Team: an overloaded agent next to one with spare capacity (same desk = an easy reassignment)
+  // 3) HR: an overloaded agent next to one with spare capacity (same desk = an easy reassignment)
   if (members.length) {
     const org = orgReport(leads, members, access, capacity, { now });
     const sales = org.people.filter((p) => p.tier === 'sales');
@@ -107,7 +115,7 @@ export function buildDecisionInsights({
       push({
         id: `team-rebalance-${a.uid}`,
         severity: a.pct >= 130 ? 'critical' : 'warning',
-        category: 'team',
+        category: 'hr',
         title_ar: `حمل غير متوازن: ${a.name} فوق طاقته`,
         detail_ar: `${a.name} شايل ${a.open} عميل من سعة ${a.capacity} (${a.pct}%)، في حين ${b.name} عنده مساحة (${b.open} من ${b.capacity}, ${b.pct}%).`,
         action_ar: `انقل جزء من عملاء ${a.name} لـ ${b.name}`,
@@ -118,7 +126,7 @@ export function buildDecisionInsights({
       push({
         id: `team-overload-${a.uid}`,
         severity: a.pct >= 130 ? 'critical' : 'warning',
-        category: 'team',
+        category: 'hr',
         title_ar: `${a.name} فوق طاقته`,
         detail_ar: `شايل ${a.open} عميل من سعة ${a.capacity} (${a.pct}%)، ومفيش حد تاني عنده مساحة دلوقتي.`,
         action_ar: 'فكّر تزوّد السعة أو توقف استقبال عملاء جداد له مؤقتاً',
@@ -129,7 +137,7 @@ export function buildDecisionInsights({
       push({
         id: 'team-unassigned',
         severity: org.unassigned.open >= 10 ? 'critical' : 'warning',
-        category: 'team',
+        category: 'hr',
         title_ar: `${org.unassigned.open} عميل من غير مسؤول`,
         detail_ar: `${org.unassigned.sellers} ملاك و${org.unassigned.buyers} مشترين مستنيين حد يستلمهم.`,
         action_ar: 'وزّعهم على الفريق دلوقتي قبل ما يبردوا',
@@ -161,7 +169,7 @@ export function buildDecisionInsights({
     push({
       id: 'risk-top-lost-reason',
       severity: cohort.funnel.topLostReason.count >= 10 ? 'warning' : 'info',
-      category: 'risk',
+      category: 'sales',
       title_ar: 'أكتر سبب بيخسرنا عملاء',
       detail_ar: `«${cohort.funnel.topLostReason.id}» سبب خسارة ${cohort.funnel.topLostReason.count} عميل آخر 30 يوم.`,
       action_ar: 'راجع السبب ده مع الفريق — ممكن يكون حل واحد يوقف نزيف العملاء',
@@ -177,7 +185,7 @@ export function buildDecisionInsights({
       push({
         id: `kpi-bad-${k.id}`,
         severity: 'warning',
-        category: 'kpi',
+        category: KPI_GROUP_CATEGORY[k.group] || 'sales',
         title_ar: `مؤشر بعيد عن هدفه: ${k.note}`,
         detail_ar: `القيمة ${k.value ?? '—'}${k.unit}، والهدف ${k.target?.good ?? '—'}${k.unit}.`,
         action_ar: 'شوف تفاصيله في تبويب المؤشرات',
@@ -192,7 +200,7 @@ export function buildDecisionInsights({
     push({
       id: 'stock-duplicates',
       severity: 'info',
-      category: 'stock',
+      category: 'ops',
       title_ar: `${dupPairs.size / 2} زوج عقارات مكررة محتاجة دمج`,
       detail_ar: 'نفس الوحدة مدخلة أكتر من مرة — بتوهم الفريق والعملاء بمعروض أكبر من الحقيقي.',
       action_ar: 'ادمجهم من أداة «دمج المكررين» في قائمة العقارات',
@@ -209,6 +217,22 @@ export function buildDecisionInsights({
       detail_ar: 'لو العرض ده بينجح، فكّر تمدده بدل ما يختفي من الواجهة لوحده.',
       action_ar: 'راجع العروض اللي قربت تخلص',
       tab: 'marketing',
+    });
+  }
+
+  // 7) Finance: open deals carrying no deal value can't be forecast — the commission report under-counts them
+  const commission = commissionForecast(leads, { now });
+  const totalOpenValued = commission.valued + commission.missingValue;
+  if (commission.missingValue >= MIN_MISSING_VALUE && totalOpenValued > 0) {
+    const pct = Math.round((commission.missingValue / totalOpenValued) * 100);
+    push({
+      id: 'finance-missing-value',
+      severity: pct >= 50 ? 'warning' : 'info',
+      category: 'finance',
+      title_ar: `${commission.missingValue} صفقة مفتوحة من غير قيمة متوقعة`,
+      detail_ar: `${pct}% من الصفقات المفتوحة (${commission.missingValue} من ${totalOpenValued}) من غير قيمة صفقة مسجّلة — توقع العمولة بتاعهم مش داخل في تقرير الفلوس.`,
+      action_ar: 'اطلب من الفريق يسجّل قيمة الصفقة لكل عميل في مرحلة متقدمة',
+      tab: 'sales',
     });
   }
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Compass, Building, Hourglass, Users, Megaphone, ShieldAlert, Gauge, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Compass, Building, Users, Megaphone, Banknote, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getActiveAccessConfig } from '../../services/accessConfig';
 import { useGoals } from '../../hooks/useGoals';
 import { loadMonthlySpend } from '../../firebaseLazy';
@@ -9,13 +9,14 @@ import { EmptyState, IconBadge } from '../ui';
 import DecisionSectionMap from './DecisionSectionMap';
 import './report-dash.css';
 
-const CATEGORY_ICON = { stock: Building, flow: Hourglass, team: Users, marketing: Megaphone, risk: ShieldAlert, kpi: Gauge };
+const CATEGORY_ICON = { marketing: Megaphone, sales: TrendingUp, ops: Building, finance: Banknote, hr: Users };
 const SEVERITY_TONE = { critical: 'danger', warning: 'warning', info: 'info' };
 
 /**
- * «مركز القرار»: cross-references every report already in the hub (تسويق، فريق، تدفق شغل، عقارات
- * وطلب، مؤشرات، خسائر) into one ranked list of decisions worth making right now - not another
- * metric, just what today's numbers across all of them mean together. Founder-only.
+ * «مركز القرار»: cross-references every report already in the hub into one ranked list of
+ * decisions worth making right now, filed under the company's five departments (marketing, sales,
+ * operations, finance, HR) - not another metric, just what today's numbers across all of them mean
+ * together. Founder-only.
  */
 export default function DecisionCenterPanel({ leads = [], properties = [], demands = [], members = [], lang = 'ar', onJumpTab }) {
   const isAr = lang !== 'en';

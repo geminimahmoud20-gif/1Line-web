@@ -13,6 +13,7 @@ test('flags a critical stock deficit (no supply, live demand) and links to the s
   assert.ok(found, 'expected a stock deficit insight');
   assert.equal(found.severity, 'critical');
   assert.equal(found.tab, 'stock');
+  assert.equal(found.category, 'ops');
 });
 
 test('flags a pipeline bottleneck when a stage holds many late clients', () => {
@@ -23,6 +24,7 @@ test('flags a pipeline bottleneck when a stage holds many late clients', () => {
   const found = insights.find((i) => i.id === 'flow-bottleneck');
   assert.ok(found, 'expected a flow bottleneck insight');
   assert.equal(found.tab, 'flow');
+  assert.equal(found.category, 'sales');
 });
 
 test('flags an overloaded agent and suggests the colleague with spare capacity', () => {
@@ -42,6 +44,7 @@ test('flags an overloaded agent and suggests the colleague with spare capacity',
   assert.match(found.detail_ar, /أحمد/);
   assert.match(found.action_ar, /سارة/);
   assert.equal(found.tab, 'org');
+  assert.equal(found.category, 'hr');
 });
 
 test('flags unassigned open clients', () => {
@@ -77,6 +80,7 @@ test('flags a dominant lost reason', () => {
   const found = insights.find((i) => i.id === 'risk-top-lost-reason');
   assert.ok(found);
   assert.equal(found.tab, 'risk');
+  assert.equal(found.category, 'sales');
 });
 
 test('flags duplicate listings pending merge', () => {
@@ -100,6 +104,18 @@ test('flags offers ending within two days', () => {
   const found = insights.find((i) => i.id === 'marketing-offers-ending');
   assert.ok(found);
   assert.equal(found.tab, 'marketing');
+});
+
+test('flags open deals carrying no logged deal value', () => {
+  const leads = [
+    ...Array.from({ length: 4 }, (_, i) => ({ id: `nv-${i}`, status: 'negotiating', createdAt: daysAgo(10) })),
+    { id: 'valued-1', status: 'negotiating', dealValue: 1500000, createdAt: daysAgo(10) },
+  ];
+  const insights = buildDecisionInsights({ leads, now: NOW });
+  const found = insights.find((i) => i.id === 'finance-missing-value');
+  assert.ok(found, 'expected a finance missing-value insight');
+  assert.equal(found.category, 'finance');
+  assert.equal(found.tab, 'sales');
 });
 
 test('an idle system (no data) produces no insights', () => {
@@ -129,16 +145,16 @@ test('categorySummary: a section takes its worst insight\'s severity and counts 
     { category: 'marketing', severity: 'info' },
     { category: 'marketing', severity: 'critical' },
     { category: 'marketing', severity: 'warning' },
-    { category: 'team', severity: 'warning' },
+    { category: 'hr', severity: 'warning' },
   ];
   const rows = categorySummary(insights);
   const marketing = rows.find((r) => r.category === 'marketing');
-  const team = rows.find((r) => r.category === 'team');
-  const stock = rows.find((r) => r.category === 'stock');
+  const hr = rows.find((r) => r.category === 'hr');
+  const ops = rows.find((r) => r.category === 'ops');
   assert.equal(marketing.severity, 'critical');
   assert.equal(marketing.count, 3);
-  assert.equal(team.severity, 'warning');
-  assert.equal(team.count, 1);
-  assert.equal(stock.severity, 'ok');
-  assert.equal(stock.count, 0);
+  assert.equal(hr.severity, 'warning');
+  assert.equal(hr.count, 1);
+  assert.equal(ops.severity, 'ok');
+  assert.equal(ops.count, 0);
 });
